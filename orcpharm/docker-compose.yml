@@ -1,0 +1,59 @@
+﻿version: '3.8'
+services:
+  orcpharm:
+    image: atentbot/orcpharm:latest
+    volumes:
+      - orcpharm-keys:/app/.keys
+      - orcpharm-uploads:/app/uploads
+      - dataprotection:/home/appuser/.aspnet/DataProtection-Keys
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_HTTPS_PORT=8443
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        
+        # Router HTTPS
+        - "traefik.http.routers.orcpharm.rule=Host(`orcpharm.atentbot.com`)"
+        - "traefik.http.routers.orcpharm.entrypoints=websecure"
+        - "traefik.http.routers.orcpharm.tls=true"
+        - "traefik.http.routers.orcpharm.tls.certresolver=le"
+        
+        # Service
+        - "traefik.http.services.orcpharm.loadbalancer.server.port=8080"
+        - "traefik.docker.network=traefik_public"
+        
+        # Health check
+        - "traefik.http.services.orcpharm.loadbalancer.healthcheck.path=/health"
+        - "traefik.http.services.orcpharm.loadbalancer.healthcheck.interval=30s"
+        - "traefik.http.services.orcpharm.loadbalancer.healthcheck.timeout=5s"
+        
+        # Sticky sessions (opcional, mas útil com 2 réplicas)
+        - "traefik.http.services.orcpharm.loadbalancer.sticky.cookie=true"
+        - "traefik.http.services.orcpharm.loadbalancer.sticky.cookie.name=orcpharm_sticky"
+        - "traefik.http.services.orcpharm.loadbalancer.sticky.cookie.secure=true"
+        - "traefik.http.services.orcpharm.loadbalancer.sticky.cookie.httpOnly=true"
+        
+    networks:
+      - traefik_public
+
+volumes:
+  orcpharm-keys:
+    driver: local
+  orcpharm-uploads:
+    driver: local
+  dataprotection:
+    driver: local
+    
+networks:
+  traefik_public:
+    external: true
