@@ -1,0 +1,1603 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "OrcPharm API",
+    "description": "Documentação da API do projeto OrcPharm",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/Employees/login": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Employees": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEmployeeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Employees"
+        ],
+        "parameters": [
+          {
+            "name": "establishmentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "jobPositionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Employees/{id}": {
+      "get": {
+        "tags": [
+          "Employees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Employees"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmployeeDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmployeeDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEmployeeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/establishments": {
+      "get": {
+        "tags": [
+          "Establishments"
+        ],
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Establishment"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Establishment"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Establishment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Establishments"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Establishment"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Establishment"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Establishment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/establishments/{id}": {
+      "get": {
+        "tags": [
+          "Establishments"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/establishments/confirm": {
+      "post": {
+        "tags": [
+          "Establishments"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/wa/send": {
+      "post": {
+        "tags": [
+          "Message"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RawMaterials": {
+      "get": {
+        "tags": [
+          "RawMaterials"
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "controlType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lowStock",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "RawMaterials"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRawMaterialDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRawMaterialDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRawMaterialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RawMaterials/{id}": {
+      "get": {
+        "tags": [
+          "RawMaterials"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "RawMaterials"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRawMaterialDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRawMaterialDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRawMaterialDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "RawMaterials"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RawMaterials/statistics": {
+      "get": {
+        "tags": [
+          "RawMaterials"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/StockMovements/entrada": {
+      "post": {
+        "tags": [
+          "StockMovements"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntradaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Suppliers": {
+      "get": {
+        "tags": [
+          "Suppliers"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Suppliers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupplierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Test/hash/{password}": {
+      "get": {
+        "tags": [
+          "Test"
+        ],
+        "parameters": [
+          {
+            "name": "password",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessLevel": {
+        "required": [
+          "code",
+          "description",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Category": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "establishments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Establishment"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateEmployeeDto": {
+        "type": "object",
+        "properties": {
+          "establishmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobPositionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "socialName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "type": "string",
+            "nullable": true
+          },
+          "rg": {
+            "type": "string",
+            "nullable": true
+          },
+          "rgIssuer": {
+            "type": "string",
+            "nullable": true
+          },
+          "rgIssueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true
+          },
+          "nationality": {
+            "type": "string",
+            "nullable": true
+          },
+          "placeOfBirth": {
+            "type": "string",
+            "nullable": true
+          },
+          "maritalStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "ctps": {
+            "type": "string",
+            "nullable": true
+          },
+          "ctpsSeries": {
+            "type": "string",
+            "nullable": true
+          },
+          "ctpsUf": {
+            "type": "string",
+            "nullable": true
+          },
+          "ctpsIssueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "pisPasep": {
+            "type": "string",
+            "nullable": true
+          },
+          "voterRegistration": {
+            "type": "string",
+            "nullable": true
+          },
+          "militaryService": {
+            "type": "string",
+            "nullable": true
+          },
+          "driverLicense": {
+            "type": "string",
+            "nullable": true
+          },
+          "driverLicenseCategory": {
+            "type": "string",
+            "nullable": true
+          },
+          "driverLicenseExpiry": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "whatsApp": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "complement": {
+            "type": "string",
+            "nullable": true
+          },
+          "neighborhood": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "hireDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "contractType": {
+            "type": "string",
+            "nullable": true
+          },
+          "workShift": {
+            "type": "string",
+            "nullable": true
+          },
+          "salary": {
+            "type": "number",
+            "format": "double"
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankBranch": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountType": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountDigit": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergencyContactRelationship": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "dependentsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "probationDays": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateRawMaterialDto": {
+        "required": [
+          "casNumber",
+          "controlType",
+          "name",
+          "unit"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dcbCode": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "dciCode": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "casNumber": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1000,
+            "type": "string",
+            "nullable": true
+          },
+          "controlType": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "unit": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
+          "purityFactor": {
+            "maximum": 100,
+            "minimum": 0,01,
+            "type": "number",
+            "format": "double"
+          },
+          "minimumStock": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "maximumStock": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "storageConditions": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "requiresRefrigeration": {
+            "type": "boolean"
+          },
+          "lightSensitive": {
+            "type": "boolean"
+          },
+          "humiditySensitive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSupplierDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "cnpj": {
+            "type": "string",
+            "nullable": true
+          },
+          "tradeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "afeNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "afeExpiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "neighborhood": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "suppliesControlled": {
+            "type": "boolean"
+          },
+          "suppliesAntibiotics": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EntradaDto": {
+        "type": "object",
+        "properties": {
+          "rawMaterialId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supplierId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "batchNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Establishment": {
+        "required": [
+          "accessLevelId",
+          "categoryId",
+          "city",
+          "cnpj",
+          "country",
+          "neighborhood",
+          "nomeFantasia",
+          "number",
+          "passwordAlgorithm",
+          "passwordHash",
+          "postalCode",
+          "razaoSocial",
+          "state",
+          "street"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "razaoSocial": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nomeFantasia": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "cnpj": {
+            "maxLength": 14,
+            "minLength": 1,
+            "type": "string"
+          },
+          "street": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "number": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
+          "complement": {
+            "maxLength": 120,
+            "type": "string",
+            "nullable": true
+          },
+          "neighborhood": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 2,
+            "minLength": 1,
+            "type": "string"
+          },
+          "postalCode": {
+            "maxLength": 8,
+            "minLength": 1,
+            "type": "string"
+          },
+          "country": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "phone": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "whatsApp": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "maxLength": 200,
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "instagram": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "facebook": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "tikTok": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "passwordHash": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "passwordCreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "passwordLastRehash": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "passwordAlgorithm": {
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accessLevelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accessLevel": {
+            "$ref": "#/components/schemas/AccessLevel"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "onboardingCompleted": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "cpf": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "whatsApp": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MessageRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateEmployeeDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "socialName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "whatsApp": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "string",
+            "nullable": true
+          },
+          "complement": {
+            "type": "string",
+            "nullable": true
+          },
+          "neighborhood": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankName": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankBranch": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccount": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountType": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankAccountDigit": {
+            "type": "string",
+            "nullable": true
+          },
+          "salary": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergencyContactRelationship": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true
+          },
+          "dependentsCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateRawMaterialDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "maxLength": 1000,
+            "type": "string",
+            "nullable": true
+          },
+          "controlType": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "purityFactor": {
+            "maximum": 100,
+            "minimum": 0,01,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "minimumStock": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maximumStock": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "storageConditions": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "requiresRefrigeration": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "lightSensitive": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "humiditySensitive": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "Cole aqui sua X-API-KEY",
+        "name": "X-API-KEY",
+        "in": "header"
+      },
+      "SessionToken": {
+        "type": "apiKey",
+        "description": "Token de sessão retornado no login",
+        "name": "X-SESSION-TOKEN",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKey": [ ],
+      "SessionToken": [ ]
+    }
+  ]
+}

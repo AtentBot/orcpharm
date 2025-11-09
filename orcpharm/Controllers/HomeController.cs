@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using orcpharm.Models;
+using Models;
 
-namespace orcpharm.Controllers
+namespace Controllers
 {
     public class HomeController : Controller
     {

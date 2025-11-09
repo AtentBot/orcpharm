@@ -3,8 +3,20 @@
   "WorkspaceRootPath": "E:\\orcpharm\\orcpharm\\orcpharm\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\docker-compose.yml||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:docker-compose.yml||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\data\\configurations\\categoryconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:data\\configurations\\categoryconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\models\\establishment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:models\\establishment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\models\\core\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:models\\core\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,15 +38,54 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Establishment.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\Establishment.cs",
+              "RelativeDocumentMoniker": "Models\\Establishment.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\Establishment.cs*",
+              "RelativeToolTip": "Models\\Establishment.cs*",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAswGwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-09T11:29:04.037Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "Data\\AppDbContext.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "Data\\AppDbContext.cs",
+              "ViewState": "AgIAACoAAAAAAAAAAAA0wDsAAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-09T11:26:51.587Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "docker-compose.yml",
-              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\docker-compose.yml",
-              "RelativeDocumentMoniker": "docker-compose.yml",
-              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\docker-compose.yml",
-              "RelativeToolTip": "docker-compose.yml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACQAAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
-              "WhenOpened": "2025-11-07T19:17:12.249Z",
+              "Title": "CategoryConfiguration.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Data\\Configurations\\CategoryConfiguration.cs",
+              "RelativeDocumentMoniker": "Data\\Configurations\\CategoryConfiguration.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Data\\Configurations\\CategoryConfiguration.cs",
+              "RelativeToolTip": "Data\\Configurations\\CategoryConfiguration.cs",
+              "ViewState": "AgIAAFUAAAAAAAAAAAAgwCoAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-09T11:12:04.861Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Category.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\Core\\Category.cs",
+              "RelativeDocumentMoniker": "Models\\Core\\Category.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\Core\\Category.cs",
+              "RelativeToolTip": "Models\\Core\\Category.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAuwCEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-09T11:11:28.825Z",
               "EditorCaption": ""
             }
           ]

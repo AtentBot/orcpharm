@@ -1,4 +1,4 @@
-namespace orcpharm.Models
+namespace Models
 {
     public class ErrorViewModel
     {
