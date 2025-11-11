@@ -184,6 +184,37 @@
         }
       }
     },
+    "/api/Employees/generate-hash": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateHashDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateHashDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateHashDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/establishments": {
       "get": {
         "tags": [
@@ -1362,6 +1393,16 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GenerateHashDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -4,6 +4,7 @@ using Data;
 using Models.Employees;
 using Isopoh.Cryptography.Argon2;
 using Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Controllers;
 
@@ -29,13 +30,17 @@ public class EmployeesController : ControllerBase
 
         // Validar CPF
         if (!DocumentValidator.IsValidCpf(cpf))
+
             return BadRequest(new { error = "CPF inválido" });
 
-        // Buscar funcionário
-        var employee = await _db.Employees
-            .Include(e => e.Establishment)
-            .Include(e => e.JobPosition)
-            .FirstOrDefaultAsync(e => e.Cpf == cpf);
+        try
+        {
+            // Buscar funcionário
+            var employee = await _db.Employees
+                .Include(e => e.Establishment)
+                .Include(e => e.JobPosition)
+                .FirstOrDefaultAsync(e => e.Cpf == cpf);
+       
 
         if (employee == null)
             return Unauthorized(new { error = "Credenciais inválidas" });
@@ -124,6 +129,17 @@ public class EmployeesController : ControllerBase
                 }
             }
         });
+
+        }
+        catch (DbUpdateException dbEx)
+        {
+            _logger.LogError(dbEx, "Erro ao atualizar banco de dados durante login");
+            return StatusCode(500, new
+            {
+                error = "Erro ao processar login. Tente novamente.",
+                details = "Problema ao salvar dados no banco"
+            });
+        }
     }
 
     // ==================== CRIAR FUNCIONÁRIO ====================
@@ -497,23 +513,64 @@ public class EmployeesController : ControllerBase
         return Ok(new { message = "Funcionário atualizado com sucesso" });
     }
 
+    // ==================== GERAR HASH DE SENHA ====================
+    [HttpPost("generate-hash")]
+    [AllowAnonymous]
+    public IActionResult GenerateHash([FromBody] GenerateHashDto dto)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(dto.Password))
+                return BadRequest(new { error = "Senha não pode ser vazia" });
+
+            var hash = Argon2.Hash(dto.Password);
+
+            return Ok(new
+            {
+                success = true,
+                password = dto.Password,
+                hash = hash,
+                algorithm = "argon2id-v1",
+                sqlUpdate = $@"UPDATE employees 
+            SET ""PasswordHash"" = '{hash}',
+                ""PasswordCreatedAt"" = CURRENT_TIMESTAMP,
+                ""PasswordAlgorithm"" = 'argon2id-v1',
+                ""RequirePasswordChange"" = false,
+                ""FailedLoginAttempts"" = 0,
+                ""LockedUntil"" = NULL
+            WHERE ""Cpf"" = 'CPF_AQUI';"
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Erro ao gerar hash de senha");
+                        return StatusCode(500, new { error = "Erro ao gerar hash", details = ex.Message });
+                    }
+    }
+
     // ==================== HELPERS ====================
     private string GetDeviceType(string userAgent)
     {
-        if (userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase))
-            return "Mobile";
-        if (userAgent.Contains("Tablet", StringComparison.OrdinalIgnoreCase))
-            return "Tablet";
+        if (string.IsNullOrEmpty(userAgent)) return "Unknown";
+        if (userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase)) return "Mobile";
+        if (userAgent.Contains("Tablet", StringComparison.OrdinalIgnoreCase)) return "Tablet";
         return "Desktop";
     }
 
     private string GetBrowser(string userAgent)
     {
+        if (string.IsNullOrEmpty(userAgent)) return "Unknown";
         if (userAgent.Contains("Chrome")) return "Chrome";
         if (userAgent.Contains("Firefox")) return "Firefox";
         if (userAgent.Contains("Safari")) return "Safari";
         if (userAgent.Contains("Edge")) return "Edge";
         return "Unknown";
+    }
+
+    // ==================== DTOs ====================
+    public class GenerateHashDto
+    {
+        public string Password { get; set; } = "";
     }
 
     // ==================== DTOs ====================

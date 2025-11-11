@@ -90,6 +90,22 @@
   },
   {
     "ContainingType": "Controllers.EmployeesController",
+    "Method": "GenerateHash",
+    "RelativePath": "api/Employees/generate-hash",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Controllers.EmployeesController\u002BGenerateHashDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Controllers.EmployeesController",
     "Method": "Login",
     "RelativePath": "api/Employees/login",
     "HttpMethod": "POST",
