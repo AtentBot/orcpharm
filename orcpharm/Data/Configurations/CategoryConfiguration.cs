@@ -54,8 +54,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Farmácia de Manipulação",
                 Description = "Estabelecimento autorizado pela ANVISA para manipulação magistral e oficinal conforme RDC 67/2007",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -63,8 +63,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Drogaria",
                 Description = "Estabelecimento comercial de dispensação e comércio de medicamentos industrializados",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -72,8 +72,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Farmácia com Manipulação",
                 Description = "Estabelecimento que combina dispensação de medicamentos industrializados e manipulação magistral",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -81,8 +81,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Farmácia Hospitalar",
                 Description = "Unidade clínica, administrativa e técnica responsável pela assistência farmacêutica em ambiente hospitalar",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -90,8 +90,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Distribuidora",
                 Description = "Empresa autorizada para armazenamento e distribuição de medicamentos e insumos farmacêuticos",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -99,8 +99,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Farmácia Homeopática",
                 Description = "Estabelecimento especializado em manipulação e dispensação de medicamentos homeopáticos",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -108,8 +108,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Laboratório de Análises",
                 Description = "Estabelecimento destinado à realização de análises clínicas e controle de qualidade",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -117,8 +117,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Posto de Medicamentos",
                 Description = "Unidade destinada exclusivamente à dispensação de medicamentos industrializados",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Category
             {
@@ -126,8 +126,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
                 Name = "Ervanária",
                 Description = "Estabelecimento de dispensação de plantas medicinais e fitoterápicos",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
     }

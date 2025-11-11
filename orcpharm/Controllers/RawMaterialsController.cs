@@ -150,7 +150,7 @@ public class RawMaterialsController : ControllerBase
 
         if (!await HasStockManagementPermission(employee))
         {
-            return Forbid();
+            return StatusCode(403, new { error = "Sem permissão para gerenciar estoque" });
         }
 
         // Validação adicional para substâncias controladas
@@ -613,16 +613,16 @@ public class RawMaterialsController : ControllerBase
             return false;
 
         // Lista de cargos que podem gerenciar estoque
-        var allowedPositions = new[]
-        {
-            "FARMACÊUTICO",
-            "FARMACÊUTICO RESPONSÁVEL",
-            "GERENTE",
-            "ADMINISTRADOR",
-            "AUXILIAR DE ESTOQUE"
+                var allowedPositionCodes = new[]
+         {
+            "pharmacist",           // Farmacêutico
+            "pharmacist_rt",        // Farmacêutico RT ✅
+            "manager",              // Gerente
+            "admin",                // Administrador
+            "stock_assistant"       // Auxiliar de Estoque
         };
 
-        return allowedPositions.Contains(employee.JobPosition.Name.ToUpper());
+        return allowedPositionCodes.Contains(employee.JobPosition.Code);
     }
 
     /// <summary>
@@ -641,15 +641,15 @@ public class RawMaterialsController : ControllerBase
         if (employee.JobPosition == null)
             return false;
 
-        // Apenas farmacêuticos podem lidar com substâncias controladas
-        var allowedPositions = new[]
+        // Apenas farmacêuticos podem lidar com substâncias controladas (usando CODE)
+        var allowedPositionCodes = new[]
         {
-            "FARMACÊUTICO",
-            "FARMACÊUTICO RESPONSÁVEL",
-            "ADMINISTRADOR"
-        };
+        "pharmacist",     // Farmacêutico
+        "pharmacist_rt",  // Farmacêutico RT ✅ Corrigido!
+        "admin"           // Administrador
+    };
 
-        return allowedPositions.Contains(employee.JobPosition.Name.ToUpper());
+        return allowedPositionCodes.Contains(employee.JobPosition.Code);  // ✅ Usando Code
     }
 
     // ==================== DTOs ====================

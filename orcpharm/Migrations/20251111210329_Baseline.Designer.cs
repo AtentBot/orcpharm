@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Migrations
+namespace orcpharm.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251109093545_Initial")]
-    partial class Initial
+    [Migration("20251111210329_Baseline")]
+    partial class Baseline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -241,6 +241,134 @@ namespace Migrations
                         .IsUnique();
 
                     b.ToTable("AccessProfiles");
+                });
+
+            modelBuilder.Entity("Models.Core.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Categories_Name");
+
+                    b.ToTable("Categories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Estabelecimento autorizado pela ANVISA para manipulação magistral e oficinal conforme RDC 67/2007",
+                            IsActive = true,
+                            Name = "Farmácia de Manipulação",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Estabelecimento comercial de dispensação e comércio de medicamentos industrializados",
+                            IsActive = true,
+                            Name = "Drogaria",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000003"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Estabelecimento que combina dispensação de medicamentos industrializados e manipulação magistral",
+                            IsActive = true,
+                            Name = "Farmácia com Manipulação",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000004"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Unidade clínica, administrativa e técnica responsável pela assistência farmacêutica em ambiente hospitalar",
+                            IsActive = true,
+                            Name = "Farmácia Hospitalar",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000005"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Empresa autorizada para armazenamento e distribuição de medicamentos e insumos farmacêuticos",
+                            IsActive = true,
+                            Name = "Distribuidora",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000006"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Estabelecimento especializado em manipulação e dispensação de medicamentos homeopáticos",
+                            IsActive = true,
+                            Name = "Farmácia Homeopática",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000007"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Estabelecimento destinado à realização de análises clínicas e controle de qualidade",
+                            IsActive = true,
+                            Name = "Laboratório de Análises",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000008"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Unidade destinada exclusivamente à dispensação de medicamentos industrializados",
+                            IsActive = true,
+                            Name = "Posto de Medicamentos",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = new Guid("c0000000-0000-0000-0000-000000000009"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Estabelecimento de dispensação de plantas medicinais e fitoterápicos",
+                            IsActive = true,
+                            Name = "Ervanária",
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("Models.Employees.Employee", b =>
@@ -1137,6 +1265,8 @@ namespace Migrations
 
                     b.HasIndex("AccessLevelId");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("City");
 
                     b.HasIndex("Cnpj")
@@ -1851,135 +1981,607 @@ namespace Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
 
                     b.Property<DateTime?>("AfeExpiryDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("AfeExpiryDate");
 
                     b.Property<string>("AfeNumber")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("AfeNumber");
+
+                    b.Property<int?>("AverageDeliveryTime")
+                        .HasColumnType("integer")
+                        .HasColumnName("AverageDeliveryTime");
 
                     b.Property<string>("City")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("City");
+
+                    b.Property<string>("Classification")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("Classification");
 
                     b.Property<string>("Cnpj")
                         .IsRequired()
                         .HasMaxLength(14)
-                        .HasColumnType("character varying(14)");
+                        .HasColumnType("character varying(14)")
+                        .HasColumnName("Cnpj");
+
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("CompanyName");
 
                     b.Property<string>("Complement")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Complement");
 
-                    b.Property<string>("ContactName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.Property<string>("Country")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Brasil")
+                        .HasColumnName("Country");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<Guid>("CreatedByEmployeeId")
-                        .HasColumnType("uuid");
+                    b.Property<Guid?>("CreatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatedByEmployeeId");
 
                     b.Property<string>("Email")
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("Email");
 
                     b.Property<Guid>("EstablishmentId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("EstablishmentId");
+
+                    b.Property<bool>("HasAnvisaAuthorization")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("HasAnvisaAuthorization");
+
+                    b.Property<bool>("HasGmpCertificate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("HasGmpCertificate");
+
+                    b.Property<bool>("HasIsoCertificate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("HasIsoCertificate");
+
+                    b.Property<DateTime?>("InactivatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("InactivatedAt");
+
+                    b.Property<Guid?>("InactivatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("InactivatedByEmployeeId");
+
+                    b.Property<string>("InactivationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("InactivationReason");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("IsActive");
+
+                    b.Property<bool>("IsPreferred")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsPreferred");
 
                     b.Property<bool>("IsQualified")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsQualified");
+
+                    b.Property<DateTime?>("LastEvaluationDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastEvaluationDate");
+
+                    b.Property<DateTime?>("LastOrderDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastOrderDate");
+
+                    b.Property<decimal?>("MinimumOrderValue")
+                        .HasColumnType("numeric")
+                        .HasColumnName("MinimumOrderValue");
+
+                    b.Property<string>("MunicipalRegistration")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("MunicipalRegistration");
+
+                    b.Property<string>("Neighborhood")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Neighborhood");
+
+                    b.Property<int>("NonConformitiesCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("NonConformitiesCount");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("Notes");
+
+                    b.Property<string>("Number")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("Number");
+
+                    b.Property<int?>("PaymentTermDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("PaymentTermDays");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("Phone");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("PostalCode");
+
+                    b.Property<string>("ProductTypes")
+                        .HasColumnType("text")
+                        .HasColumnName("ProductTypes");
+
+                    b.Property<DateTime?>("QualifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("QualifiedAt");
+
+                    b.Property<decimal?>("Rating")
+                        .HasColumnType("numeric")
+                        .HasColumnName("Rating");
+
+                    b.Property<string>("State")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("State");
+
+                    b.Property<string>("StateRegistration")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("StateRegistration");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Em Avaliação")
+                        .HasColumnName("Status");
+
+                    b.Property<string>("Street")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Street");
+
+                    b.Property<bool>("SuppliesAntibiotics")
+                        .HasColumnType("boolean")
+                        .HasColumnName("SuppliesAntibiotics");
+
+                    b.Property<bool>("SuppliesControlled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("SuppliesControlled");
+
+                    b.Property<int>("TotalOrders")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("TotalOrders");
+
+                    b.Property<string>("TradeName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("TradeName");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("UpdatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("UpdatedByEmployeeId");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("Website");
+
+                    b.Property<string>("WhatsApp")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("WhatsApp");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Classification");
+
+                    b.HasIndex("Cnpj");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("EstablishmentId", "IsActive");
+
+                    b.ToTable("suppliers");
+                });
+
+            modelBuilder.Entity("Models.Pharmacy.SupplierCertificate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
+
+                    b.Property<bool>("AlertBeforeExpiry")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("AlertBeforeExpiry");
+
+                    b.Property<int>("AlertDaysBefore")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(30)
+                        .HasColumnName("AlertDaysBefore");
+
+                    b.Property<string>("CertificateType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("CertificateType");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("CreatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatedByEmployeeId");
+
+                    b.Property<DateTime?>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ExpiryDate");
+
+                    b.Property<string>("FilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("FilePath");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("IsActive");
+
+                    b.Property<DateTime?>("IssueDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("IssueDate");
+
+                    b.Property<string>("IssuingAuthority")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("IssuingAuthority");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("Name");
 
-                    b.Property<string>("Neighborhood")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTime?>("NextQualificationDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("Notes");
 
                     b.Property<string>("Number")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Number");
+
+                    b.Property<string>("Status")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Válido")
+                        .HasColumnName("Status");
 
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.Property<DateTime?>("QualificationDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("QualificationNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime?>("SpecialAuthorizationExpiry")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("SpecialAuthorizationNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<string>("Street")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<bool>("SuppliesAntibiotics")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("SuppliesControlled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("SuppliesHormones")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("TradeName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("SupplierId");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Guid?>("UpdatedByEmployeeId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("UpdatedByEmployeeId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Cnpj")
-                        .IsUnique();
+                    b.HasIndex("CertificateType");
 
-                    b.HasIndex("IsQualified");
+                    b.HasIndex("ExpiryDate");
 
-                    b.HasIndex("EstablishmentId", "IsActive");
+                    b.HasIndex("SupplierId", "IsActive");
 
-                    b.ToTable("Suppliers");
+                    b.ToTable("supplier_certificates");
+                });
+
+            modelBuilder.Entity("Models.Pharmacy.SupplierContact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("CreatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatedByEmployeeId");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("Department");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("Email");
+
+                    b.Property<string>("Extension")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("Extension");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("FullName");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("IsActive");
+
+                    b.Property<bool>("IsEmergencyContact")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsEmergencyContact");
+
+                    b.Property<bool>("IsPrimary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsPrimary");
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("JobTitle");
+
+                    b.Property<string>("Mobile")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("Mobile");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("Notes");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("Phone");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("SupplierId");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid?>("UpdatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("UpdatedByEmployeeId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId", "IsPrimary", "IsActive");
+
+                    b.ToTable("supplier_contacts");
+                });
+
+            modelBuilder.Entity("Models.Pharmacy.SupplierEvaluation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
+
+                    b.Property<Guid?>("ApprovedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ApprovedByEmployeeId");
+
+                    b.Property<string>("Classification")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("Classification");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("text")
+                        .HasColumnName("Comments");
+
+                    b.Property<decimal?>("ComplianceScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("ComplianceScore");
+
+                    b.Property<string>("CorrectiveActions")
+                        .HasColumnType("text")
+                        .HasColumnName("CorrectiveActions");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal?>("DeliveryScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("DeliveryScore");
+
+                    b.Property<decimal?>("DocumentationScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("DocumentationScore");
+
+                    b.Property<Guid?>("EvaluatedByEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("EvaluatedByEmployeeId");
+
+                    b.Property<DateTime>("EvaluationDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("EvaluationDate")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("IsApproved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("IsApproved");
+
+                    b.Property<int>("LateDeliveries")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("LateDeliveries");
+
+                    b.Property<int>("NonConformities")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("NonConformities");
+
+                    b.Property<int>("OnTimeDeliveries")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("OnTimeDeliveries");
+
+                    b.Property<decimal>("OverallScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("OverallScore");
+
+                    b.Property<string>("Period")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("Period");
+
+                    b.Property<decimal?>("PriceScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("PriceScore");
+
+                    b.Property<decimal?>("QualityScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("QualityScore");
+
+                    b.Property<string>("Recommendation")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("Recommendation");
+
+                    b.Property<int>("Returns")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("Returns");
+
+                    b.Property<decimal?>("ServiceScore")
+                        .HasColumnType("numeric")
+                        .HasColumnName("ServiceScore");
+
+                    b.Property<string>("Strengths")
+                        .HasColumnType("text")
+                        .HasColumnName("Strengths");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("SupplierId");
+
+                    b.Property<int>("TotalOrders")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("TotalOrders");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Weaknesses")
+                        .HasColumnType("text")
+                        .HasColumnName("Weaknesses");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Classification");
+
+                    b.HasIndex("IsApproved");
+
+                    b.HasIndex("SupplierId", "EvaluationDate");
+
+                    b.ToTable("supplier_evaluations");
                 });
 
             modelBuilder.Entity("Models.Security.Permission", b =>
@@ -2518,7 +3120,16 @@ namespace Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Models.Core.Category", "Category")
+                        .WithMany("Establishments")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Establishments_Categories_CategoryId");
+
                     b.Navigation("AccessLevel");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("Models.Pharmacy.Batch", b =>
@@ -2720,12 +3331,45 @@ namespace Migrations
             modelBuilder.Entity("Models.Pharmacy.Supplier", b =>
                 {
                     b.HasOne("Models.Establishment", "Establishment")
-                        .WithMany()
+                        .WithMany("Suppliers")
                         .HasForeignKey("EstablishmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Establishment");
+                });
+
+            modelBuilder.Entity("Models.Pharmacy.SupplierCertificate", b =>
+                {
+                    b.HasOne("Models.Pharmacy.Supplier", "Supplier")
+                        .WithMany("Certificates")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Models.Pharmacy.SupplierContact", b =>
+                {
+                    b.HasOne("Models.Pharmacy.Supplier", "Supplier")
+                        .WithMany("Contacts")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Models.Pharmacy.SupplierEvaluation", b =>
+                {
+                    b.HasOne("Models.Pharmacy.Supplier", "Supplier")
+                        .WithMany("Evaluations")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("Models.Security.Permission", b =>
@@ -2778,6 +3422,11 @@ namespace Migrations
                     b.Navigation("Permissions");
                 });
 
+            modelBuilder.Entity("Models.Core.Category", b =>
+                {
+                    b.Navigation("Establishments");
+                });
+
             modelBuilder.Entity("Models.Employees.Employee", b =>
                 {
                     b.Navigation("Benefits");
@@ -2798,6 +3447,11 @@ namespace Migrations
                     b.Navigation("JobHistories");
 
                     b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Models.Establishment", b =>
+                {
+                    b.Navigation("Suppliers");
                 });
 
             modelBuilder.Entity("Models.Pharmacy.Batch", b =>
@@ -2836,6 +3490,12 @@ namespace Migrations
             modelBuilder.Entity("Models.Pharmacy.Supplier", b =>
                 {
                     b.Navigation("Batches");
+
+                    b.Navigation("Certificates");
+
+                    b.Navigation("Contacts");
+
+                    b.Navigation("Evaluations");
                 });
 
             modelBuilder.Entity("Models.Security.Permission", b =>

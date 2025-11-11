@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Data;
 using Middleware;
 using Models;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,9 @@ builder.Services.AddControllersWithViews();
 
 // ADICIONAR DbContext para PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options
+        .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
 // Adicionar Health Checks
 builder.Services.AddHealthChecks();
@@ -145,8 +148,8 @@ app.UseSwaggerUI(options =>
 app.UseRouting();
 app.UseSession();
 
-app.UseAuthorization();
-app.UseEmployeeAuth();
+app.UseEmployeeAuth();      
+app.UseAuthorization();    
 
 app.MapStaticAssets();
 

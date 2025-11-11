@@ -29,6 +29,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ManipulationOrder> ManipulationOrders => Set<ManipulationOrder>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<SupplierContact> SupplierContacts { get; set; }
+    public DbSet<SupplierCertificate> SupplierCertificates { get; set; }
+    public DbSet<SupplierEvaluation> SupplierEvaluations { get; set; }
 
     // ==================== NOVOS MODELOS - EMPLOYEES ====================
 
@@ -58,6 +61,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new PermissionConfiguration());
         modelBuilder.ApplyConfiguration(new RolePermissionConfiguration());
         modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+        modelBuilder.ApplyConfiguration(new SupplierConfiguration());
+        modelBuilder.ApplyConfiguration(new SupplierContactConfiguration());
+        modelBuilder.ApplyConfiguration(new SupplierCertificateConfiguration());
+        modelBuilder.ApplyConfiguration(new SupplierEvaluationConfiguration());
 
 
         SeedInitialData(modelBuilder);
@@ -153,7 +160,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // Supplier -> Establishment
         modelBuilder.Entity<Supplier>()
             .HasOne(s => s.Establishment)
-            .WithMany()
+            .WithMany(e => e.Suppliers)
             .HasForeignKey(s => s.EstablishmentId)
             .OnDelete(DeleteBehavior.Restrict);
 

@@ -106,4 +106,7 @@ public class Establishment
     // Status do estabelecimento
     public bool OnboardingCompleted { get; set; } = false;
     public bool IsActive { get; set; } = true;
+    public ICollection<Models.Pharmacy.Supplier>? Suppliers { get; set; }
+    = new List<Models.Pharmacy.Supplier>();
+
 }

@@ -86,7 +86,10 @@ public class EmployeesController : ControllerBase
         {
             Id = Guid.NewGuid(),
             EmployeeId = employee.Id,
-            Token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)),
+            Token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48))
+                .Replace('+', '-')
+                .Replace('/', '_')
+                .TrimEnd('='),
             IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
             UserAgent = Request.Headers["User-Agent"].ToString(),
             DeviceType = GetDeviceType(Request.Headers["User-Agent"].ToString()),
