@@ -5,7 +5,7 @@ using Models.Employees;
 using Models.Pharmacy;
 using System.ComponentModel.DataAnnotations;
 
-namespace orcpharm.Controllers;
+namespace Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -78,7 +78,9 @@ public class SuppliersController : ControllerBase
             var totalRecords = await query.CountAsync();
 
             var suppliers = await query
-                .OrderBy(s => s.CompanyName)
+                .OrderByDescending(s => s.IsPreferred)
+                .ThenByDescending(s => s.Rating)
+                .ThenBy(s => s.CompanyName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(s => new
@@ -101,8 +103,8 @@ public class SuppliersController : ControllerBase
                     s.LastOrderDate,
                     s.LastEvaluationDate,
                     s.CreatedAt,
-                    ContactsCount = s.Contacts!.Count(c => c.IsActive),
-                    CertificatesCount = s.Certificates!.Count(c => c.IsActive)
+                    ContactsCount = s.Contacts != null ? s.Contacts.Count(c => c.IsActive) : 0,
+                    CertificatesCount = s.Certificates != null ? s.Certificates.Count(c => c.IsActive) : 0
                 })
                 .ToListAsync();
 
@@ -148,6 +150,15 @@ public class SuppliersController : ControllerBase
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
+            // ✅ NOVO: Buscar informações do funcionário criador
+            Employee? createdByEmp = null;
+            if (supplier.CreatedByEmployeeId.HasValue)
+            {
+                createdByEmp = await _db.Employees
+                    .Include(e => e.JobPosition)
+                    .FirstOrDefaultAsync(e => e.Id == supplier.CreatedByEmployeeId.Value);
+            }
+
             return Ok(new
             {
                 supplier.Id,
@@ -191,6 +202,25 @@ public class SuppliersController : ControllerBase
                     supplier.HasIsoCertificate,
                     supplier.HasAnvisaAuthorization
                 },
+                // ✅ NOVO: Informações de AFE com status
+                afe = new
+                {
+                    supplier.AfeNumber,
+                    supplier.AfeExpiryDate,
+                    Status = supplier.AfeExpiryDate.HasValue
+        ? (supplier.AfeExpiryDate.Value < DateTime.UtcNow ? "Vencida" :
+           supplier.AfeExpiryDate.Value < DateTime.UtcNow.AddDays(30) ? "Vencendo" : "Válida")
+        : null,
+                    DaysUntilExpiry = supplier.AfeExpiryDate.HasValue
+        ? (supplier.AfeExpiryDate.Value - DateTime.UtcNow).Days
+        : (int?)null
+                },
+                // ✅ NOVO: Informações de produtos
+                products = new
+                {
+                    supplier.SuppliesControlled,
+                    supplier.SuppliesAntibiotics
+                },
                 statistics = new
                 {
                     supplier.TotalOrders,
@@ -201,6 +231,13 @@ public class SuppliersController : ControllerBase
                 contacts = supplier.Contacts,
                 certificates = supplier.Certificates,
                 evaluations = supplier.Evaluations!.OrderByDescending(e => e.EvaluationDate).Take(5),
+                // ✅ NOVO: Informações do funcionário criador
+                createdBy = createdByEmp != null ? new
+                {
+                    createdByEmp.Id,
+                    createdByEmp.FullName,
+                    JobPosition = createdByEmp.JobPosition?.Name
+                } : null,
                 supplier.CreatedAt,
                 supplier.UpdatedAt
             });
@@ -225,7 +262,7 @@ public class SuppliersController : ControllerBase
         if (!IsEmployeeActive(employee))
             return Unauthorized(new { error = "Funcionário inativo" });
 
-        if (!await HasSupplierManagementPermission(employee))
+        if (!HasSupplierManagementPermission(employee))
             return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         // Validar CNPJ
@@ -251,46 +288,52 @@ public class SuppliersController : ControllerBase
                 TradeName = dto.TradeName?.Trim(),
                 Cnpj = cnpj,
                 StateRegistration = dto.StateRegistration?.Trim(),
+                MunicipalRegistration = null,
                 Street = dto.Street?.Trim(),
                 Number = dto.Number?.Trim(),
                 Complement = dto.Complement?.Trim(),
                 Neighborhood = dto.Neighborhood?.Trim(),
                 City = dto.City?.Trim(),
-                State = dto.State?.Trim(),
+                State = dto.State?.Trim()?.ToUpper(),
                 PostalCode = RemoveFormatting(dto.PostalCode),
                 Country = dto.Country?.Trim() ?? "Brasil",
-                Phone = dto.Phone?.Trim(),
-                WhatsApp = dto.WhatsApp?.Trim(),
-                Email = dto.Email?.Trim(),
+                Phone = RemoveFormatting(dto.Phone),
+                WhatsApp = RemoveFormatting(dto.WhatsApp),
+                Email = dto.Email?.Trim()?.ToLower(),
                 Website = dto.Website?.Trim(),
+                Status = "ATIVO",
+                // ✅ MELHORIA: Novos campos no Create
+                Classification = dto.Classification?.Trim()?.ToUpper(),
+                Rating = dto.Rating,
+                IsQualified = dto.IsQualified,
+                AverageDeliveryTime = dto.AverageDeliveryTime,
+                PaymentTermDays = dto.PaymentTermDays,
+                MinimumOrderValue = dto.MinimumOrderValue,
+                ProductTypes = dto.ProductTypes?.Trim(),
+                HasGmpCertificate = dto.HasGmpCertificate,
+                HasIsoCertificate = dto.HasIsoCertificate,
+                HasAnvisaAuthorization = dto.HasAnvisaAuthorization,
                 AfeNumber = dto.AfeNumber?.Trim(),
                 AfeExpiryDate = dto.AfeExpiryDate,
                 SuppliesControlled = dto.SuppliesControlled,
                 SuppliesAntibiotics = dto.SuppliesAntibiotics,
-                Status = "Em Avaliação",
                 Notes = dto.Notes?.Trim(),
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
                 CreatedByEmployeeId = employee.Id,
-                UpdatedByEmployeeId = employee.Id
+                CreatedAt = DateTime.UtcNow
             };
 
             _db.Suppliers.Add(supplier);
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Fornecedor {Name} criado por {EmployeeName}",
-                supplier.CompanyName, employee.FullName);
+                "Fornecedor {SupplierId} criado por {EmployeeId} no estabelecimento {EstablishmentId}",
+                supplier.Id, employee.Id, employee.EstablishmentId);
 
             return CreatedAtAction(nameof(GetById), new { id = supplier.Id }, new
             {
-                supplier.Id,
-                supplier.CompanyName,
-                supplier.TradeName,
-                supplier.Cnpj,
-                supplier.Status,
-                supplier.CreatedAt
+                message = "Fornecedor criado com sucesso",
+                supplierId = supplier.Id
             });
         }
         catch (Exception ex)
@@ -313,7 +356,7 @@ public class SuppliersController : ControllerBase
         if (!IsEmployeeActive(employee))
             return Unauthorized(new { error = "Funcionário inativo" });
 
-        if (!await HasSupplierManagementPermission(employee))
+        if (!HasSupplierManagementPermission(employee))
             return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         try
@@ -325,54 +368,54 @@ public class SuppliersController : ControllerBase
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
-            // Atualizar campos fornecidos
-            if (!string.IsNullOrEmpty(dto.Name))
-                supplier.CompanyName = dto.Name.Trim();
+            // Atualizar campos se fornecidos
+            if (!string.IsNullOrEmpty(dto.CompanyName))
+                supplier.CompanyName = dto.CompanyName.Trim();
 
             if (dto.TradeName != null)
                 supplier.TradeName = dto.TradeName.Trim();
 
-            if (!string.IsNullOrEmpty(dto.StateRegistration))
+            if (dto.StateRegistration != null)
                 supplier.StateRegistration = dto.StateRegistration.Trim();
 
-            if (!string.IsNullOrEmpty(dto.Street))
+            if (dto.Street != null)
                 supplier.Street = dto.Street.Trim();
 
-            if (!string.IsNullOrEmpty(dto.Number))
+            if (dto.Number != null)
                 supplier.Number = dto.Number.Trim();
 
             if (dto.Complement != null)
                 supplier.Complement = dto.Complement.Trim();
 
-            if (!string.IsNullOrEmpty(dto.Neighborhood))
+            if (dto.Neighborhood != null)
                 supplier.Neighborhood = dto.Neighborhood.Trim();
 
-            if (!string.IsNullOrEmpty(dto.City))
+            if (dto.City != null)
                 supplier.City = dto.City.Trim();
 
-            if (!string.IsNullOrEmpty(dto.State))
-                supplier.State = dto.State.Trim();
+            if (dto.State != null)
+                supplier.State = dto.State.Trim().ToUpper();
 
-            if (!string.IsNullOrEmpty(dto.PostalCode))
+            if (dto.PostalCode != null)
                 supplier.PostalCode = RemoveFormatting(dto.PostalCode);
 
-            if (!string.IsNullOrEmpty(dto.Phone))
-                supplier.Phone = dto.Phone.Trim();
+            if (dto.Phone != null)
+                supplier.Phone = RemoveFormatting(dto.Phone);
 
-            if (!string.IsNullOrEmpty(dto.WhatsApp))
-                supplier.WhatsApp = dto.WhatsApp.Trim();
+            if (dto.WhatsApp != null)
+                supplier.WhatsApp = RemoveFormatting(dto.WhatsApp);
 
-            if (!string.IsNullOrEmpty(dto.Email))
-                supplier.Email = dto.Email.Trim();
+            if (dto.Email != null)
+                supplier.Email = dto.Email.Trim().ToLower();
 
-            if (!string.IsNullOrEmpty(dto.Website))
+            if (dto.Website != null)
                 supplier.Website = dto.Website.Trim();
 
-            if (!string.IsNullOrEmpty(dto.AfeNumber))
+            if (dto.AfeNumber != null)
                 supplier.AfeNumber = dto.AfeNumber.Trim();
 
             if (dto.AfeExpiryDate.HasValue)
-                supplier.AfeExpiryDate = dto.AfeExpiryDate;
+                supplier.AfeExpiryDate = dto.AfeExpiryDate.Value;
 
             if (dto.SuppliesControlled.HasValue)
                 supplier.SuppliesControlled = dto.SuppliesControlled.Value;
@@ -383,23 +426,50 @@ public class SuppliersController : ControllerBase
             if (dto.Notes != null)
                 supplier.Notes = dto.Notes.Trim();
 
-            supplier.UpdatedAt = DateTime.UtcNow;
+            // Novos campos
+            if (dto.Classification != null)
+                supplier.Classification = dto.Classification.Trim().ToUpper();
+
+            if (dto.Rating.HasValue)
+                supplier.Rating = dto.Rating.Value;
+
+            if (dto.IsQualified.HasValue)
+                supplier.IsQualified = dto.IsQualified.Value;
+
+            if (dto.IsPreferred.HasValue)
+                supplier.IsPreferred = dto.IsPreferred.Value;
+
+            if (dto.AverageDeliveryTime.HasValue)
+                supplier.AverageDeliveryTime = dto.AverageDeliveryTime.Value;
+
+            if (dto.PaymentTermDays.HasValue)
+                supplier.PaymentTermDays = dto.PaymentTermDays.Value;
+
+            if (dto.MinimumOrderValue.HasValue)
+                supplier.MinimumOrderValue = dto.MinimumOrderValue.Value;
+
+            if (dto.ProductTypes != null)
+                supplier.ProductTypes = dto.ProductTypes.Trim();
+
+            if (dto.HasGmpCertificate.HasValue)
+                supplier.HasGmpCertificate = dto.HasGmpCertificate.Value;
+
+            if (dto.HasIsoCertificate.HasValue)
+                supplier.HasIsoCertificate = dto.HasIsoCertificate.Value;
+
+            if (dto.HasAnvisaAuthorization.HasValue)
+                supplier.HasAnvisaAuthorization = dto.HasAnvisaAuthorization.Value;
+
             supplier.UpdatedByEmployeeId = employee.Id;
+            supplier.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Fornecedor {Name} atualizado por {EmployeeName}",
-                supplier.CompanyName, employee.FullName);
+                "Fornecedor {SupplierId} atualizado por {EmployeeId}",
+                supplier.Id, employee.Id);
 
-            return Ok(new
-            {
-                supplier.Id,
-                supplier.CompanyName,
-                supplier.TradeName,
-                supplier.Status,
-                supplier.UpdatedAt
-            });
+            return Ok(new { message = "Fornecedor atualizado com sucesso" });
         }
         catch (Exception ex)
         {
@@ -421,7 +491,7 @@ public class SuppliersController : ControllerBase
         if (!IsEmployeeActive(employee))
             return Unauthorized(new { error = "Funcionário inativo" });
 
-        if (!await HasSupplierManagementPermission(employee))
+        if (!HasSupplierManagementPermission(employee))
             return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         try
@@ -433,27 +503,32 @@ public class SuppliersController : ControllerBase
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
-            supplier.IsActive = false;
+            // ✅ NOVO: Validar se existem lotes ativos
+            var batches = await _db.Batches
+                .Where(b => b.SupplierId == id && b.Status == "APROVADO")
+                .CountAsync();
+
+            if (batches > 0)
+            {
+                return BadRequest(new
+                {
+                    error = "Não é possível desativar fornecedor com lotes ativos",
+                    activeBatchesCount = batches
+                });
+            }
+
             supplier.Status = "Inativo";
             supplier.InactivatedAt = DateTime.UtcNow;
             supplier.InactivatedByEmployeeId = employee.Id;
             supplier.InactivationReason = dto.Reason?.Trim();
-            supplier.UpdatedAt = DateTime.UtcNow;
-            supplier.UpdatedByEmployeeId = employee.Id;
 
             await _db.SaveChangesAsync();
 
             _logger.LogWarning(
-                "Fornecedor {Name} inativado por {EmployeeName}. Motivo: {Reason}",
-                supplier.CompanyName, employee.FullName, dto.Reason);
+                "Fornecedor {SupplierId} inativado por {EmployeeId}. Motivo: {Reason}",
+                supplier.Id, employee.Id, dto.Reason);
 
-            return Ok(new
-            {
-                message = "Fornecedor inativado com sucesso",
-                supplier.Id,
-                supplier.CompanyName,
-                supplier.InactivatedAt
-            });
+            return Ok(new { message = "Fornecedor inativado com sucesso" });
         }
         catch (Exception ex)
         {
@@ -463,63 +538,9 @@ public class SuppliersController : ControllerBase
     }
 
     /// <summary>
-    /// Qualifica/Homologa fornecedor
+    /// Bloqueia fornecedor temporariamente
     /// </summary>
-    [HttpPut("{id}/qualify")]
-    public async Task<IActionResult> Qualify(Guid id)
-    {
-        var employee = HttpContext.Items["Employee"] as Employee;
-        if (employee == null)
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-
-        if (!IsEmployeeActive(employee))
-            return Unauthorized(new { error = "Funcionário inativo" });
-
-        if (!await HasSupplierQualificationPermission(employee))
-            return StatusCode(403, new { error = "Sem permissão para qualificar fornecedores" });
-
-        try
-        {
-            var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
-                .FirstOrDefaultAsync();
-
-            if (supplier == null)
-                return NotFound(new { error = "Fornecedor não encontrado" });
-
-            supplier.IsQualified = true;
-            supplier.QualifiedAt = DateTime.UtcNow;
-            supplier.Status = "Ativo";
-            supplier.UpdatedAt = DateTime.UtcNow;
-            supplier.UpdatedByEmployeeId = employee.Id;
-
-            await _db.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Fornecedor {Name} qualificado por {EmployeeName}",
-                supplier.CompanyName, employee.FullName);
-
-            return Ok(new
-            {
-                message = "Fornecedor qualificado com sucesso",
-                supplier.Id,
-                supplier.CompanyName,
-                supplier.IsQualified,
-                supplier.QualifiedAt,
-                supplier.Status
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao qualificar fornecedor {SupplierId}", id);
-            return StatusCode(500, new { error = "Erro ao qualificar fornecedor" });
-        }
-    }
-
-    /// <summary>
-    /// Bloqueia fornecedor
-    /// </summary>
-    [HttpPut("{id}/block")]
+    [HttpPost("{id}/block")]
     public async Task<IActionResult> Block(Guid id, [FromBody] BlockSupplierDto dto)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
@@ -529,146 +550,7 @@ public class SuppliersController : ControllerBase
         if (!IsEmployeeActive(employee))
             return Unauthorized(new { error = "Funcionário inativo" });
 
-        if (!await HasSupplierQualificationPermission(employee))
-            return StatusCode(403, new { error = "Sem permissão para bloquear fornecedores" });
-
-        try
-        {
-            var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
-                .FirstOrDefaultAsync();
-
-            if (supplier == null)
-                return NotFound(new { error = "Fornecedor não encontrado" });
-
-            supplier.Status = "Bloqueado";
-            supplier.IsQualified = false;
-            supplier.Notes = $"BLOQUEADO em {DateTime.UtcNow:dd/MM/yyyy}: {dto.Reason}\n\n{supplier.Notes}";
-            supplier.UpdatedAt = DateTime.UtcNow;
-            supplier.UpdatedByEmployeeId = employee.Id;
-
-            await _db.SaveChangesAsync();
-
-            _logger.LogWarning(
-                "Fornecedor {Name} bloqueado por {EmployeeName}. Motivo: {Reason}",
-                supplier.CompanyName, employee.FullName, dto.Reason);
-
-            return Ok(new
-            {
-                message = "Fornecedor bloqueado com sucesso",
-                supplier.Id,
-                supplier.CompanyName,
-                supplier.Status,
-                reason = dto.Reason
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao bloquear fornecedor {SupplierId}", id);
-            return StatusCode(500, new { error = "Erro ao bloquear fornecedor" });
-        }
-    }
-
-    /// <summary>
-    /// Estatísticas de fornecedores
-    /// </summary>
-    [HttpGet("statistics")]
-    public async Task<IActionResult> GetStatistics()
-    {
-        var employee = HttpContext.Items["Employee"] as Employee;
-        if (employee == null)
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-
-        try
-        {
-            var suppliers = await _db.Suppliers
-                .Where(s => s.EstablishmentId == employee.EstablishmentId && s.IsActive)
-                .ToListAsync();
-
-            var now = DateTime.UtcNow;
-
-            var stats = new
-            {
-                totalSuppliers = suppliers.Count,
-                byStatus = suppliers.GroupBy(s => s.Status)
-                    .Select(g => new { status = g.Key, count = g.Count() })
-                    .ToList(),
-                byClassification = suppliers.Where(s => s.Classification != null)
-                    .GroupBy(s => s.Classification)
-                    .Select(g => new { classification = g.Key, count = g.Count() })
-                    .ToList(),
-                qualified = suppliers.Count(s => s.IsQualified),
-                notQualified = suppliers.Count(s => !s.IsQualified),
-                preferred = suppliers.Count(s => s.IsPreferred),
-                averageRating = suppliers.Any(s => s.Rating.HasValue)
-                    ? suppliers.Where(s => s.Rating.HasValue).Average(s => s.Rating!.Value)
-                    : (decimal?)null,
-                suppliesControlled = suppliers.Count(s => s.SuppliesControlled),
-                suppliesAntibiotics = suppliers.Count(s => s.SuppliesAntibiotics),
-                afeExpired = suppliers.Count(s => s.AfeExpiryDate.HasValue && s.AfeExpiryDate.Value < now),
-                afeExpiringSoon = suppliers.Count(s => s.AfeExpiryDate.HasValue &&
-                    s.AfeExpiryDate.Value > now &&
-                    s.AfeExpiryDate.Value <= now.AddDays(30)),
-                totalOrders = suppliers.Sum(s => s.TotalOrders),
-                totalNonConformities = suppliers.Sum(s => s.NonConformitiesCount)
-            };
-
-            return Ok(stats);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao obter estatísticas de fornecedores");
-            return StatusCode(500, new { error = "Erro ao obter estatísticas" });
-        }
-    }
-
-    // ==================== CONTACTS ====================
-
-    /// <summary>
-    /// Lista contatos de um fornecedor
-    /// </summary>
-    [HttpGet("{id}/contacts")]
-    public async Task<IActionResult> GetContacts(Guid id)
-    {
-        var employee = HttpContext.Items["Employee"] as Employee;
-        if (employee == null)
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-
-        try
-        {
-            var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
-                .FirstOrDefaultAsync();
-
-            if (supplier == null)
-                return NotFound(new { error = "Fornecedor não encontrado" });
-
-            var contacts = await _db.SupplierContacts
-                .Where(c => c.SupplierId == id && c.IsActive)
-                .OrderByDescending(c => c.IsPrimary)
-                .ThenBy(c => c.FullName)
-                .ToListAsync();
-
-            return Ok(new { data = contacts });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao listar contatos do fornecedor {SupplierId}", id);
-            return StatusCode(500, new { error = "Erro ao listar contatos" });
-        }
-    }
-
-    /// <summary>
-    /// Adiciona contato ao fornecedor
-    /// </summary>
-    [HttpPost("{id}/contacts")]
-    public async Task<IActionResult> AddContact(Guid id, [FromBody] CreateContactDto dto)
-    {
-        var employee = HttpContext.Items["Employee"] as Employee;
-        if (employee == null)
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-
-        if (!await HasSupplierManagementPermission(employee))
+        if (!HasSupplierManagementPermission(employee))
             return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         try
@@ -680,11 +562,149 @@ public class SuppliersController : ControllerBase
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
-            // Se este será o contato primário, desmarcar os outros
+            if (supplier.Status == "BLOQUEADO")
+                return BadRequest(new { error = "Fornecedor já está bloqueado" });
+
+            supplier.Status = "Bloqueado";
+            supplier.IsQualified = false;
+            supplier.BlockedReason = dto.Reason?.Trim();
+            supplier.BlockedByEmployeeId = employee.Id;
+            supplier.BlockedAt = DateTime.UtcNow;
+            supplier.UpdatedAt = DateTime.UtcNow;
+            supplier.UpdatedByEmployeeId = employee.Id;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogWarning(
+                "Fornecedor {SupplierId} bloqueado por {EmployeeId}. Motivo: {Reason}",
+                supplier.Id, employee.Id, dto.Reason);
+
+            return Ok(new { message = "Fornecedor bloqueado com sucesso" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao bloquear fornecedor {SupplierId}", id);
+            return StatusCode(500, new { error = "Erro ao bloquear fornecedor" });
+        }
+    }
+
+    [HttpPut("{id}/unblock")]
+    public async Task<IActionResult> Unblock(Guid id)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "Funcionário não autenticado" });
+
+        if (!IsEmployeeActive(employee))
+            return Unauthorized(new { error = "Funcionário inativo" });
+
+        if (!HasSupplierQualificationPermission(employee))
+            return StatusCode(403, new { error = "Sem permissão para desbloquear fornecedores" });
+
+        try
+        {
+            var supplier = await _db.Suppliers
+                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (supplier == null)
+                return NotFound(new { error = "Fornecedor não encontrado" });
+
+            if (supplier.Status != "Bloqueado")
+                return BadRequest(new { error = "Fornecedor não está bloqueado" });
+
+            supplier.Status = "Ativo";
+            supplier.BlockedReason = null;
+            supplier.BlockedByEmployeeId = null;
+            supplier.BlockedAt = null;
+            supplier.UpdatedAt = DateTime.UtcNow;
+            supplier.UpdatedByEmployeeId = employee.Id;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Fornecedor {Name} desbloqueado por {EmployeeName}",
+                supplier.CompanyName, employee.FullName);
+
+            return Ok(new
+            {
+                message = "Fornecedor desbloqueado com sucesso",
+                supplier.Id,
+                supplier.CompanyName,
+                supplier.Status
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao desbloquear fornecedor {SupplierId}", id);
+            return StatusCode(500, new { error = "Erro ao desbloquear fornecedor" });
+        }
+    }
+    
+
+    // ==================== CONTACTS ====================
+
+    /// <summary>
+    /// Lista contatos do fornecedor
+    /// </summary>
+    [HttpGet("{supplierId}/contacts")]
+    public async Task<IActionResult> ListContacts(Guid supplierId)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "Funcionário não autenticado" });
+
+        try
+        {
+            var supplier = await _db.Suppliers
+                .Where(s => s.Id == supplierId && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (supplier == null)
+                return NotFound(new { error = "Fornecedor não encontrado" });
+
+            var contacts = await _db.SupplierContacts
+                .Where(c => c.SupplierId == supplierId && c.IsActive)
+                .OrderByDescending(c => c.IsPrimary)
+                .ThenBy(c => c.FullName)
+                .ToListAsync();
+
+            return Ok(new { data = contacts });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar contatos do fornecedor {SupplierId}", supplierId);
+            return StatusCode(500, new { error = "Erro ao listar contatos" });
+        }
+    }
+
+    /// <summary>
+    /// Adiciona contato ao fornecedor
+    /// </summary>
+    [HttpPost("{supplierId}/contacts")]
+    public async Task<IActionResult> AddContact(Guid supplierId, [FromBody] CreateContactDto dto)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "Funcionário não autenticado" });
+
+        if (!HasSupplierManagementPermission(employee))
+            return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
+
+        try
+        {
+            var supplier = await _db.Suppliers
+                .Where(s => s.Id == supplierId && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .FirstOrDefaultAsync();
+
+            if (supplier == null)
+                return NotFound(new { error = "Fornecedor não encontrado" });
+
+            // Se é contato primário, remover flag dos outros
             if (dto.IsPrimary)
             {
                 var existingContacts = await _db.SupplierContacts
-                    .Where(c => c.SupplierId == id && c.IsPrimary && c.IsActive)
+                    .Where(c => c.SupplierId == supplierId && c.IsActive && c.IsPrimary)
                     .ToListAsync();
 
                 foreach (var contact in existingContacts)
@@ -694,36 +714,38 @@ public class SuppliersController : ControllerBase
             var newContact = new SupplierContact
             {
                 Id = Guid.NewGuid(),
-                SupplierId = id,
+                SupplierId = supplierId,
                 FullName = dto.FullName.Trim(),
                 JobTitle = dto.JobTitle?.Trim(),
                 Department = dto.Department?.Trim(),
-                Email = dto.Email?.Trim(),
-                Phone = dto.Phone?.Trim(),
-                Mobile = dto.Mobile?.Trim(),
+                Email = dto.Email?.Trim()?.ToLower(),
+                Phone = RemoveFormatting(dto.Phone),
+                Mobile = RemoveFormatting(dto.Mobile),
                 Extension = dto.Extension?.Trim(),
                 IsPrimary = dto.IsPrimary,
                 IsEmergencyContact = dto.IsEmergencyContact,
                 Notes = dto.Notes?.Trim(),
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
                 CreatedByEmployeeId = employee.Id,
-                UpdatedByEmployeeId = employee.Id
+                CreatedAt = DateTime.UtcNow
             };
 
             _db.SupplierContacts.Add(newContact);
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Contato {ContactName} adicionado ao fornecedor {SupplierName} por {EmployeeName}",
-                newContact.FullName, supplier.CompanyName, employee.FullName);
+                "Contato {ContactId} adicionado ao fornecedor {SupplierId} por {EmployeeId}",
+                newContact.Id, supplierId, employee.Id);
 
-            return CreatedAtAction(nameof(GetContacts), new { id }, newContact);
+            return CreatedAtAction(nameof(ListContacts), new { supplierId }, new
+            {
+                message = "Contato adicionado com sucesso",
+                contactId = newContact.Id
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao adicionar contato ao fornecedor {SupplierId}", id);
+            _logger.LogError(ex, "Erro ao adicionar contato ao fornecedor {SupplierId}", supplierId);
             return StatusCode(500, new { error = "Erro ao adicionar contato" });
         }
     }
@@ -732,33 +754,31 @@ public class SuppliersController : ControllerBase
     /// Remove contato do fornecedor
     /// </summary>
     [HttpDelete("{supplierId}/contacts/{contactId}")]
-    public async Task<IActionResult> DeleteContact(Guid supplierId, Guid contactId)
+    public async Task<IActionResult> RemoveContact(Guid supplierId, Guid contactId)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
             return Unauthorized(new { error = "Funcionário não autenticado" });
 
-        if (!await HasSupplierManagementPermission(employee))
+        if (!HasSupplierManagementPermission(employee))
             return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         try
         {
             var contact = await _db.SupplierContacts
-                .Include(c => c.Supplier)
                 .Where(c => c.Id == contactId && c.SupplierId == supplierId && c.IsActive)
                 .FirstOrDefaultAsync();
 
             if (contact == null)
                 return NotFound(new { error = "Contato não encontrado" });
 
-            if (contact.Supplier?.EstablishmentId != employee.EstablishmentId)
-                return StatusCode(403, new { error = "Sem permissão para acessar este contato" });
-
             contact.IsActive = false;
-            contact.UpdatedAt = DateTime.UtcNow;
-            contact.UpdatedByEmployeeId = employee.Id;
 
             await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Contato {ContactId} removido do fornecedor {SupplierId} por {EmployeeId}",
+                contactId, supplierId, employee.Id);
 
             return Ok(new { message = "Contato removido com sucesso" });
         }
@@ -772,10 +792,10 @@ public class SuppliersController : ControllerBase
     // ==================== CERTIFICATES ====================
 
     /// <summary>
-    /// Lista certificados de um fornecedor
+    /// Lista certificados do fornecedor
     /// </summary>
-    [HttpGet("{id}/certificates")]
-    public async Task<IActionResult> GetCertificates(Guid id)
+    [HttpGet("{supplierId}/certificates")]
+    public async Task<IActionResult> ListCertificates(Guid supplierId)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
@@ -784,15 +804,16 @@ public class SuppliersController : ControllerBase
         try
         {
             var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .Where(s => s.Id == supplierId && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
                 .FirstOrDefaultAsync();
 
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
             var certificates = await _db.SupplierCertificates
-                .Where(c => c.SupplierId == id && c.IsActive)
-                .OrderBy(c => c.ExpiryDate)
+                .Where(c => c.SupplierId == supplierId && c.IsActive)
+                .OrderBy(c => c.CertificateType)
+                .ThenBy(c => c.Name)
                 .Select(c => new
                 {
                     c.Id,
@@ -802,10 +823,16 @@ public class SuppliersController : ControllerBase
                     c.IssuingAuthority,
                     c.IssueDate,
                     c.ExpiryDate,
-                    c.Status,
-                    c.IsValid,
-                    c.DaysUntilExpiry,
-                    c.IsExpiringSoon,
+                    Status = c.ExpiryDate.HasValue
+                        ? (c.ExpiryDate.Value < DateTime.UtcNow ? "Vencido" :
+                           c.ExpiryDate.Value < DateTime.UtcNow.AddDays(30) ? "Vencendo" : "Válido")
+                        : "Sem Validade",
+                    DaysUntilExpiry = c.ExpiryDate.HasValue
+                        ? (c.ExpiryDate.Value - DateTime.UtcNow).Days
+                        : (int?)null,
+                    c.Notes,
+                    c.AlertBeforeExpiry,
+                    c.AlertDaysBefore,
                     c.CreatedAt
                 })
                 .ToListAsync();
@@ -814,7 +841,7 @@ public class SuppliersController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao listar certificados do fornecedor {SupplierId}", id);
+            _logger.LogError(ex, "Erro ao listar certificados do fornecedor {SupplierId}", supplierId);
             return StatusCode(500, new { error = "Erro ao listar certificados" });
         }
     }
@@ -822,20 +849,20 @@ public class SuppliersController : ControllerBase
     /// <summary>
     /// Adiciona certificado ao fornecedor
     /// </summary>
-    [HttpPost("{id}/certificates")]
-    public async Task<IActionResult> AddCertificate(Guid id, [FromBody] CreateCertificateDto dto)
+    [HttpPost("{supplierId}/certificates")]
+    public async Task<IActionResult> AddCertificate(Guid supplierId, [FromBody] CreateCertificateDto dto)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
             return Unauthorized(new { error = "Funcionário não autenticado" });
 
-        if (!await HasSupplierManagementPermission(employee))
+        if (!HasSupplierManagementPermission(employee))
             return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         try
         {
             var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .Where(s => s.Id == supplierId && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
                 .FirstOrDefaultAsync();
 
             if (supplier == null)
@@ -844,98 +871,87 @@ public class SuppliersController : ControllerBase
             var certificate = new SupplierCertificate
             {
                 Id = Guid.NewGuid(),
-                SupplierId = id,
-                CertificateType = dto.CertificateType.ToUpper(),
+                SupplierId = supplierId,
+                CertificateType = dto.CertificateType.Trim().ToUpper(),
                 Name = dto.Name.Trim(),
                 Number = dto.Number?.Trim(),
                 IssuingAuthority = dto.IssuingAuthority?.Trim(),
                 IssueDate = dto.IssueDate,
                 ExpiryDate = dto.ExpiryDate,
-                Status = dto.ExpiryDate.HasValue && dto.ExpiryDate.Value > DateTime.UtcNow ? "Válido" : "Expirado",
                 Notes = dto.Notes?.Trim(),
                 AlertBeforeExpiry = dto.AlertBeforeExpiry ?? true,
                 AlertDaysBefore = dto.AlertDaysBefore ?? 30,
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
                 CreatedByEmployeeId = employee.Id,
-                UpdatedByEmployeeId = employee.Id
+                CreatedAt = DateTime.UtcNow
             };
 
             _db.SupplierCertificates.Add(certificate);
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Certificado {CertificateName} adicionado ao fornecedor {SupplierName}",
-                certificate.Name, supplier.CompanyName);
+                "Certificado {CertificateId} adicionado ao fornecedor {SupplierId} por {EmployeeId}",
+                certificate.Id, supplierId, employee.Id);
 
-            return CreatedAtAction(nameof(GetCertificates), new { id }, certificate);
+            return CreatedAtAction(nameof(ListCertificates), new { supplierId }, new
+            {
+                message = "Certificado adicionado com sucesso",
+                certificateId = certificate.Id
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao adicionar certificado ao fornecedor {SupplierId}", id);
+            _logger.LogError(ex, "Erro ao adicionar certificado ao fornecedor {SupplierId}", supplierId);
             return StatusCode(500, new { error = "Erro ao adicionar certificado" });
         }
     }
 
     /// <summary>
-    /// Lista certificados expirando (próximos 30 dias)
+    /// Remove certificado do fornecedor
     /// </summary>
-    [HttpGet("certificates/expiring")]
-    public async Task<IActionResult> GetExpiringCertificates([FromQuery] int days = 30)
+    [HttpDelete("{supplierId}/certificates/{certificateId}")]
+    public async Task<IActionResult> RemoveCertificate(Guid supplierId, Guid certificateId)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
             return Unauthorized(new { error = "Funcionário não autenticado" });
 
+        if (!HasSupplierManagementPermission(employee))
+            return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
+
         try
         {
-            var expiryDate = DateTime.UtcNow.AddDays(days);
+            var certificate = await _db.SupplierCertificates
+                .Where(c => c.Id == certificateId && c.SupplierId == supplierId && c.IsActive)
+                .FirstOrDefaultAsync();
 
-            var certificates = await _db.SupplierCertificates
-                .Include(c => c.Supplier)
-                .Where(c =>
-                    c.Supplier!.EstablishmentId == employee.EstablishmentId &&
-                    c.IsActive &&
-                    c.ExpiryDate.HasValue &&
-                    c.ExpiryDate.Value <= expiryDate &&
-                    c.ExpiryDate.Value > DateTime.UtcNow)
-                .OrderBy(c => c.ExpiryDate)
-                .Select(c => new
-                {
-                    c.Id,
-                    c.SupplierId,
-                    supplierName = c.Supplier!.CompanyName,
-                    c.CertificateType,
-                    c.Name,
-                    c.Number,
-                    c.ExpiryDate,
-                    c.DaysUntilExpiry,
-                    c.AlertDaysBefore
-                })
-                .ToListAsync();
+            if (certificate == null)
+                return NotFound(new { error = "Certificado não encontrado" });
 
-            return Ok(new
-            {
-                data = certificates,
-                count = certificates.Count,
-                daysFilter = days
-            });
+            certificate.IsActive = false;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Certificado {CertificateId} removido do fornecedor {SupplierId} por {EmployeeId}",
+                certificateId, supplierId, employee.Id);
+
+            return Ok(new { message = "Certificado removido com sucesso" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao listar certificados expirando");
-            return StatusCode(500, new { error = "Erro ao listar certificados" });
+            _logger.LogError(ex, "Erro ao remover certificado {CertificateId}", certificateId);
+            return StatusCode(500, new { error = "Erro ao remover certificado" });
         }
     }
 
     // ==================== EVALUATIONS ====================
 
     /// <summary>
-    /// Lista avaliações de um fornecedor
+    /// Lista avaliações do fornecedor
     /// </summary>
-    [HttpGet("{id}/evaluations")]
-    public async Task<IActionResult> GetEvaluations(Guid id)
+    [HttpGet("{supplierId}/evaluations")]
+    public async Task<IActionResult> ListEvaluations(Guid supplierId)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
@@ -944,78 +960,100 @@ public class SuppliersController : ControllerBase
         try
         {
             var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .Where(s => s.Id == supplierId && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
                 .FirstOrDefaultAsync();
 
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
             var evaluations = await _db.SupplierEvaluations
-                .Where(e => e.SupplierId == id)
+                .Where(e => e.SupplierId == supplierId)
                 .OrderByDescending(e => e.EvaluationDate)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.EvaluationDate,
+                    e.Period,
+                    e.OverallScore,
+                    Scores = new
+                    {
+                        e.QualityScore,
+                        e.DeliveryScore,
+                        e.PriceScore,
+                        e.ServiceScore,
+                        e.DocumentationScore,
+                        e.ComplianceScore
+                    },
+                    Statistics = new
+                    {
+                        e.TotalOrders,
+                        e.OnTimeDeliveries,
+                        e.LateDeliveries,
+                        e.NonConformities,
+                        e.Returns
+                    },
+                    e.Strengths,
+                    e.Weaknesses,
+                    e.CorrectiveActions,
+                    e.Comments,
+                    e.Recommendation,
+                    e.IsApproved,
+                    e.CreatedAt
+                })
                 .ToListAsync();
 
             return Ok(new { data = evaluations });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao listar avaliações do fornecedor {SupplierId}", id);
+            _logger.LogError(ex, "Erro ao listar avaliações do fornecedor {SupplierId}", supplierId);
             return StatusCode(500, new { error = "Erro ao listar avaliações" });
         }
     }
 
     /// <summary>
-    /// Cria avaliação de fornecedor
+    /// Cria avaliação do fornecedor
     /// </summary>
-    [HttpPost("{id}/evaluations")]
-    public async Task<IActionResult> CreateEvaluation(Guid id, [FromBody] CreateEvaluationDto dto)
+    [HttpPost("{supplierId}/evaluations")]
+    public async Task<IActionResult> CreateEvaluation(Guid supplierId, [FromBody] CreateEvaluationDto dto)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
             return Unauthorized(new { error = "Funcionário não autenticado" });
 
-        if (!await HasSupplierQualificationPermission(employee))
-            return StatusCode(403, new { error = "Sem permissão para avaliar fornecedores" });
+        if (!HasSupplierManagementPermission(employee))
+            return StatusCode(403, new { error = "Sem permissão para gerenciar fornecedores" });
 
         try
         {
             var supplier = await _db.Suppliers
-                .Where(s => s.Id == id && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
+                .Where(s => s.Id == supplierId && s.EstablishmentId == employee.EstablishmentId && s.IsActive)
                 .FirstOrDefaultAsync();
 
             if (supplier == null)
                 return NotFound(new { error = "Fornecedor não encontrado" });
 
-            // Calcular nota geral (média das notas fornecidas)
-            var scores = new List<decimal>();
-            if (dto.QualityScore.HasValue) scores.Add(dto.QualityScore.Value);
-            if (dto.DeliveryScore.HasValue) scores.Add(dto.DeliveryScore.Value);
-            if (dto.PriceScore.HasValue) scores.Add(dto.PriceScore.Value);
-            if (dto.ServiceScore.HasValue) scores.Add(dto.ServiceScore.Value);
-            if (dto.DocumentationScore.HasValue) scores.Add(dto.DocumentationScore.Value);
-            if (dto.ComplianceScore.HasValue) scores.Add(dto.ComplianceScore.Value);
+            // Calcular pontuação geral
+            var scores = new[] {
+                dto.QualityScore, dto.DeliveryScore, dto.PriceScore,
+                dto.ServiceScore, dto.DocumentationScore, dto.ComplianceScore
+            }.Where(s => s.HasValue).ToList();
 
             var overallScore = scores.Any() ? scores.Average() : 0;
-
-            // Determinar classificação
-            string? classification = overallScore >= 9.0m ? "A" :
-                                    overallScore >= 7.0m ? "B" :
-                                    overallScore >= 5.0m ? "C" : "D";
 
             var evaluation = new SupplierEvaluation
             {
                 Id = Guid.NewGuid(),
-                SupplierId = id,
+                SupplierId = supplierId,
                 EvaluationDate = dto.EvaluationDate ?? DateTime.UtcNow,
                 Period = dto.Period?.Trim(),
-                QualityScore = dto.QualityScore,
-                DeliveryScore = dto.DeliveryScore,
-                PriceScore = dto.PriceScore,
-                ServiceScore = dto.ServiceScore,
-                DocumentationScore = dto.DocumentationScore,
-                ComplianceScore = dto.ComplianceScore,
-                OverallScore = overallScore,
-                Classification = classification,
+                QualityScore = dto.QualityScore.HasValue ? (decimal?)dto.QualityScore.Value : null,
+                DeliveryScore = dto.DeliveryScore.HasValue ? (decimal?)dto.DeliveryScore.Value : null,
+                PriceScore = dto.PriceScore.HasValue ? (decimal?)dto.PriceScore.Value : null,
+                ServiceScore = dto.ServiceScore.HasValue ? (decimal?)dto.ServiceScore.Value : null,
+                DocumentationScore = dto.DocumentationScore.HasValue ? (decimal?)dto.DocumentationScore.Value : null,
+                ComplianceScore = dto.ComplianceScore.HasValue ? (decimal?)dto.ComplianceScore.Value : null,
+                OverallScore = (decimal)overallScore,
                 TotalOrders = dto.TotalOrders ?? 0,
                 OnTimeDeliveries = dto.OnTimeDeliveries ?? 0,
                 LateDeliveries = dto.LateDeliveries ?? 0,
@@ -1025,339 +1063,372 @@ public class SuppliersController : ControllerBase
                 Weaknesses = dto.Weaknesses?.Trim(),
                 CorrectiveActions = dto.CorrectiveActions?.Trim(),
                 Comments = dto.Comments?.Trim(),
-                Recommendation = dto.Recommendation?.Trim(),
+                Recommendation = dto.Recommendation?.Trim()?.ToUpper(),
                 IsApproved = dto.IsApproved ?? true,
                 EvaluatedByEmployeeId = employee.Id,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             _db.SupplierEvaluations.Add(evaluation);
 
             // Atualizar dados do fornecedor
-            supplier.Rating = overallScore;
-            supplier.Classification = classification;
             supplier.LastEvaluationDate = evaluation.EvaluationDate;
+            supplier.Rating = overallScore;
+            supplier.UpdatedByEmployeeId = employee.Id;
             supplier.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Avaliação criada para fornecedor {SupplierName} por {EmployeeName}. Nota: {Score}",
-                supplier.CompanyName, employee.FullName, overallScore);
+                "Avaliação {EvaluationId} criada para fornecedor {SupplierId} por {EmployeeId}. Pontuação: {Score}",
+                evaluation.Id, supplierId, employee.Id, overallScore);
 
-            return CreatedAtAction(nameof(GetEvaluations), new { id }, evaluation);
+            return CreatedAtAction(nameof(ListEvaluations), new { supplierId }, new
+            {
+                message = "Avaliação criada com sucesso",
+                evaluationId = evaluation.Id,
+                overallScore
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao criar avaliação do fornecedor {SupplierId}", id);
+            _logger.LogError(ex, "Erro ao criar avaliação para fornecedor {SupplierId}", supplierId);
             return StatusCode(500, new { error = "Erro ao criar avaliação" });
         }
     }
 
-    // ==================== MÉTODOS AUXILIARES ====================
+    // ==================== HELPER METHODS ====================
 
     private bool IsEmployeeActive(Employee employee)
     {
-        return employee.Status == "Ativo" &&
+        return employee.Status.Equals("Ativo", StringComparison.OrdinalIgnoreCase) &&
                employee.Establishment != null &&
                employee.Establishment.IsActive;
     }
 
-    private async Task<bool> HasSupplierManagementPermission(Employee employee)
+    private bool HasSupplierManagementPermission(Employee employee)
     {
-        if (employee.JobPosition == null)
-        {
-            await _db.Entry(employee)
-                .Reference(e => e.JobPosition)
-                .LoadAsync();
-        }
-
         if (employee.JobPosition == null)
             return false;
 
-        var allowedPositionCodes = new[]
-        {
-            "admin",
-            "manager",
-            "pharmacist_rt",
-            "stock_assistant"
-        };
+        var code = employee.JobPosition.Code.ToLower();
 
-        return allowedPositionCodes.Contains(employee.JobPosition.Code);
+        return code == "owner" ||
+               code == "manager" ||
+               code == "supervisor" ||
+               code == "pharmacist_rt";  // ✅ ADICIONAR
     }
 
-    private async Task<bool> HasSupplierQualificationPermission(Employee employee)
+    private bool HasSupplierQualificationPermission(Employee employee)
     {
-        if (employee.JobPosition == null)
-        {
-            await _db.Entry(employee)
-                .Reference(e => e.JobPosition)
-                .LoadAsync();
-        }
-
         if (employee.JobPosition == null)
             return false;
 
-        var allowedPositionCodes = new[]
-        {
-            "admin",
-            "manager",
-            "pharmacist_rt"
-        };
+        var code = employee.JobPosition.Code.ToLower();
 
-        return allowedPositionCodes.Contains(employee.JobPosition.Code);
+        return code == "owner" ||
+               code == "manager" ||
+               code == "supervisor" ||
+               code == "pharmacist_rt";  // ✅ ADICIONAR
     }
 
-    private static string RemoveFormatting(string? document)
+    private static string RemoveFormatting(string? value)
     {
-        if (string.IsNullOrEmpty(document))
+        if (string.IsNullOrEmpty(value))
             return string.Empty;
 
-        return new string(document.Where(char.IsDigit).ToArray());
+        return new string(value.Where(char.IsDigit).ToArray());
     }
+}
 
-    // ==================== DTOs ====================
+// ==================== DTOs ====================
 
-    public class CreateSupplierDto
-    {
-        [Required(ErrorMessage = "Nome é obrigatório")]
-        [MaxLength(200)]
-        public string CompanyName { get; set; } = string.Empty;
+public class CreateSupplierDto
+{
+    [Required(ErrorMessage = "Razão social é obrigatória")]
+    [MaxLength(200)]
+    public string CompanyName { get; set; } = string.Empty;
 
-        [MaxLength(200)]
-        public string? TradeName { get; set; }
+    [MaxLength(200)]
+    public string? TradeName { get; set; }
 
-        [Required(ErrorMessage = "CNPJ é obrigatório")]
-        [MaxLength(18)]
-        public string Cnpj { get; set; } = string.Empty;
+    [Required(ErrorMessage = "CNPJ é obrigatório")]
+    [MaxLength(18)]
+    public string Cnpj { get; set; } = string.Empty;
 
-        [MaxLength(20)]
-        public string? StateRegistration { get; set; }
+    [MaxLength(20)]
+    public string? StateRegistration { get; set; }
 
-        [MaxLength(100)]
-        public string? Street { get; set; }
+    [MaxLength(100)]
+    public string? Street { get; set; }
 
-        [MaxLength(10)]
-        public string? Number { get; set; }
+    [MaxLength(10)]
+    public string? Number { get; set; }
 
-        [MaxLength(100)]
-        public string? Complement { get; set; }
+    [MaxLength(100)]
+    public string? Complement { get; set; }
 
-        [MaxLength(100)]
-        public string? Neighborhood { get; set; }
+    [MaxLength(100)]
+    public string? Neighborhood { get; set; }
 
-        [MaxLength(100)]
-        public string? City { get; set; }
+    [MaxLength(100)]
+    public string? City { get; set; }
 
-        [MaxLength(2)]
-        public string? State { get; set; }
+    [MaxLength(2)]
+    public string? State { get; set; }
 
-        [MaxLength(10)]
-        public string? PostalCode { get; set; }
+    [MaxLength(10)]
+    public string? PostalCode { get; set; }
 
-        [MaxLength(50)]
-        public string? Country { get; set; }
+    [MaxLength(50)]
+    public string? Country { get; set; }
 
-        [MaxLength(20)]
-        public string? Phone { get; set; }
+    [MaxLength(20)]
+    public string? Phone { get; set; }
 
-        [MaxLength(20)]
-        public string? WhatsApp { get; set; }
+    [MaxLength(20)]
+    public string? WhatsApp { get; set; }
 
-        [MaxLength(200)]
-        public string? Email { get; set; }
+    [MaxLength(200)]
+    public string? Email { get; set; }
 
-        [MaxLength(200)]
-        public string? Website { get; set; }
+    [MaxLength(200)]
+    public string? Website { get; set; }
 
-        [MaxLength(50)]
-        public string? AfeNumber { get; set; }
+    [MaxLength(50)]
+    public string? AfeNumber { get; set; }
 
-        public DateTime? AfeExpiryDate { get; set; }
+    public DateTime? AfeExpiryDate { get; set; }
 
-        public bool SuppliesControlled { get; set; }
+    public bool SuppliesControlled { get; set; }
 
-        public bool SuppliesAntibiotics { get; set; }
+    public bool SuppliesAntibiotics { get; set; }
 
-        public string? Notes { get; set; }
-    }
+    public string? Notes { get; set; }
 
-    public class UpdateSupplierDto
-    {
-        [MaxLength(200)]
-        public string? Name { get; set; }
+    // ✅ MELHORIA: Novos campos no CreateSupplierDto
+    [MaxLength(1)]
+    public string? Classification { get; set; }  // A, B, C, D
 
-        [MaxLength(200)]
-        public string? TradeName { get; set; }
+    [Range(0, 10)]
+    public decimal? Rating { get; set; }
 
-        [MaxLength(20)]
-        public string? StateRegistration { get; set; }
+    public bool IsQualified { get; set; }
 
-        [MaxLength(100)]
-        public string? Street { get; set; }
+    public int? AverageDeliveryTime { get; set; }
 
-        [MaxLength(10)]
-        public string? Number { get; set; }
+    public int? PaymentTermDays { get; set; }
 
-        [MaxLength(100)]
-        public string? Complement { get; set; }
+    public decimal? MinimumOrderValue { get; set; }
 
-        [MaxLength(100)]
-        public string? Neighborhood { get; set; }
+    public string? ProductTypes { get; set; }
 
-        [MaxLength(100)]
-        public string? City { get; set; }
+    public bool HasGmpCertificate { get; set; }
 
-        [MaxLength(2)]
-        public string? State { get; set; }
+    public bool HasIsoCertificate { get; set; }
 
-        [MaxLength(10)]
-        public string? PostalCode { get; set; }
+    public bool HasAnvisaAuthorization { get; set; }
+}
 
-        [MaxLength(20)]
-        public string? Phone { get; set; }
+public class UpdateSupplierDto
+{
+    [MaxLength(200)]
+    public string? CompanyName { get; set; }
 
-        [MaxLength(20)]
-        public string? WhatsApp { get; set; }
+    [MaxLength(200)]
+    public string? TradeName { get; set; }
 
-        [MaxLength(200)]
-        public string? Email { get; set; }
+    [MaxLength(20)]
+    public string? StateRegistration { get; set; }
 
-        [MaxLength(200)]
-        public string? Website { get; set; }
+    [MaxLength(100)]
+    public string? Street { get; set; }
 
-        [MaxLength(50)]
-        public string? AfeNumber { get; set; }
+    [MaxLength(10)]
+    public string? Number { get; set; }
 
-        public DateTime? AfeExpiryDate { get; set; }
+    [MaxLength(100)]
+    public string? Complement { get; set; }
 
-        public bool? SuppliesControlled { get; set; }
+    [MaxLength(100)]
+    public string? Neighborhood { get; set; }
 
-        public bool? SuppliesAntibiotics { get; set; }
+    [MaxLength(100)]
+    public string? City { get; set; }
 
-        public string? Notes { get; set; }
-    }
+    [MaxLength(2)]
+    public string? State { get; set; }
 
-    public class DeleteSupplierDto
-    {
-        [Required(ErrorMessage = "Motivo da inativação é obrigatório")]
-        [MaxLength(500)]
-        public string Reason { get; set; } = string.Empty;
-    }
+    [MaxLength(10)]
+    public string? PostalCode { get; set; }
 
-    public class BlockSupplierDto
-    {
-        [Required(ErrorMessage = "Motivo do bloqueio é obrigatório")]
-        [MaxLength(500)]
-        public string Reason { get; set; } = string.Empty;
-    }
+    [MaxLength(20)]
+    public string? Phone { get; set; }
 
-    public class CreateContactDto
-    {
-        [Required(ErrorMessage = "Nome é obrigatório")]
-        [MaxLength(200)]
-        public string FullName { get; set; } = string.Empty;
+    [MaxLength(20)]
+    public string? WhatsApp { get; set; }
 
-        [MaxLength(100)]
-        public string? JobTitle { get; set; }
+    [MaxLength(200)]
+    public string? Email { get; set; }
 
-        [MaxLength(100)]
-        public string? Department { get; set; }
+    [MaxLength(200)]
+    public string? Website { get; set; }
 
-        [MaxLength(200)]
-        public string? Email { get; set; }
+    [MaxLength(50)]
+    public string? AfeNumber { get; set; }
 
-        [MaxLength(20)]
-        public string? Phone { get; set; }
+    public DateTime? AfeExpiryDate { get; set; }
 
-        [MaxLength(20)]
-        public string? Mobile { get; set; }
+    public bool? SuppliesControlled { get; set; }
 
-        [MaxLength(10)]
-        public string? Extension { get; set; }
+    public bool? SuppliesAntibiotics { get; set; }
 
-        public bool IsPrimary { get; set; } = false;
+    public string? Notes { get; set; }
 
-        public bool IsEmergencyContact { get; set; } = false;
+    // ✅ MELHORIA: Novos campos no UpdateSupplierDto
+    [MaxLength(1)]
+    public string? Classification { get; set; }
 
-        [MaxLength(500)]
-        public string? Notes { get; set; }
-    }
+    [Range(0, 10)]
+    public decimal? Rating { get; set; }
 
-    public class CreateCertificateDto
-    {
-        [Required(ErrorMessage = "Tipo de certificado é obrigatório")]
-        [MaxLength(50)]
-        public string CertificateType { get; set; } = string.Empty;
+    public bool? IsQualified { get; set; }
 
-        [Required(ErrorMessage = "Nome do certificado é obrigatório")]
-        [MaxLength(200)]
-        public string Name { get; set; } = string.Empty;
+    public bool? IsPreferred { get; set; }
 
-        [MaxLength(100)]
-        public string? Number { get; set; }
+    public int? AverageDeliveryTime { get; set; }
 
-        [MaxLength(200)]
-        public string? IssuingAuthority { get; set; }
+    public int? PaymentTermDays { get; set; }
 
-        public DateTime? IssueDate { get; set; }
+    public decimal? MinimumOrderValue { get; set; }
 
-        public DateTime? ExpiryDate { get; set; }
+    public string? ProductTypes { get; set; }
 
-        public string? Notes { get; set; }
+    public bool? HasGmpCertificate { get; set; }
 
-        public bool? AlertBeforeExpiry { get; set; } = true;
+    public bool? HasIsoCertificate { get; set; }
 
-        public int? AlertDaysBefore { get; set; } = 30;
-    }
+    public bool? HasAnvisaAuthorization { get; set; }
+}
 
-    public class CreateEvaluationDto
-    {
-        public DateTime? EvaluationDate { get; set; }
+public class DeleteSupplierDto
+{
+    [Required(ErrorMessage = "Motivo da inativação é obrigatório")]
+    [MaxLength(500)]
+    public string Reason { get; set; } = string.Empty;
+}
 
-        [MaxLength(50)]
-        public string? Period { get; set; }
+public class BlockSupplierDto
+{
+    [Required(ErrorMessage = "Motivo do bloqueio é obrigatório")]
+    [MaxLength(500)]
+    public string Reason { get; set; } = string.Empty;
+}
 
-        [Range(0, 10)]
-        public decimal? QualityScore { get; set; }
+public class CreateContactDto
+{
+    [Required(ErrorMessage = "Nome é obrigatório")]
+    [MaxLength(200)]
+    public string FullName { get; set; } = string.Empty;
 
-        [Range(0, 10)]
-        public decimal? DeliveryScore { get; set; }
+    [MaxLength(100)]
+    public string? JobTitle { get; set; }
 
-        [Range(0, 10)]
-        public decimal? PriceScore { get; set; }
+    [MaxLength(100)]
+    public string? Department { get; set; }
 
-        [Range(0, 10)]
-        public decimal? ServiceScore { get; set; }
+    [MaxLength(200)]
+    public string? Email { get; set; }
 
-        [Range(0, 10)]
-        public decimal? DocumentationScore { get; set; }
+    [MaxLength(20)]
+    public string? Phone { get; set; }
 
-        [Range(0, 10)]
-        public decimal? ComplianceScore { get; set; }
+    [MaxLength(20)]
+    public string? Mobile { get; set; }
 
-        public int? TotalOrders { get; set; }
+    [MaxLength(10)]
+    public string? Extension { get; set; }
 
-        public int? OnTimeDeliveries { get; set; }
+    public bool IsPrimary { get; set; } = false;
 
-        public int? LateDeliveries { get; set; }
+    public bool IsEmergencyContact { get; set; } = false;
 
-        public int? NonConformities { get; set; }
+    [MaxLength(500)]
+    public string? Notes { get; set; }
+}
 
-        public int? Returns { get; set; }
+public class CreateCertificateDto
+{
+    [Required(ErrorMessage = "Tipo de certificado é obrigatório")]
+    [MaxLength(50)]
+    public string CertificateType { get; set; } = string.Empty;
 
-        public string? Strengths { get; set; }
+    [Required(ErrorMessage = "Nome do certificado é obrigatório")]
+    [MaxLength(200)]
+    public string Name { get; set; } = string.Empty;
 
-        public string? Weaknesses { get; set; }
+    [MaxLength(100)]
+    public string? Number { get; set; }
 
-        public string? CorrectiveActions { get; set; }
+    [MaxLength(200)]
+    public string? IssuingAuthority { get; set; }
 
-        public string? Comments { get; set; }
+    public DateTime? IssueDate { get; set; }
 
-        [MaxLength(20)]
-        public string? Recommendation { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 
-        public bool? IsApproved { get; set; } = true;
-    }
+    public string? Notes { get; set; }
+
+    public bool? AlertBeforeExpiry { get; set; } = true;
+
+    public int? AlertDaysBefore { get; set; } = 30;
+}
+
+public class CreateEvaluationDto
+{
+    public DateTime? EvaluationDate { get; set; }
+
+    [MaxLength(50)]
+    public string? Period { get; set; }
+
+    [Range(0, 10)]
+    public decimal? QualityScore { get; set; }
+
+    [Range(0, 10)]
+    public decimal? DeliveryScore { get; set; }
+
+    [Range(0, 10)]
+    public decimal? PriceScore { get; set; }
+
+    [Range(0, 10)]
+    public decimal? ServiceScore { get; set; }
+
+    [Range(0, 10)]
+    public decimal? DocumentationScore { get; set; }
+
+    [Range(0, 10)]
+    public decimal? ComplianceScore { get; set; }
+
+    public int? TotalOrders { get; set; }
+
+    public int? OnTimeDeliveries { get; set; }
+
+    public int? LateDeliveries { get; set; }
+
+    public int? NonConformities { get; set; }
+
+    public int? Returns { get; set; }
+
+    public string? Strengths { get; set; }
+
+    public string? Weaknesses { get; set; }
+
+    public string? CorrectiveActions { get; set; }
+
+    public string? Comments { get; set; }
+
+    [MaxLength(20)]
+    public string? Recommendation { get; set; }
+
+    public bool? IsApproved { get; set; } = true;
 }

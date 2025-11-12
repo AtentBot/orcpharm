@@ -184,9 +184,20 @@ public class Supplier
     [Column("InactivatedByEmployeeId")]
     public Guid? InactivatedByEmployeeId { get; set; }
 
-    [MaxLength(500)]
     [Column("InactivationReason")]
     public string? InactivationReason { get; set; }
+
+    // ==================== BLOQUEIO ====================
+
+    [MaxLength(500)]
+    [Column("BlockedReason")]
+    public string? BlockedReason { get; set; }
+
+    [Column("BlockedByEmployeeId")]
+    public Guid? BlockedByEmployeeId { get; set; }
+
+    [Column("BlockedAt")]
+    public DateTime? BlockedAt { get; set; }
 
     // ==================== AFE E CONTROLADOS ====================
 
@@ -204,6 +215,7 @@ public class Supplier
     public bool SuppliesAntibiotics { get; set; }  // ✅ SEM DEFAULT
 
     // ==================== NAVEGAÇÃO ====================
+    
 
     public virtual ICollection<SupplierContact>? Contacts { get; set; }
     public virtual ICollection<SupplierCertificate>? Certificates { get; set; }

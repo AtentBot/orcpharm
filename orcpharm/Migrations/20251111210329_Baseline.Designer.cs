@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace orcpharm.Migrations
+namespace Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20251111210329_Baseline")]
