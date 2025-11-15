@@ -212,4 +212,5 @@ E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Wo
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\FluentValidation.dll
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\FluentValidation.AspNetCore.dll
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\FluentValidation.DependencyInjectionExtensions.dll
+E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\BCrypt.Net-Next.dll
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

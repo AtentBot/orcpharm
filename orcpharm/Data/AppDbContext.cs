@@ -5,6 +5,8 @@ using Models.Core;
 using Models.Employees;
 using Models.Pharmacy;
 using Models.Security;
+using Models.Purchasing;
+using Models.Auth;
 using System.Collections.Generic;
 
 namespace Data;
@@ -47,6 +49,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Category> Categories { get; set; }
 
+    public DbSet<Models.Auth.PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<Models.Auth.TwoFactorAuth> TwoFactorAuths { get; set; }
+    public DbSet<Models.Auth.LoginAttempt> LoginAttempts { get; set; }
+
+    // Purchasing
+    public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+    public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
+    public DbSet<BatchReceiving> BatchReceivings { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -69,6 +80,109 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         SeedInitialData(modelBuilder);
 
+        // PurchaseOrder
+        modelBuilder.Entity<PurchaseOrder>(entity =>
+        {
+            entity.HasOne(e => e.Supplier)
+                .WithMany()
+                .HasForeignKey(e => e.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ApprovedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.ApprovedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.UpdatedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.UpdatedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.OrderNumber).IsUnique();
+            entity.HasIndex(e => new { e.EstablishmentId, e.OrderDate });
+            entity.HasIndex(e => new { e.EstablishmentId, e.Status });
+        });
+
+        // PurchaseOrderItem
+        modelBuilder.Entity<PurchaseOrderItem>(entity =>
+        {
+            entity.HasOne(e => e.PurchaseOrder)
+                .WithMany(p => p.Items)
+                .HasForeignKey(e => e.PurchaseOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RawMaterial)
+                .WithMany()
+                .HasForeignKey(e => e.RawMaterialId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.PurchaseOrderId);
+        });
+
+        // BatchReceiving
+        modelBuilder.Entity<BatchReceiving>(entity =>
+        {
+            entity.HasOne(e => e.PurchaseOrderItem)
+                .WithMany(i => i.BatchesReceived)
+                .HasForeignKey(e => e.PurchaseOrderItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Batch)
+                .WithMany()
+                .HasForeignKey(e => e.BatchId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ReceivedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.ReceivedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.PurchaseOrderItemId);
+            entity.HasIndex(e => e.BatchId);
+        });
+
+        // PasswordResetToken
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasOne(e => e.Employee)
+                .WithMany()
+                .HasForeignKey(e => e.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => new { e.EmployeeId, e.ExpiresAt });
+            entity.HasIndex(e => new { e.Code, e.ExpiresAt });
+        });
+
+        // TwoFactorAuth
+        modelBuilder.Entity<TwoFactorAuth>(entity =>
+        {
+            entity.HasOne(e => e.Employee)
+                .WithMany()
+                .HasForeignKey(e => e.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.EmployeeId, e.ExpiresAt });
+            entity.HasIndex(e => new { e.Code, e.Purpose, e.ExpiresAt });
+        });
+
+        // LoginAttempt
+        modelBuilder.Entity<LoginAttempt>(entity =>
+        {
+            entity.HasIndex(e => e.Identifier);
+            entity.HasIndex(e => new { e.IpAddress, e.AttemptedAt });
+            entity.HasIndex(e => e.AttemptedAt);
+        });
 
         // RawMaterial -> Establishment
         modelBuilder.Entity<RawMaterial>()

@@ -4,6 +4,12 @@ using Data;
 using Middleware;
 using Models;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Service.Purchasing;
+using Service.Auth;
+using Service.Notifications;
+using Service.BatchQuality;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,12 +24,37 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 
 // ADICIONAR DbContext para PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options
         .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
         .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
+
+// HttpClient
+builder.Services.AddHttpClient<WhatsAppService>();
+
+// Services
+builder.Services.AddScoped<PurchaseOrderService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<WhatsAppService>();
+builder.Services.AddScoped<BatchQualityService>();
+
+// FluentValidation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 // Adicionar Health Checks
 builder.Services.AddHealthChecks();
@@ -145,6 +176,7 @@ app.UseSwaggerUI(options =>
     options.RoutePrefix = "swagger";
 });
 
+app.UseCors();
 app.UseRouting();
 app.UseSession();
 

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using Stripe.Climate;
+using Models.Employees;
 
 namespace Models.Pharmacy;
 
@@ -52,12 +52,18 @@ public class Batch
     public DateTime? ApprovalDate { get; set; }
     public Guid? ApprovedByEmployeeId { get; set; }
 
+    [ForeignKey(nameof(ApprovedByEmployeeId))]
+    public Employee? ApprovedByEmployee { get; set; }  // ✅ ADICIONADO
+
     [MaxLength(500)]
     public string? QualityNotes { get; set; }
 
     // Auditoria
     public DateTime CreatedAt { get; set; }
     public Guid CreatedByEmployeeId { get; set; }
+
+    [ForeignKey(nameof(CreatedByEmployeeId))]
+    public Employee? CreatedByEmployee { get; set; }  // ✅ ADICIONADO
 
     // Navegação
     public ICollection<StockMovement>? StockMovements { get; set; }

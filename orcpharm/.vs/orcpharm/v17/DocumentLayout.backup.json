@@ -3,12 +3,16 @@
   "WorkspaceRootPath": "E:\\orcpharm\\orcpharm\\orcpharm\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\controllers\\manipulationorderscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:controllers\\manipulationorderscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\service\\batchqualityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:service\\batchqualityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\controllers\\formulascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:controllers\\formulascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\models\\pharmacy\\batch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:models\\pharmacy\\batch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -30,28 +34,41 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "ManipulationOrdersController.cs",
-              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\ManipulationOrdersController.cs",
-              "RelativeDocumentMoniker": "Controllers\\ManipulationOrdersController.cs",
-              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\ManipulationOrdersController.cs*",
-              "RelativeToolTip": "Controllers\\ManipulationOrdersController.cs*",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "Batch.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\Pharmacy\\Batch.cs",
+              "RelativeDocumentMoniker": "Models\\Pharmacy\\Batch.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\Pharmacy\\Batch.cs",
+              "RelativeToolTip": "Models\\Pharmacy\\Batch.cs",
+              "ViewState": "AgIAAB0AAAAAAAAAAAAAAEUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-12T22:24:10.555Z",
+              "WhenOpened": "2025-11-15T17:41:43.467Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "FormulasController.cs",
-              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\FormulasController.cs",
-              "RelativeDocumentMoniker": "Controllers\\FormulasController.cs",
-              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\FormulasController.cs",
-              "RelativeToolTip": "Controllers\\FormulasController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAPAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAAACkAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-12T22:23:38.371Z",
+              "WhenOpened": "2025-11-15T17:39:34.523Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "BatchQualityService.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Service\\BatchQualityService.cs",
+              "RelativeDocumentMoniker": "Service\\BatchQualityService.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Service\\BatchQualityService.cs*",
+              "RelativeToolTip": "Service\\BatchQualityService.cs*",
+              "ViewState": "AgIAAEkAAAAAAAAAAAAqwJgAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-15T17:38:28.057Z",
               "EditorCaption": ""
             }
           ]
