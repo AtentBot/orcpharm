@@ -1,41 +1,56 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Models.Pharmacy;
+namespace Models;
 
-[Index(nameof(SaleId))]
+[Table("sale_items")]
 public class SaleItem
 {
     [Key]
+    [Column("id")]
     public Guid Id { get; set; }
 
-    [Required]
+    [Column("sale_id")]
     public Guid SaleId { get; set; }
-    public Sale? Sale { get; set; }
 
+    [Column("manipulation_order_id")]
     public Guid? ManipulationOrderId { get; set; }
-    public ManipulationOrder? ManipulationOrder { get; set; }
 
-    [Required, MaxLength(200)]
-    public string Description { get; set; } = default!;
+    [Column("prescription_id")]
+    public Guid? PrescriptionId { get; set; }
 
-    [Column(TypeName = "decimal(10,4)")]
+    [Column("formula_id")]
+    public Guid? FormulaId { get; set; }
+
+    [Column("description")]
+    [MaxLength(500)]
+    public string Description { get; set; } = string.Empty;
+
+    [Column("quantity")]
     public decimal Quantity { get; set; }
 
-    [Required, MaxLength(10)]
-    public string Unit { get; set; } = default!;
-
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("unit_price")]
     public decimal UnitPrice { get; set; }
 
-    [Column(TypeName = "decimal(10,2)")]
+    [Column("discount_percentage")]
+    public decimal DiscountPercentage { get; set; } = 0;
+
+    [Column("discount_amount")]
+    public decimal DiscountAmount { get; set; } = 0;
+
+    [Column("total_price")]
     public decimal TotalPrice { get; set; }
 
-    // Para produtos manipulados
-    [MaxLength(50)]
-    public string? BatchNumber { get; set; }
+    [Column("cost_price")]
+    public decimal CostPrice { get; set; } = 0;
 
-    public DateTime? ExpiryDate { get; set; }
+    [Column("profit_margin")]
+    public decimal ProfitMargin { get; set; } = 0;
+
+    [Column("observations")]
+    public string? Observations { get; set; }
+
+    // Relacionamento
+    [ForeignKey("SaleId")]
+    public virtual Sale? Sale { get; set; }
 }

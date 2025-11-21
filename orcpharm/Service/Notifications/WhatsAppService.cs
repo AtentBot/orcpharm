@@ -6,8 +6,8 @@ namespace Service.Notifications;
 public class WhatsAppService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey = "1D8F046A269F-4556-804C-0586245F169A";
-    private readonly string _baseUrl = "https://api.atentbot.com/message/sendText/crescer";
+    private readonly string _apiKey = "33B2682CFAFB-4184-966E-71A3028B7A37";
+    private readonly string _baseUrl = "https://api.atentbot.com/message/sendText/pharm";
 
     public WhatsAppService(HttpClient httpClient)
     {

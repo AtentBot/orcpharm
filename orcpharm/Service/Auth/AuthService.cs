@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.Auth;
-using Models.Auth;  
-using Models.Employees; 
+using Models.Auth;
+using Models.Employees;
 using Service.Notifications;
 using System.Security.Cryptography;
 
@@ -51,7 +51,7 @@ public class AuthService
             };
         }
 
-        if (employee.Establishment?.IsActive != true)  // ✅ CORRIGIDO
+        if (employee.Establishment?.IsActive != true)
         {
             attempt.FailureReason = "Estabelecimento inativo";
             _context.LoginAttempts.Add(attempt);
@@ -115,43 +115,55 @@ public class AuthService
             Success = true,
             Message = "Login realizado com sucesso",
             Requires2FA = false,
-            SessionId = sessionToken,  // ✅ CORRIGIDO
+            SessionId = sessionToken,
             Employee = new EmployeeInfoDto
             {
                 Id = employee.Id,
-                Name = employee.FullName,  // ✅ CORRIGIDO
+                Name = employee.FullName,
                 Cpf = employee.Cpf,
                 WhatsApp = employee.WhatsApp,
                 Email = employee.Email,
                 JobPositionName = employee.JobPosition?.Name ?? "",
-                EstablishmentName = employee.Establishment?.NomeFantasia ?? ""  // ✅ CORRIGIDO
+                EstablishmentName = employee.Establishment?.NomeFantasia ?? ""
             }
         };
     }
 
+    // ✅ MÉTODO CORRIGIDO COM LOGS
     public async Task<(bool Success, string Message)> RequestPasswordResetAsync(RequestPasswordResetDto dto)
     {
+        Console.WriteLine($"🔵 [RequestPasswordResetAsync] INICIANDO para: {dto.Identifier}");
+
         var employee = await _context.Employees
             .FirstOrDefaultAsync(e => e.Cpf == dto.Identifier || e.WhatsApp == dto.Identifier);
 
         if (employee == null)
         {
+            Console.WriteLine($"⚠️ [RequestPasswordResetAsync] Employee não encontrado");
             await Task.Delay(Random.Shared.Next(1000, 3000));
             return (true, "Se o CPF/WhatsApp existir, você receberá o código de recuperação");
         }
 
+        Console.WriteLine($"✅ [RequestPasswordResetAsync] Employee: {employee.Id}, WhatsApp: '{employee.WhatsApp}'");
+
+        // ✅ Rate limit FORA do try-catch
         var recentTokens = await _context.PasswordResetTokens
             .Where(t => t.EmployeeId == employee.Id &&
                        t.CreatedAt > DateTime.UtcNow.AddHours(-1))
             .CountAsync();
 
+        Console.WriteLine($"📊 [RequestPasswordResetAsync] Tokens recentes: {recentTokens}");
+
         if (recentTokens >= 3)
         {
+            Console.WriteLine($"❌ [RequestPasswordResetAsync] Rate limit excedido");
             return (false, "Limite de tentativas excedido. Aguarde 1 hora");
         }
 
         var code = GenerateNumericCode(6);
         var token = GenerateSecureToken();
+
+        Console.WriteLine($"🔑 [RequestPasswordResetAsync] Código gerado: {code}");
 
         var resetToken = new PasswordResetToken
         {
@@ -163,15 +175,66 @@ public class AuthService
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.PasswordResetTokens.Add(resetToken);
-        await _context.SaveChangesAsync();
-
-        if (dto.Method.ToUpper() == "WHATSAPP" && !string.IsNullOrEmpty(employee.WhatsApp))
+        try
         {
-            await _whatsAppService.SendPasswordResetCodeAsync(employee.WhatsApp, code, employee.FullName);  // ✅ CORRIGIDO
-        }
+            _context.PasswordResetTokens.Add(resetToken);
+            await _context.SaveChangesAsync();
 
-        return (true, "Código de recuperação enviado");
+            Console.WriteLine($"✅ [RequestPasswordResetAsync] Token salvo no banco");
+
+            // ✅ VERIFICAR CONDIÇÕES
+            Console.WriteLine($"🔍 [RequestPasswordResetAsync] Verificando condições:");
+            Console.WriteLine($"   - Method: '{dto.Method}' (Upper: '{dto.Method.ToUpper()}')");
+            Console.WriteLine($"   - Employee.WhatsApp: '{employee.WhatsApp ?? "NULL"}'");
+            Console.WriteLine($"   - IsNullOrEmpty: {string.IsNullOrEmpty(employee.WhatsApp)}");
+
+            if (dto.Method.ToUpper() == "WHATSAPP" && !string.IsNullOrEmpty(employee.WhatsApp))
+            {
+                Console.WriteLine($"📱 [RequestPasswordResetAsync] CONDIÇÕES OK! Enviando WhatsApp...");
+                Console.WriteLine($"   - Telefone: {employee.WhatsApp}");
+                Console.WriteLine($"   - Nome: {employee.FullName}");
+                Console.WriteLine($"   - Código: {code}");
+
+                var (whatsappSuccess, whatsappMessage) = await _whatsAppService.SendPasswordResetCodeAsync(
+                    employee.WhatsApp,
+                    code,
+                    employee.FullName
+                );
+
+                Console.WriteLine($"📱 [RequestPasswordResetAsync] WhatsApp retornou:");
+                Console.WriteLine($"   - Success: {whatsappSuccess}");
+                Console.WriteLine($"   - Message: {whatsappMessage}");
+
+                if (!whatsappSuccess)
+                {
+                    Console.WriteLine($"❌ [RequestPasswordResetAsync] WhatsApp FALHOU!");
+                    return (false, $"Erro ao enviar código: {whatsappMessage}");
+                }
+
+                Console.WriteLine($"✅ [RequestPasswordResetAsync] WhatsApp ENVIADO COM SUCESSO!");
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ [RequestPasswordResetAsync] WhatsApp NÃO FOI ENVIADO!");
+                Console.WriteLine($"   - Condição falhou!");
+            }
+
+            return (true, "Código de recuperação enviado");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ [RequestPasswordResetAsync] EXCEPTION:");
+            Console.WriteLine($"   Type: {ex.GetType().Name}");
+            Console.WriteLine($"   Message: {ex.Message}");
+            Console.WriteLine($"   StackTrace: {ex.StackTrace}");
+
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"   InnerException: {ex.InnerException.Message}");
+            }
+
+            return (false, "Erro ao processar recuperação de senha. Tente novamente.");
+        }
     }
 
     public async Task<(bool Success, string Message)> VerifyResetCodeAsync(VerifyResetCodeDto dto)
@@ -227,13 +290,13 @@ public class AuthService
 
         if (!string.IsNullOrEmpty(employee.WhatsApp))
         {
-            await _whatsAppService.SendPasswordChangedNotificationAsync(employee.WhatsApp, employee.FullName);  // ✅ CORRIGIDO
+            await _whatsAppService.SendPasswordChangedNotificationAsync(employee.WhatsApp, employee.FullName);
         }
 
         return (true, "Senha alterada com sucesso");
     }
 
-    public async Task<(bool Success, string Message)> ChangePasswordAsync(Guid employeeId, ChangePasswordDto dto)  // ✅ CORRIGIDO: int → Guid
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(Guid employeeId, ChangePasswordDto dto)
     {
         var employee = await _context.Employees.FindAsync(employeeId);
         if (employee == null)
@@ -253,13 +316,13 @@ public class AuthService
 
         if (!string.IsNullOrEmpty(employee.WhatsApp))
         {
-            await _whatsAppService.SendPasswordChangedNotificationAsync(employee.WhatsApp, employee.FullName);  // ✅ CORRIGIDO
+            await _whatsAppService.SendPasswordChangedNotificationAsync(employee.WhatsApp, employee.FullName);
         }
 
         return (true, "Senha alterada com sucesso");
     }
 
-    public async Task<(bool Success, string Message)> Create2FACodeAsync(Guid employeeId, string purpose, string? ipAddress, string? userAgent)  // ✅ CORRIGIDO: int → Guid
+    public async Task<(bool Success, string Message)> Create2FACodeAsync(Guid employeeId, string purpose, string? ipAddress, string? userAgent)
     {
         var employee = await _context.Employees.FindAsync(employeeId);
         if (employee == null)
@@ -289,7 +352,7 @@ public class AuthService
         return (true, "Código enviado via WhatsApp");
     }
 
-    public async Task<(bool Success, string Message, string? SessionId)> Verify2FAAsync(Guid employeeId, Verify2FADto dto, string ipAddress, string? userAgent)  // ✅ CORRIGIDO: int → Guid
+    public async Task<(bool Success, string Message, string? SessionId)> Verify2FAAsync(Guid employeeId, Verify2FADto dto, string ipAddress, string? userAgent)
     {
         var twoFA = await _context.TwoFactorAuths
             .Where(t => t.EmployeeId == employeeId &&
@@ -329,7 +392,7 @@ public class AuthService
         return (true, "Código verificado com sucesso", null);
     }
 
-    private async Task<bool> Check2FARequired(Guid employeeId)  // ✅ CORRIGIDO: int → Guid
+    private async Task<bool> Check2FARequired(Guid employeeId)
     {
         var employee = await _context.Employees
             .Include(e => e.JobPosition)
@@ -344,7 +407,7 @@ public class AuthService
         return requires2FA;
     }
 
-    private async Task<string> CreateSessionAsync(Guid employeeId, bool rememberMe, string ipAddress, string? userAgent)  // ✅ CORRIGIDO: int → Guid
+    private async Task<string> CreateSessionAsync(Guid employeeId, bool rememberMe, string ipAddress, string? userAgent)
     {
         var sessionToken = GenerateSecureToken();
         var expiresAt = rememberMe
@@ -354,7 +417,7 @@ public class AuthService
         var session = new EmployeeSession
         {
             EmployeeId = employeeId,
-            Token = sessionToken,  // ✅ CORRIGIDO: SessionId → Token
+            Token = sessionToken,
             ExpiresAt = expiresAt,
             IpAddress = ipAddress,
             UserAgent = userAgent,

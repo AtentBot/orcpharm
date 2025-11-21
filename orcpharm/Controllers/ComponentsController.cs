@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.Common;
-using DTOs.Pharmacy.Formulas;
+using DTOs.Formulas;
 using Models.Pharmacy;
 
 namespace Controllers;

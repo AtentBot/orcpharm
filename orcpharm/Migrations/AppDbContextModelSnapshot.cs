@@ -1493,6 +1493,10 @@ namespace Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ApprovedByEmployeeId");
+
+                    b.HasIndex("CreatedByEmployeeId");
+
                     b.HasIndex("ExpiryDate");
 
                     b.HasIndex("RawMaterialId");
@@ -3515,6 +3519,16 @@ namespace Migrations
 
             modelBuilder.Entity("Models.Pharmacy.Batch", b =>
                 {
+                    b.HasOne("Models.Employees.Employee", "ApprovedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByEmployeeId");
+
+                    b.HasOne("Models.Employees.Employee", "CreatedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("CreatedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Models.Pharmacy.RawMaterial", "RawMaterial")
                         .WithMany("Batches")
                         .HasForeignKey("RawMaterialId")
@@ -3526,6 +3540,10 @@ namespace Migrations
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("ApprovedByEmployee");
+
+                    b.Navigation("CreatedByEmployee");
 
                     b.Navigation("RawMaterial");
 

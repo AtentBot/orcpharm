@@ -184,6 +184,14 @@ public class Employee
     public DateOnly? ProbationEndDate { get; set; } // Fim do período de experiência (45 ou 90 dias)
 
     // ==================== SEGURANÇA E ACESSO ====================
+    [Column("crm")]
+    [MaxLength(20)]
+    public string? Crm { get; set; }
+
+    [Column("crm_state")]
+    [MaxLength(2)]
+    public string? CrmState { get; set; }
+
     [Required]
     public string PasswordHash { get; set; } = default!;
 

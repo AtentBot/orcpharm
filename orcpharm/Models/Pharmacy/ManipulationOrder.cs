@@ -14,6 +14,10 @@ public class ManipulationOrder
     [Key]
     public Guid Id { get; set; }
 
+    [Column("code")] 
+    [MaxLength(20)]  
+    public string Code { get; set; } = string.Empty;
+
     [Required]
     public Guid EstablishmentId { get; set; }
     public Establishment? Establishment { get; set; }

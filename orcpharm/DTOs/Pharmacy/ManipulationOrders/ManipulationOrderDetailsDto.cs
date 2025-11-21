@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using DTOs.Pharmacy.Formulas;
+using DTOs.Formulas;
 
 namespace DTOs.Pharmacy.ManipulationOrders;
 

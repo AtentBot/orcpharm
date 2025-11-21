@@ -57,6 +57,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
     public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
     public DbSet<BatchReceiving> BatchReceivings { get; set; }
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
+    public DbSet<ControlledSubstanceMovement> ControlledSubstanceMovements => Set<ControlledSubstanceMovement>();
+    public DbSet<ControlledSubstanceBalance> ControlledSubstanceBalances => Set<ControlledSubstanceBalance>();
+    public DbSet<SpecialPrescriptionControl> SpecialPrescriptionControls => Set<SpecialPrescriptionControl>();
+    public DbSet<LabelTemplate> LabelTemplates => Set<LabelTemplate>();
+    public DbSet<GeneratedLabel> GeneratedLabels => Set<GeneratedLabel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -154,6 +161,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // PasswordResetToken
         modelBuilder.Entity<PasswordResetToken>(entity =>
         {
+            entity.ToTable("password_reset_tokens", "public");
             entity.HasOne(e => e.Employee)
                 .WithMany()
                 .HasForeignKey(e => e.EmployeeId)
@@ -167,6 +175,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // TwoFactorAuth
         modelBuilder.Entity<TwoFactorAuth>(entity =>
         {
+            entity.ToTable("two_factor_auths", "public");
             entity.HasOne(e => e.Employee)
                 .WithMany()
                 .HasForeignKey(e => e.EmployeeId)
@@ -179,6 +188,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // LoginAttempt
         modelBuilder.Entity<LoginAttempt>(entity =>
         {
+            entity.ToTable("login_attempts", "public");
             entity.HasIndex(e => e.Identifier);
             entity.HasIndex(e => new { e.IpAddress, e.AttemptedAt });
             entity.HasIndex(e => e.AttemptedAt);
@@ -278,25 +288,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(s => s.EstablishmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Sale -> Establishment
-        modelBuilder.Entity<Sale>()
-            .HasOne(s => s.Establishment)
-            .WithMany()
-            .HasForeignKey(s => s.EstablishmentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Sale -> Employee
-        modelBuilder.Entity<Sale>()
-            .HasOne(s => s.SoldByEmployee)
-            .WithMany()
-            .HasForeignKey(s => s.SoldByEmployeeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<Sale>()
-            .HasOne(s => s.AuthorizedByPharmacist)
-            .WithMany()
-            .HasForeignKey(s => s.AuthorizedByPharmacistId)
-            .OnDelete(DeleteBehavior.Restrict);
+       
 
         // SaleItem -> Sale
         modelBuilder.Entity<SaleItem>()
@@ -305,14 +297,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(si => si.SaleId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // SaleItem -> ManipulationOrder
-        modelBuilder.Entity<SaleItem>()
-            .HasOne(si => si.ManipulationOrder)
-            .WithMany(mo => mo.SaleItems)
-            .HasForeignKey(si => si.ManipulationOrderId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // ManipulationOrder relationships
+       // ManipulationOrder relationships
         modelBuilder.Entity<ManipulationOrder>()
             .HasOne(mo => mo.Establishment)
             .WithMany()

@@ -53,7 +53,7 @@ public class Batch
     public Guid? ApprovedByEmployeeId { get; set; }
 
     [ForeignKey(nameof(ApprovedByEmployeeId))]
-    public Employee? ApprovedByEmployee { get; set; }  // ✅ ADICIONADO
+    public Employee? ApprovedByEmployee { get; set; }  
 
     [MaxLength(500)]
     public string? QualityNotes { get; set; }
@@ -63,7 +63,7 @@ public class Batch
     public Guid CreatedByEmployeeId { get; set; }
 
     [ForeignKey(nameof(CreatedByEmployeeId))]
-    public Employee? CreatedByEmployee { get; set; }  // ✅ ADICIONADO
+    public Employee? CreatedByEmployee { get; set; }  
 
     // Navegação
     public ICollection<StockMovement>? StockMovements { get; set; }

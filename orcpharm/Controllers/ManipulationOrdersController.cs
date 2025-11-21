@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.Common;
 using DTOs.Pharmacy.ManipulationOrders;
-using DTOs.Pharmacy.Formulas;
 using Models.Pharmacy;
+using DTOs.Formulas;
 
 namespace Controllers;
 

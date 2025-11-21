@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251115165842_ConvertIdsToGuid")]
-    partial class ConvertIdsToGuid
+    [Migration("20251119085040_AddCustomersTable")]
+    partial class AddCustomersTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1495,6 +1495,10 @@ namespace Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApprovedByEmployeeId");
+
+                    b.HasIndex("CreatedByEmployeeId");
 
                     b.HasIndex("ExpiryDate");
 
@@ -3518,6 +3522,16 @@ namespace Migrations
 
             modelBuilder.Entity("Models.Pharmacy.Batch", b =>
                 {
+                    b.HasOne("Models.Employees.Employee", "ApprovedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByEmployeeId");
+
+                    b.HasOne("Models.Employees.Employee", "CreatedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("CreatedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Models.Pharmacy.RawMaterial", "RawMaterial")
                         .WithMany("Batches")
                         .HasForeignKey("RawMaterialId")
@@ -3529,6 +3543,10 @@ namespace Migrations
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("ApprovedByEmployee");
+
+                    b.Navigation("CreatedByEmployee");
 
                     b.Navigation("RawMaterial");
 

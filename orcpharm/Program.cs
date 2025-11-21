@@ -2,6 +2,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Middleware;
+using Models.Pharmacy;
 using Models;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using FluentValidation;
@@ -9,6 +10,9 @@ using FluentValidation.AspNetCore;
 using Service.Purchasing;
 using Service.Auth;
 using Service.Notifications;
+using Service;
+using Service.Formulas;
+using Validators.Formulas;
 using Service.BatchQuality;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,12 +29,43 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
+builder.Services.AddScoped<FormulaService>();
+builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<PrescriptionService>();
+builder.Services.AddScoped<SaleService>();
+builder.Services.AddScoped<SngpcService>();
+builder.Services.AddScoped<LabelService>();
 
 // ADICIONAR DbContext para PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options
-        .UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        // ✅ Retry automático em falhas temporárias
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null
+        );
+
+        // ✅ Timeout maior para comandos
+        npgsqlOptions.CommandTimeout(60);
+
+        npgsqlOptions.MigrationsAssembly("orcpharm");
+    });
+
+    // ✅ Logging em desenvolvimento
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
+    }
+
+    options.ConfigureWarnings(w =>
+        w.Ignore(RelationalEventId.PendingModelChangesWarning));
+});
 
 // HttpClient
 builder.Services.AddHttpClient<WhatsAppService>();
