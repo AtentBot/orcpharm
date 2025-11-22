@@ -28,11 +28,9 @@ public class EmployeeAuthMiddleware
         }
 
         // ==================== 2. ROTAS COM API KEY (sem necessidade de sessão) ====================
-        // Endpoints de recuperação de senha - protegidos apenas com API Key no controller
         if (IsApiKeyOnlyPath(path))
         {
             _logger.LogDebug("Rota protegida apenas com API Key: {Path}", path);
-            // O atributo [RequireApiKey] no controller vai validar a chave
             await _next(context);
             return;
         }
@@ -73,19 +71,35 @@ public class EmployeeAuthMiddleware
     /// </summary>
     private static bool IsPublicPath(string path)
     {
-        // Rotas exatas
+        // ===== ROTAS EXATAS =====
         var exactPublicPaths = new[]
         {
+            "/",
             "/health",
-            "/login",
-            "/home"
+            "/home",
+            "/home/index",
+            "/home/error",
+            "/home/privacy"
         };
 
         if (exactPublicPaths.Contains(path))
             return true;
 
-        // Rotas que começam com (prefix)
-        var publicPrefixes = new[]
+        // ===== ROTAS DE AUTENTICAÇÃO (Views MVC) =====
+        var accountPaths = new[]
+        {
+            "/account/login",
+            "/account/register",
+            "/account/forgotpassword",
+            "/account/resetpassword",
+            "/account/validatecode"
+        };
+
+        if (accountPaths.Any(p => path.StartsWith(p)))
+            return true;
+
+        // ===== ROTAS DE API PÚBLICAS =====
+        var publicApiPrefixes = new[]
         {
             "/swagger",
             "/api/auth/login",
@@ -94,11 +108,16 @@ public class EmployeeAuthMiddleware
             "/api/establishment/login"
         };
 
-        if (publicPrefixes.Any(prefix => path.StartsWith(prefix)))
+        if (publicApiPrefixes.Any(prefix => path.StartsWith(prefix)))
             return true;
 
-        // Arquivos estáticos (extensões)
-        var staticExtensions = new[] { ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".woff", ".woff2", ".ttf" };
+        // ===== ARQUIVOS ESTÁTICOS =====
+        var staticExtensions = new[]
+        {
+            ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".ico",
+            ".svg", ".woff", ".woff2", ".ttf", ".eot", ".map"
+        };
+
         if (staticExtensions.Any(ext => path.EndsWith(ext)))
             return true;
 
@@ -236,7 +255,7 @@ public class EmployeeAuthMiddleware
         else
         {
             // Views web - redirecionar para login
-            context.Response.Redirect("/login");
+            context.Response.Redirect("/Account/Login");
         }
     }
 
@@ -253,7 +272,7 @@ public class EmployeeAuthMiddleware
         else
         {
             // Views web - redirecionar para login
-            context.Response.Redirect("/login");
+            context.Response.Redirect("/Account/Login");
         }
     }
 }

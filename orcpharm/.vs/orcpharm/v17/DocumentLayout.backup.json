@@ -1,7 +1,28 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "E:\\orcpharm\\orcpharm\\orcpharm\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\middleware\\employeeauthmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:middleware\\employeeauthmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\viewmodels\\dashboardviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:viewmodels\\dashboardviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +30,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 6,
           "Children": [
             {
               "$type": "Bookmark",
@@ -18,6 +39,71 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAAJkAAAAAAAAAAAAkwKQAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-22T14:16:06.859Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Dashboardviewmodel.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\ViewModels\\Dashboardviewmodel.cs",
+              "RelativeDocumentMoniker": "ViewModels\\Dashboardviewmodel.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\ViewModels\\Dashboardviewmodel.cs",
+              "RelativeToolTip": "ViewModels\\Dashboardviewmodel.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAA9wBAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-22T14:14:24.677Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\Dashboard\\Index.cshtml",
+              "RelativeDocumentMoniker": "Views\\Dashboard\\Index.cshtml",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\Dashboard\\Index.cshtml",
+              "RelativeToolTip": "Views\\Dashboard\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-11-22T13:59:33.907Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "DashboardController.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\DashboardController.cs",
+              "RelativeDocumentMoniker": "Controllers\\DashboardController.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\DashboardController.cs",
+              "RelativeToolTip": "Controllers\\DashboardController.cs",
+              "ViewState": "AgIAAG8AAAAAAAAAAAAAAHIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-22T13:53:15.831Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "EmployeeAuthMiddleware.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Middleware\\EmployeeAuthMiddleware.cs",
+              "RelativeDocumentMoniker": "Middleware\\EmployeeAuthMiddleware.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Middleware\\EmployeeAuthMiddleware.cs",
+              "RelativeToolTip": "Middleware\\EmployeeAuthMiddleware.cs",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAAABkAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-22T13:52:47.827Z",
+              "EditorCaption": ""
             }
           ]
         }
