@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("orcpharm")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+059b752bc66de4055400b31a5d1e1ad6535acef5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+18e92f3ed4d6a5cbf81027eb73a92556c00d7204")]
 [assembly: System.Reflection.AssemblyProductAttribute("orcpharm")]
 [assembly: System.Reflection.AssemblyTitleAttribute("orcpharm")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -7,6 +7,7 @@ using Models.Pharmacy;
 using Models.Security;
 using Models.Purchasing;
 using Models.Auth;
+using Models.Fiscal;
 using System.Collections.Generic;
 
 namespace Data;
@@ -64,10 +65,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SpecialPrescriptionControl> SpecialPrescriptionControls => Set<SpecialPrescriptionControl>();
     public DbSet<LabelTemplate> LabelTemplates => Set<LabelTemplate>();
     public DbSet<GeneratedLabel> GeneratedLabels => Set<GeneratedLabel>();
+    public DbSet<ManipulationStep> ManipulationSteps { get; set; }
+    public DbSet<ManipulationPhoto> ManipulationPhotos { get; set; }
+    public DbSet<CashRegister> CashRegisters { get; set; }
+    public DbSet<CashMovement> CashMovements { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
 
         // Aplicar configurações
         modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
@@ -288,7 +293,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(s => s.EstablishmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-       
+
 
         // SaleItem -> Sale
         modelBuilder.Entity<SaleItem>()
@@ -297,7 +302,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(si => si.SaleId)
             .OnDelete(DeleteBehavior.Cascade);
 
-       // ManipulationOrder relationships
+        // ManipulationOrder relationships
         modelBuilder.Entity<ManipulationOrder>()
             .HasOne(mo => mo.Establishment)
             .WithMany()
@@ -642,5 +647,54 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // Seed de Permissões básicas do sistema
         SeedPermissions(modelBuilder);
+    }
+    private void ConfigureManipulationWorkflow(ModelBuilder modelBuilder)
+    {
+        // ManipulationStep -> ManipulationOrder
+        modelBuilder.Entity<ManipulationStep>()
+            .HasOne(s => s.ManipulationOrder)
+            .WithMany()
+            .HasForeignKey(s => s.ManipulationOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ManipulationStep -> PerformedByEmployee
+        modelBuilder.Entity<ManipulationStep>()
+            .HasOne(s => s.PerformedByEmployee)
+            .WithMany()
+            .HasForeignKey(s => s.PerformedByEmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ManipulationStep -> CheckedByEmployee
+        modelBuilder.Entity<ManipulationStep>()
+            .HasOne(s => s.CheckedByEmployee)
+            .WithMany()
+            .HasForeignKey(s => s.CheckedByEmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ManipulationPhoto -> ManipulationOrder
+        modelBuilder.Entity<ManipulationPhoto>()
+            .HasOne(p => p.ManipulationOrder)
+            .WithMany()
+            .HasForeignKey(p => p.ManipulationOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ManipulationPhoto -> ManipulationStep
+        modelBuilder.Entity<ManipulationPhoto>()
+            .HasOne(p => p.ManipulationStep)
+            .WithMany(s => s.Photos)
+            .HasForeignKey(p => p.ManipulationStepId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ManipulationPhoto -> CapturedByEmployee
+        modelBuilder.Entity<ManipulationPhoto>()
+            .HasOne(p => p.CapturedByEmployee)
+            .WithMany()
+            .HasForeignKey(p => p.CapturedByEmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configurar coluna JSON para StepData
+        modelBuilder.Entity<ManipulationStep>()
+            .Property(s => s.StepData)
+            .HasColumnType("jsonb");
     }
 }

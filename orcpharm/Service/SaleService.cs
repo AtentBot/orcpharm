@@ -25,7 +25,7 @@ public class SaleService
             // Verificar cliente se informado
             if (dto.CustomerId.HasValue)
             {
-                var customerExists = await _context.Set<Customer>()
+                var customerExists = await _context.Customers
                     .AnyAsync(c => c.Id == dto.CustomerId.Value &&
                                   c.EstablishmentId == establishmentId);
 
@@ -79,7 +79,7 @@ public class SaleService
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.Set<Sale>().Add(sale);
+            _context.Sales.Add(sale);
             await _context.SaveChangesAsync();
 
             // Adicionar itens
@@ -106,7 +106,7 @@ public class SaleService
                     ProfitMargin = 0
                 };
 
-                _context.Set<SaleItem>().Add(item);
+                _context.SaleItems.Add(item);
 
                 // Atualizar status da OM se vinculada
                 if (itemDto.ManipulationOrderId.HasValue)
@@ -124,7 +124,7 @@ public class SaleService
                 // Atualizar status da prescrição se vinculada
                 if (itemDto.PrescriptionId.HasValue)
                 {
-                    var prescription = await _context.Set<Prescription>()
+                    var prescription = await _context.Prescriptions
                         .FirstOrDefaultAsync(p => p.Id == itemDto.PrescriptionId.Value);
 
                     if (prescription != null && prescription.Status == "VALIDADA")
@@ -156,7 +156,7 @@ public class SaleService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var sale = await _context.Set<Sale>()
+            var sale = await _context.Sales
                 .Include(s => s.Items)
                 .FirstOrDefaultAsync(s => s.Id == saleId &&
                                          s.EstablishmentId == establishmentId);
@@ -207,7 +207,7 @@ public class SaleService
         Guid establishmentId,
         DateTime date)
     {
-        var sales = await _context.Set<Sale>()
+        var sales = await _context.Sales
             .Include(s => s.Items)
             .Where(s => s.EstablishmentId == establishmentId &&
                        s.SaleDate.Date == date.Date &&
@@ -242,7 +242,7 @@ public class SaleService
         var month = DateTime.UtcNow.Month;
         var prefix = $"VD{year}{month:D2}";
 
-        var lastSale = await _context.Set<Sale>()
+        var lastSale = await _context.Sales
             .Where(s => s.EstablishmentId == establishmentId &&
                        s.Code.StartsWith(prefix))
             .OrderByDescending(s => s.Code)

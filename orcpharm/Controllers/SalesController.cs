@@ -36,7 +36,7 @@ public class SalesController : ControllerBase
         if (!establishmentId.HasValue)
             return NotFound(new { message = "Estabelecimento não encontrado" });
 
-        var query = _context.Set<Sale>()
+        var query = _context.Sales
             .Where(s => s.EstablishmentId == establishmentId.Value);
 
         if (startDate.HasValue)
@@ -58,7 +58,7 @@ public class SalesController : ControllerBase
                 Id = s.Id,
                 Code = s.Code,
                 CustomerName = s.CustomerId.HasValue ?
-                    _context.Set<Customer>()
+                    _context.Customers
                         .Where(c => c.Id == s.CustomerId.Value)
                         .Select(c => c.FullName)
                         .FirstOrDefault() : "CLIENTE NÃO IDENTIFICADO",
@@ -85,7 +85,7 @@ public class SalesController : ControllerBase
         if (!establishmentId.HasValue)
             return NotFound(new { message = "Estabelecimento não encontrado" });
 
-        var sale = await _context.Set<Sale>()
+        var sale = await _context.Sales
             .Include(s => s.Items)
             .Where(s => s.Id == id && s.EstablishmentId == establishmentId.Value)
             .FirstOrDefaultAsync();
@@ -99,12 +99,12 @@ public class SalesController : ControllerBase
             Code = sale.Code,
             CustomerId = sale.CustomerId,
             CustomerName = sale.CustomerId.HasValue ?
-                await _context.Set<Customer>()
+                await _context.Customers
                     .Where(c => c.Id == sale.CustomerId.Value)
                     .Select(c => c.FullName)
                     .FirstOrDefaultAsync() : "CLIENTE NÃO IDENTIFICADO",
             CustomerCpf = sale.CustomerId.HasValue ?
-                await _context.Set<Customer>()
+                await _context.Customers
                     .Where(c => c.Id == sale.CustomerId.Value)
                     .Select(c => c.Cpf)
                     .FirstOrDefaultAsync() : null,
@@ -246,7 +246,7 @@ public class SalesController : ControllerBase
         var start = startDate ?? DateTime.Today.AddDays(-30);
         var end = endDate ?? DateTime.Today;
 
-        var sales = await _context.Set<Sale>()
+        var sales = await _context.Sales
             .Include(s => s.Items)
             .Where(s => s.EstablishmentId == establishmentId.Value &&
                        s.SaleDate >= start &&
