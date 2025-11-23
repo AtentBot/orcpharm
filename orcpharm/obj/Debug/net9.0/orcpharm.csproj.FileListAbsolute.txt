@@ -214,3 +214,6 @@ E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\refint\orcpharm.dll
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.pdb
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.genruntimeconfig.cache
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\ref\orcpharm.dll
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\ofpng2l96d-mt0ck4zlm8.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\ihzi7qs19a-hn87q3nes3.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\qprnqqqorg-fmw5x5id3m.gz

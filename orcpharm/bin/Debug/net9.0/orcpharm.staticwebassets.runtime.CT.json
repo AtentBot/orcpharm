@@ -8,11 +8,27 @@
     "Children": {
       "css": {
         "Children": {
+          "employees-shared.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/employees-shared.css"
+            },
+            "Patterns": null
+          },
           "site.css": {
             "Children": null,
             "Asset": {
               "ContentRootIndex": 0,
               "SubPath": "css/site.css"
+            },
+            "Patterns": null
+          },
+          "employees-shared.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "ofpng2l96d-mt0ck4zlm8.gz"
             },
             "Patterns": null
           },
@@ -38,11 +54,43 @@
       },
       "js": {
         "Children": {
+          "employees-auth-adapter.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/employees-auth-adapter.js"
+            },
+            "Patterns": null
+          },
+          "employees-shared.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/employees-shared.js"
+            },
+            "Patterns": null
+          },
           "site.js": {
             "Children": null,
             "Asset": {
               "ContentRootIndex": 0,
               "SubPath": "js/site.js"
+            },
+            "Patterns": null
+          },
+          "employees-auth-adapter.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "ihzi7qs19a-hn87q3nes3.gz"
+            },
+            "Patterns": null
+          },
+          "employees-shared.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "qprnqqqorg-fmw5x5id3m.gz"
             },
             "Patterns": null
           },

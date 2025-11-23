@@ -8,6 +8,7 @@ using Models.Security;
 using Models.Purchasing;
 using Models.Auth;
 using Models.Fiscal;
+using Models.Auth;
 using System.Collections.Generic;
 
 namespace Data;
@@ -51,7 +52,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Category> Categories { get; set; }
 
     public DbSet<Models.Auth.PasswordResetToken> PasswordResetTokens { get; set; }
-    public DbSet<Models.Auth.TwoFactorAuth> TwoFactorAuths { get; set; }
+    public DbSet<Models.Auth.TwoFactorToken> TwoFactorAuths { get; set; }
     public DbSet<Models.Auth.LoginAttempt> LoginAttempts { get; set; }
 
     // Purchasing
@@ -178,7 +179,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         });
 
         // TwoFactorAuth
-        modelBuilder.Entity<TwoFactorAuth>(entity =>
+        modelBuilder.Entity<TwoFactorToken>(entity =>
         {
             entity.ToTable("two_factor_auths", "public");
             entity.HasOne(e => e.Employee)

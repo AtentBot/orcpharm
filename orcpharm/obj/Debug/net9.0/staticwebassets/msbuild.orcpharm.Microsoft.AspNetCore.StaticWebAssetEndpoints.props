@@ -1,5 +1,17 @@
 ﻿<Project>
   <ItemGroup>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/employees-shared.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\employees-shared.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-KiMENTZ/Fk5dItRRnvZ1XtKmaQWq3hI3P/CRk5KjbwI="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"13966"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022KiMENTZ/Fk5dItRRnvZ1XtKmaQWq3hI3P/CRk5KjbwI=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:43 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/employees-shared.mt0ck4zlm8.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\employees-shared.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"mt0ck4zlm8"},{"Name":"integrity","Value":"sha256-KiMENTZ/Fk5dItRRnvZ1XtKmaQWq3hI3P/CRk5KjbwI="},{"Name":"label","Value":"_content/orcpharm/css/employees-shared.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"13966"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022KiMENTZ/Fk5dItRRnvZ1XtKmaQWq3hI3P/CRk5KjbwI=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:43 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/css/site.b9sayid5wm.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
@@ -23,6 +35,30 @@
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-Jtxf9L\u002B5ITKRc1gIRl4VbUpGkRNfOBXjYTdhJD4facM="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=3600, must-revalidate"},{"Name":"Content-Length","Value":"5430"},{"Name":"Content-Type","Value":"image/x-icon"},{"Name":"ETag","Value":"\u0022Jtxf9L\u002B5ITKRc1gIRl4VbUpGkRNfOBXjYTdhJD4facM=\u0022"},{"Name":"Last-Modified","Value":"Fri, 07 Nov 2025 19:00:01 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/employees-auth-adapter.hn87q3nes3.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\employees-auth-adapter.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"hn87q3nes3"},{"Name":"integrity","Value":"sha256-c6IWlpFXByPg1ip8lxKxt1pk8NN5J/xpKLIsA/98PZA="},{"Name":"label","Value":"_content/orcpharm/js/employees-auth-adapter.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"11383"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022c6IWlpFXByPg1ip8lxKxt1pk8NN5J/xpKLIsA/98PZA=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:22 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/employees-auth-adapter.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\employees-auth-adapter.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-c6IWlpFXByPg1ip8lxKxt1pk8NN5J/xpKLIsA/98PZA="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"11383"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022c6IWlpFXByPg1ip8lxKxt1pk8NN5J/xpKLIsA/98PZA=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:22 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/employees-shared.fmw5x5id3m.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\employees-shared.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"fmw5x5id3m"},{"Name":"integrity","Value":"sha256-mXY1KZl/ueqVxmq51/oVeW0taadd1YK8HWFcN\u002BNowYo="},{"Name":"label","Value":"_content/orcpharm/js/employees-shared.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"18775"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022mXY1KZl/ueqVxmq51/oVeW0taadd1YK8HWFcN\u002BNowYo=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:24 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/employees-shared.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\employees-shared.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-mXY1KZl/ueqVxmq51/oVeW0taadd1YK8HWFcN\u002BNowYo="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"18775"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022mXY1KZl/ueqVxmq51/oVeW0taadd1YK8HWFcN\u002BNowYo=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:24 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/js/site.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.js'))</AssetFile>

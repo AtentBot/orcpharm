@@ -29,6 +29,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.slim.min.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.slim.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\employees-auth-adapter.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css
@@ -36,10 +37,12 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation-unobtrusive\dist\jqu
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css
+E:\orcpharm\orcpharm\orcpharm\wwwroot\css\employees-shared.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\employees-shared.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css.map
@@ -60,8 +63,11 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\jquery.validate.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\additional-methods.js
+wwwroot\css\employees-shared.css
 wwwroot\css\site.css
 wwwroot\favicon.ico
+wwwroot\js\employees-auth-adapter.js
+wwwroot\js\employees-shared.js
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap.css
 wwwroot\lib\bootstrap\dist\css\bootstrap.css.map

@@ -100,14 +100,10 @@ public class AccountController : Controller
 
     // ==================== REDEFINIR SENHA ====================
     [HttpGet]
-    public IActionResult ResetPassword(string token)
+    public IActionResult ResetPassword(string? identifier = null)
     {
-        if (string.IsNullOrEmpty(token))
-        {
-            return RedirectToAction("Login");
-        }
-
-        ViewBag.Token = token;
+        // Identifier pode vir da URL ou o usuário digita na tela
+        ViewBag.Identifier = identifier;
         return View();
     }
 }

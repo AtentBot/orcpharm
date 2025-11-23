@@ -5,8 +5,9 @@ using Models.Employees;
 using Isopoh.Cryptography.Argon2;
 using Helpers;
 using Microsoft.AspNetCore.Authorization;
+using DTOs.Auth;
 
-namespace Controllers;
+namespace Controllers.Api;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -108,6 +109,16 @@ public class EmployeesController : ControllerBase
 
         _logger.LogInformation("Funcionário {FullName} (ID: {Id}) fez login com sucesso",
             employee.FullName, employee.Id);
+
+        Response.Cookies.Append("SessionId", session.Token, new CookieOptions
+        {
+            HttpOnly = true,              // Proteção contra XSS
+            Secure = Request.IsHttps,     // true apenas em HTTPS
+            SameSite = SameSiteMode.Lax,  // Permite navegação normal
+            Expires = session.ExpiresAt,  // Mesmo tempo da sessão (8h)
+            Path = "/",                   // Válido para todo o site
+            IsEssential = true            // Cookie essencial para funcionamento
+        });
 
         return Ok(new
         {
@@ -551,6 +562,88 @@ public class EmployeesController : ControllerBase
                     }
     }
 
+    [HttpPost("ChangePassword")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        try
+        {
+            // Validações básicas
+            if (string.IsNullOrWhiteSpace(dto.NewPassword))
+                return BadRequest(new { message = "Nova senha é obrigatória" });
+
+            if (dto.NewPassword.Length < 6)
+                return BadRequest(new { message = "A senha deve ter no mínimo 6 caracteres" });
+
+            // Buscar funcionário que terá a senha alterada
+            var targetEmployee = await _db.Employees
+                .Include(e => e.Establishment)
+                .FirstOrDefaultAsync(e => e.Id == dto.EmployeeId);
+
+            if (targetEmployee == null)
+                return NotFound(new { message = "Funcionário não encontrado" });
+
+            // Obter funcionário logado do contexto (do middleware)
+            var currentEmployee = HttpContext.Items["Employee"] as Employee;
+            if (currentEmployee == null)
+                return Unauthorized(new { message = "Usuário não autenticado" });
+
+            // Carregar JobPosition do funcionário logado
+            await _db.Entry(currentEmployee)
+                .Reference(e => e.JobPosition)
+                .LoadAsync();
+
+            // Verificar permissões
+            bool isOwnProfile = currentEmployee.Id == dto.EmployeeId;
+            bool isManager = new[] { "OWNER", "MANAGER" }.Contains(currentEmployee.JobPosition?.Code ?? "");
+
+            // Se não for próprio perfil e não for manager, negar
+            if (!isOwnProfile && !isManager)
+                return Forbid();
+
+            // Se for próprio perfil, validar senha atual
+            if (isOwnProfile)
+            {
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
+                    return BadRequest(new { message = "Senha atual é obrigatória" });
+
+                if (!Argon2.Verify(targetEmployee.PasswordHash, dto.CurrentPassword))
+                    return BadRequest(new { message = "Senha atual incorreta" });
+            }
+
+            // Verificar se é do mesmo estabelecimento
+            if (targetEmployee.EstablishmentId != currentEmployee.EstablishmentId)
+                return Forbid();
+
+            // Gerar novo hash
+            var newHash = Argon2.Hash(dto.NewPassword);
+
+            // Atualizar senha
+            targetEmployee.PasswordHash = newHash;
+            targetEmployee.PasswordCreatedAt = DateTime.UtcNow;
+            targetEmployee.PasswordAlgorithm = "argon2id-v1";
+            targetEmployee.RequirePasswordChange = false;
+            targetEmployee.FailedLoginAttempts = 0;
+            targetEmployee.LockedUntil = null;
+            targetEmployee.UpdatedAt = DateTime.UtcNow;
+            targetEmployee.UpdatedBy = currentEmployee.Id;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Senha do funcionário {TargetId} alterada por {CurrentId}",
+                targetEmployee.Id,
+                currentEmployee.Id
+            );
+
+            return Ok(new { message = "Senha alterada com sucesso" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao alterar senha do funcionário {EmployeeId}", dto.EmployeeId);
+            return StatusCode(500, new { message = "Erro ao alterar senha", details = ex.Message });
+        }
+    }
+
     // ==================== HELPERS ====================
     private string GetDeviceType(string userAgent)
     {
@@ -692,5 +785,11 @@ public class EmployeesController : ControllerBase
         public string? EmergencyContactPhone { get; set; }
 
         public int? DependentsCount { get; set; }
+    }
+    public class ChangePasswordDto
+    {
+        public Guid EmployeeId { get; set; }
+        public string? CurrentPassword { get; set; }
+        public string NewPassword { get; set; } = string.Empty;
     }
 }

@@ -5,12 +5,24 @@
       "PackagePath": "staticwebassets\\orcpharm.kefrm7xlu8.bundle.scp.css"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\employees-shared.css",
+      "PackagePath": "staticwebassets\\css\\employees-shared.css"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\site.css",
       "PackagePath": "staticwebassets\\css\\site.css"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\favicon.ico",
       "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\employees-auth-adapter.js",
+      "PackagePath": "staticwebassets\\js\\employees-auth-adapter.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\employees-shared.js",
+      "PackagePath": "staticwebassets\\js\\employees-shared.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\site.js",

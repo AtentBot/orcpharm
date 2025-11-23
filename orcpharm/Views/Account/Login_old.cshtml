@@ -260,16 +260,14 @@
             btnLoader.classList.remove('d-none');
             
             try {
-                const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
+                const cpf = document.getElementById('cpf').value;
                 const password = document.getElementById('password').value;
                 
-                // ✅ CORRIGIDO: Adicionar credentials: 'include' para enviar/receber cookies
                 const response = await fetch('/api/Employees/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    credentials: 'include', // ✅ CRÍTICO: Necessário para cookies
                     body: JSON.stringify({ cpf, password })
                 });
                 
@@ -277,11 +275,6 @@
                 
                 if (response.ok) {
                     // Login bem-sucedido
-                    console.log('Login successful:', data);
-                    
-                    // ✅ Aguardar um pouco para garantir que cookie foi setado
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
                     if (data.requires2FA) {
                         // Salvar employeeId na sessão e redirecionar para validação
                         sessionStorage.setItem('pendingEmployeeId', data.employeeId);
@@ -292,11 +285,9 @@
                     }
                 } else {
                     // Mostrar erro
-                    console.error('Login failed:', data);
-                    showAlert(data.error || data.message || 'Erro ao fazer login', 'danger');
+                    showAlert(data.error || 'Erro ao fazer login', 'danger');
                 }
             } catch (error) {
-                console.error('Login error:', error);
                 showAlert('Erro de conexão. Tente novamente.', 'danger');
             } finally {
                 // Esconder loading

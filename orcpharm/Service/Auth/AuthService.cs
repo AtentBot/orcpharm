@@ -5,6 +5,7 @@ using Models.Auth;
 using Models.Employees;
 using Service.Notifications;
 using System.Security.Cryptography;
+using Isopoh.Cryptography.Argon2; // ✅ CORRIGIDO: Usar Argon2
 
 namespace Service.Auth;
 
@@ -129,7 +130,6 @@ public class AuthService
         };
     }
 
-    // ✅ MÉTODO CORRIGIDO COM LOGS
     public async Task<(bool Success, string Message)> RequestPasswordResetAsync(RequestPasswordResetDto dto)
     {
         Console.WriteLine($"🔵 [RequestPasswordResetAsync] INICIANDO para: {dto.Identifier}");
@@ -146,7 +146,6 @@ public class AuthService
 
         Console.WriteLine($"✅ [RequestPasswordResetAsync] Employee: {employee.Id}, WhatsApp: '{employee.WhatsApp}'");
 
-        // ✅ Rate limit FORA do try-catch
         var recentTokens = await _context.PasswordResetTokens
             .Where(t => t.EmployeeId == employee.Id &&
                        t.CreatedAt > DateTime.UtcNow.AddHours(-1))
@@ -182,18 +181,9 @@ public class AuthService
 
             Console.WriteLine($"✅ [RequestPasswordResetAsync] Token salvo no banco");
 
-            // ✅ VERIFICAR CONDIÇÕES
-            Console.WriteLine($"🔍 [RequestPasswordResetAsync] Verificando condições:");
-            Console.WriteLine($"   - Method: '{dto.Method}' (Upper: '{dto.Method.ToUpper()}')");
-            Console.WriteLine($"   - Employee.WhatsApp: '{employee.WhatsApp ?? "NULL"}'");
-            Console.WriteLine($"   - IsNullOrEmpty: {string.IsNullOrEmpty(employee.WhatsApp)}");
-
             if (dto.Method.ToUpper() == "WHATSAPP" && !string.IsNullOrEmpty(employee.WhatsApp))
             {
                 Console.WriteLine($"📱 [RequestPasswordResetAsync] CONDIÇÕES OK! Enviando WhatsApp...");
-                Console.WriteLine($"   - Telefone: {employee.WhatsApp}");
-                Console.WriteLine($"   - Nome: {employee.FullName}");
-                Console.WriteLine($"   - Código: {code}");
 
                 var (whatsappSuccess, whatsappMessage) = await _whatsAppService.SendPasswordResetCodeAsync(
                     employee.WhatsApp,
@@ -213,27 +203,13 @@ public class AuthService
 
                 Console.WriteLine($"✅ [RequestPasswordResetAsync] WhatsApp ENVIADO COM SUCESSO!");
             }
-            else
-            {
-                Console.WriteLine($"⚠️ [RequestPasswordResetAsync] WhatsApp NÃO FOI ENVIADO!");
-                Console.WriteLine($"   - Condição falhou!");
-            }
 
             return (true, "Código de recuperação enviado");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ [RequestPasswordResetAsync] EXCEPTION:");
-            Console.WriteLine($"   Type: {ex.GetType().Name}");
-            Console.WriteLine($"   Message: {ex.Message}");
-            Console.WriteLine($"   StackTrace: {ex.StackTrace}");
-
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"   InnerException: {ex.InnerException.Message}");
-            }
-
-            return (false, "Erro ao processar recuperação de senha. Tente novamente.");
+            Console.WriteLine($"❌ [RequestPasswordResetAsync] EXCEPTION: {ex.Message}");
+            return (false, $"Erro ao processar solicitação: {ex.Message}");
         }
     }
 
@@ -255,7 +231,7 @@ public class AuthService
         if (token == null)
             return (false, "Código inválido ou expirado");
 
-        return (true, "Código válido");
+        return (true, "Código verificado com sucesso");
     }
 
     public async Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDto dto)
@@ -276,6 +252,7 @@ public class AuthService
         if (token == null)
             return (false, "Código inválido ou expirado");
 
+        // ✅ CORRIGIDO: Usar Argon2 em vez de BCrypt
         employee.PasswordHash = HashPassword(dto.NewPassword);
         employee.UpdatedAt = DateTime.UtcNow;
 
@@ -305,6 +282,7 @@ public class AuthService
         if (!VerifyPassword(dto.CurrentPassword, employee.PasswordHash))
             return (false, "Senha atual incorreta");
 
+        // ✅ CORRIGIDO: Usar Argon2
         employee.PasswordHash = HashPassword(dto.NewPassword);
         employee.UpdatedAt = DateTime.UtcNow;
 
@@ -325,71 +303,66 @@ public class AuthService
     public async Task<(bool Success, string Message)> Create2FACodeAsync(Guid employeeId, string purpose, string? ipAddress, string? userAgent)
     {
         var employee = await _context.Employees.FindAsync(employeeId);
-        if (employee == null)
-            return (false, "Funcionário não encontrado");
-
-        if (string.IsNullOrEmpty(employee.WhatsApp))
-            return (false, "WhatsApp não cadastrado");
+        if (employee == null || string.IsNullOrEmpty(employee.WhatsApp))
+            return (false, "Funcionário não possui WhatsApp cadastrado");
 
         var code = GenerateNumericCode(6);
 
-        var twoFA = new TwoFactorAuth
+        var token = new TwoFactorToken
         {
             EmployeeId = employeeId,
             Code = code,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
             Purpose = purpose,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
             IpAddress = ipAddress,
             UserAgent = userAgent,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.TwoFactorAuths.Add(twoFA);
+        _context.TwoFactorAuths.Add(token);
         await _context.SaveChangesAsync();
 
-        await _whatsAppService.Send2FACodeAsync(employee.WhatsApp, code, purpose);
+        var (success, message) = await _whatsAppService.Send2FACodeAsync(employee.WhatsApp, code, purpose);
 
-        return (true, "Código enviado via WhatsApp");
+        return success
+            ? (true, "Código enviado com sucesso")
+            : (false, $"Erro ao enviar código: {message}");
     }
 
-    public async Task<(bool Success, string Message, string? SessionId)> Verify2FAAsync(Guid employeeId, Verify2FADto dto, string ipAddress, string? userAgent)
+    public async Task<(bool Success, string Message, string? SessionId)> Verify2FAAsync(
+        Guid employeeId, Verify2FADto dto, string ipAddress, string? userAgent)
     {
-        var twoFA = await _context.TwoFactorAuths
+        var employee = await _context.Employees
+            .Include(e => e.JobPosition)
+            .Include(e => e.Establishment)
+            .FirstOrDefaultAsync(e => e.Id == employeeId);
+
+        if (employee == null)
+            return (false, "Funcionário não encontrado", null);
+
+        var token = await _context.TwoFactorAuths
             .Where(t => t.EmployeeId == employeeId &&
                        t.Code == dto.Code &&
                        t.Purpose == dto.Purpose &&
-                       !t.IsVerified &&
+                       !t.IsUsed &&
                        t.ExpiresAt > DateTime.UtcNow)
             .FirstOrDefaultAsync();
 
-        if (twoFA == null)
-        {
-            var existingCode = await _context.TwoFactorAuths
-                .Where(t => t.EmployeeId == employeeId &&
-                           t.Code == dto.Code &&
-                           t.Purpose == dto.Purpose)
-                .FirstOrDefaultAsync();
-
-            if (existingCode != null)
-            {
-                existingCode.Attempts++;
-                await _context.SaveChangesAsync();
-            }
-
+        if (token == null)
             return (false, "Código inválido ou expirado", null);
-        }
 
-        twoFA.IsVerified = true;
-        twoFA.VerifiedAt = DateTime.UtcNow;
+        token.IsUsed = true;
+        token.UsedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
 
         if (dto.Purpose == "LOGIN")
         {
-            var sessionToken = await CreateSessionAsync(employeeId, false, ipAddress, userAgent);
-            return (true, "Código verificado com sucesso", sessionToken);
+            var sessionToken = await CreateSessionAsync(employee.Id, false, ipAddress, userAgent);
+            return (true, "Autenticação 2FA bem-sucedida", sessionToken);
         }
 
-        return (true, "Código verificado com sucesso", null);
+        return (true, "Código 2FA verificado com sucesso", null);
     }
 
     private async Task<bool> Check2FARequired(Guid employeeId)
@@ -398,16 +371,14 @@ public class AuthService
             .Include(e => e.JobPosition)
             .FirstOrDefaultAsync(e => e.Id == employeeId);
 
-        if (employee?.JobPosition == null)
+        if (employee == null)
             return false;
 
-        var requires2FA = new[] { "FARMACEUTICO_RT", "GERENTE" }
-            .Contains(employee.JobPosition.Code, StringComparer.OrdinalIgnoreCase);
-
-        return requires2FA;
+        var requiresCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST" };
+        return requiresCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
-    private async Task<string> CreateSessionAsync(Guid employeeId, bool rememberMe, string ipAddress, string? userAgent)
+    private async Task<string> CreateSessionAsync(Guid employeeId, bool rememberMe, string? ipAddress, string? userAgent)
     {
         var sessionToken = GenerateSecureToken();
         var expiresAt = rememberMe
@@ -431,14 +402,32 @@ public class AuthService
         return sessionToken;
     }
 
+    // ✅ CORRIGIDO: Usar Argon2 em vez de BCrypt
     private string HashPassword(string password)
     {
-        return BCrypt.Net.BCrypt.HashPassword(password, 12);
+        return Argon2.Hash(password);
     }
 
+    // ✅ CORRIGIDO: Verificar com Argon2 (com fallback para BCrypt para senhas antigas)
     private bool VerifyPassword(string password, string hash)
     {
-        return BCrypt.Net.BCrypt.Verify(password, hash);
+        try
+        {
+            // Tentar Argon2 primeiro (padrão atual)
+            return Argon2.Verify(hash, password);
+        }
+        catch
+        {
+            // Fallback para BCrypt (para senhas antigas que ainda não foram migradas)
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(password, hash);
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     private string GenerateNumericCode(int length)

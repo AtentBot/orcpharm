@@ -35,6 +35,7 @@
   <ItemGroup>
     <Folder Include="Views\Account\" />
     <Folder Include="Views\Dashboard\" />
+    <Folder Include="Views\Employees\" />
   </ItemGroup>
 
 </Project>

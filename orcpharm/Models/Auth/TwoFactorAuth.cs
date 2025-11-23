@@ -1,16 +1,20 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models.Employees;
 
 namespace Models.Auth;
 
-public class TwoFactorAuth
+/// <summary>
+/// Token de autenticação de dois fatores
+/// RENOMEADO DE: TwoFactorAuth → TwoFactorToken
+/// </summary>
+public class TwoFactorToken
 {
     [Key]
     public int Id { get; set; }
 
     [Required]
-    public Guid EmployeeId { get; set; }  // ? MUDOU DE int PARA Guid
+    public Guid EmployeeId { get; set; }
 
     [ForeignKey(nameof(EmployeeId))]
     public Employee? Employee { get; set; }
@@ -22,9 +26,12 @@ public class TwoFactorAuth
     [Required]
     public DateTime ExpiresAt { get; set; }
 
-    public bool IsVerified { get; set; }
+    // ✅ CAMPOS COMBINADOS de ambas as classes
+    public bool IsUsed { get; set; }  // ← Usado pelo AuthService
+    public DateTime? UsedAt { get; set; }  // ← Usado pelo AuthService
 
-    public DateTime? VerifiedAt { get; set; }
+    public bool IsVerified { get; set; }  // ← Mantido da versão antiga
+    public DateTime? VerifiedAt { get; set; }  // ← Mantido da versão antiga
 
     [Required]
     [StringLength(50)]
@@ -36,7 +43,7 @@ public class TwoFactorAuth
     [StringLength(200)]
     public string? UserAgent { get; set; }
 
-    public int Attempts { get; set; }
+    public int Attempts { get; set; }  // ← Mantido da versão antiga
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
