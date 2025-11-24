@@ -202,7 +202,7 @@ public class EmployeesController : Controller
         }
 
         // Apenas OWNER e MANAGER podem acessar
-        var allowedCodes = new[] { "OWNER", "MANAGER" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER" };
         var jobPositionCode = employee.JobPosition?.Code ?? "";
 
         if (!allowedCodes.Contains(jobPositionCode))
@@ -290,7 +290,7 @@ public class EmployeesController : Controller
     /// </summary>
     private bool CanManageEmployees(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER" };
         var jobPositionCode = employee.JobPosition?.Code ?? "";
         return allowedCodes.Contains(jobPositionCode);
     }
@@ -300,7 +300,7 @@ public class EmployeesController : Controller
     /// </summary>
     private bool CanViewReports(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "pharmacist_rt", "SUPERVISOR" };
         var jobPositionCode = employee.JobPosition?.Code ?? "";
         return allowedCodes.Contains(jobPositionCode);
     }
@@ -310,7 +310,7 @@ public class EmployeesController : Controller
     /// </summary>
     private bool CanManageInventory(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "pharmacist_rt", "SUPERVISOR", "STOCK_CONTROLLER" };
         var jobPositionCode = employee.JobPosition?.Code ?? "";
         return allowedCodes.Contains(jobPositionCode);
     }
@@ -320,7 +320,7 @@ public class EmployeesController : Controller
     /// </summary>
     private bool CanManageFormulas(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "pharmacist_rt", "PHARMACIST" };
         var jobPositionCode = employee.JobPosition?.Code ?? "";
         return allowedCodes.Contains(jobPositionCode);
     }
@@ -330,7 +330,7 @@ public class EmployeesController : Controller
     /// </summary>
     private bool CanManagePurchases(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "PURCHASER" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "pharmacist_rt", "SUPERVISOR", "PURCHASER" };
         var jobPositionCode = employee.JobPosition?.Code ?? "";
         return allowedCodes.Contains(jobPositionCode);
     }

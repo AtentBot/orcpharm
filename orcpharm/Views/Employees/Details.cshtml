@@ -493,12 +493,18 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadEmployee() {
     try {
         const response = await fetch(`/api/Employees/${employeeId}`, {
+            method: 'GET',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Content-Type': 'application/json'
             }
         });
         
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/Account/Login';
+                return;
+            }
             throw new Error('Funcionário não encontrado');
         }
         

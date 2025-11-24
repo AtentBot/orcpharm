@@ -41,108 +41,108 @@ public class EmployeesController : ControllerBase
                 .Include(e => e.Establishment)
                 .Include(e => e.JobPosition)
                 .FirstOrDefaultAsync(e => e.Cpf == cpf);
-       
 
-        if (employee == null)
-            return Unauthorized(new { error = "Credenciais inválidas" });
 
-        // Verificar status do funcionário
-        if (employee.Status != "Ativo")
-            return Unauthorized(new { error = $"Funcionário {employee.Status.ToLower()}" });
+            if (employee == null)
+                return Unauthorized(new { error = "Credenciais inválidas" });
 
-        // Verificar se está bloqueado
-        if (employee.LockedUntil.HasValue && employee.LockedUntil.Value > DateTime.UtcNow)
-        {
-            var remainingMinutes = (employee.LockedUntil.Value - DateTime.UtcNow).TotalMinutes;
-            return Unauthorized(new { error = $"Conta bloqueada. Tente novamente em {Math.Ceiling(remainingMinutes)} minutos" });
-        }
+            // Verificar status do funcionário
+            if (employee.Status != "Ativo")
+                return Unauthorized(new { error = $"Funcionário {employee.Status.ToLower()}" });
 
-        // Verificar senha
-        if (!Argon2.Verify(employee.PasswordHash, dto.Password))
-        {
-            // Incrementar tentativas falhas
-            employee.FailedLoginAttempts++;
-
-            if (employee.FailedLoginAttempts >= 5)
+            // Verificar se está bloqueado
+            if (employee.LockedUntil.HasValue && employee.LockedUntil.Value > DateTime.UtcNow)
             {
-                employee.LockedUntil = DateTime.UtcNow.AddMinutes(30);
-                await _db.SaveChangesAsync();
-                return Unauthorized(new { error = "Conta bloqueada por 30 minutos devido a múltiplas tentativas falhas" });
+                var remainingMinutes = (employee.LockedUntil.Value - DateTime.UtcNow).TotalMinutes;
+                return Unauthorized(new { error = $"Conta bloqueada. Tente novamente em {Math.Ceiling(remainingMinutes)} minutos" });
             }
 
-            await _db.SaveChangesAsync();
-            return Unauthorized(new { error = "Credenciais inválidas" });
-        }
-
-        // Verificar se estabelecimento está ativo
-        if (!employee.Establishment!.IsActive)
-            return Unauthorized(new { error = "Estabelecimento inativo" });
-
-        // Resetar tentativas falhas
-        employee.FailedLoginAttempts = 0;
-        employee.LockedUntil = null;
-
-        // Criar sessão
-        var session = new EmployeeSession
-        {
-            Id = Guid.NewGuid(),
-            EmployeeId = employee.Id,
-            Token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48))
-                .Replace('+', '-')
-                .Replace('/', '_')
-                .TrimEnd('='),
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-            UserAgent = Request.Headers["User-Agent"].ToString(),
-            DeviceType = GetDeviceType(Request.Headers["User-Agent"].ToString()),
-            Browser = GetBrowser(Request.Headers["User-Agent"].ToString()),
-            CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddHours(8),
-            LastActivityAt = DateTime.UtcNow,
-            IsActive = true,
-            RequiresTwoFactor = employee.TwoFactorEnabled,
-            TwoFactorVerified = !employee.TwoFactorEnabled, // Se não tem 2FA, já está verificado
-            SessionName = $"{GetBrowser(Request.Headers["User-Agent"].ToString())} - {employee.City}/{employee.State}"
-        };
-
-        _db.EmployeeSessions.Add(session);
-        await _db.SaveChangesAsync();
-
-        _logger.LogInformation("Funcionário {FullName} (ID: {Id}) fez login com sucesso",
-            employee.FullName, employee.Id);
-
-        Response.Cookies.Append("SessionId", session.Token, new CookieOptions
-        {
-            HttpOnly = true,              // Proteção contra XSS
-            Secure = Request.IsHttps,     // true apenas em HTTPS
-            SameSite = SameSiteMode.Lax,  // Permite navegação normal
-            Expires = session.ExpiresAt,  // Mesmo tempo da sessão (8h)
-            Path = "/",                   // Válido para todo o site
-            IsEssential = true            // Cookie essencial para funcionamento
-        });
-
-        return Ok(new
-        {
-            token = session.Token,
-            expiresAt = session.ExpiresAt,
-            requiresPasswordChange = employee.RequirePasswordChange,
-            requiresTwoFactor = employee.TwoFactorEnabled && !session.TwoFactorVerified,
-            employee = new
+            // Verificar senha
+            if (!Argon2.Verify(employee.PasswordHash, dto.Password))
             {
-                id = employee.Id,
-                fullName = employee.FullName,
-                socialName = employee.SocialName,
-                email = employee.Email,
-                jobPosition = employee.JobPosition?.Name,
-                jobPositionCode = employee.JobPosition?.Code,
-                hierarchyLevel = employee.JobPosition?.HierarchyLevel,
-                establishment = new
+                // Incrementar tentativas falhas
+                employee.FailedLoginAttempts++;
+
+                if (employee.FailedLoginAttempts >= 5)
                 {
-                    id = employee.Establishment.Id,
-                    name = employee.Establishment.NomeFantasia,
-                    cnpj = employee.Establishment.Cnpj
+                    employee.LockedUntil = DateTime.UtcNow.AddMinutes(30);
+                    await _db.SaveChangesAsync();
+                    return Unauthorized(new { error = "Conta bloqueada por 30 minutos devido a múltiplas tentativas falhas" });
                 }
+
+                await _db.SaveChangesAsync();
+                return Unauthorized(new { error = "Credenciais inválidas" });
             }
-        });
+
+            // Verificar se estabelecimento está ativo
+            if (!employee.Establishment!.IsActive)
+                return Unauthorized(new { error = "Estabelecimento inativo" });
+
+            // Resetar tentativas falhas
+            employee.FailedLoginAttempts = 0;
+            employee.LockedUntil = null;
+
+            // Criar sessão
+            var session = new EmployeeSession
+            {
+                Id = Guid.NewGuid(),
+                EmployeeId = employee.Id,
+                Token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48))
+                    .Replace('+', '-')
+                    .Replace('/', '_')
+                    .TrimEnd('='),
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = Request.Headers["User-Agent"].ToString(),
+                DeviceType = GetDeviceType(Request.Headers["User-Agent"].ToString()),
+                Browser = GetBrowser(Request.Headers["User-Agent"].ToString()),
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddHours(8),
+                LastActivityAt = DateTime.UtcNow,
+                IsActive = true,
+                RequiresTwoFactor = employee.TwoFactorEnabled,
+                TwoFactorVerified = !employee.TwoFactorEnabled, // Se não tem 2FA, já está verificado
+                SessionName = $"{GetBrowser(Request.Headers["User-Agent"].ToString())} - {employee.City}/{employee.State}"
+            };
+
+            _db.EmployeeSessions.Add(session);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Funcionário {FullName} (ID: {Id}) fez login com sucesso",
+                employee.FullName, employee.Id);
+
+            Response.Cookies.Append("SessionId", session.Token, new CookieOptions
+            {
+                HttpOnly = true,              // Proteção contra XSS
+                Secure = Request.IsHttps,     // true apenas em HTTPS
+                SameSite = SameSiteMode.Lax,  // Permite navegação normal
+                Expires = session.ExpiresAt,  // Mesmo tempo da sessão (8h)
+                Path = "/",                   // Válido para todo o site
+                IsEssential = true            // Cookie essencial para funcionamento
+            });
+
+            return Ok(new
+            {
+                token = session.Token,
+                expiresAt = session.ExpiresAt,
+                requiresPasswordChange = employee.RequirePasswordChange,
+                requiresTwoFactor = employee.TwoFactorEnabled && !session.TwoFactorVerified,
+                employee = new
+                {
+                    id = employee.Id,
+                    fullName = employee.FullName,
+                    socialName = employee.SocialName,
+                    email = employee.Email,
+                    jobPosition = employee.JobPosition?.Name,
+                    jobPositionCode = employee.JobPosition?.Code,
+                    hierarchyLevel = employee.JobPosition?.HierarchyLevel,
+                    establishment = new
+                    {
+                        id = employee.Establishment.Id,
+                        name = employee.Establishment.NomeFantasia,
+                        cnpj = employee.Establishment.Cnpj
+                    }
+                }
+            });
 
         }
         catch (DbUpdateException dbEx)
@@ -396,6 +396,22 @@ public class EmployeesController : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50)
     {
+        // Verificar autenticação via middleware
+        var authenticatedEmployee = HttpContext.Items["Employee"] as Employee;
+        if (authenticatedEmployee == null)
+        {
+            return Unauthorized(new { error = "Não autenticado" });
+        }
+
+        // Verificar permissões (apenas OWNER e GENERAL_MANAGER podem listar todos)
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER" };
+        var jobPositionCode = authenticatedEmployee.JobPosition?.Code ?? "";
+
+        if (!allowedCodes.Contains(jobPositionCode))
+        {
+            return Forbid(); // 403 Forbidden
+        }
+
         var query = _db.Employees
             .Include(e => e.Establishment)
             .Include(e => e.JobPosition)
@@ -553,13 +569,13 @@ public class EmployeesController : ControllerBase
                 ""FailedLoginAttempts"" = 0,
                 ""LockedUntil"" = NULL
             WHERE ""Cpf"" = 'CPF_AQUI';"
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Erro ao gerar hash de senha");
-                        return StatusCode(500, new { error = "Erro ao gerar hash", details = ex.Message });
-                    }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao gerar hash de senha");
+            return StatusCode(500, new { error = "Erro ao gerar hash", details = ex.Message });
+        }
     }
 
     [HttpPost("ChangePassword")]
@@ -644,6 +660,317 @@ public class EmployeesController : ControllerBase
         }
     }
 
+    [ApiController]
+    [Route("api/[controller]")]
+    public class JobPositionsController : ControllerBase
+    {
+        private readonly AppDbContext _db;
+        private readonly ILogger<JobPositionsController> _logger;
+
+        public JobPositionsController(AppDbContext db, ILogger<JobPositionsController> logger)
+        {
+            _db = db;
+            _logger = logger;
+        }
+
+        // ==================== GET: CARGOS POR ESTABELECIMENTO ====================
+        /// <summary>
+        /// GET: /api/JobPositions/establishment/{establishmentId}
+        /// Retorna todos os cargos ativos de um estabelecimento específico
+        /// </summary>
+        [HttpGet("establishment/{establishmentId}")]
+        public async Task<IActionResult> GetByEstablishment(Guid establishmentId)
+        {
+            try
+            {
+                _logger.LogInformation("Buscando cargos para estabelecimento {EstablishmentId}", establishmentId);
+
+                var jobPositions = await _db.JobPositions
+                    .Where(jp => jp.EstablishmentId == establishmentId && jp.IsActive)
+                    .OrderBy(jp => jp.HierarchyLevel)
+                    .ThenBy(jp => jp.Name)
+                    .Select(jp => new
+                    {
+                        id = jp.Id,
+                        code = jp.Code,
+                        name = jp.Name,
+                        description = jp.Description,
+                        hierarchyLevel = jp.HierarchyLevel,
+                        requiresCertification = jp.RequiresCertification,
+                        requiredCertification = jp.RequiredCertification,
+                        requiredEducation = jp.RequiredEducation,
+                        suggestedSalaryMin = jp.SuggestedSalaryMin,
+                        suggestedSalaryMax = jp.SuggestedSalaryMax,
+                        responsibilities = jp.Responsibilities,
+                        isSystemDefault = jp.IsSystemDefault
+                    })
+                    .ToListAsync();
+
+                if (!jobPositions.Any())
+                {
+                    _logger.LogWarning("Nenhum cargo encontrado para estabelecimento {EstablishmentId}", establishmentId);
+                    return Ok(new { data = new List<object>(), message = "Nenhum cargo cadastrado. Por favor, cadastre os cargos primeiro." });
+                }
+
+                _logger.LogInformation("Retornando {Count} cargos para estabelecimento {EstablishmentId}",
+                    jobPositions.Count, establishmentId);
+
+                return Ok(new { data = jobPositions });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar cargos do estabelecimento {EstablishmentId}", establishmentId);
+                return StatusCode(500, new { error = "Erro ao buscar cargos", details = ex.Message });
+            }
+        }
+
+        // ==================== GET: TODOS OS CARGOS ====================
+        /// <summary>
+        /// GET: /api/JobPositions
+        /// Retorna todos os cargos ativos
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            try
+            {
+                var jobPositions = await _db.JobPositions
+                    .Where(jp => jp.IsActive)
+                    .OrderBy(jp => jp.HierarchyLevel)
+                    .ThenBy(jp => jp.Name)
+                    .Select(jp => new
+                    {
+                        id = jp.Id,
+                        code = jp.Code,
+                        name = jp.Name,
+                        description = jp.Description,
+                        hierarchyLevel = jp.HierarchyLevel,
+                        establishmentId = jp.EstablishmentId,
+                        requiresCertification = jp.RequiresCertification,
+                        requiredCertification = jp.RequiredCertification,
+                        requiredEducation = jp.RequiredEducation,
+                        suggestedSalaryMin = jp.SuggestedSalaryMin,
+                        suggestedSalaryMax = jp.SuggestedSalaryMax
+                    })
+                    .ToListAsync();
+
+                return Ok(new { data = jobPositions });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar todos os cargos");
+                return StatusCode(500, new { error = "Erro ao buscar cargos", details = ex.Message });
+            }
+        }
+
+        // ==================== GET: CARGO POR ID ====================
+        /// <summary>
+        /// GET: /api/JobPositions/{id}
+        /// Retorna um cargo específico por ID
+        /// </summary>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            try
+            {
+                var jobPosition = await _db.JobPositions
+                    .Where(jp => jp.Id == id)
+                    .Select(jp => new
+                    {
+                        id = jp.Id,
+                        code = jp.Code,
+                        name = jp.Name,
+                        description = jp.Description,
+                        hierarchyLevel = jp.HierarchyLevel,
+                        establishmentId = jp.EstablishmentId,
+                        requiresCertification = jp.RequiresCertification,
+                        requiredCertification = jp.RequiredCertification,
+                        requiredEducation = jp.RequiredEducation,
+                        responsibilities = jp.Responsibilities,
+                        suggestedSalaryMin = jp.SuggestedSalaryMin,
+                        suggestedSalaryMax = jp.SuggestedSalaryMax,
+                        salaryType = jp.SalaryType,
+                        isActive = jp.IsActive,
+                        isSystemDefault = jp.IsSystemDefault
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (jobPosition == null)
+                {
+                    return NotFound(new { error = "Cargo não encontrado" });
+                }
+
+                return Ok(jobPosition);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao buscar cargo {JobPositionId}", id);
+                return StatusCode(500, new { error = "Erro ao buscar cargo", details = ex.Message });
+            }
+        }
+
+        // ==================== POST: CRIAR CARGO ====================
+        /// <summary>
+        /// POST: /api/JobPositions
+        /// Cria um novo cargo
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateJobPositionDto dto)
+        {
+            try
+            {
+                // Validar se o estabelecimento existe
+                var establishmentExists = await _db.Establishments
+                    .AnyAsync(e => e.Id == dto.EstablishmentId);
+
+                if (!establishmentExists)
+                {
+                    return BadRequest(new { error = "Estabelecimento não encontrado" });
+                }
+
+                // Verificar se já existe um cargo com o mesmo Code no estabelecimento
+                var codeExists = await _db.JobPositions
+                    .AnyAsync(jp => jp.EstablishmentId == dto.EstablishmentId &&
+                                   jp.Code == dto.Code);
+
+                if (codeExists)
+                {
+                    return BadRequest(new { error = "Já existe um cargo com este código neste estabelecimento" });
+                }
+
+                var jobPosition = new JobPosition
+                {
+                    Id = Guid.NewGuid(),
+                    EstablishmentId = dto.EstablishmentId,
+                    Code = dto.Code,
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    HierarchyLevel = dto.HierarchyLevel,
+                    RequiresCertification = dto.RequiresCertification,
+                    RequiredCertification = dto.RequiredCertification,
+                    RequiredEducation = dto.RequiredEducation,
+                    Responsibilities = dto.Responsibilities,
+                    SuggestedSalaryMin = dto.SuggestedSalaryMin,
+                    SuggestedSalaryMax = dto.SuggestedSalaryMax,
+                    SalaryType = dto.SalaryType ?? "MENSAL",
+                    IsActive = true,
+                    IsSystemDefault = false,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _db.JobPositions.Add(jobPosition);
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Cargo {Code} criado com sucesso (ID: {Id})", jobPosition.Code, jobPosition.Id);
+
+                return CreatedAtAction(nameof(GetById), new { id = jobPosition.Id }, new
+                {
+                    id = jobPosition.Id,
+                    code = jobPosition.Code,
+                    name = jobPosition.Name,
+                    message = "Cargo criado com sucesso"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao criar cargo");
+                return StatusCode(500, new { error = "Erro ao criar cargo", details = ex.Message });
+            }
+        }
+
+        // ==================== PUT: ATUALIZAR CARGO ====================
+        /// <summary>
+        /// PUT: /api/JobPositions/{id}
+        /// Atualiza um cargo existente
+        /// </summary>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateJobPositionDto dto)
+        {
+            try
+            {
+                var jobPosition = await _db.JobPositions.FindAsync(id);
+
+                if (jobPosition == null)
+                {
+                    return NotFound(new { error = "Cargo não encontrado" });
+                }
+
+                // Atualizar campos
+                jobPosition.Name = dto.Name ?? jobPosition.Name;
+                jobPosition.Description = dto.Description ?? jobPosition.Description;
+                jobPosition.RequiredEducation = dto.RequiredEducation ?? jobPosition.RequiredEducation;
+                jobPosition.Responsibilities = dto.Responsibilities ?? jobPosition.Responsibilities;
+                jobPosition.SuggestedSalaryMin = dto.SuggestedSalaryMin ?? jobPosition.SuggestedSalaryMin;
+                jobPosition.SuggestedSalaryMax = dto.SuggestedSalaryMax ?? jobPosition.SuggestedSalaryMax;
+
+                if (dto.RequiresCertification.HasValue)
+                    jobPosition.RequiresCertification = dto.RequiresCertification.Value;
+
+                if (dto.RequiredCertification != null)
+                    jobPosition.RequiredCertification = dto.RequiredCertification;
+
+                if (dto.IsActive.HasValue)
+                    jobPosition.IsActive = dto.IsActive.Value;
+
+                jobPosition.UpdatedAt = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Cargo {Code} atualizado com sucesso (ID: {Id})", jobPosition.Code, jobPosition.Id);
+
+                return Ok(new { message = "Cargo atualizado com sucesso", id = jobPosition.Id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao atualizar cargo {JobPositionId}", id);
+                return StatusCode(500, new { error = "Erro ao atualizar cargo", details = ex.Message });
+            }
+        }
+
+        // ==================== DELETE: DESATIVAR CARGO ====================
+        /// <summary>
+        /// DELETE: /api/JobPositions/{id}
+        /// Desativa um cargo (soft delete)
+        /// </summary>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var jobPosition = await _db.JobPositions.FindAsync(id);
+
+                if (jobPosition == null)
+                {
+                    return NotFound(new { error = "Cargo não encontrado" });
+                }
+
+                // Verificar se há funcionários com este cargo
+                var hasEmployees = await _db.Employees
+                    .AnyAsync(e => e.JobPositionId == id);
+
+                if (hasEmployees)
+                {
+                    return BadRequest(new { error = "Não é possível desativar este cargo pois há funcionários ativos vinculados a ele" });
+                }
+
+                jobPosition.IsActive = false;
+                jobPosition.UpdatedAt = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Cargo {Code} desativado com sucesso (ID: {Id})", jobPosition.Code, jobPosition.Id);
+
+                return Ok(new { message = "Cargo desativado com sucesso" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao desativar cargo {JobPositionId}", id);
+                return StatusCode(500, new { error = "Erro ao desativar cargo", details = ex.Message });
+            }
+        }
+    }
+
     // ==================== HELPERS ====================
     private string GetDeviceType(string userAgent)
     {
@@ -670,6 +997,35 @@ public class EmployeesController : ControllerBase
     }
 
     // ==================== DTOs ====================
+    public class CreateJobPositionDto
+    {
+        public Guid EstablishmentId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int HierarchyLevel { get; set; }
+        public bool RequiresCertification { get; set; }
+        public string? RequiredCertification { get; set; }
+        public string? RequiredEducation { get; set; }
+        public string? Responsibilities { get; set; }
+        public decimal? SuggestedSalaryMin { get; set; }
+        public decimal? SuggestedSalaryMax { get; set; }
+        public string? SalaryType { get; set; }
+    }
+
+    public class UpdateJobPositionDto
+    {
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public bool? RequiresCertification { get; set; }
+        public string? RequiredCertification { get; set; }
+        public string? RequiredEducation { get; set; }
+        public string? Responsibilities { get; set; }
+        public decimal? SuggestedSalaryMin { get; set; }
+        public decimal? SuggestedSalaryMax { get; set; }
+        public bool? IsActive { get; set; }
+    }
+
     public class LoginDto
     {
         public string Cpf { get; set; } = "";

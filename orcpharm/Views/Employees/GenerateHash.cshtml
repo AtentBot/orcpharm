@@ -520,11 +520,17 @@
             try {
                 const response = await fetch('/api/Employees/generate-hash', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ password: password })
                 });
+                
+                if (!response.ok && response.status === 401) {
+                    window.location.href = '/Account/Login';
+                    return;
+                }
                 
                 const data = await response.json();
                 

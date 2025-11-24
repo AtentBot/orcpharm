@@ -44,8 +44,8 @@
                         <select class="form-select" id="filterPosition">
                             <option value="">Todos os cargos</option>
                             <option value="OWNER">Proprietário</option>
-                            <option value="MANAGER">Gerente</option>
-                            <option value="PHARMACIST_RT">Farmacêutico RT</option>
+                            <option value="GENERAL_MANAGER">Gerente</option>
+                            <option value="pharmacist_rt">Farmacêutico RT</option>
                             <option value="PHARMACIST">Farmacêutico</option>
                             <option value="SUPERVISOR">Supervisor</option>
                             <option value="TECHNICIAN">Técnico</option>
@@ -60,8 +60,8 @@
                             Status
                         </label>
                         <select class="form-select" id="filterStatus">
-                            <option value="">Todos</option>
-                            <option value="Ativo" selected>Ativos</option>
+                            <option value="" selected>Todos</option>
+                            <option value="Ativo">Ativos</option>
                             <option value="Demitido">Demitidos</option>
                             <option value="Afastado">Afastados</option>
                             <option value="Férias">Férias</option>
@@ -318,16 +318,23 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadEmployees() {
     try {
         const response = await fetch('/api/Employees', {
+            method: 'GET',
+            credentials: 'include', // ✅ Enviar cookies
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Content-Type': 'application/json'
             }
         });
         
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/Account/Login';
+                return;
+            }
             throw new Error('Erro ao carregar funcionários');
         }
         
-        employees = await response.json();
+        const data = await response.json();
+        employees = data.items || data; // API pode retornar {items: [...]} ou array direto
         filteredEmployees = employees;
         
         updateStatistics();

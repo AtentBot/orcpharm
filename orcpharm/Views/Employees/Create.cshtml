@@ -689,12 +689,20 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadJobPositions() {
     try {
         const response = await fetch('/api/JobPositions', {
+            method: 'GET',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Content-Type': 'application/json'
             }
         });
         
-        if (!response.ok) throw new Error('Erro ao carregar cargos');
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/Account/Login';
+                return;
+            }
+            throw new Error('Erro ao carregar cargos');
+        }
         
         const positions = await response.json();
         const select = document.getElementById('jobPositionSelect');
@@ -949,12 +957,19 @@ document.getElementById('employeeForm').addEventListener('submit', async functio
     try {
         const response = await fetch('/api/Employees', {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(submitData)
         });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/Account/Login';
+                return;
+            }
+        }
         
         const result = await response.json();
         

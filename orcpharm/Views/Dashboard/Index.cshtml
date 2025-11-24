@@ -147,6 +147,24 @@
                         </div>
                     }
 
+                    @* ============================================================ *@
+                    @* ✅ NOVO: Card de Funcionários                               *@
+                    @* ============================================================ *@
+                    @if (Model.CanManageEmployees)
+                    {
+                        <div class="col-md-3 mb-3">
+                            <a href="/Employees/List" class="text-decoration-none">
+                                <div class="card h-100 border-0 bg-light hover-card">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-person-badge text-danger fs-1 mb-3"></i>
+                                        <h6 class="card-title">Funcionários</h6>
+                                        <p class="card-text small text-muted">Gerenciar equipe</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+
                     <div class="col-md-3 mb-3">
                         <a href="#" class="text-decoration-none">
                             <div class="card h-100 border-0 bg-light hover-card">

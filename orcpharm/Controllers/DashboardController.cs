@@ -89,9 +89,10 @@ public class DashboardController : Controller
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
+    // ✅ CORRIGIDO: Adicionar PHARMACIST_RT
     private bool CanManageEmployees(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER" };
+        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT" };  // ✅ Adicionado PHARMACIST_RT
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
