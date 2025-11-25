@@ -1,0 +1,380 @@
+@{
+    ViewData["Title"] = "Matérias-Primas";
+}
+
+<!-- Header -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="bi bi-file-earmark-medical me-2"></i>Matérias-Primas</h2>
+                <p class="text-muted mb-0">Cadastro e gerenciamento de matérias-primas</p>
+            </div>
+            <div>
+                <a href="/Estoque" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-left me-1"></i> Estoque
+                </a>
+                <a href="/MateriasPrimas/Criar" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Nova Matéria-Prima
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Resumo -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Total de MPs</p>
+                        <h3 class="mb-0" id="totalMaterials">-</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-boxes text-primary fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Estoque Baixo</p>
+                        <h3 class="mb-0 text-warning" id="lowStockCount">-</h3>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-exclamation-triangle text-warning fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Controladas</p>
+                        <h3 class="mb-0 text-danger" id="controlledCount">-</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-shield-exclamation text-danger fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Refrigeração</p>
+                        <h3 class="mb-0 text-info" id="refrigerationCount">-</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-thermometer-snow text-info fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label small">Buscar</label>
+                        <input type="text" id="filterSearch" class="form-control form-control-sm" placeholder="Nome, DCB, DCI, CAS...">
+                    </div>
+
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small">Tipo de Controle</label>
+                        <select id="filterControlType" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="COMUM">Comum</option>
+                            <option value="ESPECIAL">Especial</option>
+                            <option value="A1">Lista A1</option>
+                            <option value="A2">Lista A2</option>
+                            <option value="A3">Lista A3</option>
+                            <option value="B1">Lista B1</option>
+                            <option value="B2">Lista B2</option>
+                            <option value="C1">Lista C1</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small">Status de Estoque</label>
+                        <select id="filterStockStatus" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="low">Estoque Baixo</option>
+                            <option value="normal">Normal</option>
+                            <option value="excess">Excesso</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label small">&nbsp;</label>
+                        <div>
+                            <button onclick="applyFilters()" class="btn btn-primary btn-sm w-100">
+                                <i class="bi bi-funnel me-1"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 25%">Matéria-Prima</th>
+                                <th style="width: 10%">DCB</th>
+                                <th style="width: 10%">CAS</th>
+                                <th style="width: 12%">Controle</th>
+                                <th style="width: 10%" class="text-end">Estoque Atual</th>
+                                <th style="width: 10%" class="text-end">Estoque Mín.</th>
+                                <th style="width: 8%">Status</th>
+                                <th style="width: 10%">Condições</th>
+                                <th style="width: 5%" class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsTable">
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Carregando...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paginação -->
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small">Total: <strong id="totalCount">0</strong> matérias-primas</span>
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadMaterials();
+    loadStats();
+});
+
+async function loadStats() {
+    try {
+        const response = await fetch('/api/RawMaterials', {
+            credentials: 'include'
+        });
+        const result = await response.json();
+        const materials = result.data || [];
+
+        document.getElementById('totalMaterials').textContent = materials.length;
+        
+        const lowStock = materials.filter(m => m.currentStock <= m.minimumStock);
+        document.getElementById('lowStockCount').textContent = lowStock.length;
+        
+        const controlled = materials.filter(m => m.controlType !== 'COMUM');
+        document.getElementById('controlledCount').textContent = controlled.length;
+        
+        const refrigeration = materials.filter(m => m.requiresRefrigeration);
+        document.getElementById('refrigerationCount').textContent = refrigeration.length;
+
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+    }
+}
+
+async function loadMaterials(page = 1) {
+    currentPage = page;
+    
+    const search = document.getElementById('filterSearch').value;
+    const controlType = document.getElementById('filterControlType').value;
+    const stockStatus = document.getElementById('filterStockStatus').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        pageSize: 20
+    });
+    
+    if (search) params.append('search', search);
+    if (controlType) params.append('controlType', controlType);
+    if (stockStatus === 'low') params.append('lowStock', 'true');
+    
+    try {
+        const response = await fetch(`/api/RawMaterials?${params}`, {
+            credentials: 'include'
+        });
+        const result = await response.json();
+        
+        let materials = result.data || [];
+        
+        // Filtro adicional de status de estoque
+        if (stockStatus === 'normal') {
+            materials = materials.filter(m => m.stockStatus === 'NORMAL');
+        } else if (stockStatus === 'excess') {
+            materials = materials.filter(m => m.stockStatus === 'EXCESSO');
+        }
+        
+        renderMaterials(materials);
+        
+        if (result.pagination) {
+            renderPagination(result.pagination.totalPages, result.pagination.currentPage);
+            document.getElementById('totalCount').textContent = result.pagination.totalRecords;
+        }
+        
+    } catch (error) {
+        console.error('Erro ao carregar matérias-primas:', error);
+        document.getElementById('materialsTable').innerHTML = 
+            '<tr><td colspan="9" class="text-center text-danger py-4">Erro ao carregar matérias-primas</td></tr>';
+    }
+}
+
+function renderMaterials(materials) {
+    const tbody = document.getElementById('materialsTable');
+    
+    if (!materials || materials.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Nenhuma matéria-prima encontrada</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = materials.map(m => `
+        <tr>
+            <td>
+                <strong>${m.name}</strong>
+                ${m.dciCode ? `<br><small class="text-muted">DCI: ${m.dciCode}</small>` : ''}
+            </td>
+            <td>
+                <small class="text-muted">${m.dcbCode || '-'}</small>
+            </td>
+            <td>
+                <small class="text-muted">${m.casNumber || '-'}</small>
+            </td>
+            <td>
+                ${getControlBadge(m.controlType)}
+            </td>
+            <td class="text-end">
+                <strong>${m.currentStock.toFixed(2)}</strong>
+                <small class="text-muted">${m.unit}</small>
+            </td>
+            <td class="text-end">
+                <small class="text-muted">${m.minimumStock.toFixed(2)} ${m.unit}</small>
+            </td>
+            <td>
+                ${getStockStatusBadge(m.stockStatus)}
+            </td>
+            <td>
+                <small>
+                    ${m.requiresRefrigeration ? '<i class="bi bi-thermometer-snow text-info" title="Refrigeração"></i> ' : ''}
+                    ${m.lightSensitive ? '<i class="bi bi-brightness-high text-warning" title="Sensível à luz"></i> ' : ''}
+                    ${m.humiditySensitive ? '<i class="bi bi-droplet text-primary" title="Sensível à umidade"></i>' : ''}
+                </small>
+            </td>
+            <td class="text-center">
+                <div class="btn-group btn-group-sm">
+                    <a href="/MateriasPrimas/Detalhes/${m.id}" class="btn btn-outline-primary" title="Detalhes">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/MateriasPrimas/Editar/${m.id}" class="btn btn-outline-secondary" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getControlBadge(type) {
+    const badges = {
+        'COMUM': '<span class="badge bg-secondary">Comum</span>',
+        'ESPECIAL': '<span class="badge bg-warning">Especial</span>',
+        'A1': '<span class="badge bg-danger">A1</span>',
+        'A2': '<span class="badge bg-danger">A2</span>',
+        'A3': '<span class="badge bg-danger">A3</span>',
+        'B1': '<span class="badge bg-danger">B1</span>',
+        'B2': '<span class="badge bg-danger">B2</span>',
+        'C1': '<span class="badge bg-warning">C1</span>'
+    };
+    return badges[type] || `<span class="badge bg-secondary">${type}</span>`;
+}
+
+function getStockStatusBadge(status) {
+    const badges = {
+        'BAIXO': '<span class="badge bg-danger">Baixo</span>',
+        'NORMAL': '<span class="badge bg-success">Normal</span>',
+        'EXCESSO': '<span class="badge bg-warning">Excesso</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary">-</span>';
+}
+
+function renderPagination(totalPages, currentPage) {
+    const pagination = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    let html = `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="loadMaterials(${currentPage - 1}); return false;">Anterior</a>
+        </li>
+    `;
+    
+    for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+        html += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="loadMaterials(${i}); return false;">${i}</a>
+            </li>
+        `;
+    }
+    
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="loadMaterials(${currentPage + 1}); return false;">Próxima</a>
+        </li>
+    `;
+    
+    pagination.innerHTML = html;
+}
+
+function applyFilters() {
+    loadMaterials(1);
+}
+</script>
+}

@@ -5,7 +5,7 @@ using Models.Employees;
 using Models.Pharmacy;
 using System.ComponentModel.DataAnnotations;
 
-namespace orcpharm.Controllers;
+namespace Controllers.Api;
 
 [ApiController]
 [Route("api/[controller]")]

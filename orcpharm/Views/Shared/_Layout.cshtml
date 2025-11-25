@@ -39,6 +39,7 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             z-index: 1000;
+            overflow-y: auto;
         }
 
         .sidebar-header {
@@ -61,7 +62,7 @@
         }
 
         .sidebar-nav {
-            padding: 1rem 0;
+            padding: 1rem 0 6rem 0;
         }
 
         .nav-item {
@@ -92,6 +93,37 @@
         .nav-link i {
             width: 20px;
             text-align: center;
+        }
+
+        /* Submenu */
+        .nav-submenu {
+            display: none;
+            padding-left: 2.5rem;
+        }
+
+        .nav-submenu.show {
+            display: block;
+        }
+
+        .nav-submenu .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .nav-link.has-submenu {
+            position: relative;
+        }
+
+        .nav-link.has-submenu::after {
+            content: '\F282';
+            font-family: 'bootstrap-icons';
+            position: absolute;
+            right: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .nav-link.has-submenu.open::after {
+            transform: rotate(90deg);
         }
 
         /* Main Content */
@@ -204,6 +236,8 @@
         var canManageInventory = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER" }.Contains(jobCode);
         var canManageFormulas = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST" }.Contains(jobCode);
         var canManagePurchases = new[] { "OWNER", "MANAGER", "SUPERVISOR", "BUYER" }.Contains(jobCode);
+        
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     }
 
     @if (isAuthenticated)
@@ -220,7 +254,7 @@
             <nav class="sidebar-nav">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")" 
+                        <a class="nav-link @(currentController == "Logistica" ? "active" : "")" 
                            href="/Dashboard">
                             <i class="bi bi-speedometer2"></i>
                             Dashboard
@@ -230,10 +264,38 @@
                     @if (canManageInventory)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link has-submenu @(currentController == "Estoque" || currentController == "MateriasPrimas" ? "active open" : "")" 
+                               href="#" 
+                               onclick="toggleSubmenu(event, 'estoqueSubmenu')">
                                 <i class="bi bi-boxes"></i>
                                 Estoque
                             </a>
+                            <ul class="nav flex-column nav-submenu @(currentController == "Estoque" || currentController == "MateriasPrimas" ? "show" : "")" id="estoqueSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentController == "Estoque" ? "active" : "")" href="/Estoque">
+                                        <i class="bi bi-grid"></i>
+                                        Dashboard
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentController == "MateriasPrimas" ? "active" : "")" href="/MateriasPrimas">
+                                        <i class="bi bi-file-earmark-medical"></i>
+                                        Matérias-Primas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Estoque/Lotes">
+                                        <i class="bi bi-box-seam"></i>
+                                        Lotes
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Estoque/Movimentacoes">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                        Movimentações
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     }
 
@@ -262,9 +324,16 @@
                                 Manipulações
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Customers">
+                                <i class="bi bi-people"></i>
+                                <span>Clientes</span>
+                            </a>
+                        </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "LabelsView" ? "active" : "")" 
+                            <a class="nav-link @(currentController == "LabelsView" ? "active" : "")" 
                                href="/Labels">
                                 <i class="bi bi-file-earmark-text"></i>
                                 Rótulos
@@ -280,8 +349,9 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="bi bi-truck"></i>
+                        <a class="nav-link @(currentController == "SuppliersView" ? "active" : "")"
+                           href="/suppliers">
+                            <i class="bi bi-building"></i>
                             Fornecedores
                         </a>
                     </li>
@@ -358,6 +428,17 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function toggleSubmenu(event, submenuId) {
+            event.preventDefault();
+            const submenu = document.getElementById(submenuId);
+            const link = event.currentTarget;
+            
+            submenu.classList.toggle('show');
+            link.classList.toggle('open');
+        }
+    </script>
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>

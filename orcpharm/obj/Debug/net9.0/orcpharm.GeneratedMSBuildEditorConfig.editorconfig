@@ -52,6 +52,22 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxWYWxpZGF0ZUNvZGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Customers/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9tZXJzXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Customers/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9tZXJzXERldGFpbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Customers/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9tZXJzXEVkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Customers/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9tZXJzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Dashboard/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -82,6 +98,18 @@ build_metadata.AdditionalFiles.CssScope =
 
 [E:/orcpharm/orcpharm/orcpharm/Views/Employees/List.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXExpc3QuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Estoque/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXN0b3F1ZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Estoque/Lotes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXN0b3F1ZVxMb3Rlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Estoque/Movimentacoes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXN0b3F1ZVxNb3ZpbWVudGFjb2VzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/orcpharm/orcpharm/orcpharm/Views/Formulas/Index.cshtml]
@@ -148,6 +176,18 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFuaXB1bGFjb2VzXFdvcmtmbG93LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/MateriasPrimas/Detalhes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYXNQcmltYXNcRGV0YWxoZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/MateriasPrimas/Form.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYXNQcmltYXNcRm9ybS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/MateriasPrimas/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYXNQcmltYXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Relatorios/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVsYXRvcmlvc1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -164,8 +204,28 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9HZW5lcmF0ZUxhYmVsQnV0dG9uLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Shared/_Layout_old.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRfb2xkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/SuppliersView/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwcGxpZXJzVmlld1xDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/SuppliersView/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwcGxpZXJzVmlld1xEZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/SuppliersView/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwcGxpZXJzVmlld1xFZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/SuppliersView/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU3VwcGxpZXJzVmlld1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/orcpharm/orcpharm/orcpharm/Views/_ViewImports.cshtml]

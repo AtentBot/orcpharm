@@ -6,7 +6,7 @@ using Service;
 using Validators;
 using Models;
 
-namespace Controllers;
+namespace Controllers.Api;
 
 [ApiController]
 [Route("api/[controller]")]

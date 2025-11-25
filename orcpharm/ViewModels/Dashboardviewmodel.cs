@@ -14,4 +14,5 @@ public class DashboardViewModel
     public int TotalRawMaterials { get; set; }
     public int LowStockItems { get; set; }
     public int PendingPurchases { get; set; }
+    public int TotalAtrasados { get; set; }
 }

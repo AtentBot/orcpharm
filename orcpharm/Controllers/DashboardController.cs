@@ -77,6 +77,17 @@ public class DashboardController : Controller
                 .Where(p => p.EstablishmentId == fullEmployee.EstablishmentId
                     && p.Status == "PENDENTE")
                 .CountAsync();
+
+            // ✅ ADICIONADO: Total de manipulações atrasadas
+            var today = DateTime.UtcNow.Date;
+            dashboardData.TotalAtrasados = await _db.ManipulationOrders
+                .Where(mo => mo.EstablishmentId == fullEmployee.EstablishmentId
+                    && mo.Status != "FINALIZADO"
+                    && mo.Status != "ENTREGUE"
+                    && mo.Status != "CANCELADO"
+                    && mo.ExpectedDate.Date < today)
+
+                .CountAsync();
         }
 
         return View(dashboardData);
@@ -89,10 +100,9 @@ public class DashboardController : Controller
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
-    // ✅ CORRIGIDO: Adicionar PHARMACIST_RT
     private bool CanManageEmployees(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT" };  // ✅ Adicionado PHARMACIST_RT
+        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT" };
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
