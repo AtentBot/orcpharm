@@ -5,7 +5,7 @@ using DTOs.BatchQuality;
 using Service.BatchQuality;
 using Validators.BatchQuality;
 
-namespace OrcPharm.Controllers;
+namespace Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

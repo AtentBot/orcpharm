@@ -1,0 +1,194 @@
+@{
+    ViewData["Title"] = "Novo Pedido de Compra";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="bi bi-cart-plus"></i> Novo Pedido de Compra</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/compras" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <form id="formCreateOrder">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Informações do Pedido</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="supplierId" class="form-label">Fornecedor *</label>
+                        <select id="supplierId" name="supplierId" class="form-select" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                        <div class="invalid-feedback">Selecione um fornecedor</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="expectedDeliveryDate" class="form-label">Previsão de Entrega</label>
+                        <input type="date" id="expectedDeliveryDate" name="expectedDeliveryDate" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data do Pedido</label>
+                        <input type="text" class="form-control" readonly value="@DateTime.Now.ToString("dd/MM/yyyy")">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="notes" class="form-label">Observações</label>
+                        <textarea id="notes" name="notes" class="form-control" rows="2" maxlength="500"></textarea>
+                        <small class="text-muted">Máximo 500 caracteres</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Itens do Pedido</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button type="button" id="btnAddItem" class="btn btn-sm btn-light">
+                            <i class="bi bi-plus-circle"></i> Adicionar Item
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th width="35%">Matéria-Prima *</th>
+                                <th width="12%">Quantidade *</th>
+                                <th width="10%">Unidade *</th>
+                                <th width="13%">Preço Unit.</th>
+                                <th width="10%">Desconto %</th>
+                                <th width="13%">Total</th>
+                                <th width="7%">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    Nenhum item adicionado. Clique em "Adicionar Item" para começar.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Resumo Financeiro</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Subtotal</label>
+                        <input type="text" id="displaySubtotal" class="form-control" readonly value="R$ 0,00">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="discountValue" class="form-label">Desconto Geral (R$)</label>
+                        <input type="number" id="discountValue" name="discountValue" class="form-control" 
+                               min="0" step="0.01" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="shippingValue" class="form-label">Frete (R$)</label>
+                        <input type="number" id="shippingValue" name="shippingValue" class="form-control" 
+                               min="0" step="0.01" value="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Valor Final</label>
+                        <input type="text" id="displayFinalValue" class="form-control fw-bold" readonly value="R$ 0,00">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <button type="submit" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-check-circle"></i> Criar Pedido
+                </button>
+                <button type="button" id="btnCancelCreate" class="btn btn-secondary btn-lg px-5 ms-3">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Adicionar Item -->
+<div class="modal fade" id="modalAddItem" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Adicionar Item ao Pedido</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="itemRawMaterialId" class="form-label">Matéria-Prima *</label>
+                        <select id="itemRawMaterialId" class="form-select" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="itemQuantity" class="form-label">Quantidade *</label>
+                        <input type="number" id="itemQuantity" class="form-control" 
+                               min="0.01" step="0.01" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="itemUnit" class="form-label">Unidade *</label>
+                        <select id="itemUnit" class="form-select" required>
+                            <option value="g">g (gramas)</option>
+                            <option value="kg">kg (quilogramas)</option>
+                            <option value="mL">mL (mililitros)</option>
+                            <option value="L">L (litros)</option>
+                            <option value="UN">UN (unidades)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="itemUnitPrice" class="form-label">Preço Unitário</label>
+                        <input type="number" id="itemUnitPrice" class="form-control" 
+                               min="0" step="0.01" value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="itemDiscountPercentage" class="form-label">Desconto (%)</label>
+                        <input type="number" id="itemDiscountPercentage" class="form-control" 
+                               min="0" max="100" step="0.01" value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Total do Item</label>
+                        <input type="text" id="itemTotal" class="form-control fw-bold" readonly value="R$ 0,00">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="itemNotes" class="form-label">Observações</label>
+                        <textarea id="itemNotes" class="form-control" rows="2" maxlength="200"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnConfirmAddItem" class="btn btn-primary">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/purchase-orders-create.js"></script>
+    <script>
+        $(document).ready(function() {
+            PurchaseOrdersCreate.init();
+        });
+    </script>
+}

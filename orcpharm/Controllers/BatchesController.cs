@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Data;
 using Models.Pharmacy;
 
-namespace OrcPharm.Controllers.API;
+namespace Controllers.API;
 
 [ApiController]
 [Route("api/[controller]")]

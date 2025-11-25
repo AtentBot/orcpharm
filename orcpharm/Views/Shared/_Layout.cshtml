@@ -254,7 +254,7 @@
             <nav class="sidebar-nav">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link @(currentController == "Logistica" ? "active" : "")" 
+                        <a class="nav-link @(currentController == "Dashboard" ? "active" : "")"
                            href="/Dashboard">
                             <i class="bi bi-speedometer2"></i>
                             Dashboard
@@ -274,7 +274,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link @(currentController == "Estoque" ? "active" : "")" href="/Estoque">
                                         <i class="bi bi-grid"></i>
-                                        Dashboard
+                                        Logistica
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -302,7 +302,7 @@
                     @if (canManagePurchases)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="/compras">
                                 <i class="bi bi-cart3"></i>
                                 Compras
                             </a>
@@ -323,6 +323,36 @@
                                 <i class="bi bi-file-medical"></i>
                                 Manipulações
                             </a>
+                        </li>
+
+                        <!-- Menu Workflow de Produção -->
+                        <li class="nav-item">
+                            <a class="nav-link has-submenu @(currentController == "Workflow" || currentController == "Manipulacoes" ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'workflowSubmenu')">
+                                <i class="bi bi-kanban"></i>
+                                Produção
+                            </a>
+                            <ul class="nav flex-column nav-submenu @(currentController == "Workflow" || currentController == "Manipulacoes" ? "show" : "")" id="workflowSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Workflow">
+                                        <i class="bi bi-list-task"></i>
+                                        Ordens
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Workflow/Kanban">
+                                        <i class="bi bi-columns-gap"></i>
+                                        Kanban
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Workflow/Dashboard">
+                                        <i class="bi bi-graph-up"></i>
+                                        Dashboard
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
 
                         <li class="nav-item">

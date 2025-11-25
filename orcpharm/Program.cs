@@ -29,6 +29,7 @@ builder.Services.AddScoped<SaleService>();
 builder.Services.AddScoped<SngpcService>();
 builder.Services.AddScoped<LabelService>();
 builder.Services.AddManipulationServices();
+builder.Services.AddHttpContextAccessor();
 
 // ADICIONAR DbContext para PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>

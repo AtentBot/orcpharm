@@ -29,6 +29,26 @@
       "PackagePath": "staticwebassets\\js\\manipulation-weighing.js"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-create.js",
+      "PackagePath": "staticwebassets\\js\\purchase-orders-create.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-details.js",
+      "PackagePath": "staticwebassets\\js\\purchase-orders-details.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-receive.js",
+      "PackagePath": "staticwebassets\\js\\purchase-orders-receive.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-vanilla.js",
+      "PackagePath": "staticwebassets\\js\\purchase-orders-vanilla.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders.js",
+      "PackagePath": "staticwebassets\\js\\purchase-orders.js"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

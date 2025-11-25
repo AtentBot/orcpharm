@@ -1,0 +1,140 @@
+@{
+    ViewData["Title"] = "Pedidos de Compra";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="bi bi-cart3"></i> Pedidos de Compra</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/compras/criar" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Novo Pedido
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Fornecedor</label>
+                    <select id="filterSupplier" class="form-select">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select id="filterStatus" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="PENDENTE">Pendente</option>
+                        <option value="APROVADO">Aprovado</option>
+                        <option value="ENVIADO">Enviado</option>
+                        <option value="RECEBIDO">Recebido</option>
+                        <option value="CANCELADO">Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" id="filterStartDate" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" id="filterEndDate" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button id="btnFilter" class="btn btn-secondary w-100">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="statsCards" class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Pendentes</h6>
+                    <h3 id="statPending">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Aprovados</h6>
+                    <h3 id="statApproved">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Enviados</h6>
+                    <h3 id="statSent">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Recebidos</h6>
+                    <h3 id="statReceived">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div id="loadingOrders" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </div>
+
+            <div id="ordersTable" style="display:none;">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nº Pedido</th>
+                                <th>Fornecedor</th>
+                                <th>Data</th>
+                                <th>Previsão Entrega</th>
+                                <th>Status</th>
+                                <th>Valor Total</th>
+                                <th>Valor Final</th>
+                                <th>Itens</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="noOrders" style="display:none;" class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                <p class="text-muted mt-3">Nenhum pedido encontrado</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/purchase-orders-vanilla.js"></script>
+    <script>
+        // Aguardar DOM carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                PurchaseOrders.init();
+            });
+        } else {
+            // DOM já carregado
+            PurchaseOrders.init();
+        }
+    </script>
+}

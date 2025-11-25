@@ -78,6 +78,46 @@
             },
             "Patterns": null
           },
+          "purchase-orders-create.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/purchase-orders-create.js"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-details.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/purchase-orders-details.js"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-receive.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/purchase-orders-receive.js"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-vanilla.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/purchase-orders-vanilla.js"
+            },
+            "Patterns": null
+          },
+          "purchase-orders.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/purchase-orders.js"
+            },
+            "Patterns": null
+          },
           "site.js": {
             "Children": null,
             "Asset": {
@@ -107,6 +147,46 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "eos0eqvw9a-h2aao0iczs.gz"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-create.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "d8epaeq2mj-3w64oua0jt.gz"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-details.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "ab0p5y39m1-f1pirnk0j2.gz"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-receive.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "0ilkq9ywow-10bgowkcs9.gz"
+            },
+            "Patterns": null
+          },
+          "purchase-orders-vanilla.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "tbcy2h8s7y-2vlsin2fx7.gz"
+            },
+            "Patterns": null
+          },
+          "purchase-orders.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "3639sr9zir-xnpcd841rv.gz"
             },
             "Patterns": null
           },

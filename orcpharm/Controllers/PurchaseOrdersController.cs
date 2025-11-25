@@ -5,7 +5,7 @@ using DTOs.Purchasing;
 using Service.Purchasing;
 using Validators.Purchasing;
 
-namespace OrcPharm.Controllers;
+namespace Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

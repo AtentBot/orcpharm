@@ -1,0 +1,242 @@
+@{
+    ViewData["Title"] = "Detalhes do Pedido";
+    var orderId = ViewBag.OrderId;
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="bi bi-file-text"></i> Detalhes do Pedido</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/compras" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div id="loadingOrder" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <div id="orderDetails" style="display:none;">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Informações do Pedido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Número do Pedido:</strong>
+                                <p id="orderNumber" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Status:</strong>
+                                <p id="orderStatus" class="mb-2"></p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Fornecedor:</strong>
+                                <p id="supplierName" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Data do Pedido:</strong>
+                                <p id="orderDate" class="mb-2"></p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Previsão de Entrega:</strong>
+                                <p id="expectedDeliveryDate" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Data de Recebimento:</strong>
+                                <p id="actualDeliveryDate" class="mb-2"></p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Criado por:</strong>
+                                <p id="createdByEmployee" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Aprovado por:</strong>
+                                <p id="approvedByEmployee" class="mb-2"></p>
+                            </div>
+                        </div>
+                        <div class="row" id="notesRow" style="display:none;">
+                            <div class="col-md-12">
+                                <strong>Observações:</strong>
+                                <p id="orderNotes" class="mb-2"></p>
+                            </div>
+                        </div>
+                        <div class="row" id="invoiceRow" style="display:none;">
+                            <div class="col-md-12">
+                                <strong>Nota Fiscal:</strong>
+                                <p id="supplierInvoice" class="mb-2"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Itens do Pedido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Matéria-Prima</th>
+                                        <th>Qtd. Pedida</th>
+                                        <th>Qtd. Recebida</th>
+                                        <th>Unidade</th>
+                                        <th>Preço Unit.</th>
+                                        <th>Desconto</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Resumo Financeiro</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Subtotal:</strong>
+                                <p id="totalValue" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Desconto:</strong>
+                                <p id="discountValue" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Frete:</strong>
+                                <p id="shippingValue" class="mb-2"></p>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Valor Final:</strong>
+                                <p id="finalValue" class="h5 text-success mb-2"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0">Ações</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="actionButtons">
+                            <button id="btnApprove" class="btn btn-success w-100 mb-2" style="display:none;">
+                                <i class="bi bi-check-circle"></i> Aprovar Pedido
+                            </button>
+                            <button id="btnSend" class="btn btn-primary w-100 mb-2" style="display:none;">
+                                <i class="bi bi-send"></i> Enviar ao Fornecedor
+                            </button>
+                            <button id="btnReceive" class="btn btn-info w-100 mb-2" style="display:none;">
+                                <i class="bi bi-box-seam"></i> Receber Mercadoria
+                            </button>
+                            <button id="btnDelete" class="btn btn-danger w-100 mb-2" style="display:none;">
+                                <i class="bi bi-trash"></i> Excluir Pedido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Linha do Tempo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-secondary"></div>
+                                <div class="timeline-content">
+                                    <strong>Criado</strong>
+                                    <p id="createdAt" class="mb-0 small"></p>
+                                </div>
+                            </div>
+                            <div id="approvedTimeline" class="timeline-item" style="display:none;">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <strong>Aprovado</strong>
+                                    <p id="approvedAt" class="mb-0 small"></p>
+                                </div>
+                            </div>
+                            <div id="sentTimeline" class="timeline-item" style="display:none;">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <strong>Enviado</strong>
+                                    <p id="sentAt" class="mb-0 small"></p>
+                                </div>
+                            </div>
+                            <div id="receivedTimeline" class="timeline-item" style="display:none;">
+                                <div class="timeline-marker bg-info"></div>
+                                <div class="timeline-content">
+                                    <strong>Recebido</strong>
+                                    <p id="receivedAt" class="mb-0 small"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    display: flex;
+    padding-bottom: 1.5rem;
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 25px;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+
+.timeline-content {
+    flex-grow: 1;
+}
+</style>
+
+@section Scripts {
+    <script src="~/js/purchase-orders-details.js"></script>
+    <script>
+        $(document).ready(function() {
+            PurchaseOrdersDetails.init(@orderId);
+        });
+    </script>
+}

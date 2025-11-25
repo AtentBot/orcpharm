@@ -89,6 +89,7 @@
         </div>
     </div>
 
+
     <!-- Cards de Manipulações -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
@@ -155,6 +156,25 @@
                             </div>
                             <div class="bg-info bg-opacity-10 p-3 rounded">
                                 <i class="bi bi-calculator text-info fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/Workflow/Kanban" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Workflow Produção</p>
+                                <h3 class="mb-0 text-secondary">
+                                    <i class="bi bi-arrow-right-circle"></i>
+                                </h3>
+                            </div>
+                            <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-kanban text-secondary fs-3"></i>
                             </div>
                         </div>
                     </div>
@@ -302,7 +322,7 @@
                     @if (Model.CanManagePurchases)
                     {
                         <div class="col-md-3 mb-3">
-                            <a href="/Purchases/Create" class="text-decoration-none">
+                            <a href="/compras" class="text-decoration-none">
                                 <div class="card h-100 border-0 bg-light hover-card">
                                     <div class="card-body text-center">
                                         <i class="bi bi-cart-plus text-success fs-1 mb-3"></i>

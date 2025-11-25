@@ -1,4 +1,6 @@
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\additional-methods.min.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders-receive.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map
@@ -9,6 +11,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\LICENSE.txt
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders-details.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.css
@@ -17,6 +20,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders-create.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\favicon.ico
@@ -48,6 +52,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.js.
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders-vanilla.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css
@@ -70,6 +75,11 @@ wwwroot\favicon.ico
 wwwroot\js\employees-auth-adapter.js
 wwwroot\js\employees-shared.js
 wwwroot\js\manipulation-weighing.js
+wwwroot\js\purchase-orders.js
+wwwroot\js\purchase-orders-create.js
+wwwroot\js\purchase-orders-details.js
+wwwroot\js\purchase-orders-receive.js
+wwwroot\js\purchase-orders-vanilla.js
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap.css
 wwwroot\lib\bootstrap\dist\css\bootstrap.css.map

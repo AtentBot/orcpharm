@@ -26,26 +26,6 @@ public class ItemSeparadoDto
 }
 
 // ===================================================================
-// DTOs - APROVAÇÃO
-// ===================================================================
-
-public class StartAprovacaoDto
-{
-    public DateTime? StartTime { get; set; }
-    public Guid PharmacistEmployeeId { get; set; }
-    public string PharmacistName { get; set; } = default!;
-    public string PharmacistCRF { get; set; } = default!;
-    public bool VisualInspectionPassed { get; set; }
-    public bool DocumentationComplete { get; set; }
-    public bool LabelingCorrect { get; set; }
-    public bool PackagingIntact { get; set; }
-    public bool Approved { get; set; }
-    public string? RejectionReason { get; set; }
-    public string? DigitalSignature { get; set; }
-    public string? Observations { get; set; }
-}
-
-// ===================================================================
 // DTOs - EXPEDIÇÃO
 // ===================================================================
 
@@ -73,3 +53,8 @@ public class ConfirmDeliveryDto
     public string? ReceiverSignature { get; set; }
     public string? Observations { get; set; }
 }
+
+// ===================================================================
+// NOTA: StartAprovacaoDto foi REMOVIDO daqui
+// Usar a definição em ManipulationAprovacaoDtos.cs
+// ===================================================================
