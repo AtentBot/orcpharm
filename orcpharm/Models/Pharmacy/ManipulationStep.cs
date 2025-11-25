@@ -1,68 +1,76 @@
-﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 using Models.Employees;
 
 namespace Models.Pharmacy;
 
 /// <summary>
-/// Registra cada etapa do processo de manipulação
+/// Etapa do workflow de manipulação
 /// </summary>
-[Index(nameof(ManipulationOrderId), nameof(StepType))]
-[Index(nameof(StartedAt))]
-[Index(nameof(Status))]
+[Table("ManipulationSteps")]
 public class ManipulationStep
 {
     [Key]
+    [Column("Id")]
     public Guid Id { get; set; }
 
-    [Required]
+    [Column("ManipulationOrderId")]
     public Guid ManipulationOrderId { get; set; }
     public ManipulationOrder? ManipulationOrder { get; set; }
 
-    /// <summary>
-    /// Tipo da etapa: PESAGEM, MISTURA, ENVASE, ROTULAGEM, CONFERENCIA
-    /// </summary>
-    [Required, MaxLength(20)]
+    [Column("StepType")]
+    [MaxLength(50)]
     public string StepType { get; set; } = default!;
+    // SEPARACAO, PESAGEM, MISTURA, ENVASE, ROTULAGEM, CONFERENCIA, APROVACAO, EXPEDICAO
 
-    /// <summary>
-    /// Status: PENDENTE, EM_EXECUCAO, CONCLUIDA, REJEITADA
-    /// </summary>
-    [Required, MaxLength(20)]
+    [Column("StepNumber")]
+    public int StepNumber { get; set; }
+
+    [Column("Status")]
+    [MaxLength(20)]
     public string Status { get; set; } = "PENDENTE";
+    // PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA
 
-    // Responsável pela etapa
-    [Required]
-    public Guid PerformedByEmployeeId { get; set; }
-    public Employee? PerformedByEmployee { get; set; }
-
-    // Datas
+    [Column("StartedAt")]
     public DateTime? StartedAt { get; set; }
+
+    [Column("CompletedAt")]
     public DateTime? CompletedAt { get; set; }
 
-    // Dados específicos por etapa (armazenados como JSON)
-    [Column(TypeName = "jsonb")]
-    public string? StepData { get; set; }
+    [Column("PerformedByEmployeeId")]
+    public Guid? PerformedByEmployeeId { get; set; }
+    public Employee? PerformedByEmployee { get; set; }
 
-    // Observações gerais
-    [MaxLength(2000)]
-    public string? Observations { get; set; }
-
-    // Controle de qualidade intermediário
-    public bool? PassedIntermediateCheck { get; set; }
+    [Column("CheckedByEmployeeId")]
     public Guid? CheckedByEmployeeId { get; set; }
     public Employee? CheckedByEmployee { get; set; }
 
-    [MaxLength(1000)]
-    public string? CheckNotes { get; set; }
+    [Column("CheckedAt")]
     public DateTime? CheckedAt { get; set; }
 
-    // Auditoria
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    [Column("CheckNotes")]
+    [MaxLength(1000)]
+    public string? CheckNotes { get; set; }
 
-    // Navegação
+    [Column("PassedIntermediateCheck")]
+    public bool? PassedIntermediateCheck { get; set; }
+
+    [Column("Observations")]
+    [MaxLength(1000)]
+    public string? Observations { get; set; }
+
+    /// <summary>
+    /// JSON com dados específicos da etapa (ex: PesagemStepData, MisturaStepData)
+    /// </summary>
+    [Column("StepData")]
+    public string? StepData { get; set; }
+
+    [Column("CreatedAt")]
+    public DateTime CreatedAt { get; set; }
+
+    [Column("UpdatedAt")]
+    public DateTime? UpdatedAt { get; set; }
+
+    // Navegação para fotos desta etapa
     public ICollection<ManipulationPhoto>? Photos { get; set; }
 }

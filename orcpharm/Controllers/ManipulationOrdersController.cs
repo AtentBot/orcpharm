@@ -4,6 +4,7 @@ using Data;
 using DTOs.Common;
 using DTOs.Pharmacy.ManipulationOrders;
 using Models.Pharmacy;
+using Models.Employees;
 using DTOs.Formulas;
 
 namespace Controllers;
@@ -20,29 +21,29 @@ public partial class ManipulationOrdersController : ControllerBase
     }
 
     // ===================================================================
-    // MÉTODOS HELPER (PRIVADOS)
+    // MÉTODOS HELPER (PRIVADOS) - CORRIGIDOS PARA USAR HttpContext.Items
     // ===================================================================
 
     /// <summary>
-    /// Obtém o ID do estabelecimento do usuário autenticado
+    /// Obtém o ID do estabelecimento do usuário autenticado via middleware
     /// </summary>
     private Guid GetEstablishmentId()
     {
-        var claim = User.FindFirst("EstablishmentId");
-        if (claim == null)
-            throw new UnauthorizedAccessException("EstablishmentId não encontrado no token");
-        return Guid.Parse(claim.Value);
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            throw new UnauthorizedAccessException("Usuário não autenticado");
+        return employee.EstablishmentId;
     }
 
     /// <summary>
-    /// Obtém o ID do funcionário autenticado
+    /// Obtém o ID do funcionário autenticado via middleware
     /// </summary>
     private Guid GetEmployeeId()
     {
-        var claim = User.FindFirst("EmployeeId");
-        if (claim == null)
-            throw new UnauthorizedAccessException("EmployeeId não encontrado no token");
-        return Guid.Parse(claim.Value);
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            throw new UnauthorizedAccessException("Usuário não autenticado");
+        return employee.Id;
     }
 
     /// <summary>
@@ -130,6 +131,9 @@ public partial class ManipulationOrdersController : ControllerBase
             "expecteddate" => filter.Ascending ?
                 query.OrderBy(o => o.ExpectedDate) :
                 query.OrderByDescending(o => o.ExpectedDate),
+            "updatedat" => filter.Ascending ?
+                query.OrderBy(o => o.UpdatedAt) :
+                query.OrderByDescending(o => o.UpdatedAt),
             _ => filter.Ascending ?
                 query.OrderBy(o => o.OrderDate) :
                 query.OrderByDescending(o => o.OrderDate)
@@ -209,35 +213,21 @@ public partial class ManipulationOrdersController : ControllerBase
             StartDate = order.StartDate,
             CompletionDate = order.CompletionDate,
             ExpiryDate = order.ExpiryDate,
-            RequestedByEmployeeId = order.RequestedByEmployeeId,
-            RequestedByEmployeeName = "N/A",
-            ManipulatedByEmployeeId = order.ManipulatedByEmployeeId,
-            CheckedByEmployeeId = order.CheckedByEmployeeId,
-            ApprovedByPharmacistId = order.ApprovedByPharmacistId,
-            QualityNotes = order.QualityNotes,
             PassedQualityControl = order.PassedQualityControl,
-            CreatedAt = order.CreatedAt,
-            UpdatedAt = order.UpdatedAt,
+            QualityNotes = order.QualityNotes,
             IsOverdue = order.ExpectedDate < now &&
                        order.Status != "FINALIZADO" &&
                        order.Status != "CANCELADO",
-            DaysUntilExpected = (int)(order.ExpectedDate - now).TotalDays,
+            CreatedAt = order.CreatedAt,
+            UpdatedAt = order.UpdatedAt,
             Components = order.Formula?.Components?.Select(c => new FormulaComponentDto
             {
                 Id = c.Id,
-                FormulaId = c.FormulaId,
                 RawMaterialId = c.RawMaterialId,
-                RawMaterialCode = c.RawMaterial?.DcbCode ?? c.RawMaterial?.CasNumber ?? "",
-                RawMaterialName = c.RawMaterial?.Name ?? "",
-                RawMaterialUnit = c.RawMaterial?.Unit ?? "",
-                RawMaterialIsControlled = c.RawMaterial?.ControlType != "COMUM",
+                RawMaterialName = c.RawMaterial?.Name ?? "N/A",
                 Quantity = c.Quantity,
-                Unit = c.Unit,
-                ComponentType = c.ComponentType,
-                OrderIndex = c.OrderIndex,
-                SpecialInstructions = c.SpecialInstructions,
-                IsOptional = c.IsOptional
-            }).ToList()
+                Unit = c.Unit
+            }).ToList() ?? new List<FormulaComponentDto>()
         };
 
         return Ok(ApiResponse<ManipulationOrderDetailsDto>.SuccessResponse(dto));
@@ -250,13 +240,9 @@ public partial class ManipulationOrdersController : ControllerBase
         var establishmentId = GetEstablishmentId();
         var employeeId = GetEmployeeId();
 
+        // Gerar número de ordem se não fornecido
         if (string.IsNullOrEmpty(dto.OrderNumber))
             dto.OrderNumber = await GenerateOrderNumber();
-
-        if (await _context.ManipulationOrders.AnyAsync(
-            o => o.EstablishmentId == establishmentId && o.OrderNumber == dto.OrderNumber))
-            return BadRequest(ApiResponse<ManipulationOrderDetailsDto>.ErrorResponse(
-                "Número da ordem já existe"));
 
         var order = new ManipulationOrder
         {

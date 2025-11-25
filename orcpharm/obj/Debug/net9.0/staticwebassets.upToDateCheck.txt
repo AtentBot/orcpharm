@@ -22,6 +22,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\favicon.ico
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\LICENSE.md
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\manipulation-weighing.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\css\site.css
@@ -68,6 +69,7 @@ wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\js\employees-auth-adapter.js
 wwwroot\js\employees-shared.js
+wwwroot\js\manipulation-weighing.js
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap.css
 wwwroot\lib\bootstrap\dist\css\bootstrap.css.map

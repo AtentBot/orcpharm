@@ -70,6 +70,14 @@
             },
             "Patterns": null
           },
+          "manipulation-weighing.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/manipulation-weighing.js"
+            },
+            "Patterns": null
+          },
           "site.js": {
             "Children": null,
             "Asset": {
@@ -91,6 +99,14 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "qprnqqqorg-fmw5x5id3m.gz"
+            },
+            "Patterns": null
+          },
+          "manipulation-weighing.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "eos0eqvw9a-h2aao0iczs.gz"
             },
             "Patterns": null
           },

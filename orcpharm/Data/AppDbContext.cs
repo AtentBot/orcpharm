@@ -8,7 +8,6 @@ using Models.Security;
 using Models.Purchasing;
 using Models.Auth;
 using Models.Fiscal;
-using Models.Auth;
 using System.Collections.Generic;
 
 namespace Data;
@@ -64,17 +63,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ControlledSubstanceMovement> ControlledSubstanceMovements => Set<ControlledSubstanceMovement>();
     public DbSet<ControlledSubstanceBalance> ControlledSubstanceBalances => Set<ControlledSubstanceBalance>();
     public DbSet<SpecialPrescriptionControl> SpecialPrescriptionControls => Set<SpecialPrescriptionControl>();
+
+    // ==================== RÓTULOS ANVISA ====================
     public DbSet<LabelTemplate> LabelTemplates => Set<LabelTemplate>();
     public DbSet<GeneratedLabel> GeneratedLabels => Set<GeneratedLabel>();
+    public DbSet<LabelPrintLog> LabelPrintLogs => Set<LabelPrintLog>();
+
+    // ==================== MANIPULAÇÃO ====================
     public DbSet<ManipulationStep> ManipulationSteps { get; set; }
     public DbSet<ManipulationPhoto> ManipulationPhotos { get; set; }
     public DbSet<CashRegister> CashRegisters { get; set; }
     public DbSet<CashMovement> CashMovements { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
+    public DbSet<ManipulationLoss> ManipulationLosses { get; set; } = null!;
+    public DbSet<ManipulationLeftover> ManipulationLeftovers { get; set; } = null!;
+    public DbSet<DualVerification> DualVerifications { get; set; } = null!;
+    public DbSet<ProductionRecord> ProductionRecords { get; set; } = null!;
+    public ICollection<ManipulationStep>? Steps { get; set; }
+    public ICollection<ManipulationPhoto>? Photos { get; set; }
+    public DbSet<CompanySettings> CompanySettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
         // Aplicar configurações
         modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
         modelBuilder.ApplyConfiguration(new JobPositionConfiguration());
@@ -90,8 +100,127 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new SupplierCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new SupplierEvaluationConfiguration());
 
-
         SeedInitialData(modelBuilder);
+
+        // ==================== RÓTULOS ANVISA - CONFIGURAÇÕES ====================
+        ConfigureLabelEntities(modelBuilder);
+
+        // ManipulationLoss
+        modelBuilder.Entity<ManipulationLoss>(entity =>
+        {
+            entity.ToTable("manipulation_losses");
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.ManipulationOrder)
+                .WithMany()
+                .HasForeignKey(e => e.ManipulationOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RawMaterial)
+                .WithMany()
+                .HasForeignKey(e => e.RawMaterialId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.RegisteredByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.RegisteredByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ManipulationLeftover
+        modelBuilder.Entity<ManipulationLeftover>(entity =>
+        {
+            entity.ToTable("manipulation_leftovers");
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.ManipulationOrder)
+                .WithMany()
+                .HasForeignKey(e => e.ManipulationOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RawMaterial)
+                .WithMany()
+                .HasForeignKey(e => e.RawMaterialId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.RegisteredByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.RegisteredByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // DualVerification
+        modelBuilder.Entity<DualVerification>(entity =>
+        {
+            entity.ToTable("dual_verifications");
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.ManipulationOrder)
+                .WithMany()
+                .HasForeignKey(e => e.ManipulationOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.FirstVerifier)
+                .WithMany()
+                .HasForeignKey(e => e.FirstVerifierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.SecondVerifier)
+                .WithMany()
+                .HasForeignKey(e => e.SecondVerifierId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ProductionRecord
+        modelBuilder.Entity<ProductionRecord>(entity =>
+        {
+            entity.ToTable("production_records");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.ManipulationOrderId).IsUnique();
+
+            entity.HasOne(e => e.ManipulationOrder)
+                .WithMany()
+                .HasForeignKey(e => e.ManipulationOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ProducedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.ProducedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.VerifiedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.VerifiedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ApprovedByPharmacist)
+                .WithMany()
+                .HasForeignKey(e => e.ApprovedByPharmacistId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ManipulationStep
+        modelBuilder.Entity<ManipulationStep>(entity =>
+        {
+            entity.ToTable("ManipulationSteps");
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.ManipulationOrder)
+                .WithMany(o => o.Steps)
+                .HasForeignKey(e => e.ManipulationOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.PerformedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.PerformedByEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.CheckedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.CheckedByEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
 
         // PurchaseOrder
         modelBuilder.Entity<PurchaseOrder>(entity =>
@@ -294,8 +423,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasForeignKey(s => s.EstablishmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-
-
         // SaleItem -> Sale
         modelBuilder.Entity<SaleItem>()
             .HasOne(si => si.Sale)
@@ -373,6 +500,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Supplier>()
             .Property(s => s.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
         modelBuilder.Entity<Establishment>()
             .Property(e => e.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -396,6 +524,98 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(e => e.AccessLevelId)
             .OnDelete(DeleteBehavior.Restrict);
+    }
+
+    // ==================== CONFIGURAÇÃO DE RÓTULOS ANVISA ====================
+    private void ConfigureLabelEntities(ModelBuilder modelBuilder)
+    {
+        // ===== LABEL TEMPLATE =====
+        modelBuilder.Entity<LabelTemplate>(entity =>
+        {
+            entity.ToTable("label_templates");
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.UpdatedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.UpdatedByEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.TemplateType);
+            entity.HasIndex(e => e.IsActive);
+        });
+
+        // ===== GENERATED LABEL =====
+        modelBuilder.Entity<GeneratedLabel>(entity =>
+        {
+            entity.ToTable("generated_labels");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.CompositionJson).HasColumnType("jsonb");
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ManipulationOrder)
+                .WithMany()
+                .HasForeignKey(e => e.ManipulationOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Template)
+                .WithMany()
+                .HasForeignKey(e => e.TemplateId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.LastPrintedBy)
+                .WithMany()
+                .HasForeignKey(e => e.LastPrintedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.ManipulationOrderId);
+            entity.HasIndex(e => e.LabelCode);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.EstablishmentId, e.LabelCode }).IsUnique();
+        });
+
+        // ===== LABEL PRINT LOG =====
+        modelBuilder.Entity<LabelPrintLog>(entity =>
+        {
+            entity.ToTable("label_print_logs");
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.GeneratedLabel)
+                .WithMany()
+                .HasForeignKey(e => e.GeneratedLabelId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.PrintedBy)
+                .WithMany()
+                .HasForeignKey(e => e.PrintedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.GeneratedLabelId);
+            entity.HasIndex(e => e.PrintedAt);
+            entity.HasIndex(e => e.PrintedById);
+        });
     }
 
     private void SeedPermissions(ModelBuilder modelBuilder)
@@ -597,7 +817,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     private void SeedInitialData(ModelBuilder modelBuilder)
     {
-        // Seed de Níveis de Acesso padrão (se ainda não existir)
+        // Seed de Níveis de Acesso padrão
         var ownerAccessLevelId = Guid.Parse("10000000-0000-0000-0000-000000000001");
         var managerAccessLevelId = Guid.Parse("10000000-0000-0000-0000-000000000002");
         var employeeAccessLevelId = Guid.Parse("10000000-0000-0000-0000-000000000003");
@@ -649,6 +869,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // Seed de Permissões básicas do sistema
         SeedPermissions(modelBuilder);
     }
+
     private void ConfigureManipulationWorkflow(ModelBuilder modelBuilder)
     {
         // ManipulationStep -> ManipulationOrder

@@ -27,10 +27,30 @@ public class ResetPasswordDto
     public string ConfirmPassword { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// DTO para alteração de senha de funcionário
+/// Usado pelo EmployeesController
+/// </summary>
 public class ChangePasswordDto
 {
-    public string CurrentPassword { get; set; } = string.Empty;
+    /// <summary>
+    /// ID do funcionário que terá a senha alterada
+    /// </summary>
+    public Guid EmployeeId { get; set; }
+
+    /// <summary>
+    /// Senha atual (obrigatória se o funcionário estiver alterando sua própria senha)
+    /// </summary>
+    public string? CurrentPassword { get; set; }
+
+    /// <summary>
+    /// Nova senha
+    /// </summary>
     public string NewPassword { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Confirmação da nova senha (para validação no frontend)
+    /// </summary>
     public string ConfirmPassword { get; set; } = string.Empty;
 }
 

@@ -1,0 +1,676 @@
+@model Models.Pharmacy.ManipulationOrder
+@{
+    ViewData["Title"] = $"Produção - {Model.OrderNumber}";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-3">
+    <!-- Header com informações da ordem -->
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">
+                    <i class="bi bi-gear-fill me-2"></i>
+                    Produção: @Model.OrderNumber
+                </h4>
+            </div>
+            <div>
+                <span class="badge bg-light text-primary fs-6" id="currentStatus">@Model.Status</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Fórmula:</strong><br>
+                    <span class="fs-5">@(Model.Formula?.Name ?? "Fórmula Livre")</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Cliente:</strong><br>
+                    <span class="fs-5">@(Model.CustomerName ?? "-")</span>
+                </div>
+                <div class="col-md-2">
+                    <strong>Quantidade:</strong><br>
+                    <span class="fs-5">@Model.QuantityToProduce @Model.Unit</span>
+                </div>
+                <div class="col-md-2">
+                    <strong>Responsável:</strong><br>
+                    <span class="fs-5">@(Model.ManipulatedByEmployee?.FullName ?? "Não atribuído")</span>
+                </div>
+                <div class="col-md-2">
+                    <strong>Previsão:</strong><br>
+                    <span class="fs-5">@Model.ExpectedDate.ToString("dd/MM HH:mm")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Visual -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="workflow-timeline-horizontal" id="workflowTimeline">
+                <!-- Preenchido via JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Área Principal de Produção -->
+    <div class="row">
+        <!-- Painel de Etapa Atual -->
+        <div class="col-lg-8">
+            <div class="card h-100" id="currentStepPanel">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-play-circle me-2"></i>
+                        <span id="currentStepTitle">Carregando...</span>
+                    </h5>
+                </div>
+                <div class="card-body" id="currentStepContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-lg btn-outline-secondary" id="btnPreviousStep" onclick="previousStep()" disabled>
+                            <i class="bi bi-arrow-left me-1"></i> Voltar
+                        </button>
+                        <button class="btn btn-lg btn-success" id="btnNextStep" onclick="completeCurrentStep()">
+                            Concluir Etapa <i class="bi bi-check-lg ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Lateral -->
+        <div class="col-lg-4">
+            <!-- Componentes/Materiais -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Materiais</h6>
+                </div>
+                <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                    <ul class="list-group list-group-flush" id="materialsList">
+                        @if (Model.Formula?.Components != null)
+                        {
+                            foreach (var comp in Model.Formula.Components)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@comp.RawMaterial?.Name</strong>
+                                        <br><small class="text-muted">@comp.Quantity @comp.Unit</small>
+                                    </div>
+                                    <span class="badge bg-secondary" id="material-@comp.Id">Pendente</span>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="list-group-item text-muted">Nenhum componente definido</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Cronômetro -->
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Tempo de Produção</h6>
+                    <h2 class="mb-0" id="productionTimer">00:00:00</h2>
+                    <small class="text-muted">Iniciado: <span id="startTime">-</span></small>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Ações Rápidas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="printFicha()">
+                            <i class="bi bi-printer me-2"></i>Imprimir Ficha
+                        </button>
+                        <button class="btn btn-outline-info" onclick="capturePhoto()">
+                            <i class="bi bi-camera me-2"></i>Registrar Foto
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="addObservation()">
+                            <i class="bi bi-chat-text me-2"></i>Adicionar Observação
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="reportProblem()">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Reportar Problema
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .workflow-timeline-horizontal {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        position: relative;
+    }
+
+    .workflow-timeline-horizontal::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 40px;
+        right: 40px;
+        height: 4px;
+        background: linear-gradient(to right, #198754 var(--progress), #e9ecef var(--progress));
+        transform: translateY(-50%);
+        z-index: 0;
+    }
+
+    .timeline-step-h {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .timeline-step-h:hover {
+        transform: scale(1.1);
+    }
+
+    .timeline-step-h .step-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: #e9ecef;
+        color: #6c757d;
+        border: 3px solid #dee2e6;
+        transition: all 0.3s;
+    }
+
+    .timeline-step-h.completed .step-circle {
+        background: #198754;
+        color: white;
+        border-color: #198754;
+    }
+
+    .timeline-step-h.current .step-circle {
+        background: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+        animation: pulse 2s infinite;
+    }
+
+    .timeline-step-h.rejected .step-circle {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+
+    .timeline-step-h .step-label {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        text-align: center;
+        max-width: 80px;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .form-control-lg, .form-select-lg {
+        min-height: 50px;
+    }
+
+    .btn-lg {
+        min-height: 60px;
+        font-size: 1.2rem;
+    }
+</style>
+
+@section Scripts {
+<script>
+    const orderId = '@Model.Id';
+    const STEP_ORDER = ['SEPARACAO', 'PESAGEM', 'MISTURA', 'ENVASE', 'ROTULAGEM', 'CONFERENCIA', 'APROVACAO', 'EXPEDICAO'];
+    const STEP_NAMES = {
+        'SEPARACAO': 'Separação',
+        'PESAGEM': 'Pesagem',
+        'MISTURA': 'Mistura',
+        'ENVASE': 'Envase',
+        'ROTULAGEM': 'Rotulagem',
+        'CONFERENCIA': 'Conferência',
+        'APROVACAO': 'Aprovação',
+        'EXPEDICAO': 'Expedição'
+    };
+    const STEP_ICONS = {
+        'SEPARACAO': 'bi-collection',
+        'PESAGEM': 'bi-speedometer2',
+        'MISTURA': 'bi-shuffle',
+        'ENVASE': 'bi-box-seam',
+        'ROTULAGEM': 'bi-tag',
+        'CONFERENCIA': 'bi-clipboard-check',
+        'APROVACAO': 'bi-patch-check',
+        'EXPEDICAO': 'bi-truck'
+    };
+
+    let workflowData = null;
+    let timerInterval = null;
+    let startTimestamp = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadWorkflowStatus();
+        startTimer();
+    });
+
+    async function loadWorkflowStatus() {
+        try {
+            const response = await fetch(`/api/ManipulationOrders/${orderId}/workflow-status`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                workflowData = data.data;
+                renderTimeline();
+                renderCurrentStep();
+            }
+        } catch (error) {
+            console.error('Erro ao carregar workflow:', error);
+        }
+    }
+
+    function renderTimeline() {
+        const container = document.getElementById('workflowTimeline');
+        const completedSteps = workflowData.steps ? workflowData.steps.filter(s => s.status === 'CONCLUIDA').length : 0;
+        const progress = (completedSteps / STEP_ORDER.length) * 100;
+        
+        container.style.setProperty('--progress', `${progress}%`);
+        
+        let html = '';
+        STEP_ORDER.forEach((stepType, index) => {
+            const stepData = workflowData.steps ? workflowData.steps.find(s => s.stepType === stepType) : null;
+            let statusClass = 'pending';
+            
+            if (stepData?.status === 'CONCLUIDA') {
+                statusClass = 'completed';
+            } else if (stepData?.status === 'REJEITADA') {
+                statusClass = 'rejected';
+            } else if (index === completedSteps) {
+                statusClass = 'current';
+            }
+            
+            html += `
+                <div class="timeline-step-h ${statusClass}" data-step="${stepType}">
+                    <div class="step-circle">
+                        <i class="bi ${STEP_ICONS[stepType]}"></i>
+                    </div>
+                    <div class="step-label">${STEP_NAMES[stepType]}</div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function renderCurrentStep() {
+        const completedSteps = workflowData.steps ? workflowData.steps.filter(s => s.status === 'CONCLUIDA').length : 0;
+        
+        if (completedSteps >= STEP_ORDER.length) {
+            document.getElementById('currentStepTitle').textContent = 'Produção Concluída!';
+            document.getElementById('currentStepContent').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                    <h3 class="mt-3 text-success">Todas as etapas foram concluídas!</h3>
+                    <p class="text-muted">Esta ordem de manipulação foi finalizada com sucesso.</p>
+                    <a href="/Manipulacoes" class="btn btn-primary btn-lg mt-3">
+                        <i class="bi bi-arrow-left me-2"></i>Voltar para Lista
+                    </a>
+                </div>
+            `;
+            document.getElementById('btnNextStep').style.display = 'none';
+            return;
+        }
+        
+        const currentStepType = STEP_ORDER[completedSteps];
+        document.getElementById('currentStepTitle').textContent = `Etapa ${completedSteps + 1}: ${STEP_NAMES[currentStepType]}`;
+        document.getElementById('currentStepContent').innerHTML = getStepForm(currentStepType);
+        
+        updateStatus(currentStepType);
+    }
+
+    function getStepForm(stepType) {
+        const forms = {
+            'SEPARACAO': `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Separe todos os materiais necessários para esta manipulação.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Área de Separação</label>
+                    <input type="text" class="form-control form-control-lg" id="areaSeparacao" placeholder="Ex: Bancada 1">
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkAllMaterials">
+                    <label class="form-check-label fw-bold" for="checkAllMaterials">
+                        Todos os materiais foram separados e conferidos
+                    </label>
+                </div>
+            `,
+            'PESAGEM': `
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Balança</label>
+                        <input type="text" class="form-control form-control-lg" id="balanca" placeholder="Ex: Balança 01">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Temperatura (°C)</label>
+                        <input type="number" step="0.1" class="form-control form-control-lg" id="temperatura">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Umidade (%)</label>
+                        <input type="number" step="0.1" class="form-control form-control-lg" id="umidade">
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkPesagem">
+                    <label class="form-check-label fw-bold" for="checkPesagem">
+                        Todos os pesos foram conferidos
+                    </label>
+                </div>
+            `,
+            'MISTURA': `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Método de Mistura</label>
+                        <select class="form-select form-select-lg" id="metodoMistura">
+                            <option value="MANUAL">Manual</option>
+                            <option value="MECANICA">Mecânica</option>
+                            <option value="HOMOGENEIZADOR">Homogeneizador</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Equipamento</label>
+                        <input type="text" class="form-control form-control-lg" id="equipamento" placeholder="Ex: Gral e Pistilo">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Tempo de Mistura (min)</label>
+                        <input type="number" class="form-control form-control-lg" id="tempoMistura">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Velocidade (RPM)</label>
+                        <input type="number" class="form-control form-control-lg" id="velocidade">
+                    </div>
+                </div>
+            `,
+            'ENVASE': `
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Tipo de Embalagem</label>
+                        <select class="form-select form-select-lg" id="tipoEmbalagem">
+                            <option value="POTE">Pote</option>
+                            <option value="BISNAGA">Bisnaga</option>
+                            <option value="FRASCO">Frasco</option>
+                            <option value="CAPSULA">Cápsula</option>
+                            <option value="SACHE">Sachê</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Quantidade Envasada</label>
+                        <input type="number" step="0.01" class="form-control form-control-lg" id="quantidadeEnvasada" value="@Model.QuantityToProduce">
+                    </div>
+                </div>
+            `,
+            'ROTULAGEM': `
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Número do Lote</label>
+                        <input type="text" class="form-control form-control-lg" id="numeroLote" value="${generateBatchNumber()}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Data de Fabricação</label>
+                        <input type="date" class="form-control form-control-lg" id="dataFabricacao" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Data de Validade</label>
+                        <input type="date" class="form-control form-control-lg" id="dataValidade">
+                    </div>
+                </div>
+            `,
+            'CONFERENCIA': `
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Verifique todos os itens abaixo antes de aprovar.
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkVisual">
+                    <label class="form-check-label" for="checkVisual">Aspectos visuais OK</label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkEmbalagem">
+                    <label class="form-check-label" for="checkEmbalagem">Embalagem íntegra</label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkRotulo">
+                    <label class="form-check-label" for="checkRotulo">Rótulo correto</label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkQuantidade">
+                    <label class="form-check-label" for="checkQuantidade">Quantidade correta</label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkDocumentacao">
+                    <label class="form-check-label" for="checkDocumentacao">Documentação completa</label>
+                </div>
+            `,
+            'APROVACAO': `
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-shield-check me-2"></i>
+                    Aprovação final do farmacêutico responsável.
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Nome do Farmacêutico</label>
+                        <input type="text" class="form-control form-control-lg" id="farmaceuticoNome">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">CRF</label>
+                        <input type="text" class="form-control form-control-lg" id="farmaceuticoCRF">
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkAprovado">
+                    <label class="form-check-label fw-bold" for="checkAprovado">
+                        <i class="bi bi-check-circle me-2"></i>APROVO ESTA MANIPULAÇÃO
+                    </label>
+                </div>
+            `,
+            'EXPEDICAO': `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Método de Entrega</label>
+                        <select class="form-select form-select-lg" id="metodoEntrega">
+                            <option value="BALCAO">Retirada no Balcão</option>
+                            <option value="MOTOBOY">Motoboy</option>
+                            <option value="CORREIOS">Correios</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Recebedor</label>
+                        <input type="text" class="form-control form-control-lg" id="nomeRecebedor">
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="checkNotificado">
+                    <label class="form-check-label" for="checkNotificado">
+                        Cliente foi notificado da disponibilidade
+                    </label>
+                </div>
+            `
+        };
+
+        return forms[stepType] + `
+            <div class="mt-4">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="2"></textarea>
+            </div>
+        `;
+    }
+
+    function generateBatchNumber() {
+        const now = new Date();
+        return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
+    }
+
+    async function completeCurrentStep() {
+        const completedSteps = workflowData.steps ? workflowData.steps.filter(s => s.status === 'CONCLUIDA').length : 0;
+        const currentStepType = STEP_ORDER[completedSteps];
+        
+        if (!currentStepType) return;
+
+        const observations = document.getElementById('stepObservations')?.value || '';
+        let payload = { observations };
+
+        switch(currentStepType) {
+            case 'SEPARACAO':
+                if (!document.getElementById('checkAllMaterials')?.checked) {
+                    alert('Confirme que todos os materiais foram separados');
+                    return;
+                }
+                payload.areaSeparacao = document.getElementById('areaSeparacao')?.value;
+                payload.items = [];
+                break;
+            case 'PESAGEM':
+                if (!document.getElementById('checkPesagem')?.checked) {
+                    alert('Confirme que todos os pesos foram conferidos');
+                    return;
+                }
+                payload.scaleName = document.getElementById('balanca')?.value;
+                payload.environmentTemperature = parseFloat(document.getElementById('temperatura')?.value) || null;
+                payload.environmentHumidity = parseFloat(document.getElementById('umidade')?.value) || null;
+                payload.components = [];
+                break;
+            case 'MISTURA':
+                payload.mixingMethod = document.getElementById('metodoMistura')?.value;
+                payload.equipment = document.getElementById('equipamento')?.value;
+                payload.mixingDuration = parseInt(document.getElementById('tempoMistura')?.value) || null;
+                payload.mixingSpeed = document.getElementById('velocidade')?.value;
+                break;
+            case 'ENVASE':
+                payload.packagingType = document.getElementById('tipoEmbalagem')?.value;
+                payload.packagedQuantity = parseFloat(document.getElementById('quantidadeEnvasada')?.value) || 0;
+                break;
+            case 'ROTULAGEM':
+                payload.batchNumber = document.getElementById('numeroLote')?.value;
+                payload.manufacturingDate = document.getElementById('dataFabricacao')?.value;
+                payload.expiryDate = document.getElementById('dataValidade')?.value;
+                break;
+            case 'CONFERENCIA':
+                payload.visualAspects = document.getElementById('checkVisual')?.checked;
+                payload.packagingIntact = document.getElementById('checkEmbalagem')?.checked;
+                payload.labelCorrect = document.getElementById('checkRotulo')?.checked;
+                payload.quantityCorrect = document.getElementById('checkQuantidade')?.checked;
+                payload.documentationComplete = document.getElementById('checkDocumentacao')?.checked;
+                break;
+            case 'APROVACAO':
+                if (!document.getElementById('checkAprovado')?.checked) {
+                    alert('Marque a aprovação para continuar');
+                    return;
+                }
+                payload.pharmacistName = document.getElementById('farmaceuticoNome')?.value;
+                payload.pharmacistCRF = document.getElementById('farmaceuticoCRF')?.value;
+                payload.approved = true;
+                break;
+            case 'EXPEDICAO':
+                payload.deliveryMethod = document.getElementById('metodoEntrega')?.value;
+                payload.receiverName = document.getElementById('nomeRecebedor')?.value;
+                payload.customerNotified = document.getElementById('checkNotificado')?.checked;
+                break;
+        }
+
+        try {
+            const response = await fetch(`/api/ManipulationOrders/${orderId}/steps/${currentStepType.toLowerCase()}/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                await loadWorkflowStatus();
+                showSuccess('Etapa concluída com sucesso!');
+            } else {
+                alert(data.message || 'Erro ao concluir etapa');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao processar etapa');
+        }
+    }
+
+    function startTimer() {
+        startTimestamp = new Date();
+        document.getElementById('startTime').textContent = startTimestamp.toLocaleTimeString('pt-BR');
+
+        timerInterval = setInterval(() => {
+            const now = new Date();
+            const diff = now - startTimestamp;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            document.getElementById('productionTimer').textContent = 
+                `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        }, 1000);
+    }
+
+    function updateStatus(status) {
+        document.getElementById('currentStatus').textContent = status;
+    }
+
+    function printFicha() {
+        window.open(`/Manipulacoes/FichaPesagem/${orderId}`, '_blank');
+    }
+
+    function capturePhoto() {
+        alert('Funcionalidade de captura de foto em desenvolvimento');
+    }
+
+    function addObservation() {
+        const obs = prompt('Digite a observação:');
+        if (obs) {
+            document.getElementById('stepObservations').value += '\n' + obs;
+        }
+    }
+
+    function reportProblem() {
+        if (confirm('Deseja reportar um problema com esta manipulação?')) {
+            alert('Funcionalidade em desenvolvimento');
+        }
+    }
+
+    function showSuccess(message) {
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-3';
+        toast.innerHTML = `
+            <div class="toast show bg-success text-white">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle me-2"></i>${message}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+</script>
+}

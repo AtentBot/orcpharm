@@ -14,8 +14,8 @@ public class ManipulationOrder
     [Key]
     public Guid Id { get; set; }
 
-    [Column("code")] 
-    [MaxLength(20)]  
+    [Column("code")]
+    [MaxLength(20)]
     public string Code { get; set; } = string.Empty;
 
     [Required]
@@ -95,4 +95,8 @@ public class ManipulationOrder
     // Navegação
     public ICollection<StockMovement>? StockMovements { get; set; }
     public ICollection<SaleItem>? SaleItems { get; set; }
+
+    // Navegação para Workflow de Manipulação
+    public ICollection<ManipulationStep>? Steps { get; set; }
+    public ICollection<ManipulationPhoto>? Photos { get; set; }
 }

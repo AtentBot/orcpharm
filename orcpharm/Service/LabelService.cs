@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
-using DTOs;
+using DTOs.Labels;
 using System.Text;
 using Models.Employees;
 using Models.Pharmacy;
@@ -118,7 +118,7 @@ public class LabelService
             if (template == null)
                 return (false, "Template não encontrado", null);
 
-            // ✅ CORRIGIDO: Usar ApprovedByPharmacistId
+            // Buscar farmacêutico aprovador
             var pharmacist = await _context.Employees
                 .Include(e => e.JobPosition)
                 .FirstOrDefaultAsync(e => e.Id == order.ApprovedByPharmacistId);
@@ -158,20 +158,16 @@ public class LabelService
                 ManipulationOrderId = order.Id,
                 TemplateId = template.Id,
                 LabelCode = labelCode,
-                // ✅ CORRIGIDO: Usar CustomerName direto
                 PatientName = order.CustomerName ?? "PACIENTE NÃO IDENTIFICADO",
                 FormulaName = order.Formula?.Name ?? "",
                 Composition = composition,
-                // ✅ CORRIGIDO: Usar SpecialInstructions como posologia
                 Posology = order.SpecialInstructions ?? "",
-                // ✅ CORRIGIDO: Usar CompletionDate
                 ManipulationDate = order.CompletionDate ?? DateTime.UtcNow,
-                // ✅ CORRIGIDO: Usar ExpiryDate
                 ExpirationDate = order.ExpiryDate ?? DateTime.UtcNow.AddMonths(6),
                 BatchNumber = order.OrderNumber ?? "",
                 PharmacistName = pharmacist?.FullName ?? "",
                 PharmacistCrm = "",
-                Warnings = dto.CustomWarnings ?? order.Formula?.StorageInstructions,
+                Warnings = dto.CustomWarnings ?? order.Formula?.UsageInstructions,
                 StorageInstructions = dto.CustomStorageInstructions ?? order.Formula?.StorageInstructions,
                 QrCodeData = qrCodeData,
                 GeneratedHtml = html,
@@ -209,7 +205,7 @@ public class LabelService
 
         label.PrintCount += dto.Copies;
         label.LastPrintedAt = DateTime.UtcNow;
-        label.LastPrintedByEmployeeId = employeeId;
+        label.LastPrintedById = employeeId;
         label.Status = "IMPRESSO";
 
         await _context.SaveChangesAsync();
@@ -229,10 +225,10 @@ public class LabelService
     {
         var html = new StringBuilder(template.HtmlTemplate);
 
-        // ✅ CORRIGIDO: Usar propriedades corretas do Establishment
+        // Substituir placeholders com dados do estabelecimento
         html.Replace("{{ESTABLISHMENT_NAME}}", establishment?.NomeFantasia ?? "");
 
-        // ✅ CORRIGIDO: Montar endereço completo
+        // Montar endereço completo
         var address = establishment != null
             ? $"{establishment.Street}, {establishment.Number}{(string.IsNullOrWhiteSpace(establishment.Complement) ? "" : " - " + establishment.Complement)} - {establishment.Neighborhood}"
             : "";
@@ -241,20 +237,13 @@ public class LabelService
         html.Replace("{{ESTABLISHMENT_PHONE}}", establishment?.Phone ?? "");
         html.Replace("{{ESTABLISHMENT_CNPJ}}", establishment?.Cnpj ?? "");
 
-        // ✅ CORRIGIDO: Usar CustomerName direto
+        // Dados do produto e manipulação
         html.Replace("{{PATIENT_NAME}}", order.CustomerName ?? "");
         html.Replace("{{FORMULA_NAME}}", order.Formula?.Name ?? "");
         html.Replace("{{COMPOSITION}}", composition);
-
-        // ✅ CORRIGIDO: Usar SpecialInstructions
         html.Replace("{{POSOLOGY}}", order.SpecialInstructions ?? "");
-
-        // ✅ CORRIGIDO: Usar CompletionDate
         html.Replace("{{MANIPULATION_DATE}}", (order.CompletionDate ?? DateTime.UtcNow).ToString("dd/MM/yyyy"));
-
-        // ✅ CORRIGIDO: Usar ExpiryDate
         html.Replace("{{EXPIRATION_DATE}}", (order.ExpiryDate ?? DateTime.UtcNow.AddMonths(6)).ToString("dd/MM/yyyy"));
-
         html.Replace("{{BATCH_NUMBER}}", order.OrderNumber ?? "");
         html.Replace("{{PHARMACIST_NAME}}", pharmacist?.FullName ?? "");
         html.Replace("{{PHARMACIST_CRM}}", "");

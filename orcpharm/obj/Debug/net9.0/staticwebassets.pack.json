@@ -25,6 +25,10 @@
       "PackagePath": "staticwebassets\\js\\employees-shared.js"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\manipulation-weighing.js",
+      "PackagePath": "staticwebassets\\js\\manipulation-weighing.js"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

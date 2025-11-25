@@ -1,71 +1,65 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 using Models.Employees;
 
 namespace Models.Pharmacy;
 
 /// <summary>
-/// Registro fotográfico das etapas de manipulação
+/// Fotos capturadas durante as etapas de manipulação
 /// </summary>
-[Index(nameof(ManipulationOrderId))]
-[Index(nameof(ManipulationStepId))]
-[Index(nameof(CapturedAt))]
+[Table("ManipulationPhotos")]
 public class ManipulationPhoto
 {
     [Key]
+    [Column("Id")]
     public Guid Id { get; set; }
 
-    [Required]
+    [Column("ManipulationOrderId")]
     public Guid ManipulationOrderId { get; set; }
     public ManipulationOrder? ManipulationOrder { get; set; }
 
+    [Column("ManipulationStepId")]
     public Guid? ManipulationStepId { get; set; }
     public ManipulationStep? ManipulationStep { get; set; }
 
-    /// <summary>
-    /// Tipo da etapa fotografada: PESAGEM, MISTURA, ENVASE, ROTULAGEM, PRODUTO_FINAL
-    /// </summary>
-    [Required, MaxLength(20)]
+    [Column("StepType")]
+    [MaxLength(50)]
     public string StepType { get; set; } = default!;
+    // SEPARACAO, PESAGEM, MISTURA, ENVASE, ROTULAGEM, CONFERENCIA, APROVACAO, EXPEDICAO
 
-    /// <summary>
-    /// URL ou caminho da foto (pode ser base64 ou path no storage)
-    /// </summary>
-    [Required]
+    [Column("PhotoUrl")]
+    [MaxLength(500)]
     public string PhotoUrl { get; set; } = default!;
 
-    /// <summary>
-    /// Descrição/observação sobre a foto
-    /// </summary>
+    [Column("ThumbnailUrl")]
+    [MaxLength(500)]
+    public string? ThumbnailUrl { get; set; }
+
+    [Column("FileName")]
+    [MaxLength(255)]
+    public string? FileName { get; set; }
+
+    [Column("ContentType")]
+    [MaxLength(100)]
+    public string ContentType { get; set; } = "image/jpeg";
+
+    [Column("FileSize")]
+    public long FileSize { get; set; }
+
+    [Column("Description")]
     [MaxLength(500)]
     public string? Description { get; set; }
 
-    /// <summary>
-    /// Thumbnail (miniatura) para listagens
-    /// </summary>
-    public string? ThumbnailUrl { get; set; }
-
-    /// <summary>
-    /// Tamanho do arquivo em bytes
-    /// </summary>
-    public long? FileSize { get; set; }
-
-    /// <summary>
-    /// Tipo MIME (image/jpeg, image/png, etc.)
-    /// </summary>
-    [MaxLength(50)]
-    public string? ContentType { get; set; }
-
-    // Quem capturou
-    [Required]
+    [Column("CapturedByEmployeeId")]
     public Guid CapturedByEmployeeId { get; set; }
     public Employee? CapturedByEmployee { get; set; }
 
+    [Column("CapturedAt")]
     public DateTime CapturedAt { get; set; }
 
-    // Auditoria
+    [Column("CreatedAt")]
     public DateTime CreatedAt { get; set; }
-}
 
+    [Column("IsDeleted")]
+    public bool IsDeleted { get; set; } = false;
+}

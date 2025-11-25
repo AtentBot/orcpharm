@@ -36,6 +36,8 @@
     <Folder Include="Views\Account\" />
     <Folder Include="Views\Dashboard\" />
     <Folder Include="Views\Employees\" />
+    <Folder Include="Views\Manipulacoes\" />
+    <Folder Include="Views\Formulas\" />
   </ItemGroup>
 
 </Project>

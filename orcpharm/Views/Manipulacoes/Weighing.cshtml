@@ -1,0 +1,227 @@
+@model ViewModels.Manipulation.WeighingViewModel
+@{
+    ViewData["Title"] = "Pesagem - " + Model.OrderNumber;
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-calculator me-2"></i>
+                        Pesagem de Componentes
+                    </h2>
+                    <p class="text-muted mb-0">Ordem: <strong>@Model.OrderNumber</strong> | Cliente: <strong>@Model.CustomerName</strong></p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Details", new { id = Model.ManipulationOrderId })" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações da Fórmula -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Fórmula</small>
+                            <strong>@Model.FormulaName</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Quantidade a Produzir</small>
+                            <strong>@Model.QuantityToProduce.ToString("N2") @Model.Unit</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block">Tolerância de Desvio</small>
+                            <strong class="text-warning">± 5%</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Pesagem -->
+    <form id="weighingForm">
+        <input type="hidden" id="manipulationOrderId" value="@Model.ManipulationOrderId" />
+        
+        <!-- Componentes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>
+                            Componentes para Pesagem
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%">#</th>
+                                        <th style="width: 25%">Matéria-Prima</th>
+                                        <th style="width: 12%">Qtd. Teórica</th>
+                                        <th style="width: 15%">Lote</th>
+                                        <th style="width: 15%">Qtd. Pesada</th>
+                                        <th style="width: 10%">Desvio</th>
+                                        <th style="width: 10%">Foto</th>
+                                        <th style="width: 8%">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="componentsTable">
+                                    @for (int i = 0; i < Model.Components.Count; i++)
+                                    {
+                                        var component = Model.Components[i];
+                                        <tr data-component-index="@i" data-component-id="@component.ComponentId">
+                                            <td class="align-middle text-center">
+                                                <strong>@(i + 1)</strong>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div>
+                                                    <strong>@component.RawMaterialName</strong>
+                                                    @if (component.IsControlled)
+                                                    {
+                                                        <span class="badge bg-danger ms-1">
+                                                            <i class="bi bi-exclamation-triangle-fill"></i> Controlado
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <small class="text-muted">DCB: @component.DcbCode</small>
+                                            </td>
+                                            <td class="align-middle">
+                                                <strong class="text-primary">@component.TotalQuantity.ToString("N4") @component.Unit</strong>
+                                                <br />
+                                                <small class="text-muted">(@component.UnitQuantity.ToString("N4") × @Model.QuantityToProduce)</small>
+                                            </td>
+                                            <td class="align-middle">
+                                                <select class="form-select form-select-sm batch-select" 
+                                                        data-component-index="@i"
+                                                        required>
+                                                    <option value="">Selecione o lote...</option>
+                                                    @foreach (var batch in component.AvailableBatches)
+                                                    {
+                                                        <option value="@batch.BatchId" 
+                                                                data-available="@batch.AvailableQuantity"
+                                                                data-expiry="@batch.ExpiryDate.ToString("dd/MM/yyyy")"
+                                                                class="@(batch.IsExpiringSoon ? "text-warning" : "")">
+                                                            @batch.BatchNumber 
+                                                            (@batch.AvailableQuantity.ToString("N2") @component.Unit)
+                                                            @if (batch.IsExpiringSoon)
+                                                            {
+                                                                <text> ⚠️</text>
+                                                            }
+                                                        </option>
+                                                    }
+                                                </select>
+                                                <small class="expiry-info text-muted mt-1" style="display:none;">
+                                                    Val: <span class="expiry-date"></span>
+                                                </small>
+                                            </td>
+                                            <td class="align-middle">
+                                                <div class="input-group input-group-sm">
+                                                    <input type="number" 
+                                                           class="form-control weighed-quantity" 
+                                                           data-component-index="@i"
+                                                           data-theoretical="@component.TotalQuantity"
+                                                           step="0.0001" 
+                                                           min="0"
+                                                           placeholder="0.0000"
+                                                           required />
+                                                    <span class="input-group-text">@component.Unit</span>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <span class="deviation-badge badge bg-secondary" data-component-index="@i">
+                                                    -
+                                                </span>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <input type="file" 
+                                                       class="photo-input d-none" 
+                                                       data-component-index="@i"
+                                                       accept="image/*"
+                                                       capture="environment" />
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-primary photo-btn"
+                                                        data-component-index="@i">
+                                                    <i class="bi bi-camera"></i>
+                                                </button>
+                                                <div class="photo-preview mt-1" data-component-index="@i" style="display:none;">
+                                                    <img src="" alt="Preview" class="img-thumbnail" style="max-width: 50px; max-height: 50px;" />
+                                                </div>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <i class="bi bi-circle component-status" data-component-index="@i" style="color: #ddd;"></i>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <label class="form-label fw-bold">Observações</label>
+                        <textarea class="form-control" 
+                                  id="observations" 
+                                  rows="3" 
+                                  placeholder="Observações sobre a pesagem (opcional)..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas e Warnings -->
+        <div class="row mt-3" id="warningsContainer" style="display:none;">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Atenção
+                    </h6>
+                    <ul id="warningsList" class="mb-0"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <a href="@Url.Action("Details", new { id = Model.ManipulationOrderId })" 
+                       class="btn btn-lg btn-outline-secondary">
+                        <i class="bi bi-x-circle me-2"></i>
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="btn btn-lg btn-primary" 
+                            id="submitBtn"
+                            disabled>
+                        <i class="bi bi-check-circle me-2"></i>
+                        Confirmar Pesagem
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script src="~/js/manipulation-weighing.js"></script>
+}

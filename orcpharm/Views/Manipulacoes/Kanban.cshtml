@@ -1,0 +1,406 @@
+@{
+    ViewData["Title"] = "Kanban de Produção";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-kanban text-primary me-2"></i>
+                Kanban de Produção
+            </h4>
+            <p class="text-muted mb-0">Arraste as ordens entre as colunas para atualizar o status</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2" onclick="loadAllOrders()">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+            </button>
+            <a href="/Manipulacoes/Workflow" class="btn btn-outline-primary me-2">
+                <i class="bi bi-diagram-3"></i> Workflow
+            </a>
+            <a href="/Manipulacoes" class="btn btn-primary">
+                <i class="bi bi-list"></i> Lista
+            </a>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <div class="kanban-column" data-status="PENDENTE">
+            <div class="kanban-header bg-warning bg-opacity-25">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock me-2"></i>Pendente
+                    <span class="badge bg-warning text-dark ms-2" id="count-PENDENTE">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-PENDENTE">
+                <!-- Cards carregados via JS -->
+            </div>
+        </div>
+
+        <div class="kanban-column" data-status="SEPARACAO">
+            <div class="kanban-header bg-info bg-opacity-25">
+                <h6 class="mb-0">
+                    <i class="bi bi-collection me-2"></i>Separação
+                    <span class="badge bg-info ms-2" id="count-SEPARACAO">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-SEPARACAO"></div>
+        </div>
+
+        <div class="kanban-column" data-status="PESAGEM">
+            <div class="kanban-header bg-info bg-opacity-25">
+                <h6 class="mb-0">
+                    <i class="bi bi-speedometer2 me-2"></i>Pesagem
+                    <span class="badge bg-info ms-2" id="count-PESAGEM">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-PESAGEM"></div>
+        </div>
+
+        <div class="kanban-column" data-status="PRODUCAO">
+            <div class="kanban-header bg-primary bg-opacity-25">
+                <h6 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>Produção
+                    <span class="badge bg-primary ms-2" id="count-PRODUCAO">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-PRODUCAO"></div>
+        </div>
+
+        <div class="kanban-column" data-status="CONFERENCIA">
+            <div class="kanban-header bg-secondary bg-opacity-25">
+                <h6 class="mb-0">
+                    <i class="bi bi-clipboard-check me-2"></i>Conferência
+                    <span class="badge bg-secondary ms-2" id="count-CONFERENCIA">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-CONFERENCIA"></div>
+        </div>
+
+        <div class="kanban-column" data-status="APROVADO">
+            <div class="kanban-header bg-success bg-opacity-25">
+                <h6 class="mb-0">
+                    <i class="bi bi-patch-check me-2"></i>Aprovado
+                    <span class="badge bg-success ms-2" id="count-APROVADO">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-APROVADO"></div>
+        </div>
+
+        <div class="kanban-column" data-status="FINALIZADO">
+            <div class="kanban-header bg-success bg-opacity-50">
+                <h6 class="mb-0">
+                    <i class="bi bi-check-circle me-2"></i>Finalizado
+                    <span class="badge bg-success ms-2" id="count-FINALIZADO">0</span>
+                </h6>
+            </div>
+            <div class="kanban-cards" id="column-FINALIZADO"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalhes da Ordem -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalOrderTitle">Ordem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalOrderBody">
+                <!-- Detalhes -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <a href="#" class="btn btn-primary" id="btnGoToProduction">
+                    <i class="bi bi-play me-1"></i> Ir para Produção
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .kanban-board {
+        display: flex;
+        gap: 15px;
+        overflow-x: auto;
+        padding-bottom: 20px;
+        min-height: calc(100vh - 200px);
+    }
+
+    .kanban-column {
+        min-width: 280px;
+        max-width: 280px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .kanban-header {
+        padding: 12px 15px;
+        border-radius: 8px 8px 0 0;
+        position: sticky;
+        top: 0;
+    }
+
+    .kanban-cards {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        min-height: 200px;
+    }
+
+    .kanban-card {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        cursor: grab;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .kanban-card.dragging {
+        opacity: 0.5;
+        transform: rotate(3deg);
+    }
+
+    .kanban-cards.drag-over {
+        background: rgba(13, 110, 253, 0.1);
+        border: 2px dashed #0d6efd;
+    }
+
+    .kanban-card .order-number {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+
+    .kanban-card .customer-name {
+        font-size: 14px;
+        color: #333;
+        margin: 5px 0;
+    }
+
+    .kanban-card .formula-name {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .kanban-card .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+    }
+
+    .priority-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .priority-URGENTE { background-color: #dc3545; color: white; }
+    .priority-ALTA { background-color: #ffc107; color: black; }
+    .priority-NORMAL { background-color: #6c757d; color: white; }
+    .priority-BAIXA { background-color: #e9ecef; color: black; }
+</style>
+
+@section Scripts {
+<script>
+    let allOrders = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAllOrders();
+        setupDragAndDrop();
+    });
+
+    async function loadAllOrders() {
+        try {
+            const response = await fetch('/api/ManipulationOrders?pageSize=100', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                allOrders = data.data.items || data.data;
+                renderKanbanCards();
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+    }
+
+    function renderKanbanCards() {
+        // Limpar todas as colunas
+        const columns = ['PENDENTE', 'SEPARACAO', 'PESAGEM', 'PRODUCAO', 'CONFERENCIA', 'APROVADO', 'FINALIZADO'];
+        columns.forEach(col => {
+            document.getElementById(`column-${col}`).innerHTML = '';
+            document.getElementById(`count-${col}`).textContent = '0';
+        });
+
+        // Agrupar por status
+        const grouped = {};
+        allOrders.forEach(order => {
+            let status = order.status;
+            
+            // Mapear status intermediários para colunas
+            if (['MISTURA', 'ENVASE', 'ROTULAGEM'].includes(status)) {
+                status = 'PRODUCAO';
+            }
+            
+            if (!grouped[status]) grouped[status] = [];
+            grouped[status].push(order);
+        });
+
+        // Renderizar cards
+        Object.keys(grouped).forEach(status => {
+            const column = document.getElementById(`column-${status}`);
+            const countBadge = document.getElementById(`count-${status}`);
+            
+            if (column) {
+                grouped[status].forEach(order => {
+                    column.innerHTML += createCard(order);
+                });
+                if (countBadge) {
+                    countBadge.textContent = grouped[status].length;
+                }
+            }
+        });
+
+        // Re-setup drag and drop
+        setupDragAndDrop();
+    }
+
+    function createCard(order) {
+        const isOverdue = order.estimatedCompletionDate && 
+            new Date(order.estimatedCompletionDate) < new Date() &&
+            order.status !== 'FINALIZADO';
+
+        return `
+            <div class="kanban-card" draggable="true" data-id="${order.id}" data-status="${order.status}"
+                 onclick="showOrderDetails('${order.id}')">
+                <div class="d-flex justify-content-between align-items-start">
+                    <span class="order-number">${order.orderNumber}</span>
+                    ${order.priority ? `<span class="badge priority-badge priority-${order.priority}">${order.priority}</span>` : ''}
+                </div>
+                <div class="customer-name">${order.customerName || 'Cliente não informado'}</div>
+                <div class="formula-name text-truncate">${order.formulaName || 'Fórmula livre'}</div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="bi bi-box me-1"></i>${order.quantity} ${order.unit || 'un'}
+                    </small>
+                    ${isOverdue ? '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Atrasado</span>' : 
+                    (order.estimatedCompletionDate ? `<small class="text-muted">${formatDate(order.estimatedCompletionDate)}</small>` : '')}
+                </div>
+            </div>
+        `;
+    }
+
+    function setupDragAndDrop() {
+        const cards = document.querySelectorAll('.kanban-card');
+        const columns = document.querySelectorAll('.kanban-cards');
+
+        cards.forEach(card => {
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+        });
+
+        columns.forEach(column => {
+            column.addEventListener('dragover', handleDragOver);
+            column.addEventListener('dragleave', handleDragLeave);
+            column.addEventListener('drop', handleDrop);
+        });
+    }
+
+    function handleDragStart(e) {
+        e.target.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', e.target.dataset.id);
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    async function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+
+        const orderId = e.dataTransfer.getData('text/plain');
+        const newStatus = e.currentTarget.parentElement.dataset.status;
+
+        if (!orderId || !newStatus) return;
+
+        try {
+            const response = await fetch(`/api/ManipulationOrders/${orderId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                loadAllOrders();
+            } else {
+                alert(data.message || 'Não foi possível mover a ordem');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao atualizar status');
+        }
+    }
+
+    function showOrderDetails(orderId) {
+        const order = allOrders.find(o => o.id === orderId);
+        if (!order) return;
+
+        document.getElementById('modalOrderTitle').textContent = `Ordem ${order.orderNumber}`;
+        document.getElementById('modalOrderBody').innerHTML = `
+            <table class="table table-sm">
+                <tr><th>Cliente:</th><td>${order.customerName || '-'}</td></tr>
+                <tr><th>Fórmula:</th><td>${order.formulaName || 'Fórmula livre'}</td></tr>
+                <tr><th>Quantidade:</th><td>${order.quantity} ${order.unit || 'un'}</td></tr>
+                <tr><th>Status:</th><td>${order.status}</td></tr>
+                <tr><th>Prioridade:</th><td>${order.priority || 'Normal'}</td></tr>
+                <tr><th>Responsável:</th><td>${order.assignedEmployeeName || '-'}</td></tr>
+                <tr><th>Previsão:</th><td>${formatDate(order.estimatedCompletionDate)}</td></tr>
+                <tr><th>Criado em:</th><td>${formatDateTime(order.createdAt)}</td></tr>
+            </table>
+        `;
+        document.getElementById('btnGoToProduction').href = `/Manipulacoes/Producao/${orderId}`;
+
+        new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString('pt-BR');
+    }
+
+    function formatDateTime(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleString('pt-BR');
+    }
+</script>
+}

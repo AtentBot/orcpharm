@@ -1,12 +1,12 @@
-﻿using System.Text;
 using Data;
 using Microsoft.EntityFrameworkCore;
 using Models.Pharmacy;
+using System.Text;
 
 namespace Service;
 
 /// <summary>
-/// Serviço para geração de fichas de manipulação em PDF
+/// Serviço para geração de Fichas de Pesagem conforme RDC 67/2007
 /// </summary>
 public class WeighingSheetService
 {
@@ -18,254 +18,559 @@ public class WeighingSheetService
     }
 
     /// <summary>
-    /// Gera HTML da ficha de pesagem (que pode ser convertido para PDF)
+    /// Gera HTML da Ficha de Pesagem para impressão
     /// </summary>
-    public async Task<string> GenerateWeighingSheetHtml(Guid manipulationOrderId)
+    public async Task<string> GenerateWeighingSheetHtml(Guid orderId)
     {
         var order = await _context.ManipulationOrders
-            .Include(o => o.Establishment)
             .Include(o => o.Formula)
                 .ThenInclude(f => f!.Components)
-                .ThenInclude(c => c.RawMaterial)
+                    .ThenInclude(c => c.RawMaterial)
             .Include(o => o.RequestedByEmployee)
-            .FirstOrDefaultAsync(o => o.Id == manipulationOrderId);
+            .Include(o => o.Establishment)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order == null)
             throw new Exception("Ordem de manipulação não encontrada");
 
-        if (order.Formula == null || !order.Formula.Components.Any())
-            throw new Exception("Fórmula não possui componentes");
+        var sb = new StringBuilder();
 
-        var html = new StringBuilder();
+        // Header HTML
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html lang='pt-BR'>");
+        sb.AppendLine("<head>");
+        sb.AppendLine("    <meta charset='UTF-8'>");
+        sb.AppendLine("    <meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        sb.AppendLine("    <title>Ficha de Pesagem - " + order.OrderNumber + "</title>");
+        sb.AppendLine(GetStyles());
+        sb.AppendLine("</head>");
+        sb.AppendLine("<body>");
 
-        html.AppendLine("<!DOCTYPE html>");
-        html.AppendLine("<html>");
-        html.AppendLine("<head>");
-        html.AppendLine("<meta charset='utf-8'>");
-        html.AppendLine("<title>Ficha de Pesagem</title>");
-        html.AppendLine("<style>");
-        html.AppendLine(@"
-            body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
-                font-size: 12px;
-            }
-            .header {
-                text-align: center;
-                border-bottom: 2px solid #333;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-            }
-            .header h1 {
-                margin: 0;
-                font-size: 18px;
-            }
-            .header p {
-                margin: 5px 0;
-                font-size: 10px;
-            }
-            .section {
-                margin-bottom: 20px;
-            }
-            .section-title {
-                background-color: #f0f0f0;
-                padding: 5px;
-                font-weight: bold;
-                border: 1px solid #ccc;
-                margin-bottom: 10px;
-            }
-            .info-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-                margin-bottom: 15px;
-            }
-            .info-item {
-                display: flex;
-            }
-            .info-label {
-                font-weight: bold;
-                min-width: 120px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 20px;
-            }
-            th, td {
-                border: 1px solid #333;
-                padding: 8px;
-                text-align: left;
-            }
-            th {
-                background-color: #e0e0e0;
-                font-weight: bold;
-            }
-            .signature-box {
-                margin-top: 40px;
-                page-break-inside: avoid;
-            }
-            .signature-line {
-                border-top: 1px solid #333;
-                margin-top: 50px;
-                padding-top: 5px;
-                text-align: center;
-            }
-            .footer {
-                margin-top: 30px;
-                padding-top: 10px;
-                border-top: 1px solid #ccc;
-                font-size: 10px;
-                text-align: center;
-            }
-            .warning {
-                background-color: #fff3cd;
-                border: 1px solid #ffc107;
-                padding: 10px;
-                margin: 10px 0;
-                border-radius: 4px;
-            }
-            @media print {
-                body {
-                    margin: 0;
-                }
-                .signature-box {
-                    page-break-inside: avoid;
-                }
-            }
-        ");
-        html.AppendLine("</style>");
-        html.AppendLine("</head>");
-        html.AppendLine("<body>");
+        // Cabeçalho da Farmácia
+        sb.AppendLine("<div class='header'>");
+        sb.AppendLine($"    <h1>{order.Establishment?.NomeFantasia ?? "Farmácia de Manipulação"}</h1>");
+        sb.AppendLine($"    <p>CNPJ: {order.Establishment?.Cnpj ?? "N/A"}</p>");
+        sb.AppendLine($"    <p>{order.Establishment?.Street}, {order.Establishment?.Number} - {order.Establishment?.City}/{order.Establishment?.State}</p>");
+        sb.AppendLine("</div>");
 
-        // Cabeçalho
-        html.AppendLine("<div class='header'>");
-        html.AppendLine($"<h1>{order.Establishment?.NomeFantasia ?? "Farmácia de Manipulação"}</h1>");
-        html.AppendLine($"<p>{order.Establishment?.Street}, {order.Establishment?.Number} - {order.Establishment?.Neighborhood}, {order.Establishment?.City} - {order.Establishment?.State}</p>");
-        html.AppendLine($"<p>CNPJ: {order.Establishment?.Cnpj} | Telefone: {order.Establishment?.Phone}</p>");
-        html.AppendLine("<h2 style='margin-top: 10px;'>FICHA DE PESAGEM</h2>");
-        html.AppendLine("</div>");
+        // Título
+        sb.AppendLine("<div class='title'>");
+        sb.AppendLine("    <h2>FICHA DE PESAGEM E MANIPULAÇÃO</h2>");
+        sb.AppendLine($"    <p>Conforme RDC 67/2007 - ANVISA</p>");
+        sb.AppendLine("</div>");
 
         // Informações da Ordem
-        html.AppendLine("<div class='section'>");
-        html.AppendLine("<div class='section-title'>INFORMAÇÕES DA ORDEM</div>");
-        html.AppendLine("<div class='info-grid'>");
-        html.AppendLine($"<div class='info-item'><span class='info-label'>Nº da Ordem:</span><span>{order.OrderNumber}</span></div>");
-        html.AppendLine($"<div class='info-item'><span class='info-label'>Data:</span><span>{order.OrderDate:dd/MM/yyyy}</span></div>");
-        html.AppendLine($"<div class='info-item'><span class='info-label'>Cliente:</span><span>{order.CustomerName}</span></div>");
-        html.AppendLine($"<div class='info-item'><span class='info-label'>Fórmula:</span><span>{order.Formula?.Name ?? "N/A"}</span></div>");
-        html.AppendLine($"<div class='info-item'><span class='info-label'>Quantidade:</span><span>{order.QuantityToProduce} {order.Unit}</span></div>");
-        html.AppendLine($"<div class='info-item'><span class='info-label'>Solicitante:</span><span>{order.RequestedByEmployee?.FullName ?? "N/A"}</span></div>");
-        html.AppendLine("</div>");
-        html.AppendLine("</div>");
+        sb.AppendLine("<div class='order-info'>");
+        sb.AppendLine("    <table class='info-table'>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine($"            <td><strong>Ordem Nº:</strong> {order.OrderNumber}</td>");
+        sb.AppendLine($"            <td><strong>Data:</strong> {order.OrderDate:dd/MM/yyyy HH:mm}</td>");
+        sb.AppendLine($"            <td><strong>Previsão:</strong> {order.ExpectedDate:dd/MM/yyyy}</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine($"            <td colspan='2'><strong>Cliente:</strong> {order.CustomerName}</td>");
+        sb.AppendLine($"            <td><strong>Telefone:</strong> {order.CustomerPhone ?? "N/A"}</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
 
-        // Prescrição (se houver)
+        // Informações da Prescrição (se houver)
         if (!string.IsNullOrEmpty(order.PrescriptionNumber))
         {
-            html.AppendLine("<div class='section'>");
-            html.AppendLine("<div class='section-title'>PRESCRIÇÃO</div>");
-            html.AppendLine("<div class='info-grid'>");
-            html.AppendLine($"<div class='info-item'><span class='info-label'>Nº Prescrição:</span><span>{order.PrescriptionNumber}</span></div>");
-            html.AppendLine($"<div class='info-item'><span class='info-label'>Prescritor:</span><span>{order.PrescriberName ?? "N/A"}</span></div>");
-            html.AppendLine($"<div class='info-item'><span class='info-label'>CRM/Registro:</span><span>{order.PrescriberRegistration ?? "N/A"}</span></div>");
-            html.AppendLine("</div>");
-            html.AppendLine("</div>");
+            sb.AppendLine("<div class='prescription-info'>");
+            sb.AppendLine("    <table class='info-table'>");
+            sb.AppendLine("        <tr>");
+            sb.AppendLine($"            <td><strong>Prescrição Nº:</strong> {order.PrescriptionNumber}</td>");
+            sb.AppendLine($"            <td><strong>Prescritor:</strong> {order.PrescriberName ?? "N/A"}</td>");
+            sb.AppendLine($"            <td><strong>CRM/CRO:</strong> {order.PrescriberRegistration ?? "N/A"}</td>");
+            sb.AppendLine("        </tr>");
+            sb.AppendLine("    </table>");
+            sb.AppendLine("</div>");
         }
 
-        // Instruções Especiais
-        if (!string.IsNullOrEmpty(order.SpecialInstructions))
+        // Informações da Fórmula
+        sb.AppendLine("<div class='formula-info'>");
+        sb.AppendLine("    <table class='info-table'>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine($"            <td><strong>Fórmula:</strong> {order.Formula?.Name ?? "Fórmula Livre"}</td>");
+        sb.AppendLine($"            <td><strong>Código:</strong> {order.Formula?.Code ?? "N/A"}</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine($"            <td><strong>Forma Farmacêutica:</strong> {order.Formula?.PharmaceuticalForm ?? "N/A"}</td>");
+        sb.AppendLine($"            <td><strong>Quantidade:</strong> {order.QuantityToProduce} {order.Unit}</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
+
+        // Tabela de Componentes para Pesagem
+        sb.AppendLine("<div class='components-section'>");
+        sb.AppendLine("    <h3>COMPONENTES PARA PESAGEM</h3>");
+        sb.AppendLine("    <table class='components-table'>");
+        sb.AppendLine("        <thead>");
+        sb.AppendLine("            <tr>");
+        sb.AppendLine("                <th style='width: 5%'>Item</th>");
+        sb.AppendLine("                <th style='width: 25%'>Matéria-Prima</th>");
+        sb.AppendLine("                <th style='width: 10%'>Qtd Unit.</th>");
+        sb.AppendLine("                <th style='width: 10%'>Qtd Total</th>");
+        sb.AppendLine("                <th style='width: 10%'>Lote MP</th>");
+        sb.AppendLine("                <th style='width: 10%'>Peso Real</th>");
+        sb.AppendLine("                <th style='width: 10%'>Desvio</th>");
+        sb.AppendLine("                <th style='width: 10%'>Rubrica</th>");
+        sb.AppendLine("                <th style='width: 10%'>Conferência</th>");
+        sb.AppendLine("            </tr>");
+        sb.AppendLine("        </thead>");
+        sb.AppendLine("        <tbody>");
+
+        int itemNumber = 1;
+        if (order.Formula?.Components != null)
         {
-            html.AppendLine("<div class='warning'>");
-            html.AppendLine($"<strong>INSTRUÇÕES ESPECIAIS:</strong> {order.SpecialInstructions}");
-            html.AppendLine("</div>");
+            foreach (var component in order.Formula.Components.OrderBy(c => c.OrderIndex))
+            {
+                var quantityTotal = component.Quantity * order.QuantityToProduce;
+
+                // Buscar lotes disponíveis
+                var availableBatches = await _context.Batches
+                    .Where(b => b.RawMaterialId == component.RawMaterialId &&
+                               b.Status.ToUpper() == "APROVADO" &&
+                               b.CurrentQuantity > 0 &&
+                               b.ExpiryDate > DateTime.UtcNow)
+                    .OrderBy(b => b.ExpiryDate)
+                    .Select(b => b.BatchNumber)
+                    .Take(3)
+                    .ToListAsync();
+
+                var batchSuggestion = availableBatches.Any() ? string.Join(", ", availableBatches) : "N/A";
+
+                sb.AppendLine("            <tr>");
+                sb.AppendLine($"                <td class='center'>{itemNumber++}</td>");
+                sb.AppendLine($"                <td>{component.RawMaterial?.Name ?? "N/A"}<br/><small class='dcb'>DCB: {component.RawMaterial?.DcbCode ?? "-"}</small></td>");
+                sb.AppendLine($"                <td class='center'>{component.Quantity:F4} {component.Unit}</td>");
+                sb.AppendLine($"                <td class='center'><strong>{quantityTotal:F4} {component.Unit}</strong></td>");
+                sb.AppendLine($"                <td class='input-cell'><small>{batchSuggestion}</small></td>");
+                sb.AppendLine($"                <td class='input-cell'></td>");
+                sb.AppendLine($"                <td class='input-cell'></td>");
+                sb.AppendLine($"                <td class='input-cell'></td>");
+                sb.AppendLine($"                <td class='input-cell'></td>");
+                sb.AppendLine("            </tr>");
+            }
         }
 
-        // Tabela de Componentes
-        html.AppendLine("<div class='section'>");
-        html.AppendLine("<div class='section-title'>COMPONENTES A PESAR</div>");
-        html.AppendLine("<table>");
-        html.AppendLine("<thead>");
-        html.AppendLine("<tr>");
-        html.AppendLine("<th style='width: 5%;'>Ordem</th>");
-        html.AppendLine("<th style='width: 30%;'>Componente</th>");
-        html.AppendLine("<th style='width: 10%;'>Qtd. Teórica</th>");
-        html.AppendLine("<th style='width: 10%;'>Unidade</th>");
-        html.AppendLine("<th style='width: 15%;'>Lote Utilizado</th>");
-        html.AppendLine("<th style='width: 10%;'>Qtd. Real</th>");
-        html.AppendLine("<th style='width: 20%;'>Assinatura</th>");
-        html.AppendLine("</tr>");
-        html.AppendLine("</thead>");
-        html.AppendLine("<tbody>");
-
-        var components = order.Formula.Components.OrderBy(c => c.OrderIndex).ToList();
-        foreach (var component in components)
+        // Linhas extras para componentes adicionais
+        for (int i = 0; i < 3; i++)
         {
-            html.AppendLine("<tr>");
-            html.AppendLine($"<td style='text-align: center;'>{component.OrderIndex}</td>");
-            html.AppendLine($"<td>{component.RawMaterial?.Name ?? "N/A"}</td>");
-            html.AppendLine($"<td style='text-align: right;'>{component.Quantity:F3}</td>");
-            html.AppendLine($"<td>{component.Unit}</td>");
-            html.AppendLine($"<td style='height: 30px;'></td>"); // Espaço para preencher lote
-            html.AppendLine($"<td style='height: 30px;'></td>"); // Espaço para preencher quantidade real
-            html.AppendLine($"<td style='height: 30px;'></td>"); // Espaço para assinatura
-            html.AppendLine("</tr>");
+            sb.AppendLine("            <tr class='extra-row'>");
+            sb.AppendLine($"                <td class='center'>{itemNumber++}</td>");
+            sb.AppendLine("                <td></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("                <td class='input-cell'></td>");
+            sb.AppendLine("            </tr>");
         }
 
-        html.AppendLine("</tbody>");
-        html.AppendLine("</table>");
-        html.AppendLine("</div>");
+        sb.AppendLine("        </tbody>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
 
-        // Observações
-        html.AppendLine("<div class='section'>");
-        html.AppendLine("<div class='section-title'>OBSERVAÇÕES</div>");
-        html.AppendLine("<div style='border: 1px solid #ccc; min-height: 80px; padding: 10px;'>");
-        html.AppendLine("</div>");
-        html.AppendLine("</div>");
+        // Instruções de Preparo
+        sb.AppendLine("<div class='instructions-section'>");
+        sb.AppendLine("    <h3>INSTRUÇÕES DE PREPARO</h3>");
+        sb.AppendLine("    <div class='instructions-box'>");
+        sb.AppendLine($"        {order.Formula?.PreparationInstructions ?? order.SpecialInstructions ?? "Seguir procedimento padrão da forma farmacêutica."}");
+        sb.AppendLine("    </div>");
+        sb.AppendLine("</div>");
+
+        // Registro de Perdas e Sobras
+        sb.AppendLine("<div class='losses-section'>");
+        sb.AppendLine("    <h3>REGISTRO DE PERDAS E SOBRAS</h3>");
+        sb.AppendLine("    <table class='losses-table'>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td style='width: 50%'>");
+        sb.AppendLine("                <strong>Quantidade Produzida:</strong><br/>");
+        sb.AppendLine("                <div class='input-line'></div>");
+        sb.AppendLine("            </td>");
+        sb.AppendLine("            <td style='width: 50%'>");
+        sb.AppendLine("                <strong>Rendimento (%):</strong><br/>");
+        sb.AppendLine("                <div class='input-line'></div>");
+        sb.AppendLine("            </td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>");
+        sb.AppendLine("                <strong>Perdas (quantidade/motivo):</strong><br/>");
+        sb.AppendLine("                <div class='input-line'></div>");
+        sb.AppendLine("            </td>");
+        sb.AppendLine("            <td>");
+        sb.AppendLine("                <strong>Sobras (quantidade/destino):</strong><br/>");
+        sb.AppendLine("                <div class='input-line'></div>");
+        sb.AppendLine("            </td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
+
+        // Controle de Qualidade
+        sb.AppendLine("<div class='quality-section'>");
+        sb.AppendLine("    <h3>CONTROLE DE QUALIDADE</h3>");
+        sb.AppendLine("    <table class='quality-table'>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <th>Parâmetro</th>");
+        sb.AppendLine("            <th>Especificação</th>");
+        sb.AppendLine("            <th>Resultado</th>");
+        sb.AppendLine("            <th>Conforme</th>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>Aspecto</td>");
+        sb.AppendLine("            <td>Característico da forma</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell center'>☐ S ☐ N</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>Cor</td>");
+        sb.AppendLine("            <td>Característico</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell center'>☐ S ☐ N</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>Odor</td>");
+        sb.AppendLine("            <td>Característico</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell center'>☐ S ☐ N</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>Peso/Volume Final</td>");
+        sb.AppendLine($"            <td>{order.QuantityToProduce} {order.Unit} ± 5%</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell center'>☐ S ☐ N</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>pH (se aplicável)</td>");
+        sb.AppendLine("            <td>Conforme forma</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell center'>☐ S ☐ N ☐ N/A</td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
 
         // Assinaturas
-        html.AppendLine("<div class='signature-box'>");
-        html.AppendLine("<div style='display: grid; grid-template-columns: 1fr 1fr; gap: 40px;'>");
+        sb.AppendLine("<div class='signatures-section'>");
+        sb.AppendLine("    <h3>CONFERÊNCIA DUPLA E ASSINATURAS</h3>");
+        sb.AppendLine("    <table class='signatures-table'>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <th style='width: 25%'>Função</th>");
+        sb.AppendLine("            <th style='width: 25%'>Nome</th>");
+        sb.AppendLine("            <th style='width: 25%'>Assinatura</th>");
+        sb.AppendLine("            <th style='width: 15%'>Data/Hora</th>");
+        sb.AppendLine("            <th style='width: 10%'>CRF</th>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>Manipulador</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td>Conferente</td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td><strong>Farmacêutico RT</strong></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("            <td class='input-cell'></td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
 
-        html.AppendLine("<div>");
-        html.AppendLine("<div class='signature-line'>Manipulador</div>");
-        html.AppendLine("<p style='text-align: center; margin-top: 5px; font-size: 10px;'>Nome: __________________ Data: ___/___/___</p>");
-        html.AppendLine("</div>");
+        // Rotulagem
+        sb.AppendLine("<div class='label-section'>");
+        sb.AppendLine("    <h3>INFORMAÇÕES PARA ROTULAGEM</h3>");
+        sb.AppendLine("    <table class='label-table'>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine($"            <td><strong>Lote:</strong></td>");
+        sb.AppendLine($"            <td class='input-cell' style='width: 30%'></td>");
+        sb.AppendLine($"            <td><strong>Validade:</strong></td>");
+        sb.AppendLine($"            <td class='input-cell' style='width: 30%'></td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td colspan='4'>");
+        sb.AppendLine($"                <strong>Armazenamento:</strong> {order.Formula?.StorageInstructions ?? "Conservar em local fresco e seco, ao abrigo da luz."}");
+        sb.AppendLine("            </td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("        <tr>");
+        sb.AppendLine("            <td colspan='4'>");
+        sb.AppendLine($"                <strong>Posologia:</strong> {order.Formula?.UsageInstructions ?? "Conforme prescrição médica."}");
+        sb.AppendLine("            </td>");
+        sb.AppendLine("        </tr>");
+        sb.AppendLine("    </table>");
+        sb.AppendLine("</div>");
 
-        html.AppendLine("<div>");
-        html.AppendLine("<div class='signature-line'>Conferente</div>");
-        html.AppendLine("<p style='text-align: center; margin-top: 5px; font-size: 10px;'>Nome: __________________ Data: ___/___/___</p>");
-        html.AppendLine("</div>");
-
-        html.AppendLine("</div>");
-        html.AppendLine("</div>");
+        // Observações
+        sb.AppendLine("<div class='observations-section'>");
+        sb.AppendLine("    <h3>OBSERVAÇÕES</h3>");
+        sb.AppendLine("    <div class='observations-box'>");
+        if (!string.IsNullOrEmpty(order.SpecialInstructions))
+        {
+            sb.AppendLine($"        <p>{order.SpecialInstructions}</p>");
+        }
+        sb.AppendLine("        <div class='observation-lines'>");
+        sb.AppendLine("            <div class='input-line'></div>");
+        sb.AppendLine("            <div class='input-line'></div>");
+        sb.AppendLine("            <div class='input-line'></div>");
+        sb.AppendLine("        </div>");
+        sb.AppendLine("    </div>");
+        sb.AppendLine("</div>");
 
         // Rodapé
-        html.AppendLine("<div class='footer'>");
-        html.AppendLine($"Documento gerado em: {DateTime.Now:dd/MM/yyyy HH:mm} | Sistema OrcPharm");
-        html.AppendLine("</div>");
+        sb.AppendLine("<div class='footer'>");
+        sb.AppendLine($"    <p>Documento gerado em: {DateTime.Now:dd/MM/yyyy HH:mm:ss}</p>");
+        sb.AppendLine($"    <p>Sistema OrcPharm - Gestão de Farmácia de Manipulação</p>");
+        sb.AppendLine("</div>");
 
-        html.AppendLine("</body>");
-        html.AppendLine("</html>");
+        // Script para impressão automática
+        sb.AppendLine("<script>");
+        sb.AppendLine("    window.onload = function() {");
+        sb.AppendLine("        // window.print();");
+        sb.AppendLine("    };");
+        sb.AppendLine("</script>");
 
-        return html.ToString();
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+
+        return sb.ToString();
     }
 
-    /// <summary>
-    /// Calcula desvio percentual entre quantidade teórica e real
-    /// </summary>
-    public static decimal CalculateDeviation(decimal theoretical, decimal actual)
+    private string GetStyles()
     {
-        if (theoretical == 0)
-            return 0;
-
-        return Math.Round(((actual - theoretical) / theoretical) * 100, 2);
-    }
-
-    /// <summary>
-    /// Verifica se o desvio está dentro do limite aceitável (padrão: ±5%)
-    /// </summary>
-    public static bool IsDeviationAcceptable(decimal deviationPercentage, decimal maxDeviation = 5.0m)
-    {
-        return Math.Abs(deviationPercentage) <= maxDeviation;
+        return @"
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            padding: 15px;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            color: #1a5f7a;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .title {
+            text-align: center;
+            background: #1a5f7a;
+            color: white;
+            padding: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .title h2 {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        
+        .title p {
+            font-size: 9px;
+        }
+        
+        h3 {
+            font-size: 12px;
+            color: #1a5f7a;
+            border-bottom: 1px solid #1a5f7a;
+            padding-bottom: 3px;
+            margin-bottom: 8px;
+        }
+        
+        .info-table {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .info-table td {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+        
+        .components-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .components-table th {
+            background: #1a5f7a;
+            color: white;
+            padding: 6px 4px;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .components-table td {
+            border: 1px solid #ccc;
+            padding: 6px 4px;
+            font-size: 10px;
+        }
+        
+        .components-table .center {
+            text-align: center;
+        }
+        
+        .components-table .input-cell {
+            background: #fffef0;
+            min-height: 25px;
+        }
+        
+        .components-table .dcb {
+            color: #888;
+            font-size: 8px;
+        }
+        
+        .extra-row td {
+            height: 30px;
+        }
+        
+        .instructions-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f9f9f9;
+            margin-bottom: 15px;
+            min-height: 60px;
+        }
+        
+        .losses-table {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .losses-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        
+        .input-line {
+            border-bottom: 1px solid #333;
+            height: 25px;
+            margin: 5px 0;
+        }
+        
+        .quality-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .quality-table th, .quality-table td {
+            border: 1px solid #ccc;
+            padding: 5px;
+            text-align: center;
+            font-size: 10px;
+        }
+        
+        .quality-table th {
+            background: #e0e0e0;
+        }
+        
+        .quality-table .input-cell {
+            background: #fffef0;
+            min-height: 20px;
+        }
+        
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .signatures-table th, .signatures-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+            font-size: 10px;
+        }
+        
+        .signatures-table th {
+            background: #1a5f7a;
+            color: white;
+        }
+        
+        .signatures-table .input-cell {
+            background: #fffef0;
+            height: 40px;
+        }
+        
+        .label-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .label-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+        }
+        
+        .label-table .input-cell {
+            background: #fffef0;
+        }
+        
+        .observations-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            min-height: 60px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 9px;
+            color: #888;
+        }
+        
+        @media print {
+            body {
+                padding: 10px;
+            }
+            
+            .no-print {
+                display: none;
+            }
+            
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+        }
+    </style>";
     }
 }

@@ -14,17 +14,10 @@ using Service;
 using Service.Formulas;
 using Validators.Formulas;
 using Service.BatchQuality;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-
-//// Configurar Kestrel apenas para HTTP em desenvolvimento
-//if (builder.Environment.IsDevelopment())
-//{
-//    builder.WebHost.ConfigureKestrel(serverOptions =>
-//    {
-//        serverOptions.ListenAnyIP(8080); // Apenas HTTP
-//    });
-//}
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -35,6 +28,7 @@ builder.Services.AddScoped<PrescriptionService>();
 builder.Services.AddScoped<SaleService>();
 builder.Services.AddScoped<SngpcService>();
 builder.Services.AddScoped<LabelService>();
+builder.Services.AddManipulationServices();
 
 // ADICIONAR DbContext para PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -43,20 +37,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
     options.UseNpgsql(connectionString, npgsqlOptions =>
     {
-        // ✅ Retry automático em falhas temporárias
         npgsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(5),
             errorCodesToAdd: null
         );
 
-        // ✅ Timeout maior para comandos
         npgsqlOptions.CommandTimeout(60);
-
         npgsqlOptions.MigrationsAssembly("orcpharm");
     });
 
-    // ✅ Logging em desenvolvimento
     if (builder.Environment.IsDevelopment())
     {
         options.EnableSensitiveDataLogging();
@@ -80,6 +70,19 @@ builder.Services.AddScoped<BatchQualityService>();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
+// Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
+
+builder.Services.AddAuthorization();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -91,7 +94,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Adicionar Health Checks
+// Health Checks
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpClient();
 builder.Services.AddSession(options =>
@@ -102,7 +105,7 @@ builder.Services.AddSession(options =>
     options.Cookie.Name = "OrcPharm.Session";
 });
 
-// === Swagger ===
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -113,7 +116,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Documentação da API do projeto OrcPharm",
     });
 
-    // Header: X-API-KEY
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.ApiKey,
@@ -122,7 +124,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Cole aqui sua X-API-KEY"
     });
 
-    // Header: X-SESSION-TOKEN
     c.AddSecurityDefinition("SessionToken", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.ApiKey,
@@ -131,7 +132,6 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Token de sessão retornado no login"
     });
 
-    // Exigir ambos por padrão (para rotas /api)
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -149,18 +149,22 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    c.DocInclusionPredicate((docName, apiDesc) =>
+    {
+        return apiDesc.RelativePath?.StartsWith("api/", StringComparison.OrdinalIgnoreCase) == true;
+    });
 });
 
 var app = builder.Build();
 
-// Seed data - Criar AccessLevel padrão com proteção
+// Seed data
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // Testar conexão primeiro
         if (await db.Database.CanConnectAsync())
         {
             if (!await db.AccessLevels.AnyAsync())
@@ -189,21 +193,20 @@ try
 catch (Exception ex)
 {
     Console.WriteLine($"⚠️ Erro ao criar seed data: {ex.Message}");
-    // Continua a execução mesmo se o seed falhar
 }
 
-// Configure the HTTP request pipeline.
+// Configure pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
-    app.UseHttpsRedirection(); // Apenas em produção
+    app.UseHttpsRedirection();
 }
 
-// Health Check Endpoint - IMPORTANTE para o Traefik!
+// Health Check
 app.MapHealthChecks("/health");
 
-// Habilitar Swagger
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -215,8 +218,9 @@ app.UseCors();
 app.UseRouting();
 app.UseSession();
 
-app.UseEmployeeAuth();      
-app.UseAuthorization();    
+app.UseAuthentication();
+app.UseEmployeeAuth();
+app.UseAuthorization();
 
 app.MapStaticAssets();
 
@@ -224,5 +228,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapControllerRoute(
+    name: "manipulacoes",
+    pattern: "Manipulacoes/{action=Index}/{id?}",
+    defaults: new { controller = "Manipulacoes" });
 
 app.Run();

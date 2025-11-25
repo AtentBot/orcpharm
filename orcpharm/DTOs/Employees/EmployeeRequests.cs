@@ -2,6 +2,31 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DTOs.Employees;
 
+// ==================== AUTENTICAÇÃO ====================
+
+/// <summary>
+/// DTO para login de funcionário
+/// </summary>
+public class LoginDto
+{
+    [Required]
+    public string Cpf { get; set; } = "";
+
+    [Required]
+    public string Password { get; set; } = "";
+}
+
+/// <summary>
+/// DTO para gerar hash de senha (ferramenta administrativa)
+/// </summary>
+public class GenerateHashDto
+{
+    [Required]
+    public string Password { get; set; } = "";
+}
+
+// ==================== FUNCIONÁRIOS ====================
+
 /// <summary>
 /// DTO para criação de novo funcionário
 /// </summary>
@@ -22,7 +47,7 @@ public record CreateEmployeeRequest
     public string? SocialName { get; init; }
 
     [Required(ErrorMessage = "O CPF é obrigatório")]
-    [MaxLength(14)] // Com formatação
+    [MaxLength(14)]
     public string Cpf { get; init; } = default!;
 
     [MaxLength(20)]
@@ -39,6 +64,15 @@ public record CreateEmployeeRequest
     [MaxLength(20)]
     public string? Gender { get; init; }
 
+    [MaxLength(100)]
+    public string? Nationality { get; init; }
+
+    [MaxLength(100)]
+    public string? PlaceOfBirth { get; init; }
+
+    [MaxLength(50)]
+    public string? MaritalStatus { get; init; }
+
     // Documentos Trabalhistas
     [MaxLength(20)]
     public string? Ctps { get; init; }
@@ -53,6 +87,20 @@ public record CreateEmployeeRequest
 
     [MaxLength(20)]
     public string? PisPasep { get; init; }
+
+    [MaxLength(20)]
+    public string? VoterRegistration { get; init; }
+
+    [MaxLength(20)]
+    public string? MilitaryService { get; init; }
+
+    [MaxLength(20)]
+    public string? DriverLicense { get; init; }
+
+    [MaxLength(10)]
+    public string? DriverLicenseCategory { get; init; }
+
+    public DateOnly? DriverLicenseExpiry { get; init; }
 
     // Contatos
     [MaxLength(20)]
@@ -91,7 +139,7 @@ public record CreateEmployeeRequest
     public string State { get; init; } = default!;
 
     [Required(ErrorMessage = "O CEP é obrigatório")]
-    [MaxLength(9)] // Com formatação
+    [MaxLength(9)]
     public string PostalCode { get; init; } = default!;
 
     // Dados Trabalhistas
@@ -128,6 +176,9 @@ public record CreateEmployeeRequest
     [MaxLength(10)]
     public string? BankAccountType { get; init; }
 
+    [MaxLength(5)]
+    public string? BankAccountDigit { get; init; }
+
     // Contato de Emergência
     [MaxLength(200)]
     public string? EmergencyContactName { get; init; }
@@ -143,6 +194,10 @@ public record CreateEmployeeRequest
 
     // Período de Experiência (padrão: 90 dias)
     public int ProbationDays { get; init; } = 90;
+
+    // Senha para primeiro acesso
+    [Required(ErrorMessage = "A senha é obrigatória")]
+    public string Password { get; init; } = default!;
 }
 
 /// <summary>
@@ -150,9 +205,6 @@ public record CreateEmployeeRequest
 /// </summary>
 public record UpdateEmployeeRequest
 {
-    [Required]
-    public Guid Id { get; init; }
-
     public Guid? JobPositionId { get; init; }
 
     [MaxLength(200)]
@@ -209,6 +261,9 @@ public record UpdateEmployeeRequest
     [MaxLength(10)]
     public string? BankAccountType { get; init; }
 
+    [MaxLength(5)]
+    public string? BankAccountDigit { get; init; }
+
     public decimal? Salary { get; init; }
 
     [MaxLength(50)]
@@ -228,6 +283,95 @@ public record UpdateEmployeeRequest
     public string? EmergencyContactPhone { get; init; }
 
     public int? DependentsCount { get; init; }
+}
+
+/// <summary>
+/// Classe para compatibilidade com controller existente
+/// </summary>
+public class CreateEmployeeDto
+{
+    public Guid EstablishmentId { get; set; }
+    public Guid JobPositionId { get; set; }
+    public string FullName { get; set; } = "";
+    public string? SocialName { get; set; }
+    public string Cpf { get; set; } = "";
+    public string? Rg { get; set; }
+    public string? RgIssuer { get; set; }
+    public DateOnly? RgIssueDate { get; set; }
+    public DateOnly DateOfBirth { get; set; }
+    public string? Gender { get; set; }
+    public string? Nationality { get; set; }
+    public string? PlaceOfBirth { get; set; }
+    public string? MaritalStatus { get; set; }
+    public string? Ctps { get; set; }
+    public string? CtpsSeries { get; set; }
+    public string? CtpsUf { get; set; }
+    public DateOnly? CtpsIssueDate { get; set; }
+    public string? PisPasep { get; set; }
+    public string? VoterRegistration { get; set; }
+    public string? MilitaryService { get; set; }
+    public string? DriverLicense { get; set; }
+    public string? DriverLicenseCategory { get; set; }
+    public DateOnly? DriverLicenseExpiry { get; set; }
+    public string? Phone { get; set; }
+    public string? WhatsApp { get; set; }
+    public string Email { get; set; } = "";
+    public string Street { get; set; } = "";
+    public string Number { get; set; } = "";
+    public string? Complement { get; set; }
+    public string Neighborhood { get; set; } = "";
+    public string City { get; set; } = "";
+    public string State { get; set; } = "";
+    public string PostalCode { get; set; } = "";
+    public DateOnly HireDate { get; set; }
+    public string? ContractType { get; set; }
+    public string? WorkShift { get; set; }
+    public decimal Salary { get; set; }
+    public string? Department { get; set; }
+    public string? BankCode { get; set; }
+    public string? BankName { get; set; }
+    public string? BankBranch { get; set; }
+    public string? BankAccount { get; set; }
+    public string? BankAccountType { get; set; }
+    public string? BankAccountDigit { get; set; }
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactRelationship { get; set; }
+    public string? EmergencyContactPhone { get; set; }
+    public int DependentsCount { get; set; } = 0;
+    public int? ProbationDays { get; set; }
+    public string Password { get; set; } = "";
+}
+
+/// <summary>
+/// Classe para compatibilidade com controller existente
+/// </summary>
+public class UpdateEmployeeDto
+{
+    public string? FullName { get; set; }
+    public string? SocialName { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? WhatsApp { get; set; }
+    public string? Street { get; set; }
+    public string? Number { get; set; }
+    public string? Complement { get; set; }
+    public string? Neighborhood { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string? PostalCode { get; set; }
+    public string? BankCode { get; set; }
+    public string? BankName { get; set; }
+    public string? BankBranch { get; set; }
+    public string? BankAccount { get; set; }
+    public string? BankAccountType { get; set; }
+    public string? BankAccountDigit { get; set; }
+    public decimal? Salary { get; set; }
+    public string? Department { get; set; }
+    public string? Status { get; set; }
+    public string? EmergencyContactName { get; set; }
+    public string? EmergencyContactRelationship { get; set; }
+    public string? EmergencyContactPhone { get; set; }
+    public int? DependentsCount { get; set; }
 }
 
 /// <summary>
@@ -254,6 +398,75 @@ public record EmployeeResponse
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }
+
+// ==================== CARGOS ====================
+
+/// <summary>
+/// DTO para criar cargo
+/// </summary>
+public class CreateJobPositionDto
+{
+    [Required]
+    public Guid EstablishmentId { get; set; }
+
+    [Required]
+    [MaxLength(50)]
+    public string Code { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
+    public int HierarchyLevel { get; set; }
+    public bool RequiresCertification { get; set; }
+
+    [MaxLength(100)]
+    public string? RequiredCertification { get; set; }
+
+    [MaxLength(100)]
+    public string? RequiredEducation { get; set; }
+
+    [MaxLength(1000)]
+    public string? Responsibilities { get; set; }
+
+    public decimal? SuggestedSalaryMin { get; set; }
+    public decimal? SuggestedSalaryMax { get; set; }
+
+    [MaxLength(20)]
+    public string? SalaryType { get; set; }
+}
+
+/// <summary>
+/// DTO para atualizar cargo
+/// </summary>
+public class UpdateJobPositionDto
+{
+    [MaxLength(100)]
+    public string? Name { get; set; }
+
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
+    public bool? RequiresCertification { get; set; }
+
+    [MaxLength(100)]
+    public string? RequiredCertification { get; set; }
+
+    [MaxLength(100)]
+    public string? RequiredEducation { get; set; }
+
+    [MaxLength(1000)]
+    public string? Responsibilities { get; set; }
+
+    public decimal? SuggestedSalaryMin { get; set; }
+    public decimal? SuggestedSalaryMax { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+// ==================== OPERAÇÕES DE RH ====================
 
 /// <summary>
 /// DTO para mudança de cargo
@@ -291,7 +504,7 @@ public record TerminateEmployeeRequest
 
     [Required]
     [MaxLength(50)]
-    public string TerminationType { get; init; } = default!; 
+    public string TerminationType { get; init; } = default!;
     // ComJustaCausa, SemJustaCausa, Pedido, Acordo, FimContrato
 
     [MaxLength(1000)]
@@ -302,32 +515,11 @@ public record TerminateEmployeeRequest
 
     public bool RevokeAccessImmediately { get; init; } = true;
 }
-public class ChangePasswordDto
-{
-    /// <summary>
-    /// ID do funcionário que terá a senha alterada
-    /// </summary>
-    public Guid EmployeeId { get; set; }
 
-    /// <summary>
-    /// Senha atual (obrigatória se o funcionário estiver alterando sua própria senha)
-    /// </summary>
-    public string? CurrentPassword { get; set; }
-
-    /// <summary>
-    /// Nova senha
-    /// </summary>
-    public string NewPassword { get; set; } = string.Empty;
-}
-
-
-
-
-
-
-
-
-
-
-
-
+// =======================================================================
+// NOTA IMPORTANTE: ChangePasswordDto
+// =======================================================================
+// O DTO ChangePasswordDto está em DTOs/Auth/AuthDtos.cs
+// Não duplicá-lo aqui para evitar conflito no Swagger
+// O controller usa: using DTOs.Auth; para acessá-lo
+// =======================================================================

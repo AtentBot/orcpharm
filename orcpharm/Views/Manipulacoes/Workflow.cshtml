@@ -1,0 +1,1028 @@
+@{
+    ViewData["Title"] = "Workflow de Manipulação";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-diagram-3 text-primary me-2"></i>
+                Workflow de Manipulação
+            </h4>
+            <p class="text-muted mb-0">Acompanhe as etapas de produção em tempo real</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2" onclick="loadOrders()">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+            </button>
+            <a href="/Manipulacoes" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nova Ordem
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small">Status</label>
+                    <select id="filterStatus" class="form-select form-select-sm" onchange="loadOrders()">
+                        <option value="">Todos</option>
+                        <option value="PENDENTE">Pendente</option>
+                        <option value="SEPARACAO">Em Separação</option>
+                        <option value="PESAGEM">Em Pesagem</option>
+                        <option value="MISTURA">Em Mistura</option>
+                        <option value="ENVASE">Em Envase</option>
+                        <option value="ROTULAGEM">Em Rotulagem</option>
+                        <option value="CONFERENCIA">Em Conferência</option>
+                        <option value="APROVADO">Aguardando Aprovação</option>
+                        <option value="FINALIZADO">Finalizado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Período</label>
+                    <select id="filterPeriod" class="form-select form-select-sm" onchange="loadOrders()">
+                        <option value="today">Hoje</option>
+                        <option value="week" selected>Esta Semana</option>
+                        <option value="month">Este Mês</option>
+                        <option value="all">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Buscar</label>
+                    <input type="text" id="filterSearch" class="form-control form-control-sm" 
+                           placeholder="Número da ordem ou cliente..." onkeyup="debounceSearch()">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-outline-primary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-0 text-warning" id="kpiPendentes">0</h3>
+                    <small class="text-muted">Pendentes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-primary bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-0 text-primary" id="kpiEmProducao">0</h3>
+                    <small class="text-muted">Em Produção</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-info bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-0 text-info" id="kpiConferencia">0</h3>
+                    <small class="text-muted">Conferência</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-0 text-success" id="kpiFinalizados">0</h3>
+                    <small class="text-muted">Finalizados Hoje</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-danger bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-0 text-danger" id="kpiAtrasados">0</h3>
+                    <small class="text-muted">Atrasados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-secondary bg-opacity-10">
+                <div class="card-body text-center py-3">
+                    <h3 class="mb-0 text-secondary" id="kpiTotal">0</h3>
+                    <small class="text-muted">Total</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Ordens com Workflow -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="ordersTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">Ordem</th>
+                            <th style="width: 180px;">Cliente/Fórmula</th>
+                            <th>Workflow</th>
+                            <th style="width: 100px;">Progresso</th>
+                            <th style="width: 120px;">Previsão</th>
+                            <th style="width: 100px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalhes do Workflow -->
+<div class="modal fade" id="workflowModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    <span id="modalOrderNumber">Ordem #</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Timeline Visual -->
+                <div class="workflow-timeline mb-4" id="modalTimeline">
+                    <!-- Preenchido via JavaScript -->
+                </div>
+
+                <!-- Detalhes da Etapa Atual -->
+                <div class="card" id="currentStepCard">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-play-circle me-2"></i>
+                        <span id="currentStepTitle">Etapa Atual</span>
+                    </div>
+                    <div class="card-body" id="currentStepBody">
+                        <!-- Formulário da etapa atual -->
+                    </div>
+                </div>
+
+                <!-- Histórico de Etapas -->
+                <div class="mt-4">
+                    <h6><i class="bi bi-clock-history me-2"></i>Histórico de Etapas</h6>
+                    <div id="stepsHistory"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnAdvanceStep" onclick="advanceToNextStep()">
+                    <i class="bi bi-arrow-right me-1"></i> Avançar Etapa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Execução de Etapa -->
+<div class="modal fade" id="stepExecutionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stepExecutionTitle">Executar Etapa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="stepExecutionBody">
+                <!-- Formulário dinâmico por etapa -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmStep" onclick="confirmStep()">
+                    <i class="bi bi-check-lg me-1"></i> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .workflow-steps {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+    
+    .workflow-step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .workflow-step.completed {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .workflow-step.current {
+        background-color: #0d6efd;
+        color: white;
+        animation: pulse 2s infinite;
+    }
+    
+    .workflow-step.pending {
+        background-color: #e9ecef;
+        color: #6c757d;
+    }
+    
+    .workflow-step.rejected {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .workflow-connector {
+        width: 12px;
+        height: 2px;
+        background-color: #e9ecef;
+    }
+    
+    .workflow-connector.completed {
+        background-color: #198754;
+    }
+    
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    .workflow-timeline {
+        display: flex;
+        justify-content: space-between;
+        padding: 20px 0;
+        position: relative;
+    }
+    
+    .workflow-timeline::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background-color: #e9ecef;
+        transform: translateY(-50%);
+        z-index: 0;
+    }
+    
+    .timeline-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+        background: white;
+        padding: 0 10px;
+    }
+    
+    .timeline-step .step-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+    
+    .timeline-step.completed .step-icon {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .timeline-step.current .step-icon {
+        background-color: #0d6efd;
+        color: white;
+        animation: pulse 2s infinite;
+    }
+    
+    .timeline-step.pending .step-icon {
+        background-color: #e9ecef;
+        color: #6c757d;
+    }
+    
+    .timeline-step .step-label {
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .timeline-step .step-time {
+        font-size: 10px;
+        color: #6c757d;
+    }
+    
+    .step-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+    }
+    
+    .workflow-step:hover .step-tooltip {
+        opacity: 1;
+    }
+</style>
+
+@section Scripts {
+<script>
+    const STEP_NAMES = {
+        'SEPARACAO': 'Separação',
+        'PESAGEM': 'Pesagem',
+        'MISTURA': 'Mistura',
+        'ENVASE': 'Envase',
+        'ROTULAGEM': 'Rotulagem',
+        'CONFERENCIA': 'Conferência',
+        'APROVACAO': 'Aprovação',
+        'EXPEDICAO': 'Expedição'
+    };
+
+    const STEP_ICONS = {
+        'SEPARACAO': 'bi-collection',
+        'PESAGEM': 'bi-speedometer2',
+        'MISTURA': 'bi-shuffle',
+        'ENVASE': 'bi-box-seam',
+        'ROTULAGEM': 'bi-tag',
+        'CONFERENCIA': 'bi-clipboard-check',
+        'APROVACAO': 'bi-patch-check',
+        'EXPEDICAO': 'bi-truck'
+    };
+
+    const STEP_ORDER = ['SEPARACAO', 'PESAGEM', 'MISTURA', 'ENVASE', 'ROTULAGEM', 'CONFERENCIA', 'APROVACAO', 'EXPEDICAO'];
+
+    let currentOrder = null;
+    let searchTimeout = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOrders();
+        loadDashboard();
+        setInterval(loadOrders, 30000); // Auto-refresh
+    });
+
+    function debounceSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(loadOrders, 500);
+    }
+
+    function clearFilters() {
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterPeriod').value = 'week';
+        document.getElementById('filterSearch').value = '';
+        loadOrders();
+    }
+
+    async function loadDashboard() {
+        try {
+            const response = await fetch('/api/ManipulationOrders/workflow-dashboard', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('kpiPendentes').textContent = data.data.totalPendentes;
+                document.getElementById('kpiEmProducao').textContent = data.data.totalEmProducao;
+                document.getElementById('kpiFinalizados').textContent = data.data.totalFinalizadosHoje;
+                document.getElementById('kpiAtrasados').textContent = data.data.totalAtrasados;
+                document.getElementById('kpiConferencia').textContent = data.data.ordersByStatus?.CONFERENCIA || 0;
+                
+                const total = Object.values(data.data.ordersByStatus || {}).reduce((a, b) => a + b, 0);
+                document.getElementById('kpiTotal').textContent = total;
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dashboard:', error);
+        }
+    }
+
+    async function loadOrders() {
+        const status = document.getElementById('filterStatus').value;
+        const period = document.getElementById('filterPeriod').value;
+        const search = document.getElementById('filterSearch').value;
+
+        let url = '/api/ManipulationOrders?pageSize=50';
+        if (status) url += `&status=${status}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+
+        try {
+            const response = await fetch(url, { credentials: 'include' });
+            const data = await response.json();
+
+            if (data.success) {
+                renderOrders(data.data.items || data.data);
+                loadDashboard();
+            }
+        } catch (error) {
+            console.error('Erro ao carregar ordens:', error);
+            document.getElementById('ordersTableBody').innerHTML = `
+                <tr><td colspan="6" class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Erro ao carregar ordens
+                </td></tr>`;
+        }
+    }
+
+    function renderOrders(orders) {
+        const tbody = document.getElementById('ordersTableBody');
+        
+        if (!orders || orders.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="6" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    Nenhuma ordem encontrada
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = orders.map(order => `
+            <tr>
+                <td>
+                    <a href="javascript:void(0)" onclick="openWorkflow('${order.id}')" class="text-decoration-none">
+                        <strong class="text-primary">${order.orderNumber}</strong>
+                    </a>
+                    <br>
+                    <small class="text-muted">${formatDate(order.createdAt)}</small>
+                </td>
+                <td>
+                    <div class="fw-medium">${order.customerName || 'Cliente não informado'}</div>
+                    <small class="text-muted">${order.formulaName || 'Fórmula padrão'}</small>
+                </td>
+                <td>
+                    ${renderWorkflowSteps(order)}
+                </td>
+                <td>
+                    ${renderProgress(order)}
+                </td>
+                <td>
+                    ${renderDeadline(order)}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="openWorkflow('${order.id}')" title="Ver Workflow">
+                            <i class="bi bi-diagram-3"></i>
+                        </button>
+                        <button class="btn btn-outline-success" onclick="executeNextStep('${order.id}')" title="Executar Próxima Etapa">
+                            <i class="bi bi-play"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderWorkflowSteps(order) {
+        const currentStepIndex = getCurrentStepIndex(order.status);
+        
+        return `
+            <div class="workflow-steps">
+                ${STEP_ORDER.map((step, index) => {
+                    let stepClass = 'pending';
+                    if (index < currentStepIndex) stepClass = 'completed';
+                    else if (index === currentStepIndex) stepClass = 'current';
+                    
+                    if (order.status === 'REJEITADO' && index === currentStepIndex) stepClass = 'rejected';
+                    
+                    return `
+                        <div class="workflow-step ${stepClass}" title="${STEP_NAMES[step]}">
+                            <span class="step-tooltip">${STEP_NAMES[step]}</span>
+                            ${index + 1}
+                        </div>
+                        ${index < STEP_ORDER.length - 1 ? `<div class="workflow-connector ${index < currentStepIndex ? 'completed' : ''}"></div>` : ''}
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    function getCurrentStepIndex(status) {
+        const statusMap = {
+            'PENDENTE': 0,
+            'SEPARACAO': 1,
+            'PESAGEM': 2,
+            'MISTURA': 3,
+            'ENVASE': 4,
+            'ROTULAGEM': 5,
+            'CONFERENCIA': 6,
+            'APROVADO': 7,
+            'FINALIZADO': 8,
+            'ENTREGUE': 8
+        };
+        return statusMap[status] || 0;
+    }
+
+    function renderProgress(order) {
+        const currentStep = getCurrentStepIndex(order.status);
+        const progress = Math.round((currentStep / 8) * 100);
+        
+        let colorClass = 'bg-primary';
+        if (progress === 100) colorClass = 'bg-success';
+        else if (order.status === 'REJEITADO') colorClass = 'bg-danger';
+        
+        return `
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar ${colorClass}" style="width: ${progress}%"></div>
+            </div>
+            <small class="text-muted">${progress}%</small>
+        `;
+    }
+
+    function renderDeadline(order) {
+        if (!order.estimatedCompletionDate) {
+            return '<span class="text-muted">-</span>';
+        }
+        
+        const deadline = new Date(order.estimatedCompletionDate);
+        const now = new Date();
+        const isOverdue = deadline < now && order.status !== 'FINALIZADO' && order.status !== 'ENTREGUE';
+        
+        return `
+            <span class="${isOverdue ? 'text-danger fw-bold' : ''}">
+                ${isOverdue ? '<i class="bi bi-exclamation-triangle me-1"></i>' : ''}
+                ${formatDate(order.estimatedCompletionDate)}
+            </span>
+        `;
+    }
+
+    async function openWorkflow(orderId) {
+        try {
+            const response = await fetch(`/api/ManipulationOrders/${orderId}/workflow-status`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                currentOrder = data.data;
+                renderWorkflowModal(data.data);
+                new bootstrap.Modal(document.getElementById('workflowModal')).show();
+            }
+        } catch (error) {
+            console.error('Erro ao carregar workflow:', error);
+            alert('Erro ao carregar detalhes do workflow');
+        }
+    }
+
+    function renderWorkflowModal(workflow) {
+        document.getElementById('modalOrderNumber').textContent = `Ordem ${workflow.orderNumber}`;
+        
+        // Timeline
+        const timeline = document.getElementById('modalTimeline');
+        timeline.innerHTML = workflow.steps.map(step => {
+            let statusClass = 'pending';
+            if (step.status === 'CONCLUIDA') statusClass = 'completed';
+            else if (step.status === 'EM_EXECUCAO') statusClass = 'current';
+            else if (step.status === 'REJEITADA') statusClass = 'rejected';
+            
+            // Verificar se é a etapa atual
+            if (step.stepNumber === workflow.currentStepNumber && step.status === 'PENDENTE') {
+                statusClass = 'current';
+            }
+            
+            return `
+                <div class="timeline-step ${statusClass}">
+                    <div class="step-icon">
+                        <i class="bi ${STEP_ICONS[step.stepType]}"></i>
+                    </div>
+                    <div class="step-label">${step.stepName}</div>
+                    <div class="step-time">
+                        ${step.completedAt ? formatTime(step.completedAt) : '-'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Histórico
+        const history = document.getElementById('stepsHistory');
+        const completedSteps = workflow.steps.filter(s => s.status === 'CONCLUIDA' || s.status === 'REJEITADA');
+        
+        if (completedSteps.length === 0) {
+            history.innerHTML = '<p class="text-muted">Nenhuma etapa concluída ainda</p>';
+        } else {
+            history.innerHTML = `
+                <div class="list-group list-group-flush">
+                    ${completedSteps.map(step => `
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi ${STEP_ICONS[step.stepType]} me-2 ${step.status === 'REJEITADA' ? 'text-danger' : 'text-success'}"></i>
+                                <strong>${step.stepName}</strong>
+                                ${step.performedByName ? `<span class="text-muted"> por ${step.performedByName}</span>` : ''}
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">${formatDateTime(step.completedAt)}</small>
+                                ${step.duration ? `<br><small class="text-muted">${formatDuration(step.duration)}</small>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Botão de avançar
+        const btnAdvance = document.getElementById('btnAdvanceStep');
+        if (workflow.currentStatus === 'FINALIZADO' || workflow.currentStatus === 'ENTREGUE') {
+            btnAdvance.style.display = 'none';
+        } else {
+            btnAdvance.style.display = 'inline-block';
+            btnAdvance.textContent = `Executar: ${workflow.currentStepName}`;
+        }
+    }
+
+    function executeNextStep(orderId) {
+        openWorkflow(orderId).then(() => {
+            setTimeout(() => advanceToNextStep(), 500);
+        });
+    }
+
+    function advanceToNextStep() {
+        if (!currentOrder) return;
+        
+        const nextStep = currentOrder.steps.find(s => s.status === 'PENDENTE');
+        if (!nextStep) {
+            alert('Todas as etapas já foram concluídas');
+            return;
+        }
+        
+        renderStepForm(nextStep.stepType);
+        new bootstrap.Modal(document.getElementById('stepExecutionModal')).show();
+    }
+
+    function renderStepForm(stepType) {
+        document.getElementById('stepExecutionTitle').textContent = `Executar: ${STEP_NAMES[stepType]}`;
+        
+        const body = document.getElementById('stepExecutionBody');
+        
+        switch(stepType) {
+            case 'SEPARACAO':
+                body.innerHTML = getSeparacaoForm();
+                break;
+            case 'PESAGEM':
+                body.innerHTML = getPesagemForm();
+                break;
+            case 'MISTURA':
+                body.innerHTML = getMisturaForm();
+                break;
+            case 'ENVASE':
+                body.innerHTML = getEnvaseForm();
+                break;
+            case 'ROTULAGEM':
+                body.innerHTML = getRotulagemForm();
+                break;
+            case 'CONFERENCIA':
+                body.innerHTML = getConferenciaForm();
+                break;
+            case 'APROVACAO':
+                body.innerHTML = getAprovacaoForm();
+                break;
+            case 'EXPEDICAO':
+                body.innerHTML = getExpedicaoForm();
+                break;
+        }
+        
+        document.getElementById('stepExecutionBody').dataset.stepType = stepType;
+    }
+
+    // Forms para cada etapa
+    function getSeparacaoForm() {
+        return `
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Separe todos os materiais necessários para a manipulação
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Área de Separação</label>
+                <input type="text" class="form-control" id="areaSeparacao" placeholder="Ex: Bancada 01">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getPesagemForm() {
+        return `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Confira os pesos com precisão. Esta etapa requer conferência dupla.
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Balança Utilizada</label>
+                <input type="text" class="form-control" id="balanca" placeholder="Ex: Balança Analítica 001">
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Temperatura Ambiente (°C)</label>
+                    <input type="number" class="form-control" id="temperatura" step="0.1">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Umidade Relativa (%)</label>
+                    <input type="number" class="form-control" id="umidade" step="0.1">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getMisturaForm() {
+        return `
+            <div class="mb-3">
+                <label class="form-label">Método de Mistura</label>
+                <select class="form-select" id="metodoMistura">
+                    <option value="MANUAL">Manual (Gral e Pistilo)</option>
+                    <option value="MECANICA">Mecânica (Misturador)</option>
+                    <option value="HOMOGENEIZADOR">Homogeneizador</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Equipamento Utilizado</label>
+                <input type="text" class="form-control" id="equipamento">
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Tempo de Mistura (min)</label>
+                    <input type="number" class="form-control" id="tempoMistura">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Velocidade (RPM)</label>
+                    <input type="number" class="form-control" id="velocidade">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getEnvaseForm() {
+        return `
+            <div class="mb-3">
+                <label class="form-label">Tipo de Embalagem</label>
+                <select class="form-select" id="tipoEmbalagem">
+                    <option value="POTE_PLASTICO">Pote Plástico</option>
+                    <option value="POTE_VIDRO">Pote de Vidro</option>
+                    <option value="BISNAGA">Bisnaga</option>
+                    <option value="FRASCO_CONTA_GOTAS">Frasco Conta-Gotas</option>
+                    <option value="FRASCO_SPRAY">Frasco Spray</option>
+                    <option value="CAPSULA">Cápsula</option>
+                    <option value="SACHÊ">Sachê</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Quantidade Envasada</label>
+                <input type="number" class="form-control" id="quantidadeEnvasada" step="0.01">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getRotulagemForm() {
+        return `
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Verifique se o rótulo contém todas as informações exigidas pela RDC 67/2007
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Número do Lote</label>
+                <input type="text" class="form-control" id="numeroLote" readonly>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Data de Fabricação</label>
+                    <input type="date" class="form-control" id="dataFabricacao">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Data de Validade</label>
+                    <input type="date" class="form-control" id="dataValidade">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getConferenciaForm() {
+        return `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Conferência final obrigatória antes da aprovação
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="checkVisual">
+                <label class="form-check-label" for="checkVisual">Aspectos visuais conformes</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="checkEmbalagem">
+                <label class="form-check-label" for="checkEmbalagem">Embalagem íntegra</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="checkRotulo">
+                <label class="form-check-label" for="checkRotulo">Rótulo correto e legível</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="checkQuantidade">
+                <label class="form-check-label" for="checkQuantidade">Quantidade correta</label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="checkDocumentacao">
+                <label class="form-check-label" for="checkDocumentacao">Documentação completa</label>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getAprovacaoForm() {
+        return `
+            <div class="alert alert-success">
+                <i class="bi bi-patch-check me-2"></i>
+                Aprovação final pelo Farmacêutico Responsável Técnico
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Farmacêutico Responsável</label>
+                <input type="text" class="form-control" id="farmaceuticoNome" placeholder="Nome completo">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">CRF</label>
+                <input type="text" class="form-control" id="farmaceuticoCRF" placeholder="CRF-XX 00000">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="checkAprovado">
+                <label class="form-check-label" for="checkAprovado">
+                    <strong>Aprovo esta manipulação</strong>
+                </label>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    function getExpedicaoForm() {
+        return `
+            <div class="mb-3">
+                <label class="form-label">Método de Entrega</label>
+                <select class="form-select" id="metodoEntrega">
+                    <option value="BALCAO">Retirada no Balcão</option>
+                    <option value="MOTOBOY">Motoboy</option>
+                    <option value="CORREIOS">Correios</option>
+                    <option value="DELIVERY_APP">Delivery App</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Nome do Recebedor</label>
+                <input type="text" class="form-control" id="nomeRecebedor">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="checkNotificado">
+                <label class="form-check-label" for="checkNotificado">Cliente foi notificado</label>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Observações</label>
+                <textarea class="form-control" id="stepObservations" rows="3"></textarea>
+            </div>
+        `;
+    }
+
+    async function confirmStep() {
+        const stepType = document.getElementById('stepExecutionBody').dataset.stepType;
+        const observations = document.getElementById('stepObservations')?.value || '';
+        
+        let endpoint = `/api/ManipulationOrders/${currentOrder.orderId}/steps/${stepType.toLowerCase()}/start`;
+        let payload = { observations };
+        
+        // Construir payload específico por etapa
+        switch(stepType) {
+            case 'SEPARACAO':
+                payload.areaSeparacao = document.getElementById('areaSeparacao')?.value;
+                payload.items = []; // TODO: Carregar itens da ordem
+                break;
+            case 'PESAGEM':
+                payload.scaleName = document.getElementById('balanca')?.value;
+                payload.environmentTemperature = parseFloat(document.getElementById('temperatura')?.value) || null;
+                payload.environmentHumidity = parseFloat(document.getElementById('umidade')?.value) || null;
+                payload.components = []; // TODO: Carregar componentes
+                break;
+            case 'MISTURA':
+                payload.mixingMethod = document.getElementById('metodoMistura')?.value;
+                payload.equipment = document.getElementById('equipamento')?.value;
+                payload.mixingDuration = parseInt(document.getElementById('tempoMistura')?.value) || null;
+                payload.mixingSpeed = parseInt(document.getElementById('velocidade')?.value) || null;
+                break;
+            case 'ENVASE':
+                payload.packagingType = document.getElementById('tipoEmbalagem')?.value;
+                payload.packagedQuantity = parseFloat(document.getElementById('quantidadeEnvasada')?.value) || 0;
+                break;
+            case 'ROTULAGEM':
+                payload.batchNumber = document.getElementById('numeroLote')?.value;
+                payload.manufacturingDate = document.getElementById('dataFabricacao')?.value;
+                payload.expiryDate = document.getElementById('dataValidade')?.value;
+                break;
+            case 'CONFERENCIA':
+                payload.visualAspects = document.getElementById('checkVisual')?.checked;
+                payload.packagingIntact = document.getElementById('checkEmbalagem')?.checked;
+                payload.labelCorrect = document.getElementById('checkRotulo')?.checked;
+                payload.quantityCorrect = document.getElementById('checkQuantidade')?.checked;
+                payload.documentationComplete = document.getElementById('checkDocumentacao')?.checked;
+                break;
+            case 'APROVACAO':
+                payload.pharmacistName = document.getElementById('farmaceuticoNome')?.value;
+                payload.pharmacistCRF = document.getElementById('farmaceuticoCRF')?.value;
+                payload.approved = document.getElementById('checkAprovado')?.checked;
+                break;
+            case 'EXPEDICAO':
+                payload.deliveryMethod = document.getElementById('metodoEntrega')?.value;
+                payload.receiverName = document.getElementById('nomeRecebedor')?.value;
+                payload.customerNotified = document.getElementById('checkNotificado')?.checked;
+                break;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('stepExecutionModal')).hide();
+                await openWorkflow(currentOrder.orderId);
+                loadOrders();
+                showToast('success', data.message || 'Etapa concluída com sucesso!');
+            } else {
+                showToast('danger', data.message || 'Erro ao concluir etapa');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('danger', 'Erro ao processar etapa');
+        }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString('pt-BR');
+    }
+
+    function formatTime(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDateTime(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleString('pt-BR');
+    }
+
+    function formatDuration(duration) {
+        if (!duration) return '';
+        // Assumindo formato TimeSpan como string
+        return duration;
+    }
+
+    function showToast(type, message) {
+        // Implementar toast notification
+        alert(message);
+    }
+</script>
+}

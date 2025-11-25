@@ -1493,6 +1493,304 @@
       ]
     },
     {
+      "Route": "js/manipulation-weighing.h2aao0iczs.js",
+      "AssetFile": "js/manipulation-weighing.js.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000335683115"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2978"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"flaRgzjsaDnSAHC+oolbDOKXuZyw+FzkDvMAih7f9RA=\""
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 25 Nov 2025 06:32:14 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "h2aao0iczs"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg="
+        },
+        {
+          "Name": "label",
+          "Value": "js/manipulation-weighing.js"
+        }
+      ]
+    },
+    {
+      "Route": "js/manipulation-weighing.h2aao0iczs.js",
+      "AssetFile": "js/manipulation-weighing.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11294"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 25 Nov 2025 06:32:14 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "h2aao0iczs"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg="
+        },
+        {
+          "Name": "label",
+          "Value": "js/manipulation-weighing.js"
+        }
+      ]
+    },
+    {
+      "Route": "js/manipulation-weighing.h2aao0iczs.js.gz",
+      "AssetFile": "js/manipulation-weighing.js.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2978"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"flaRgzjsaDnSAHC+oolbDOKXuZyw+FzkDvMAih7f9RA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 25 Nov 2025 06:32:14 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "h2aao0iczs"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-flaRgzjsaDnSAHC+oolbDOKXuZyw+FzkDvMAih7f9RA="
+        },
+        {
+          "Name": "label",
+          "Value": "js/manipulation-weighing.js.gz"
+        }
+      ]
+    },
+    {
+      "Route": "js/manipulation-weighing.js",
+      "AssetFile": "js/manipulation-weighing.js.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000335683115"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2978"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"flaRgzjsaDnSAHC+oolbDOKXuZyw+FzkDvMAih7f9RA=\""
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 25 Nov 2025 06:32:14 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg="
+        }
+      ]
+    },
+    {
+      "Route": "js/manipulation-weighing.js",
+      "AssetFile": "js/manipulation-weighing.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "11294"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 25 Nov 2025 06:32:14 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-eYmbfkUOkuNCNj1PbWRgdD67p85LQCbaPp6OLC+rijg="
+        }
+      ]
+    },
+    {
+      "Route": "js/manipulation-weighing.js.gz",
+      "AssetFile": "js/manipulation-weighing.js.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2978"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"flaRgzjsaDnSAHC+oolbDOKXuZyw+FzkDvMAih7f9RA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 25 Nov 2025 06:32:14 GMT"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-flaRgzjsaDnSAHC+oolbDOKXuZyw+FzkDvMAih7f9RA="
+        }
+      ]
+    },
+    {
       "Route": "js/site.js",
       "AssetFile": "js/site.js.gz",
       "Selectors": [
@@ -19495,7 +19793,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 22 Nov 2025 05:25:36 GMT"
+          "Value": "Tue, 25 Nov 2025 03:22:56 GMT"
         },
         {
           "Name": "Vary",
@@ -19544,7 +19842,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 22 Nov 2025 05:25:36 GMT"
+          "Value": "Tue, 25 Nov 2025 03:22:56 GMT"
         }
       ],
       "EndpointProperties": [
@@ -19593,7 +19891,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 22 Nov 2025 05:25:36 GMT"
+          "Value": "Tue, 25 Nov 2025 03:22:56 GMT"
         },
         {
           "Name": "Vary",
@@ -19656,7 +19954,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 22 Nov 2025 05:25:36 GMT"
+          "Value": "Tue, 25 Nov 2025 03:22:56 GMT"
         },
         {
           "Name": "Vary",
@@ -19697,7 +19995,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 22 Nov 2025 05:25:36 GMT"
+          "Value": "Tue, 25 Nov 2025 03:22:56 GMT"
         }
       ],
       "EndpointProperties": [
@@ -19738,7 +20036,7 @@
         },
         {
           "Name": "Last-Modified",
-          "Value": "Sat, 22 Nov 2025 05:25:36 GMT"
+          "Value": "Tue, 25 Nov 2025 03:22:56 GMT"
         },
         {
           "Name": "Vary",

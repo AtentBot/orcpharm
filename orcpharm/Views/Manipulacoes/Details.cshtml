@@ -1,0 +1,354 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Detalhes da Ordem";
+    var orderId = ViewBag.OrderId ?? Model?.Id ?? Guid.Empty;
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">
+                <i class="bi bi-file-medical me-2"></i>Ordem de Manipulação
+            </h2>
+            <p class="text-muted mb-0" id="orderCode">Ordem #@orderId</p>
+        </div>
+        <div class="col-auto">
+            <!-- INTEGRAÇÃO COM RÓTULOS - PARTIAL VIEW -->
+            <partial name="_GenerateLabelButton" model="@orderId" />
+            
+            <a href="/Manipulacoes" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Card de Informações -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informações da Ordem
+                    </h5>
+                </div>
+                <div class="card-body" id="orderInfo">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Carregando dados da ordem...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Fórmula -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard2-pulse me-2"></i>Composição da Fórmula
+                    </h5>
+                </div>
+                <div class="card-body" id="formulaInfo">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-info"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Lateral -->
+        <div class="col-lg-4">
+            <!-- Card de Status -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-flag me-2"></i>Status
+                    </h5>
+                </div>
+                <div class="card-body text-center" id="statusInfo">
+                    <div class="spinner-border spinner-border-sm text-secondary"></div>
+                </div>
+            </div>
+
+            <!-- Card de Ações Rápidas -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>Ações Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <!-- Link direto para gerar rótulo -->
+                        <a href="/Labels/Generate/@orderId" class="btn btn-success">
+                            <i class="bi bi-file-earmark-text me-2"></i>Gerar Rótulo
+                        </a>
+                        
+                        <button class="btn btn-primary" onclick="editOrder()">
+                            <i class="bi bi-pencil me-2"></i>Editar Ordem
+                        </button>
+                        
+                        <button class="btn btn-warning" onclick="printReceipt()">
+                            <i class="bi bi-printer me-2"></i>Imprimir Receita
+                        </button>
+                        
+                        <button class="btn btn-danger" onclick="cancelOrder()">
+                            <i class="bi bi-x-circle me-2"></i>Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Timeline -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Histórico
+                    </h5>
+                </div>
+                <div class="card-body" id="timeline">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-dark"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const orderId = '@orderId';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        if (orderId && orderId !== '@Guid.Empty') {
+            loadOrderDetails();
+        }
+    });
+    
+    async function loadOrderDetails() {
+        try {
+            const response = await fetch(`/api/ManipulationOrders/${orderId}`, {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Ordem não encontrada');
+            }
+            
+            const order = await response.json();
+            displayOrderInfo(order);
+            displayFormulaInfo(order);
+            displayStatusInfo(order);
+            displayTimeline(order);
+            
+        } catch (error) {
+            console.error('Erro ao carregar ordem:', error);
+            showError(error.message);
+        }
+    }
+    
+    function displayOrderInfo(order) {
+        const html = `
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Código</label>
+                    <div class="fw-bold">${order.code || order.orderNumber || '-'}</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Data</label>
+                    <div class="fw-bold">${formatDate(order.orderDate || order.createdAt)}</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Paciente</label>
+                    <div class="fw-bold">${order.customerName || order.patientName || '-'}</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Prescritor</label>
+                    <div class="fw-bold">${order.prescriberName || '-'}</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Lote</label>
+                    <div class="fw-bold">${order.batchNumber || 'Não gerado'}</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Validade</label>
+                    <div class="fw-bold">${order.expirationDate ? formatDate(order.expirationDate) : '-'}</div>
+                </div>
+                ${order.specialInstructions || order.notes ? `
+                <div class="col-12">
+                    <label class="form-label text-muted small mb-1">Observações</label>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>${order.specialInstructions || order.notes}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        document.getElementById('orderInfo').innerHTML = html;
+    }
+    
+    function displayFormulaInfo(order) {
+        const html = `
+            <h6 class="mb-3">${order.formulaName || 'Fórmula Magistral'}</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Forma Farmacêutica</label>
+                    <div class="fw-bold">${order.pharmaceuticalForm || '-'}</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-muted small mb-1">Quantidade</label>
+                    <div class="fw-bold">${order.quantity || '-'} ${order.unit || ''}</div>
+                </div>
+                ${order.composition ? `
+                <div class="col-12">
+                    <label class="form-label text-muted small mb-1">Composição</label>
+                    <div class="border rounded p-3 bg-light">
+                        ${order.composition}
+                    </div>
+                </div>
+                ` : ''}
+                ${order.posology ? `
+                <div class="col-12">
+                    <label class="form-label text-muted small mb-1">Posologia</label>
+                    <div class="alert alert-success mb-0">
+                        <i class="bi bi-clipboard-pulse me-2"></i>${order.posology}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        document.getElementById('formulaInfo').innerHTML = html;
+    }
+    
+    function displayStatusInfo(order) {
+        const badge = getStatusBadge(order.status);
+        const html = `
+            <div class="mb-4">${badge}</div>
+            <div class="text-start">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Criado em</small>
+                    <strong>${formatDateTime(order.createdAt)}</strong>
+                </div>
+                ${order.completionDate ? `
+                <div class="mb-3">
+                    <small class="text-muted d-block">Finalizado em</small>
+                    <strong>${formatDateTime(order.completionDate)}</strong>
+                </div>
+                ` : ''}
+                ${order.deliveryDate ? `
+                <div>
+                    <small class="text-muted d-block">Previsão de entrega</small>
+                    <strong>${formatDate(order.deliveryDate)}</strong>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        document.getElementById('statusInfo').innerHTML = html;
+    }
+    
+    function displayTimeline(order) {
+        const html = `
+            <div class="timeline">
+                <div class="timeline-item pb-3 border-bottom mb-3">
+                    <small class="text-muted">${formatDateTime(order.createdAt)}</small>
+                    <p class="mb-0 mt-1">
+                        <i class="bi bi-plus-circle text-primary me-2"></i>
+                        <strong>Ordem criada</strong>
+                    </p>
+                </div>
+                ${order.completionDate ? `
+                <div class="timeline-item">
+                    <small class="text-muted">${formatDateTime(order.completionDate)}</small>
+                    <p class="mb-0 mt-1">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        <strong>Ordem finalizada</strong>
+                    </p>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        document.getElementById('timeline').innerHTML = html;
+    }
+    
+    function showError(message) {
+        const errorHtml = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Erro:</strong> ${message}
+            </div>
+        `;
+        document.getElementById('orderInfo').innerHTML = errorHtml;
+        document.getElementById('formulaInfo').innerHTML = errorHtml;
+        document.getElementById('statusInfo').innerHTML = errorHtml;
+        document.getElementById('timeline').innerHTML = errorHtml;
+    }
+    
+    function getStatusBadge(status) {
+        const badges = {
+            'PENDENTE': '<span class="badge bg-warning fs-5 px-4 py-2">Pendente</span>',
+            'SEPARACAO': '<span class="badge bg-info fs-5 px-4 py-2">Separação</span>',
+            'PESAGEM': '<span class="badge bg-info fs-5 px-4 py-2">Pesagem</span>',
+            'MISTURA': '<span class="badge bg-primary fs-5 px-4 py-2">Mistura</span>',
+            'ENVASE': '<span class="badge bg-primary fs-5 px-4 py-2">Envase</span>',
+            'ROTULAGEM': '<span class="badge bg-primary fs-5 px-4 py-2">Rotulagem</span>',
+            'CONFERENCIA': '<span class="badge bg-secondary fs-5 px-4 py-2">Conferência</span>',
+            'APROVADO': '<span class="badge bg-success fs-5 px-4 py-2">Aprovado</span>',
+            'FINALIZADO': '<span class="badge bg-success fs-5 px-4 py-2">Finalizado</span>',
+            'ENTREGUE': '<span class="badge bg-dark fs-5 px-4 py-2">Entregue</span>',
+            'CANCELADO': '<span class="badge bg-danger fs-5 px-4 py-2">Cancelado</span>'
+        };
+        return badges[status] || `<span class="badge bg-secondary fs-5 px-4 py-2">${status}</span>`;
+    }
+    
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('pt-BR');
+    }
+    
+    function formatDateTime(dateString) {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleString('pt-BR');
+    }
+    
+    // Funções de ação
+    function editOrder() {
+        window.location.href = `/Manipulacoes/Edit/${orderId}`;
+    }
+    
+    function printReceipt() {
+        window.print();
+    }
+    
+    function cancelOrder() {
+        if (confirm('Tem certeza que deseja cancelar esta ordem?')) {
+            // Implementar lógica de cancelamento
+            alert('Funcionalidade em desenvolvimento');
+        }
+    }
+</script>
+
+<style>
+    .timeline-item {
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--bs-primary);
+    }
+    
+    @@media print {
+        .btn, .card-header, nav, .sidebar {
+            display: none !important;
+        }
+    }
+</style>
+}

@@ -1,0 +1,451 @@
+@{
+    ViewData["Title"] = "Ordens de Manipulação";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-file-medical text-primary me-2"></i>
+                Ordens de Manipulação
+            </h4>
+            <p class="text-muted mb-0">Gerencie as ordens de produção da farmácia</p>
+        </div>
+        <div>
+            <a href="/Manipulacoes/Producao" class="btn btn-outline-primary me-2">
+                <i class="bi bi-gear-wide-connected"></i> Produção
+            </a>
+            <a href="/Manipulacoes/Create" class="btn btn-success">
+                <i class="bi bi-plus-lg"></i> Nova Ordem
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros e KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body py-3">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="searchInput" 
+                                   placeholder="Buscar ordem..." onkeyup="debounceSearch()">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="filterStatus" onchange="loadOrders()">
+                                <option value="">Todos Status</option>
+                                <option value="PENDENTE">Pendente</option>
+                                <option value="EM_PRODUCAO">Em Produção</option>
+                                <option value="FINALIZADO">Finalizado</option>
+                                <option value="CANCELADO">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="filterPriority" onchange="loadOrders()">
+                                <option value="">Prioridade</option>
+                                <option value="URGENTE">Urgente</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="NORMAL">Normal</option>
+                                <option value="BAIXA">Baixa</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="filterDate" onchange="loadOrders()">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                <i class="bi bi-x-circle"></i> Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="row g-2">
+                <div class="col-4">
+                    <div class="card border-0 bg-warning bg-opacity-10 h-100">
+                        <div class="card-body text-center py-2">
+                            <h4 class="mb-0 text-warning" id="kpiPendentes">0</h4>
+                            <small>Pendentes</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card border-0 bg-primary bg-opacity-10 h-100">
+                        <div class="card-body text-center py-2">
+                            <h4 class="mb-0 text-primary" id="kpiProducao">0</h4>
+                            <small>Produção</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card border-0 bg-success bg-opacity-10 h-100">
+                        <div class="card-body text-center py-2">
+                            <h4 class="mb-0 text-success" id="kpiFinalizados">0</h4>
+                            <small>Hoje</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Ordens -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ordem</th>
+                            <th>Cliente</th>
+                            <th>Fórmula</th>
+                            <th>Status</th>
+                            <th>Prioridade</th>
+                            <th>Previsão</th>
+                            <th>Responsável</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="spinner-border text-primary"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <nav id="paginationNav"></nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nova Ordem -->
+<div class="modal fade" id="createOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>Nova Ordem de Manipulação
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createOrderForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Cliente *</label>
+                            <select class="form-select" id="customerId" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fórmula</label>
+                            <select class="form-select" id="formulaId">
+                                <option value="">Fórmula livre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Prescrição</label>
+                            <select class="form-select" id="prescriptionId">
+                                <option value="">Sem prescrição</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Quantidade *</label>
+                            <input type="number" class="form-control" id="quantity" required min="1" value="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Prioridade</label>
+                            <select class="form-select" id="priority">
+                                <option value="NORMAL">Normal</option>
+                                <option value="BAIXA">Baixa</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="URGENTE">Urgente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Previsão de Entrega</label>
+                            <input type="datetime-local" class="form-control" id="estimatedCompletion">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Responsável</label>
+                            <select class="form-select" id="assignedEmployeeId">
+                                <option value="">Não atribuído</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observações</label>
+                            <textarea class="form-control" id="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="createOrder()">
+                    <i class="bi bi-check-lg me-1"></i> Criar Ordem
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentPage = 1;
+    let searchTimeout = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOrders();
+        loadDashboard();
+        loadDropdowns();
+    });
+
+    function debounceSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(loadOrders, 500);
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterPriority').value = '';
+        document.getElementById('filterDate').value = '';
+        loadOrders();
+    }
+
+    async function loadDashboard() {
+        try {
+            const response = await fetch('/api/ManipulationOrders/workflow-dashboard', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('kpiPendentes').textContent = data.data.totalPendentes;
+                document.getElementById('kpiProducao').textContent = data.data.totalEmProducao;
+                document.getElementById('kpiFinalizados').textContent = data.data.totalFinalizadosHoje;
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+    }
+
+    async function loadOrders() {
+        const search = document.getElementById('searchInput').value;
+        const status = document.getElementById('filterStatus').value;
+        const priority = document.getElementById('filterPriority').value;
+        const date = document.getElementById('filterDate').value;
+
+        let url = `/api/ManipulationOrders?pageNumber=${currentPage}&pageSize=20`;
+        if (search) url += `&orderNumber=${encodeURIComponent(search)}`;
+        if (status) url += `&status=${status}`;
+        if (date) url += `&expectedDateFrom=${date}`;
+
+        try {
+            const response = await fetch(url, { credentials: 'include' });
+            const data = await response.json();
+
+            // PagedResultDto retorna diretamente items (não tem wrapper success)
+            if (data.items) {
+                renderOrders(data.items);
+                updateKpis();
+            } else if (Array.isArray(data)) {
+                renderOrders(data);
+                updateKpis();
+            } else {
+                renderOrders([]);
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            document.getElementById('ordersTableBody').innerHTML = `
+                <tr><td colspan="8" class="text-center py-5 text-danger">
+                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
+                    Erro ao carregar ordens
+                </td></tr>`;
+        }
+    }
+
+    async function updateKpis() {
+        try {
+            const response = await fetch('/api/ManipulationOrders/workflow-dashboard', { credentials: 'include' });
+            const data = await response.json();
+            if (data.success && data.data) {
+                document.getElementById('kpiPendentes').textContent = data.data.totalPendentes || 0;
+                document.getElementById('kpiProducao').textContent = data.data.totalEmProducao || 0;
+                document.getElementById('kpiFinalizados').textContent = data.data.totalFinalizadosHoje || 0;
+            }
+        } catch (e) {
+            console.error('Erro KPIs:', e);
+        }
+    }
+
+    function renderOrders(orders) {
+        const tbody = document.getElementById('ordersTableBody');
+        
+        if (!orders || orders.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="8" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    Nenhuma ordem encontrada
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = orders.map(order => `
+            <tr>
+                <td>
+                    <a href="/Manipulacoes/Producao/${order.id}" class="text-decoration-none">
+                        <strong class="text-primary">${order.orderNumber}</strong>
+                    </a>
+                    <br><small class="text-muted">${formatDate(order.orderDate)}</small>
+                </td>
+                <td>${order.customerName || '-'}</td>
+                <td>
+                    <span class="text-truncate d-inline-block" style="max-width: 200px;">
+                        ${order.formulaName || 'Fórmula livre'}
+                    </span>
+                </td>
+                <td>${getStatusBadge(order.status)}</td>
+                <td>${order.isOverdue ? '<span class="badge bg-danger">Atrasado</span>' : '<span class="badge bg-secondary">Normal</span>'}</td>
+                <td>
+                    ${formatDate(order.expectedDate)}
+                    ${order.daysUntilExpected < 0 ? '<br><small class="text-danger">Atrasado</small>' : ''}
+                </td>
+                <td>${order.manipulatedByEmployeeName || '<span class="text-muted">-</span>'}</td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <a href="/Manipulacoes/Producao/${order.id}" class="btn btn-outline-primary" title="Detalhes">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="/Manipulacoes/Producao/${order.id}" class="btn btn-outline-success" title="Produzir">
+                            <i class="bi bi-play"></i>
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="printFicha('${order.id}')" title="Ficha">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function getStatusBadge(status) {
+        const badges = {
+            'PENDENTE': '<span class="badge bg-warning">Pendente</span>',
+            'SEPARACAO': '<span class="badge bg-info">Separação</span>',
+            'PESAGEM': '<span class="badge bg-info">Pesagem</span>',
+            'MISTURA': '<span class="badge bg-info">Mistura</span>',
+            'ENVASE': '<span class="badge bg-info">Envase</span>',
+            'ROTULAGEM': '<span class="badge bg-info">Rotulagem</span>',
+            'CONFERENCIA': '<span class="badge bg-primary">Conferência</span>',
+            'APROVADO': '<span class="badge bg-success">Aprovado</span>',
+            'FINALIZADO': '<span class="badge bg-success">Finalizado</span>',
+            'ENTREGUE': '<span class="badge bg-success">Entregue</span>',
+            'REJEITADO': '<span class="badge bg-danger">Rejeitado</span>',
+            'CANCELADO': '<span class="badge bg-secondary">Cancelado</span>'
+        };
+        return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+    }
+
+    function getPriorityBadge(priority) {
+        const badges = {
+            'URGENTE': '<span class="badge bg-danger">Urgente</span>',
+            'ALTA': '<span class="badge bg-warning">Alta</span>',
+            'NORMAL': '<span class="badge bg-secondary">Normal</span>',
+            'BAIXA': '<span class="badge bg-light text-dark">Baixa</span>'
+        };
+        return badges[priority] || '';
+    }
+
+    async function loadDropdowns() {
+        // Carregar clientes
+        try {
+            const customers = await fetch('/api/Customers?pageSize=100', { credentials: 'include' });
+            const customersData = await customers.json();
+            if (customersData.success) {
+                const select = document.getElementById('customerId');
+                (customersData.data.items || customersData.data).forEach(c => {
+                    select.innerHTML += `<option value="${c.id}">${c.fullName}</option>`;
+                });
+            }
+        } catch (e) {}
+
+        // Carregar fórmulas
+        try {
+            const formulas = await fetch('/api/Formulas?pageSize=100', { credentials: 'include' });
+            const formulasData = await formulas.json();
+            if (formulasData.success) {
+                const select = document.getElementById('formulaId');
+                (formulasData.data.items || formulasData.data).forEach(f => {
+                    select.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+                });
+            }
+        } catch (e) {}
+
+        // Carregar funcionários
+        try {
+            const employees = await fetch('/api/Employees?pageSize=100', { credentials: 'include' });
+            const employeesData = await employees.json();
+            if (employeesData.success) {
+                const select = document.getElementById('assignedEmployeeId');
+                (employeesData.data.items || employeesData.data).forEach(e => {
+                    select.innerHTML += `<option value="${e.id}">${e.fullName}</option>`;
+                });
+            }
+        } catch (e) {}
+    }
+
+    async function createOrder() {
+        const payload = {
+            customerId: document.getElementById('customerId').value || null,
+            formulaId: document.getElementById('formulaId').value || null,
+            prescriptionId: document.getElementById('prescriptionId').value || null,
+            quantity: parseInt(document.getElementById('quantity').value) || 1,
+            priority: document.getElementById('priority').value,
+            estimatedCompletionDate: document.getElementById('estimatedCompletion').value || null,
+            assignedEmployeeId: document.getElementById('assignedEmployeeId').value || null,
+            notes: document.getElementById('notes').value
+        };
+
+        try {
+            const response = await fetch('/api/ManipulationOrders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('createOrderModal')).hide();
+                loadOrders();
+                loadDashboard();
+                alert('Ordem criada com sucesso!');
+            } else {
+                alert(data.message || 'Erro ao criar ordem');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao criar ordem');
+        }
+    }
+
+    function printFicha(orderId) {
+        window.open(`/Manipulacoes/FichaPesagem/${orderId}`, '_blank');
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString('pt-BR');
+    }
+</script>
+}

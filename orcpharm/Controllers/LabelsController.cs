@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs;
+using DTOs.Labels;
 using Service;
-using Validators;
+using Validators.Labels;
 using Models;
+using Validators;
 
 namespace Controllers;
 
@@ -19,6 +20,20 @@ public class LabelsController : ControllerBase
     {
         _context = context;
         _service = service;
+    }
+
+    private Guid? GetEmployeeId()
+    {
+        var claim = User.FindFirst("employee_id");
+        return claim != null && Guid.TryParse(claim.Value, out var id) ? id : null;
+    }
+
+    private async Task<Guid?> GetEstablishmentId(Guid employeeId)
+    {
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == employeeId);
+        return employee?.EstablishmentId;
     }
 
     // ============================================
@@ -220,12 +235,29 @@ public class LabelsController : ControllerBase
                     .Select(o => o.Code)
                     .FirstOrDefault() ?? "",
                 PatientName = l.PatientName,
+                PrescriberName = l.PrescriberName,
+                PrescriberRegistration = l.PrescriberRegistration,
                 FormulaName = l.FormulaName,
+                PharmaceuticalForm = l.PharmaceuticalForm,
+                Composition = l.Composition,
+                Quantity = l.Quantity,
+                Unit = l.Unit,
+                BatchNumber = l.BatchNumber,
                 ManipulationDate = l.ManipulationDate,
                 ExpirationDate = l.ExpirationDate,
-                BatchNumber = l.BatchNumber,
+                Posology = l.Posology,
+                AdministrationRoute = l.AdministrationRoute,
+                StorageConditions = l.StorageConditions,
+                Warnings = l.Warnings,
+                UsageType = l.UsageType,
+                IsControlled = l.IsControlled,
+                ControlSchedule = l.ControlSchedule,
+                PharmacyName = l.PharmacyName,
+                PharmacistName = l.PharmacistName,
+                PharmacistCrf = l.PharmacistCrf,
                 QrCodeData = l.QrCodeData,
                 QrCodeImageUrl = l.QrCodeImageUrl,
+                BarcodeData = l.BarcodeData,
                 GeneratedHtml = l.GeneratedHtml,
                 PrintCount = l.PrintCount,
                 LastPrintedAt = l.LastPrintedAt,
@@ -266,10 +298,8 @@ public class LabelsController : ControllerBase
         return Ok(new { message });
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetLabels(
-        [FromQuery] Guid? manipulationOrderId = null,
-        [FromQuery] string? status = null)
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchLabels([FromQuery] LabelSearchDto dto)
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
@@ -282,14 +312,33 @@ public class LabelsController : ControllerBase
         var query = _context.Set<GeneratedLabel>()
             .Where(l => l.EstablishmentId == establishmentId.Value);
 
-        if (manipulationOrderId.HasValue)
-            query = query.Where(l => l.ManipulationOrderId == manipulationOrderId.Value);
+        if (dto.ManipulationOrderId.HasValue)
+            query = query.Where(l => l.ManipulationOrderId == dto.ManipulationOrderId.Value);
 
-        if (!string.IsNullOrWhiteSpace(status))
-            query = query.Where(l => l.Status == status.ToUpper());
+        if (!string.IsNullOrEmpty(dto.PatientName))
+            query = query.Where(l => l.PatientName != null && l.PatientName.Contains(dto.PatientName));
+
+        if (!string.IsNullOrEmpty(dto.BatchNumber))
+            query = query.Where(l => l.BatchNumber != null && l.BatchNumber.Contains(dto.BatchNumber));
+
+        if (!string.IsNullOrEmpty(dto.Status))
+            query = query.Where(l => l.Status == dto.Status.ToUpper());
+
+        if (dto.DateFrom.HasValue)
+            query = query.Where(l => l.CreatedAt >= dto.DateFrom.Value);
+
+        if (dto.DateTo.HasValue)
+            query = query.Where(l => l.CreatedAt <= dto.DateTo.Value);
+
+        if (dto.IsControlled.HasValue)
+            query = query.Where(l => l.IsControlled == dto.IsControlled.Value);
+
+        var totalCount = await query.CountAsync();
 
         var labels = await query
             .OrderByDescending(l => l.CreatedAt)
+            .Skip((dto.Page - 1) * dto.PageSize)
+            .Take(dto.PageSize)
             .Select(l => new GeneratedLabelResponseDto
             {
                 Id = l.Id,
@@ -301,10 +350,10 @@ public class LabelsController : ControllerBase
                     .FirstOrDefault() ?? "",
                 PatientName = l.PatientName,
                 FormulaName = l.FormulaName,
+                BatchNumber = l.BatchNumber,
                 ManipulationDate = l.ManipulationDate,
                 ExpirationDate = l.ExpirationDate,
-                BatchNumber = l.BatchNumber,
-                QrCodeData = l.QrCodeData,
+                PharmacistName = l.PharmacistName,
                 PrintCount = l.PrintCount,
                 LastPrintedAt = l.LastPrintedAt,
                 Status = l.Status,
@@ -312,28 +361,16 @@ public class LabelsController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(labels);
-    }
-
-    private Guid? GetEmployeeId()
-    {
-        var sessionToken = Request.Cookies["SessionId"];
-        if (string.IsNullOrEmpty(sessionToken))
-            return null;
-
-        var session = _context.EmployeeSessions
-            .FirstOrDefault(s => s.Token == sessionToken &&
-                                s.ExpiresAt > DateTime.UtcNow &&
-                                s.IsActive);
-
-        return session?.EmployeeId;
-    }
-
-    private async Task<Guid?> GetEstablishmentId(Guid employeeId)
-    {
-        var employee = await _context.Employees
-            .FirstOrDefaultAsync(e => e.Id == employeeId);
-
-        return employee?.EstablishmentId;
+        return Ok(new
+        {
+            labels,
+            pagination = new
+            {
+                currentPage = dto.Page,
+                pageSize = dto.PageSize,
+                totalCount,
+                totalPages = (int)Math.Ceiling(totalCount / (double)dto.PageSize)
+            }
+        });
     }
 }
