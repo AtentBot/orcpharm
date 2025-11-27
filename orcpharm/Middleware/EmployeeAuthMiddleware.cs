@@ -1,6 +1,7 @@
 ﻿using Data;
 using Microsoft.EntityFrameworkCore;
 using Models.Employees;
+using System.Security.Claims;
 
 namespace Middleware;
 
@@ -56,6 +57,9 @@ public class EmployeeAuthMiddleware
         // Sessão válida - adicionar informações no contexto
         AddSessionToContext(context, validationResult.Session!);
 
+        // ✅ Adicionar claims ao User.ClaimsPrincipal
+        AddClaimsToUser(context, validationResult.Session!);
+
         _logger.LogDebug("Autenticação bem-sucedida: {EmployeeName} (ID: {EmployeeId}) acessando {Path}",
             validationResult.Session!.Employee.FullName,
             validationResult.Session.Employee.Id,
@@ -85,7 +89,8 @@ public class EmployeeAuthMiddleware
         if (exactPublicPaths.Contains(path))
             return true;
 
-        // ===== ROTAS DE AUTENTICAÇÃO (Views MVC) =====
+        // ===== ROTAS DE AUTENTICAÇÃO - VIEWS MVC (AccountController) =====
+        // Convenção padrão ASP.NET: /Account/Action
         var accountPaths = new[]
         {
             "/account/login",
@@ -102,10 +107,12 @@ public class EmployeeAuthMiddleware
         var publicApiPrefixes = new[]
         {
             "/swagger",
-            "/api/auth/login",
-            "/api/employees/login",
-            "/api/employees/generate-hash",
-            "/api/establishment/login"
+            "/api/auth/login",              // API de autenticação
+            "/api/auth/logout",             // API de logout
+            "/api/auth/register",           // API de registro
+            "/api/employees/login",         // API alternativa
+            "/api/employees/generate-hash", // Geração de hash
+            "/api/establishment/login"      // Login de estabelecimento
         };
 
         if (publicApiPrefixes.Any(prefix => path.StartsWith(prefix)))
@@ -149,9 +156,13 @@ public class EmployeeAuthMiddleware
         if (!string.IsNullOrEmpty(headerToken))
             return headerToken;
 
-        // Se não tem no header, tenta obter do cookie (web)
-        var cookieToken = context.Request.Cookies["SessionId"];
-        return cookieToken;
+        // Cookie correto usado pelo sistema
+        var cookieToken = context.Request.Cookies["X-SESSION-TOKEN"];
+        if (!string.IsNullOrEmpty(cookieToken))
+            return cookieToken;
+
+        // Fallback para cookie antigo (compatibilidade)
+        return context.Request.Cookies["SessionId"];
     }
 
     /// <summary>
@@ -237,6 +248,40 @@ public class EmployeeAuthMiddleware
     }
 
     /// <summary>
+    /// Adiciona claims ao User.ClaimsPrincipal
+    /// </summary>
+    private static void AddClaimsToUser(HttpContext context, EmployeeSession session)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim("EmployeeId", session.EmployeeId.ToString()),
+            new Claim("EstablishmentId", session.Employee.EstablishmentId.ToString()),
+            new Claim("EmployeeName", session.Employee.FullName),
+            new Claim(ClaimTypes.Name, session.Employee.FullName),
+            new Claim("SessionId", session.Id.ToString())
+        };
+
+        // Adicionar JobPositionCode se existir
+        if (session.Employee.JobPosition != null)
+        {
+            claims.Add(new Claim("JobPositionCode", session.Employee.JobPosition.Code));
+        }
+
+        // Adicionar Email se existir
+        if (!string.IsNullOrEmpty(session.Employee.Email))
+        {
+            claims.Add(new Claim(ClaimTypes.Email, session.Employee.Email));
+        }
+
+        // Criar identidade e principal
+        var identity = new ClaimsIdentity(claims, "Cookies");
+        var principal = new ClaimsPrincipal(identity);
+
+        // Substituir o User atual
+        context.User = principal;
+    }
+
+    /// <summary>
     /// Trata requisições sem token
     /// </summary>
     private async Task HandleMissingToken(HttpContext context, string path)
@@ -245,16 +290,17 @@ public class EmployeeAuthMiddleware
 
         if (path.StartsWith("/api/"))
         {
+            // Requisições de API retornam 401 JSON
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new
             {
                 error = "Token de autenticação não fornecido",
-                message = "Envie o token no header X-Session-Token ou no cookie SessionId"
+                message = "Envie o token no header X-Session-Token ou no cookie X-SESSION-TOKEN"
             });
         }
         else
         {
-            // Views web - redirecionar para login
+            // Views web - redirecionar para login MVC
             context.Response.Redirect("/Account/Login");
         }
     }
@@ -266,12 +312,13 @@ public class EmployeeAuthMiddleware
     {
         if (path.StartsWith("/api/"))
         {
+            // Requisições de API retornam 401 JSON
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new { error = errorMessage });
         }
         else
         {
-            // Views web - redirecionar para login
+            // Views web - redirecionar para login MVC
             context.Response.Redirect("/Account/Login");
         }
     }
@@ -279,9 +326,6 @@ public class EmployeeAuthMiddleware
 
 // ==================== CLASSES AUXILIARES ====================
 
-/// <summary>
-/// Resultado da validação de sessão
-/// </summary>
 internal class SessionValidationResult
 {
     public bool IsValid { get; private set; }

@@ -1,8 +1,184 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "OrcPharm - Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>ORCPHARM</p>
+<style>
+    .welcome-container {
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+    }
+    
+    .welcome-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.2rem;
+        color: #7f8c8d;
+        margin-bottom: 3rem;
+        text-align: center;
+    }
+    
+    .access-cards {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 900px;
+    }
+    
+    .access-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 280px;
+        max-width: 320px;
+        flex: 1;
+    }
+    
+    .access-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .access-card.dashboard {
+        border-top: 4px solid #28a745;
+    }
+    
+    .access-card.api {
+        border-top: 4px solid #17a2b8;
+    }
+    
+    .card-icon {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 3rem;
+    }
+    
+    .card-icon.dashboard {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+    
+    .card-icon.api {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    
+    .card-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+        text-align: center;
+    }
+    
+    .card-description {
+        font-size: 1rem;
+        color: #6c757d;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-button {
+        background: #007bff;
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .card-button:hover {
+        background: #0056b3;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .access-card.dashboard .card-button {
+        background: #28a745;
+    }
+    
+    .access-card.dashboard .card-button:hover {
+        background: #218838;
+    }
+    
+    .access-card.api .card-button {
+        background: #17a2b8;
+    }
+    
+    .access-card.api .card-button:hover {
+        background: #138496;
+    }
+    
+    @@media (max-width: 768px) {
+        .welcome-title {
+            font-size: 2rem;
+        }
+        
+        .access-cards {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .access-card {
+            min-width: 100%;
+        }
+    }
+</style>
+
+<div class="welcome-container">
+    <h1 class="welcome-title">Bem-vindo ao OrcPharm</h1>
+    <p class="welcome-subtitle">Sistema de Gestão para Farmácias de Manipulação</p>
+    
+    <div class="access-cards">
+        <!-- Card Dashboard -->
+        <div class="access-card dashboard">
+            <div class="card-icon dashboard">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+            <h2 class="card-title">Dashboard</h2>
+            <p class="card-description">
+                Acesse a interface principal do sistema com todos os módulos e funcionalidades
+            </p>
+            <a href="https://orcpharm.atentbot.com/Dashboard" class="card-button">
+                Acessar Dashboard
+            </a>
+        </div>
+        
+        <!-- Card API -->
+        <div class="access-card api">
+            <div class="card-icon api">
+                <i class="bi bi-gear-fill"></i>
+            </div>
+            <h2 class="card-title">API</h2>
+            <p class="card-description">
+                Documentação interativa das APIs REST com Swagger para desenvolvedores
+            </p>
+            <a href="https://orcpharm.atentbot.com/swagger" class="card-button">
+                Acessar Swagger
+            </a>
+        </div>
+    </div>
 </div>

@@ -49,7 +49,7 @@
                                     <option value="">Selecione o paciente...</option>
                                     @foreach (var customer in ViewBag.Customers)
                                     {
-                                        <option value="@customer.Id">@customer.Name - @customer.Cpf</option>
+                                        <option value="@customer.Id">@customer.FullName - @customer.Cpf</option>
                                     }
                                 </select>
                                 <span asp-validation-for="CustomerId" class="text-danger"></span>

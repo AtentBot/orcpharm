@@ -180,7 +180,7 @@ public class PaymentService
 
     public async Task<DailyCashFlowDto> GetDailyCashFlowAsync(Guid establishmentId, DateTime date)
     {
-        var startDate = date.Date;
+        var startDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Utc);
         var endDate = startDate.AddDays(1);
 
         var payments = await _context.SalePayments

@@ -40,16 +40,7 @@ namespace Controllers
             {
                 var employeeId = GetEmployeeId();
                 var establishmentId = GetEstablishmentId();
-
-                // Se claims não existem, o [Authorize] já garantiu autenticação
-                // Então deve ser erro de configuração do middleware
-                if (establishmentId == Guid.Empty)
-                {
-                    _logger.LogError("EstablishmentId claim is missing for authenticated user");
-                    TempData["Error"] = "Erro de configuração: estabelecimento não identificado";
-                    return View(new List<object>());
-                }
-
+               
                 var query = _context.Prescriptions
                     .Where(p => p.EstablishmentId == establishmentId)
                     .AsQueryable();
