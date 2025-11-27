@@ -3,13 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models;
 
-[Table("sale_items")]
-public class SaleItem
+[Table("sale_items")]  // ← Tabela correta
+public class SaleItem  // ← Classe correta
 {
     [Key]
     [Column("id")]
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
+    [Required]
     [Column("sale_id")]
     public Guid SaleId { get; set; }
 
@@ -22,6 +23,7 @@ public class SaleItem
     [Column("formula_id")]
     public Guid? FormulaId { get; set; }
 
+    [Required]
     [Column("description")]
     [MaxLength(500)]
     public string Description { get; set; } = string.Empty;
@@ -48,9 +50,9 @@ public class SaleItem
     public decimal ProfitMargin { get; set; } = 0;
 
     [Column("observations")]
+    [MaxLength(1000)]
     public string? Observations { get; set; }
 
-    // Relacionamento
     [ForeignKey("SaleId")]
-    public virtual Sale? Sale { get; set; }
+    public virtual Sale Sale { get; set; } = null!;
 }

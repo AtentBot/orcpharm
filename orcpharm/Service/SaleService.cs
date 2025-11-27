@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
-using DTOs;
+using DTOs.Sales;
 
 namespace Service;
 

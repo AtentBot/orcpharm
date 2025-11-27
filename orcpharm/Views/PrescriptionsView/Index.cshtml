@@ -1,0 +1,267 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Prescrições";
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-file-medical"></i> Prescrições Médicas
+            </h1>
+            <p class="text-muted mb-0">Gerenciamento de receitas e prescrições</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Create")" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nova Prescrição
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <option value="PENDENTE" selected="@(ViewBag.Status == "PENDENTE")">Pendente</option>
+                        <option value="VALIDADA" selected="@(ViewBag.Status == "VALIDADA")">Validada</option>
+                        <option value="EM_MANIPULACAO" selected="@(ViewBag.Status == "EM_MANIPULACAO")">Em Manipulação</option>
+                        <option value="CONCLUIDA" selected="@(ViewBag.Status == "CONCLUIDA")">Concluída</option>
+                        <option value="CANCELADA" selected="@(ViewBag.Status == "CANCELADA")">Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="window.location='@Url.Action("Index")'">
+                        <i class="bi bi-x-circle"></i> Limpar Filtros
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-warning shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Pendentes</h6>
+                            <h3 class="mb-0">@Model.Count(p => p.Status == "PENDENTE")</h3>
+                        </div>
+                        <i class="bi bi-clock-history" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Validadas</h6>
+                            <h3 class="mb-0">@Model.Count(p => p.Status == "VALIDADA")</h3>
+                        </div>
+                        <i class="bi bi-check-circle" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-primary shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Em Manipulação</h6>
+                            <h3 class="mb-0">@Model.Count(p => p.Status == "EM_MANIPULACAO")</h3>
+                        </div>
+                        <i class="bi bi-gear" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Concluídas</h6>
+                            <h3 class="mb-0">@Model.Count(p => p.Status == "CONCLUIDA")</h3>
+                        </div>
+                        <i class="bi bi-check-all" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                Lista de Prescrições 
+                <span class="badge bg-secondary">@ViewBag.TotalRecords</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Paciente</th>
+                                <th>Médico</th>
+                                <th>Data</th>
+                                <th>Validade</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th width="200">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@p.Code</strong>
+                                    </td>
+                                    <td>@p.CustomerName</td>
+                                    <td>@(p.DoctorName ?? "-")</td>
+                                    <td>@p.PrescriptionDate.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (p.ExpirationDate != null)
+                                        {
+                                            var daysRemaining = (p.ExpirationDate - DateTime.Now).Days;
+                                            if (daysRemaining < 0)
+                                            {
+                                                <span class="badge bg-danger">Vencida</span>
+                                            }
+                                            else if (daysRemaining <= 7)
+                                            {
+                                                <span class="badge bg-warning text-dark">@daysRemaining dias</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@p.ExpirationDate?.ToString("dd/MM/yyyy")</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @switch (p.PrescriptionType)
+                                        {
+                                            case "SIMPLES":
+                                                <span class="badge bg-secondary">Simples</span>
+                                                break;
+                                            case "CONTROLADA":
+                                                <span class="badge bg-danger">Controlada</span>
+                                                break;
+                                            case "ANTIBIOTICO":
+                                                <span class="badge bg-warning text-dark">Antibiótico</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-light text-dark">@p.PrescriptionType</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @switch (p.Status)
+                                        {
+                                            case "PENDENTE":
+                                                <span class="badge bg-warning text-dark">Pendente</span>
+                                                break;
+                                            case "VALIDADA":
+                                                <span class="badge bg-info">Validada</span>
+                                                break;
+                                            case "EM_MANIPULACAO":
+                                                <span class="badge bg-primary">Em Manipulação</span>
+                                                break;
+                                            case "CONCLUIDA":
+                                                <span class="badge bg-success">Concluída</span>
+                                                break;
+                                            case "CANCELADA":
+                                                <span class="badge bg-danger">Cancelada</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@p.Status</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="@Url.Action("Details", new { id = p.Id })" 
+                                               class="btn btn-outline-primary" 
+                                               title="Detalhes">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            
+                                            @if (p.Status == "PENDENTE")
+                                            {
+                                                <a href="@Url.Action("OcrUpload", new { id = p.Id })" 
+                                                   class="btn btn-outline-success" 
+                                                   title="OCR">
+                                                    <i class="bi bi-file-medical"></i>
+                                                </a>
+                                                <a href="@Url.Action("Validate", new { id = p.Id })" 
+                                                   class="btn btn-outline-info" 
+                                                   title="Validar">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+                    <h5 class="mt-3 text-muted">Nenhuma prescrição encontrada</h5>
+                    <p class="text-muted">Crie uma nova prescrição para começar</p>
+                    <a href="@Url.Action("Create")" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nova Prescrição
+                    </a>
+                </div>
+            }
+        </div>
+        
+        @if (Model.Any() && ViewBag.TotalPages > 1)
+        {
+            <div class="card-footer">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { page = i, status = ViewBag.Status })">
+                                    @i
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Atualizar a página a cada 30 segundos para mostrar novas prescrições
+    // setTimeout(() => location.reload(), 30000);
+</script>
+}

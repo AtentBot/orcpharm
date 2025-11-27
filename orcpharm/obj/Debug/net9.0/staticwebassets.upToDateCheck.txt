@@ -1,7 +1,9 @@
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\additional-methods.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders-receive.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\gateway-configuration.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\purchase-orders.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\pdv.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js
@@ -33,6 +35,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\css\site.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.slim.min.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\page\prescription-ocr.html
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.slim.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\employees-auth-adapter.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.min.js
@@ -44,6 +47,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\css\employees-shared.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\payment-management.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css
@@ -62,6 +66,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.slim.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\jquery.validate.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\prescription-ocr.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.min.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\site.js
@@ -74,7 +79,11 @@ wwwroot\css\site.css
 wwwroot\favicon.ico
 wwwroot\js\employees-auth-adapter.js
 wwwroot\js\employees-shared.js
+wwwroot\js\gateway-configuration.js
 wwwroot\js\manipulation-weighing.js
+wwwroot\js\payment-management.js
+wwwroot\js\pdv.js
+wwwroot\js\prescription-ocr.js
 wwwroot\js\purchase-orders.js
 wwwroot\js\purchase-orders-create.js
 wwwroot\js\purchase-orders-details.js
@@ -141,3 +150,4 @@ wwwroot\lib\jquery-validation\LICENSE.md
 wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.js
 wwwroot\lib\jquery-validation-unobtrusive\dist\jquery.validate.unobtrusive.min.js
 wwwroot\lib\jquery-validation-unobtrusive\LICENSE.txt
+wwwroot\page\prescription-ocr.html

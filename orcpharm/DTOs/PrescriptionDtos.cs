@@ -107,3 +107,108 @@ public class GenerateManipulationFromPrescriptionDto
     public DateTime ExpectedDate { get; set; }
     public string? AdditionalNotes { get; set; }
 }
+public class UploadPrescriptionFileDto
+{
+    public string FileBase64 { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public string FileType { get; set; } = string.Empty;
+}
+
+public class PrescriptionOcrResultDto
+{
+    public DoctorInfoDto Doctor { get; set; } = new();
+    public PatientInfoDto Patient { get; set; } = new();
+    public string PrescriptionDate { get; set; } = string.Empty;
+    public List<OcrItemDto> Items { get; set; } = new();
+    public string? Instructions { get; set; }
+    public string? TotalVolume { get; set; }
+    public decimal OverallConfidence { get; set; }
+    public List<string> Warnings { get; set; } = new();
+}
+
+public class DoctorInfoDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Crm { get; set; }
+    public string? Rqe { get; set; }
+    public string? Specialty { get; set; }
+}
+
+public class PatientInfoDto
+{
+    public string? Name { get; set; }
+    public string? Usage { get; set; }
+}
+
+public class OcrItemDto
+{
+    public int LineNumber { get; set; }
+    public string RawText { get; set; } = string.Empty;
+    public string Component { get; set; } = string.Empty;
+    public string? Quantity { get; set; }
+    public string? Unit { get; set; }
+    public decimal Confidence { get; set; }
+}
+
+public class IngredientMatchResponseDto
+{
+    public List<IngredientMatchDto> Matches { get; set; } = new();
+}
+
+public class IngredientMatchDto
+{
+    public string OcrText { get; set; } = string.Empty;
+    public string RawText { get; set; } = string.Empty;
+    public string? Quantity { get; set; }
+    public string? Unit { get; set; }
+    public List<RawMaterialSuggestionDto> Suggestions { get; set; } = new();
+}
+
+public class RawMaterialSuggestionDto
+{
+    public Guid RawMaterialId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? DciName { get; set; }
+    public decimal Confidence { get; set; }
+    public bool InStock { get; set; }
+    public decimal AvailableQuantity { get; set; }
+    public string Unit { get; set; } = string.Empty;
+}
+
+public class CreateOrderFromPrescriptionDto
+{
+    public Guid CustomerId { get; set; }
+    public List<ConfirmedIngredientDto> ConfirmedIngredients { get; set; } = new();
+    public string? Instructions { get; set; }
+    public string? TotalVolume { get; set; }
+}
+
+public class ConfirmedIngredientDto
+{
+    public Guid RawMaterialId { get; set; }
+    public decimal Quantity { get; set; }
+    public string Unit { get; set; } = string.Empty;
+}
+
+public class ManipulationOrderQuoteDto
+{
+    public Guid OrderId { get; set; }
+    public List<QuoteComponentDto> Components { get; set; } = new();
+    public decimal TotalCost { get; set; }
+    public decimal MarkupPercentage { get; set; }
+    public decimal MarkupValue { get; set; }
+    public decimal Taxes { get; set; }
+    public decimal FinalPrice { get; set; }
+    public string ValidUntil { get; set; } = string.Empty;
+    public string EstimatedDelivery { get; set; } = string.Empty;
+}
+
+public class QuoteComponentDto
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public string Unit { get; set; } = string.Empty;
+    public decimal UnitCost { get; set; }
+    public decimal TotalCost { get; set; }
+}
+

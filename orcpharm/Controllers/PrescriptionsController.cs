@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs;
@@ -62,8 +62,8 @@ public class PrescriptionsController : ControllerBase
                 DoctorName = p.DoctorName,
                 PrescriptionType = p.PrescriptionType,
                 Status = p.Status,
-                IsExpired = p.ExpirationDate < DateTime.Today,
-                DaysUntilExpiration = (int)(p.ExpirationDate - DateTime.Today).TotalDays
+                IsExpired = p.ExpirationDate.Date < DateTime.UtcNow.Date,
+                DaysUntilExpiration = (p.ExpirationDate.Date - DateTime.UtcNow.Date).Days
             })
             .ToListAsync();
 
@@ -257,6 +257,131 @@ public class PrescriptionsController : ControllerBase
 
         return Ok(prescriptions);
     }
+
+    // ===== MÉTODOS DE OCR =====
+
+    /// <summary>
+    /// Upload de arquivo de receita
+    /// </summary>
+    [HttpPost("{id}/upload")]
+    public async Task<IActionResult> UploadFile(Guid id, [FromBody] UploadPrescriptionFileDto dto)
+    {
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { message = "Estabelecimento não encontrado" });
+
+        try
+        {
+            var prescription = await _context.Set<Prescription>()
+                .FirstOrDefaultAsync(p => p.Id == id && p.EstablishmentId == establishmentId.Value);
+
+            if (prescription == null)
+                return NotFound(new { message = "Prescrição não encontrada" });
+
+            var fileBytes = Convert.FromBase64String(dto.FileBase64);
+            if (fileBytes.Length > 5 * 1024 * 1024)
+                return BadRequest(new { message = "Arquivo muito grande. Máximo 5MB." });
+
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "application/pdf" };
+            if (!allowedTypes.Contains(dto.FileType.ToLower()))
+                return BadRequest(new { message = "Tipo não permitido." });
+
+            var prescriptionFile = new PrescriptionFile
+            {
+                Id = Guid.NewGuid(),
+                PrescriptionId = id,
+                FileName = dto.FileName,
+                FileType = dto.FileType,
+                FileBase64 = dto.FileBase64,
+                FileSizeBytes = fileBytes.Length,
+                UploadedAt = DateTime.UtcNow,
+                UploadedByEmployeeId = employeeId.Value,
+                OcrStatus = "PENDING",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Set<PrescriptionFile>().Add(prescriptionFile);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Arquivo enviado", fileId = prescriptionFile.Id });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Erro", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Processar OCR
+    /// </summary>
+    [HttpPost("{id}/files/{fileId}/parse")]
+    public async Task<IActionResult> ParseFile(Guid id, Guid fileId)
+    {
+        try
+        {
+            var file = await _context.Set<PrescriptionFile>()
+                .FirstOrDefaultAsync(f => f.Id == fileId && f.PrescriptionId == id);
+
+            if (file == null)
+                return NotFound(new { message = "Arquivo não encontrado" });
+
+            if (string.IsNullOrEmpty(file.FileBase64))
+                return BadRequest(new { message = "Arquivo sem dados" });
+
+            file.OcrStatus = "PROCESSING";
+            file.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var ocrService = HttpContext.RequestServices.GetRequiredService<OpenAIPrescriptionParserService>();
+            var ocrResult = await ocrService.ParsePrescriptionAsync(file.FileBase64, file.FileType);
+
+            file.OcrStatus = "COMPLETED";
+            file.OcrProcessedAt = DateTime.UtcNow;
+            file.OcrResult = System.Text.Json.JsonSerializer.Serialize(ocrResult);
+            file.OcrConfidence = ocrResult.OverallConfidence;
+            file.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(ocrResult);
+        }
+        catch (Exception ex)
+        {
+            var file = await _context.Set<PrescriptionFile>().FindAsync(fileId);
+            if (file != null)
+            {
+                file.OcrStatus = "FAILED";
+                file.OcrErrorMessage = ex.Message;
+                file.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+            return StatusCode(500, new { message = "Erro OCR", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Matching de ingredientes
+    /// </summary>
+    [HttpPost("{id}/match-ingredients")]
+    public async Task<IActionResult> MatchIngredients(Guid id, [FromBody] List<OcrItemDto> items)
+    {
+        try
+        {
+            var matcherService = HttpContext.RequestServices.GetRequiredService<IngredientMatcherService>();
+            var matches = await matcherService.FindMatchesAsync(items);
+            return Ok(matches);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Erro", error = ex.Message });
+        }
+    }
+
+    // ===== MÉTODOS AUXILIARES =====
 
     private Guid? GetEmployeeId()
     {

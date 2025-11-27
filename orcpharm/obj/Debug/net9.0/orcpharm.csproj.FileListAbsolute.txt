@@ -1,3 +1,13 @@
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.csproj.AssemblyReference.cache
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.GeneratedMSBuildEditorConfig.editorconfig
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.AssemblyInfoInputs.cache
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.AssemblyInfo.cs
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.csproj.CoreCompileInputs.cache
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.MvcApplicationPartsAssemblyInfo.cs
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.MvcApplicationPartsAssemblyInfo.cache
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.RazorAssemblyInfo.cache
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.RazorAssemblyInfo.cs
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.sourcelink.json
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\appsettings.Development.json
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\appsettings.json
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\orcpharm.staticwebassets.runtime.json
@@ -121,16 +131,6 @@ E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\ru\Microsoft.CodeAnalysis.Workspa
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.csproj.AssemblyReference.cache
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.GeneratedMSBuildEditorConfig.editorconfig
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.AssemblyInfoInputs.cache
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.AssemblyInfo.cs
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.csproj.CoreCompileInputs.cache
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.MvcApplicationPartsAssemblyInfo.cs
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.MvcApplicationPartsAssemblyInfo.cache
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.RazorAssemblyInfo.cache
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.RazorAssemblyInfo.cs
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.sourcelink.json
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\scopedcss\bundle\orcpharm.styles.css
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\scopedcss\projectbundle\orcpharm.bundle.scp.css
@@ -139,7 +139,10 @@ E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\fjvvu41i0m-b9sayid5wm.
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\dpujxvvohm-61n19gt1b8.gz
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\ihzi7qs19a-hn87q3nes3.gz
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\qprnqqqorg-fmw5x5id3m.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\1i9pagwnol-dzzth887na.gz
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\eos0eqvw9a-h2aao0iczs.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\ovhky89fze-w62c9rxcxo.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\41gh1p13f8-j0znzs81zp.gz
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\d8epaeq2mj-3w64oua0jt.gz
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\ab0p5y39m1-f1pirnk0j2.gz
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\0ilkq9ywow-10bgowkcs9.gz
@@ -223,3 +226,5 @@ E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\refint\orcpharm.dll
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.pdb
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.genruntimeconfig.cache
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\ref\orcpharm.dll
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\z7jqet4le9-4ku0ovsvft.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\h0a7z5s2cr-9t8vzp6elu.gz

@@ -1,6 +1,6 @@
-﻿using Models.Pharmacy;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Models.Employees;
 
 namespace Models;
 
@@ -9,22 +9,27 @@ public class Sale
 {
     [Key]
     [Column("id")]
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
 
+    [Required]
     [Column("establishment_id")]
     public Guid EstablishmentId { get; set; }
 
     [Column("customer_id")]
     public Guid? CustomerId { get; set; }
 
+    [ForeignKey("CustomerId")]
+    public virtual Customer? Customer { get; set; }
+
+    [Required]
     [Column("code")]
-    [MaxLength(20)]
+    [MaxLength(50)]
     public string Code { get; set; } = string.Empty;
 
     [Column("sale_date")]
-    public DateTime SaleDate { get; set; }
+    public DateTime SaleDate { get; set; } = DateTime.UtcNow;
 
-    // Valores
+    // ==================== VALORES ====================
     [Column("subtotal")]
     public decimal Subtotal { get; set; }
 
@@ -37,27 +42,29 @@ public class Sale
     [Column("total_amount")]
     public decimal TotalAmount { get; set; }
 
-    // Pagamento
+    // ==================== PAGAMENTO (LEGADO - COMPATIBILIDADE) ====================
     [Column("payment_method")]
-    [MaxLength(20)]
-    public string PaymentMethod { get; set; } = "DINHEIRO";
-    // DINHEIRO, CARTAO_CREDITO, CARTAO_DEBITO, PIX, BOLETO
+    [MaxLength(50)]
+    public string? PaymentMethod { get; set; }
 
     [Column("payment_status")]
-    [MaxLength(20)]
-    public string PaymentStatus { get; set; } = "PAGO";
-    // PENDENTE, PAGO, CANCELADO
+    [MaxLength(50)]
+    public string? PaymentStatus { get; set; }
 
     [Column("paid_amount")]
-    public decimal PaidAmount { get; set; }
+    public decimal? PaidAmount { get; set; }
 
     [Column("change_amount")]
-    public decimal ChangeAmount { get; set; } = 0;
+    public decimal? ChangeAmount { get; set; }
 
     [Column("payment_date")]
     public DateTime? PaymentDate { get; set; }
 
-    // Nota Fiscal
+    // ==================== MÚLTIPLOS PAGAMENTOS (NOVO) ====================
+    [Column("has_multiple_payments")]
+    public bool HasMultiplePayments { get; set; } = false;
+
+    // ==================== NOTA FISCAL ====================
     [Column("invoice_number")]
     [MaxLength(50)]
     public string? InvoiceNumber { get; set; }
@@ -67,14 +74,15 @@ public class Sale
     public string? InvoiceKey { get; set; }
 
     [Column("invoice_status")]
-    [MaxLength(20)]
+    [MaxLength(50)]
     public string? InvoiceStatus { get; set; }
 
-    // Status
+    // ==================== STATUS ====================
+    [Required]
     [Column("status")]
-    [MaxLength(20)]
+    [MaxLength(50)]
     public string Status { get; set; } = "FINALIZADA";
-    // ORCAMENTO, FINALIZADA, CANCELADA
+    // ORCAMENTO, PENDENTE, PAGAMENTO_PARCIAL, FINALIZADA, CANCELADA
 
     [Column("cancelled_at")]
     public DateTime? CancelledAt { get; set; }
@@ -82,26 +90,38 @@ public class Sale
     [Column("cancelled_by_employee_id")]
     public Guid? CancelledByEmployeeId { get; set; }
 
+    [ForeignKey("CancelledByEmployeeId")]
+    public virtual Employee? CancelledByEmployee { get; set; }
+
     [Column("cancellation_reason")]
+    [MaxLength(500)]
     public string? CancellationReason { get; set; }
 
-    // Observações
     [Column("observations")]
+    [MaxLength(1000)]
     public string? Observations { get; set; }
 
-    // Auditoria
+    // ==================== AUDITORIA ====================
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("created_by_employee_id")]
     public Guid CreatedByEmployeeId { get; set; }
 
+    [ForeignKey("CreatedByEmployeeId")]
+    public virtual Employee CreatedByEmployee { get; set; } = null!;
+
     [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     [Column("updated_by_employee_id")]
     public Guid? UpdatedByEmployeeId { get; set; }
 
-    // Relacionamentos
+    [ForeignKey("UpdatedByEmployeeId")]
+    public virtual Employee? UpdatedByEmployee { get; set; }
+
+    // ==================== RELACIONAMENTOS ====================
     public virtual ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();
+
+    public virtual ICollection<SalePayment> Payments { get; set; } = new List<SalePayment>();
 }

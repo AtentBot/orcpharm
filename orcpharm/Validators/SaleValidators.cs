@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using DTOs;
+using DTOs.Sales;
 
 namespace Validators;
 

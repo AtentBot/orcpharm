@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs;
 using Service;
 using Validators;
 using Models;
+using DTOs.Sales;
 
 namespace Controllers;
 

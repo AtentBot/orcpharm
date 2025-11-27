@@ -1,0 +1,202 @@
+@{
+    ViewData["Title"] = "Estoque Baixo";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-exclamation-triangle text-warning me-2"></i>Alertas de Estoque Baixo</h2>
+                <button class="btn btn-primary" onclick="loadLowStock()">
+                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Itens em Falta</p>
+                            <h3 class="mb-0 text-danger" id="kpiOutOfStock">0</h3>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-x-circle text-danger fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Estoque Baixo</p>
+                            <h3 class="mb-0 text-warning" id="kpiLowStock">0</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-exclamation-triangle text-warning fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Valor Parado</p>
+                            <h3 class="mb-0 text-info" id="kpiTotalValue">R$ 0,00</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-cash-stack text-info fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Total de Alertas</p>
+                            <h3 class="mb-0" id="kpiTotal">0</h3>
+                        </div>
+                        <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-list-ul text-secondary fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Matérias-Primas com Estoque Baixo</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>Estoque Atual</th>
+                            <th>Estoque Mínimo</th>
+                            <th>Quantidade Faltante</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lowStockBody">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="spinner-border spinner-border-sm"></div>
+                                Carregando...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadLowStock();
+    });
+
+    async function loadLowStock() {
+        try {
+            const response = await fetch('/api/PDV/low-stock-alerts', {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            const tbody = document.getElementById('lowStockBody');
+            tbody.innerHTML = '';
+
+            if (result.success && result.data.length > 0) {
+                let outOfStock = 0;
+                let lowStock = 0;
+
+                result.data.forEach(item => {
+                    const missing = item.minimumStock - item.currentQuantity;
+                    const status = item.currentQuantity <= 0 ? 
+                        '<span class="badge bg-danger">SEM ESTOQUE</span>' :
+                        '<span class="badge bg-warning">BAIXO</span>';
+
+                    if (item.currentQuantity <= 0) {
+                        outOfStock++;
+                    } else {
+                        lowStock++;
+                    }
+
+                    const row = `
+                        <tr>
+                            <td>${status}</td>
+                            <td>${item.code}</td>
+                            <td>${item.name}</td>
+                            <td class="fw-bold ${item.currentQuantity <= 0 ? 'text-danger' : 'text-warning'}">
+                                ${item.currentQuantity.toLocaleString('pt-BR', {minimumFractionDigits: 2})} ${item.unit}
+                            </td>
+                            <td>${item.minimumStock.toLocaleString('pt-BR', {minimumFractionDigits: 2})} ${item.unit}</td>
+                            <td class="text-danger fw-bold">
+                                ${missing.toLocaleString('pt-BR', {minimumFractionDigits: 2})} ${item.unit}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="requestPurchase('${item.rawMaterialId}', ${missing})">
+                                    <i class="bi bi-cart-plus"></i> Solicitar Compra
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+                // Atualizar KPIs
+                document.getElementById('kpiOutOfStock').textContent = outOfStock;
+                document.getElementById('kpiLowStock').textContent = lowStock;
+                document.getElementById('kpiTotal').textContent = result.data.length;
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <i class="bi bi-check-circle text-success fs-1"></i>
+                            <p class="mt-2">Nenhum item com estoque baixo! 🎉</p>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('kpiOutOfStock').textContent = '0';
+                document.getElementById('kpiLowStock').textContent = '0';
+                document.getElementById('kpiTotal').textContent = '0';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar alertas:', error);
+            document.getElementById('lowStockBody').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Erro ao carregar dados</td></tr>';
+        }
+    }
+
+    function requestPurchase(rawMaterialId, quantity) {
+        if (confirm(`Deseja criar uma solicitação de compra para esta matéria-prima?\n\nQuantidade sugerida: ${quantity.toLocaleString('pt-BR')}`)) {
+            window.location.href = `/PurchaseOrders/Create?rawMaterialId=${rawMaterialId}&quantity=${quantity}`;
+        }
+    }
+</script>
+}

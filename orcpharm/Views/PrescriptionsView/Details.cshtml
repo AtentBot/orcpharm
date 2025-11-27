@@ -1,0 +1,388 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Detalhes da Prescrição";
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="bi bi-file-medical"></i> Prescrição @Model.Code
+            </h1>
+            <p class="text-muted mb-0">Detalhes completos da prescrição</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            @if (Model.Status == "PENDENTE")
+            {
+                <a href="@Url.Action("OcrUpload", new { id = Model.Id })" class="btn btn-success">
+                    <i class="bi bi-file-medical"></i> Processar OCR
+                </a>
+                <a href="@Url.Action("Validate", new { id = Model.Id })" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Validar
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i> @TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Informações Básicas -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informações Básicas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">CÓDIGO</label>
+                            <h5 class="mb-0">@Model.Code</h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">STATUS</label>
+                            <h5 class="mb-0">
+                                @switch (Model.Status.ToString())
+                                {
+                                    case "PENDENTE":
+                                        <span class="badge bg-warning text-dark">Pendente</span>
+                                        break;
+                                    case "VALIDADA":
+                                        <span class="badge bg-info">Validada</span>
+                                        break;
+                                    case "EM_MANIPULACAO":
+                                        <span class="badge bg-primary">Em Manipulação</span>
+                                        break;
+                                    case "CONCLUIDA":
+                                        <span class="badge bg-success">Concluída</span>
+                                        break;
+                                    case "CANCELADA":
+                                        <span class="badge bg-danger">Cancelada</span>
+                                        break;
+                                }
+                            </h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">DATA DA PRESCRIÇÃO</label>
+                            <p class="mb-0">@Model.PrescriptionDate.ToString("dd/MM/yyyy")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">VALIDADE</label>
+                            <p class="mb-0">
+                                @if (Model.ExpirationDate != null)
+                                {
+                                    @Model.ExpirationDate?.ToString("dd/MM/yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Não informada</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">TIPO DE PRESCRIÇÃO</label>
+                            <p class="mb-0">
+                                @switch (Model.PrescriptionType.ToString())
+                                {
+                                    case "SIMPLES":
+                                        <span class="badge bg-secondary">Simples</span>
+                                        break;
+                                    case "CONTROLADA":
+                                        <span class="badge bg-danger">Controlada</span>
+                                        break;
+                                    case "ANTIBIOTICO":
+                                        <span class="badge bg-warning text-dark">Antibiótico</span>
+                                        break;
+                                }
+                            </p>
+                        </div>
+                        @if (Model.ControlledType != null)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small">TIPO CONTROLADO</label>
+                                <p class="mb-0">@Model.ControlledType</p>
+                            </div>
+                        }
+                        @if (Model.PrescriptionColor != null)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <label class="text-muted small">COR DA RECEITA</label>
+                                <p class="mb-0">@Model.PrescriptionColor</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados do Paciente -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Dados do Paciente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="text-muted small">NOME</label>
+                            <h6 class="mb-0">@Model.CustomerName</h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="text-muted small">CPF</label>
+                            <p class="mb-0">@Model.CustomerCpf</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados do Médico -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-badge"></i> Dados do Médico</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="text-muted small">NOME</label>
+                            <h6 class="mb-0">@(Model.DoctorName ?? "Não informado")</h6>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="text-muted small">CRM</label>
+                            <p class="mb-0">
+                                @if (Model.DoctorCrm != null)
+                                {
+                                    @Model.DoctorCrm @("/"+ Model.DoctorCrmState)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Não informado</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medicamentos e Posologia -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-prescription2"></i> Medicamentos e Posologia</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">MEDICAMENTOS</label>
+                        <div class="border rounded p-3 bg-light">
+                            @if (!string.IsNullOrEmpty(Model.Medications))
+                            {
+                                <pre class="mb-0" style="white-space: pre-wrap;">@Model.Medications</pre>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Não informado</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small">POSOLOGIA</label>
+                        <div class="border rounded p-3 bg-light">
+                            @if (!string.IsNullOrEmpty(Model.Posology))
+                            {
+                                <pre class="mb-0" style="white-space: pre-wrap;">@Model.Posology</pre>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Não informado</span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Observations))
+                    {
+                        <div>
+                            <label class="text-muted small">OBSERVAÇÕES</label>
+                            <div class="border rounded p-3 bg-light">
+                                <pre class="mb-0" style="white-space: pre-wrap;">@Model.Observations</pre>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Imagem da Receita -->
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-image"></i> Imagem da Receita</h5>
+                    </div>
+                    <div class="card-body">
+                        <img src="@Model.ImageUrl" class="img-fluid rounded" alt="Receita">
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Coluna Lateral -->
+        <div class="col-lg-4">
+            <!-- Arquivos OCR -->
+            @if (ViewBag.Files != null && ((IEnumerable<dynamic>)ViewBag.Files).Any())
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Arquivos OCR</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach (var file in ViewBag.Files)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@file.FileName</h6>
+                                            <small class="text-muted">
+                                                @file.UploadedAt.ToString("dd/MM/yyyy HH:mm")
+                                            </small>
+                                        </div>
+                                        <div>
+                                            @switch (file.OcrStatus.ToString())
+                                            {
+                                                case "PENDING":
+                                                    <span class="badge bg-secondary">Pendente</span>
+                                                    break;
+                                                case "PROCESSING":
+                                                    <span class="badge bg-warning text-dark">Processando</span>
+                                                    break;
+                                                case "COMPLETED":
+                                                    <span class="badge bg-success">
+                                                        Completo (@(file.OcrConfidence?.ToString("F1"))%)
+                                                    </span>
+                                                    break;
+                                                case "FAILED":
+                                                    <span class="badge bg-danger">Falhou</span>
+                                                    break;
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Validação -->
+            @if (Model.Status == "VALIDADA" || Model.Status == "CONCLUIDA")
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-check-circle"></i> Validação</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="text-muted small">VALIDADO EM</label>
+                            <p class="mb-0">@Model.ValidatedAt?.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">VALIDADO POR</label>
+                            <p class="mb-0">@(Model.ValidatedByName ?? "N/A")</p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.ValidationNotes))
+                        {
+                            <div>
+                                <label class="text-muted small">OBSERVAÇÕES</label>
+                                <div class="border rounded p-2 bg-light">
+                                    <small>@Model.ValidationNotes</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Ordem de Manipulação -->
+            @if (Model.ManipulationOrderId != null)
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-box-seam"></i> Ordem de Manipulação</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">Esta prescrição está vinculada a uma ordem de manipulação.</p>
+                        <a href="/ManipulationOrders/Details/@Model.ManipulationOrderId" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-box-arrow-up-right"></i> Ver Ordem
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <!-- Auditoria -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Auditoria</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="text-muted small">CRIADO EM</label>
+                        <p class="mb-0">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Ações Rápidas</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @if (Model.Status == "PENDENTE")
+                        {
+                            <a href="@Url.Action("OcrUpload", new { id = Model.Id })" class="list-group-item list-group-item-action">
+                                <i class="bi bi-file-medical text-success"></i> Processar com OCR
+                            </a>
+                            <a href="@Url.Action("Validate", new { id = Model.Id })" class="list-group-item list-group-item-action">
+                                <i class="bi bi-check-circle text-primary"></i> Validar Prescrição
+                            </a>
+                        }
+                        <a href="javascript:window.print()" class="list-group-item list-group-item-action">
+                            <i class="bi bi-printer text-secondary"></i> Imprimir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    @@media print {
+        .btn, .card-header, nav { display: none !important; }
+    }
+</style>
+}

@@ -25,8 +25,24 @@
       "PackagePath": "staticwebassets\\js\\employees-shared.js"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\gateway-configuration.js",
+      "PackagePath": "staticwebassets\\js\\gateway-configuration.js"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\manipulation-weighing.js",
       "PackagePath": "staticwebassets\\js\\manipulation-weighing.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\payment-management.js",
+      "PackagePath": "staticwebassets\\js\\payment-management.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\pdv.js",
+      "PackagePath": "staticwebassets\\js\\pdv.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\prescription-ocr.js",
+      "PackagePath": "staticwebassets\\js\\prescription-ocr.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-create.js",
@@ -291,6 +307,10 @@
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\lib\\jquery\\dist\\jquery.slim.min.map",
       "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.slim.min.map"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\page\\prescription-ocr.html",
+      "PackagePath": "staticwebassets\\page\\prescription-ocr.html"
     },
     {
       "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.build.orcpharm.props",

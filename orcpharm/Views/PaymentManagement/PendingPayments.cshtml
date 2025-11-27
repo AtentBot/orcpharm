@@ -1,0 +1,495 @@
+@{
+    ViewData["Title"] = "Pagamentos Pendentes";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index")">Gestão de Pagamentos</a></li>
+                    <li class="breadcrumb-item active">Pagamentos Pendentes</li>
+                </ol>
+            </nav>
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="bi bi-hourglass-split me-2"></i>Pagamentos Pendentes</h2>
+                <button class="btn btn-primary" onclick="loadPendingPayments()">
+                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo de Pendências -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Pendente</p>
+                            <h3 class="mb-0" id="totalPending">R$ 0,00</h3>
+                            <small class="text-warning">Aguardando confirmação</small>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">PIX Pendentes</p>
+                            <h3 class="mb-0" id="pixPending">0</h3>
+                            <small class="text-info" id="pixAmount">R$ 0,00</small>
+                        </div>
+                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-qr-code text-info fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Boletos Pendentes</p>
+                            <h3 class="mb-0" id="boletoPending">0</h3>
+                            <small class="text-secondary" id="boletoAmount">R$ 0,00</small>
+                        </div>
+                        <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-upc-scan text-secondary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted mb-1 small">Vencidos</p>
+                            <h3 class="mb-0 text-danger" id="overduePending">0</h3>
+                            <small class="text-danger" id="overdueAmount">R$ 0,00</small>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded">
+                            <i class="bi bi-calendar-x text-danger fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Forma de Pagamento</label>
+                    <select class="form-select" id="filterMethod" onchange="loadPendingPayments()">
+                        <option value="">Todas</option>
+                        <option value="PIX">PIX</option>
+                        <option value="BOLETO">Boleto</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filterStatus" onchange="loadPendingPayments()">
+                        <option value="PENDING">Pendente</option>
+                        <option value="OVERDUE">Vencido</option>
+                        <option value="ALL">Todos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ordenar por</label>
+                    <select class="form-select" id="sortBy" onchange="loadPendingPayments()">
+                        <option value="date">Data (mais recente)</option>
+                        <option value="amount">Valor (maior)</option>
+                        <option value="dueDate">Vencimento (próximo)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" class="form-control" id="searchPending" 
+                           placeholder="Cliente, código..." onkeyup="searchPayments()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Pagamentos Pendentes -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lista de Pendências</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-success" onclick="confirmSelectedPayments()">
+                        <i class="bi bi-check-circle"></i> Confirmar Selecionados
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelSelectedPayments()">
+                        <i class="bi bi-x-circle"></i> Cancelar Selecionados
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAll" 
+                                       onchange="toggleSelectAll()">
+                            </th>
+                            <th>Data/Hora</th>
+                            <th>Venda</th>
+                            <th>Cliente</th>
+                            <th>Método</th>
+                            <th>Detalhes</th>
+                            <th class="text-end">Valor</th>
+                            <th>Status</th>
+                            <th>Vencimento</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingPaymentsTable">
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-5">
+                                <i class="bi bi-hourglass-split fs-1 d-block mb-3"></i>
+                                <p>Carregando pagamentos pendentes...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Pagamento -->
+<div class="modal fade" id="confirmPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="confirmPaymentId">
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Confirme o recebimento deste pagamento
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Valor</label>
+                    <input type="text" class="form-control" id="confirmAmount" readonly>
+                </div>
+
+                <div class="mb-3" id="pixConfirmFields" style="display: none;">
+                    <label class="form-label">ID da Transação PIX</label>
+                    <input type="text" class="form-control" id="pixTransactionId" 
+                           placeholder="E12345678202411251030...">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Data de Confirmação</label>
+                    <input type="datetime-local" class="form-control" id="confirmDate" 
+                           value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Observações</label>
+                    <textarea class="form-control" id="confirmObs" rows="2" 
+                              placeholder="Observações sobre a confirmação (opcional)"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="processConfirmPayment()">
+                    <i class="bi bi-check-circle"></i> Confirmar Pagamento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cancelar Pagamento -->
+<div class="modal fade" id="cancelPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cancelar Pagamento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cancelPaymentId">
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Esta ação irá cancelar o pagamento e atualizar o status da venda
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Motivo do Cancelamento</label>
+                    <select class="form-select" id="cancelReason">
+                        <option value="">Selecione...</option>
+                        <option value="CLIENTE_NAO_PAGOU">Cliente não realizou o pagamento</option>
+                        <option value="PAGAMENTO_NAO_CONFIRMADO">Pagamento não foi confirmado</option>
+                        <option value="ERRO_OPERACIONAL">Erro operacional</option>
+                        <option value="DUPLICIDADE">Pagamento duplicado</option>
+                        <option value="OUTRO">Outro motivo</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Observações</label>
+                    <textarea class="form-control" id="cancelObs" rows="3" 
+                              placeholder="Descreva o motivo do cancelamento" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                <button type="button" class="btn btn-danger" onclick="processCancelPayment()">
+                    <i class="bi bi-x-circle"></i> Confirmar Cancelamento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPendingPayments();
+            // Atualizar a cada 30 segundos
+            setInterval(loadPendingPayments, 30000);
+        });
+
+        async function loadPendingPayments() {
+            try {
+                // Simular carregamento - substituir por chamada real à API
+                const tbody = document.getElementById('pendingPaymentsTable');
+                
+                // Dados simulados
+                const pendingPayments = [
+                    {
+                        id: '1',
+                        date: '2024-11-25T14:30:00',
+                        saleCode: 'VND-2024-001234',
+                        customer: 'João Silva',
+                        method: 'PIX',
+                        details: 'joao@email.com',
+                        amount: 250.00,
+                        status: 'PENDING',
+                        dueDate: null
+                    },
+                    {
+                        id: '2',
+                        date: '2024-11-24T10:15:00',
+                        saleCode: 'VND-2024-001198',
+                        customer: 'Maria Santos',
+                        method: 'BOLETO',
+                        details: '34191.79001 01043.510047 91020.150008 8 96610000025000',
+                        amount: 450.00,
+                        status: 'PENDING',
+                        dueDate: '2024-11-27'
+                    }
+                ];
+
+                tbody.innerHTML = pendingPayments.map(payment => `
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input payment-select" 
+                                   value="${payment.id}">
+                        </td>
+                        <td>${formatDateTime(payment.date)}</td>
+                        <td><a href="/Sales/Details/${payment.id}">${payment.saleCode}</a></td>
+                        <td>${payment.customer}</td>
+                        <td>
+                            <i class="bi ${getMethodIcon(payment.method)} me-1"></i>
+                            ${formatPaymentMethod(payment.method)}
+                        </td>
+                        <td><small class="text-muted">${payment.details}</small></td>
+                        <td class="text-end"><strong>${formatCurrency(payment.amount)}</strong></td>
+                        <td>${getStatusBadge(payment.status)}</td>
+                        <td>${payment.dueDate ? formatDate(payment.dueDate) : '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-success" 
+                                    onclick="showConfirmModal('${payment.id}', ${payment.amount}, '${payment.method}')">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="showCancelModal('${payment.id}')">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                updateSummary(pendingPayments);
+            } catch (error) {
+                console.error('Erro ao carregar pagamentos pendentes:', error);
+            }
+        }
+
+        function updateSummary(payments) {
+            const total = payments.reduce((sum, p) => sum + p.amount, 0);
+            const pixPayments = payments.filter(p => p.method === 'PIX');
+            const boletoPayments = payments.filter(p => p.method === 'BOLETO');
+
+            document.getElementById('totalPending').textContent = formatCurrency(total);
+            document.getElementById('pixPending').textContent = pixPayments.length;
+            document.getElementById('pixAmount').textContent = 
+                formatCurrency(pixPayments.reduce((sum, p) => sum + p.amount, 0));
+            document.getElementById('boletoPending').textContent = boletoPayments.length;
+            document.getElementById('boletoAmount').textContent = 
+                formatCurrency(boletoPayments.reduce((sum, p) => sum + p.amount, 0));
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.payment-select').forEach(checkbox => {
+                checkbox.checked = selectAll;
+            });
+        }
+
+        function showConfirmModal(paymentId, amount, method) {
+            document.getElementById('confirmPaymentId').value = paymentId;
+            document.getElementById('confirmAmount').value = formatCurrency(amount);
+            
+            if (method === 'PIX') {
+                document.getElementById('pixConfirmFields').style.display = 'block';
+            } else {
+                document.getElementById('pixConfirmFields').style.display = 'none';
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('confirmPaymentModal'));
+            modal.show();
+        }
+
+        function showCancelModal(paymentId) {
+            document.getElementById('cancelPaymentId').value = paymentId;
+            const modal = new bootstrap.Modal(document.getElementById('cancelPaymentModal'));
+            modal.show();
+        }
+
+        async function processConfirmPayment() {
+            const paymentId = document.getElementById('confirmPaymentId').value;
+            
+            try {
+                // Implementar chamada à API
+                alert('Pagamento confirmado com sucesso!');
+                bootstrap.Modal.getInstance(document.getElementById('confirmPaymentModal')).hide();
+                loadPendingPayments();
+            } catch (error) {
+                alert('Erro ao confirmar pagamento: ' + error.message);
+            }
+        }
+
+        async function processCancelPayment() {
+            const paymentId = document.getElementById('cancelPaymentId').value;
+            const reason = document.getElementById('cancelReason').value;
+            const obs = document.getElementById('cancelObs').value;
+
+            if (!reason || !obs) {
+                alert('Preencha o motivo e as observações');
+                return;
+            }
+
+            try {
+                // Implementar chamada à API
+                alert('Pagamento cancelado com sucesso!');
+                bootstrap.Modal.getInstance(document.getElementById('cancelPaymentModal')).hide();
+                loadPendingPayments();
+            } catch (error) {
+                alert('Erro ao cancelar pagamento: ' + error.message);
+            }
+        }
+
+        function confirmSelectedPayments() {
+            const selected = Array.from(document.querySelectorAll('.payment-select:checked'));
+            if (selected.length === 0) {
+                alert('Selecione pelo menos um pagamento');
+                return;
+            }
+
+            if (confirm(`Confirmar ${selected.length} pagamento(s)?`)) {
+                // Implementar confirmação em lote
+                alert('Pagamentos confirmados!');
+                loadPendingPayments();
+            }
+        }
+
+        function cancelSelectedPayments() {
+            const selected = Array.from(document.querySelectorAll('.payment-select:checked'));
+            if (selected.length === 0) {
+                alert('Selecione pelo menos um pagamento');
+                return;
+            }
+
+            if (confirm(`Cancelar ${selected.length} pagamento(s)?`)) {
+                // Implementar cancelamento em lote
+                alert('Pagamentos cancelados!');
+                loadPendingPayments();
+            }
+        }
+
+        function searchPayments() {
+            // Implementar busca
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        function formatDateTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString('pt-BR');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function formatPaymentMethod(method) {
+            const methods = {
+                'PIX': 'PIX',
+                'BOLETO': 'Boleto'
+            };
+            return methods[method] || method;
+        }
+
+        function getMethodIcon(method) {
+            const icons = {
+                'PIX': 'bi-qr-code',
+                'BOLETO': 'bi-upc-scan'
+            };
+            return icons[method] || 'bi-wallet2';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'PENDING': '<span class="badge bg-warning">Pendente</span>',
+                'OVERDUE': '<span class="badge bg-danger">Vencido</span>'
+            };
+            return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+        }
+    </script>
+}

@@ -62,7 +62,7 @@
         }
 
         .sidebar-nav {
-            padding: 1rem 0 6rem 0;
+            padding: 1rem 0 8rem 0;
         }
 
         .nav-item {
@@ -295,6 +295,18 @@
                                         Movimentações
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Stock">
+                                        <i class="bi bi-box-seam"></i>
+                                        Dashboard Estoque
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Stock/LowStock">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        Estoque Baixo
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                     }
@@ -324,7 +336,41 @@
                                 Manipulações
                             </a>
                         </li>
-
+                        <!-- Menu Prescrições -->
+                        <li class="nav-item">
+                            <a class="nav-link has-submenu @(currentController == "PrescriptionsView" ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'prescricoesSubmenu')">
+                                <i class="bi bi-file-medical"></i>
+                                Prescrições
+                            </a>
+                            <ul class="nav flex-column nav-submenu @(currentController == "PrescriptionsView" ? "show" : "")" id="prescricoesSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/PrescriptionsView">
+                                        <i class="bi bi-list-ul"></i>
+                                        Lista
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/PrescriptionsView/Create">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Nova Prescrição
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/PrescriptionsView?status=PENDENTE">
+                                        <i class="bi bi-hourglass-split"></i>
+                                        Pendentes
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/PrescriptionsView?status=VALIDADA">
+                                        <i class="bi bi-check-circle"></i>
+                                        Validadas
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                         <!-- Menu Workflow de Produção -->
                         <li class="nav-item">
                             <a class="nav-link has-submenu @(currentController == "Workflow" || currentController == "Manipulacoes" ? "active open" : "")"
@@ -371,6 +417,7 @@
                         </li>
                     }
 
+
                     <li class="nav-item">
                         <a class="nav-link" href="#">
                             <i class="bi bi-people"></i>
@@ -395,6 +442,53 @@
                             </a>
                         </li>
                     }
+                    <!-- Menu Financeiro -->
+                    <li class="nav-item">
+                        <a class="nav-link has-submenu @(currentController == "PDV" || currentController == "PaymentManagement" ? "active open" : "")"
+                           href="#"
+                           onclick="toggleSubmenu(event, 'financeiroSubmenu')">
+                            <i class="bi bi-credit-card"></i>
+                            Financeiro
+                        </a>
+                        <ul class="nav flex-column nav-submenu @(currentController == "PDV" || currentController == "PaymentManagement" ? "show" : "")" id="financeiroSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PDV">
+                                    <i class="bi bi-shop"></i>
+                                    PDV
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PaymentManagement">
+                                    <i class="bi bi-graph-up"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PaymentManagement/Configuration">
+                                    <i class="bi bi-gear"></i>
+                                    Configurações
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PaymentManagement/DailyReport">
+                                    <i class="bi bi-file-earmark-bar-graph"></i>
+                                    Relatório Diário
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PaymentManagement/PendingPayments">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    Pendências
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/PaymentManagement/GatewaySettings">
+                                    <i class="bi bi-plugin"></i>
+                                    Gateways
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
 
                     @if (canManageEmployees)
                     {

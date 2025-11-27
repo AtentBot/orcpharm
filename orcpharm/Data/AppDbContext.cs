@@ -82,6 +82,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public ICollection<ManipulationStep>? Steps { get; set; }
     public ICollection<ManipulationPhoto>? Photos { get; set; }
     public DbSet<CompanySettings> CompanySettings { get; set; }
+    public DbSet<SalePayment> SalePayments => Set<SalePayment>();
+    public DbSet<PrescriptionFile> PrescriptionFiles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

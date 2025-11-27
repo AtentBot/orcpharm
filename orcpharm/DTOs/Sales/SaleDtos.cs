@@ -1,6 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DTOs;
+namespace DTOs.Sales;
+
+// ===================================================================
+// DTOs - CRIAÇÃO DE VENDAS
+// ===================================================================
 
 public class CreateSaleDto
 {
@@ -12,7 +16,7 @@ public class CreateSaleDto
     public DateTime SaleDate { get; set; } = DateTime.UtcNow;
 
     [Required]
-    [MaxLength(20)]
+    [MaxLength(50)]
     public string PaymentMethod { get; set; } = "DINHEIRO";
 
     [Required]
@@ -25,7 +29,7 @@ public class CreateSaleDto
     [Range(0, 999999)]
     public decimal DiscountAmount { get; set; } = 0;
 
-    [MaxLength(500)]
+    [MaxLength(1000)]
     public string? Observations { get; set; }
 }
 
@@ -37,12 +41,12 @@ public class SaleItemDto
     public Guid? ProductId { get; set; }
 
     [Required]
-    [MaxLength(200)]
+    [MaxLength(500)]
     public string Description { get; set; } = default!;
 
     [Required]
-    [Range(1, 9999)]
-    public int Quantity { get; set; }
+    [Range(0.01, 9999)]
+    public decimal Quantity { get; set; }
 
     [Required]
     [Range(0.01, 999999)]
@@ -50,6 +54,32 @@ public class SaleItemDto
 
     [Range(0, 100)]
     public decimal DiscountPercentage { get; set; } = 0;
+}
+
+// ===================================================================
+// DTOs - VENDA RÁPIDA (PDV)
+// ===================================================================
+
+public class QuickSaleDto
+{
+    public Guid? CustomerId { get; set; }
+
+    [Required]
+    public List<SaleItemDto> Items { get; set; } = new();
+
+    [Required]
+    [MaxLength(50)]
+    public string PaymentMethod { get; set; } = "DINHEIRO";
+
+    [Required]
+    [Range(0, 999999)]
+    public decimal PaidAmount { get; set; }
+
+    [Range(0, 100)]
+    public decimal DiscountPercentage { get; set; } = 0;
+
+    [MaxLength(1000)]
+    public string? Observations { get; set; }
 }
 
 // ===================================================================
@@ -85,23 +115,36 @@ public class SaleResponseDto
     public decimal DiscountPercentage { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal TotalAmount { get; set; }
-    public string PaymentMethod { get; set; } = default!;
-    public string PaymentStatus { get; set; } = default!;
-    public decimal PaidAmount { get; set; }
-    public decimal ChangeAmount { get; set; }
+
+    // Campos de pagamento (legado - compatibilidade)
+    public string? PaymentMethod { get; set; }
+    public string? PaymentStatus { get; set; }
+    public decimal? PaidAmount { get; set; }
+    public decimal? ChangeAmount { get; set; }
     public DateTime? PaymentDate { get; set; }
+
+    // Múltiplos pagamentos
+    public bool HasMultiplePayments { get; set; }
+
+    // Nota Fiscal
     public string? InvoiceNumber { get; set; }
     public string? InvoiceKey { get; set; }
     public string? InvoiceStatus { get; set; }
+
+    // Status
     public string Status { get; set; } = default!;
     public DateTime? CancelledAt { get; set; }
     public string? CancelledByEmployeeName { get; set; }
     public string? CancellationReason { get; set; }
     public string? Observations { get; set; }
+
+    // Auditoria
     public DateTime CreatedAt { get; set; }
     public string? CreatedByEmployeeName { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public string? UpdatedByEmployeeName { get; set; }
+
+    // Items
     public List<SaleItemResponseDto> Items { get; set; } = new();
 }
 
@@ -126,6 +169,35 @@ public class SaleItemResponseDto
 }
 
 // ===================================================================
+// DTOs - RECIBO
+// ===================================================================
+
+public class SaleReceiptDto
+{
+    public string Code { get; set; } = default!;
+    public DateTime SaleDate { get; set; }
+    public string? CustomerName { get; set; }
+    public List<ReceiptItemDto> Items { get; set; } = new();
+    public decimal Subtotal { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal TotalAmount { get; set; }
+    public string PaymentMethod { get; set; } = default!;
+    public decimal PaidAmount { get; set; }
+    public decimal ChangeAmount { get; set; }
+    public string EstablishmentName { get; set; } = default!;
+    public string EstablishmentAddress { get; set; } = default!;
+    public string EstablishmentCnpj { get; set; } = default!;
+}
+
+public class ReceiptItemDto
+{
+    public string Description { get; set; } = default!;
+    public decimal Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal TotalPrice { get; set; }
+}
+
+// ===================================================================
 // DTOs - CANCELAMENTO
 // ===================================================================
 
@@ -133,12 +205,29 @@ public class CancelSaleDto
 {
     [Required]
     [MinLength(10)]
+    [MaxLength(500)]
     public string Reason { get; set; } = default!;
 }
 
 // ===================================================================
 // DTOs - RELATÓRIOS
 // ===================================================================
+
+public class DailySalesDto
+{
+    public DateTime Date { get; set; }
+    public int TotalSales { get; set; }
+    public decimal TotalAmount { get; set; }
+    public decimal TotalCash { get; set; }
+    public decimal TotalCard { get; set; }
+    public decimal TotalPix { get; set; }
+    public decimal TotalCost { get; set; }
+    public decimal TotalProfit { get; set; }
+    public decimal AverageTicket { get; set; }
+    public Dictionary<string, int> SalesByPaymentMethod { get; set; } = new();
+    public Dictionary<string, decimal> AmountByPaymentMethod { get; set; } = new();
+    public List<SaleListDto> Sales { get; set; } = new();
+}
 
 public class DailySalesReportDto
 {
@@ -166,6 +255,7 @@ public class CreateQuotationDto
     [Range(0, 100)]
     public decimal DiscountPercentage { get; set; } = 0;
 
+    [MaxLength(1000)]
     public string? Observations { get; set; }
 }
 

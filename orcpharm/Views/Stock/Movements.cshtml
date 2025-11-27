@@ -1,0 +1,314 @@
+@{
+    ViewData["Title"] = "Movimentações de Estoque";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-arrow-left-right me-2"></i>Movimentações de Estoque</h2>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Matéria-Prima</label>
+                    <select class="form-select" id="filterRawMaterial">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" id="filterType">
+                        <option value="">Todos</option>
+                        <option value="ENTRADA">Entrada</option>
+                        <option value="SAIDA">Saída</option>
+                        <option value="AJUSTE">Ajuste</option>
+                        <option value="DEVOLUCAO">Devolução</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Início</label>
+                    <input type="date" class="form-control" id="filterStartDate">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" class="form-control" id="filterEndDate">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary me-2" onclick="loadMovements()">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Movimentações -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Histórico de Movimentações</h5>
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNewMovement">
+                <i class="bi bi-plus-circle"></i> Nova Movimentação
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="tableMovements">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th>Matéria-Prima</th>
+                            <th>Quantidade</th>
+                            <th>Lote</th>
+                            <th>Referência</th>
+                            <th>Motivo</th>
+                            <th>Operador</th>
+                        </tr>
+                    </thead>
+                    <tbody id="movementsBody">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="spinner-border spinner-border-sm"></div>
+                                Carregando...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nova Movimentação -->
+<div class="modal fade" id="modalNewMovement" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Movimentação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Matéria-Prima *</label>
+                    <select class="form-select" id="newRawMaterial" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Movimentação *</label>
+                    <select class="form-select" id="newType" required>
+                        <option value="ENTRADA">Entrada</option>
+                        <option value="SAIDA">Saída</option>
+                        <option value="AJUSTE">Ajuste</option>
+                        <option value="DEVOLUCAO">Devolução</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-md-8">
+                        <label class="form-label">Quantidade *</label>
+                        <input type="number" class="form-control" id="newQuantity" step="0.0001" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Unidade</label>
+                        <input type="text" class="form-control" id="newUnit" readonly>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Lote</label>
+                    <input type="text" class="form-control" id="newBatch">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Custo (R$)</label>
+                    <input type="number" class="form-control" id="newCost" step="0.01">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Motivo *</label>
+                    <textarea class="form-control" id="newReason" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveMovement()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let rawMaterials = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRawMaterials();
+        loadMovements();
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterEndDate').value = today;
+        
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+        document.getElementById('filterStartDate').value = startDate.toISOString().split('T')[0];
+    });
+
+    async function loadRawMaterials() {
+        try {
+            const response = await fetch('/api/RawMaterials', {
+                credentials: 'include'
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                rawMaterials = result.data;
+                
+                const selectFilter = document.getElementById('filterRawMaterial');
+                const selectNew = document.getElementById('newRawMaterial');
+                
+                rawMaterials.forEach(rm => {
+                    selectFilter.add(new Option(`${rm.code} - ${rm.name}`, rm.id));
+                    selectNew.add(new Option(`${rm.code} - ${rm.name}`, rm.id));
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar matérias-primas:', error);
+        }
+    }
+
+    async function loadMovements() {
+        const rawMaterialId = document.getElementById('filterRawMaterial').value;
+        const movementType = document.getElementById('filterType').value;
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+
+        let url = '/api/StockMovements/history?';
+        if (rawMaterialId) url += `rawMaterialId=${rawMaterialId}&`;
+        if (movementType) url += `movementType=${movementType}&`;
+        if (startDate) url += `startDate=${startDate}&`;
+        if (endDate) url += `endDate=${endDate}`;
+
+        try {
+            const response = await fetch(url, { credentials: 'include' });
+            const result = await response.json();
+
+            const tbody = document.getElementById('movementsBody');
+            tbody.innerHTML = '';
+
+            if (result.success && result.data.length > 0) {
+                result.data.forEach(m => {
+                    const row = `
+                        <tr>
+                            <td>${new Date(m.movementDate).toLocaleString('pt-BR')}</td>
+                            <td><span class="badge bg-${getTypeBadgeColor(m.movementType)}">${getTypeLabel(m.movementType)}</span></td>
+                            <td>${m.rawMaterialCode} - ${m.rawMaterialName}</td>
+                            <td>${m.quantity.toLocaleString('pt-BR')} ${m.unit}</td>
+                            <td>${m.batchNumber || '-'}</td>
+                            <td>${m.referenceType || '-'}</td>
+                            <td>${m.reason || '-'}</td>
+                            <td>${m.employeeName || '-'}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Nenhuma movimentação encontrada</td></tr>';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar movimentações:', error);
+            document.getElementById('movementsBody').innerHTML = 
+                '<tr><td colspan="8" class="text-center text-danger">Erro ao carregar dados</td></tr>';
+        }
+    }
+
+    function getTypeBadgeColor(type) {
+        const colors = {
+            'ENTRADA': 'success',
+            'SAIDA': 'danger',
+            'AJUSTE': 'warning',
+            'DEVOLUCAO': 'info'
+        };
+        return colors[type] || 'secondary';
+    }
+
+    function getTypeLabel(type) {
+        const labels = {
+            'ENTRADA': 'Entrada',
+            'SAIDA': 'Saída',
+            'AJUSTE': 'Ajuste',
+            'DEVOLUCAO': 'Devolução'
+        };
+        return labels[type] || type;
+    }
+
+    function clearFilters() {
+        document.getElementById('filterRawMaterial').value = '';
+        document.getElementById('filterType').value = '';
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterEndDate').value = today;
+        
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 30);
+        document.getElementById('filterStartDate').value = startDate.toISOString().split('T')[0];
+        
+        loadMovements();
+    }
+
+    document.getElementById('newRawMaterial').addEventListener('change', function() {
+        const rmId = this.value;
+        const rm = rawMaterials.find(r => r.id === rmId);
+        if (rm) {
+            document.getElementById('newUnit').value = rm.unit;
+        }
+    });
+
+    async function saveMovement() {
+        const data = {
+            rawMaterialId: document.getElementById('newRawMaterial').value,
+            movementType: document.getElementById('newType').value,
+            quantity: parseFloat(document.getElementById('newQuantity').value),
+            unit: document.getElementById('newUnit').value,
+            batchNumber: document.getElementById('newBatch').value || null,
+            cost: document.getElementById('newCost').value ? parseFloat(document.getElementById('newCost').value) : null,
+            reason: document.getElementById('newReason').value
+        };
+
+        if (!data.rawMaterialId || !data.quantity || !data.reason) {
+            alert('Preencha todos os campos obrigatórios');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/StockMovements/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                bootstrap.Modal.getInstance(document.getElementById('modalNewMovement')).hide();
+                document.getElementById('newRawMaterial').value = '';
+                document.getElementById('newQuantity').value = '';
+                document.getElementById('newBatch').value = '';
+                document.getElementById('newCost').value = '';
+                document.getElementById('newReason').value = '';
+                loadMovements();
+            } else {
+                alert('Erro: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao salvar movimentação:', error);
+            alert('Erro ao salvar movimentação');
+        }
+    }
+</script>
+}

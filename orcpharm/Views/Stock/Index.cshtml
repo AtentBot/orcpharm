@@ -1,0 +1,156 @@
+@{
+    ViewData["Title"] = "Gestão de Estoque";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-box-seam me-2"></i>Gestão de Estoque</h2>
+        </div>
+    </div>
+
+    <!-- Cards de Acesso Rápido -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <a href="/Stock/Movements" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
+                            <i class="bi bi-arrow-left-right text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h5 class="card-title">Movimentações</h5>
+                        <p class="card-text text-muted small">Histórico e registro de entradas/saídas</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <a href="/Stock/LowStock" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-warning bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
+                            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h5 class="card-title">Estoque Baixo</h5>
+                        <p class="card-text text-muted small">Alertas e itens para reposição</p>
+                        <span class="badge bg-warning" id="badgeLowStock">Carregando...</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <a href="/RawMaterials" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-success bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
+                            <i class="bi bi-boxes text-success" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h5 class="card-title">Matérias-Primas</h5>
+                        <p class="card-text text-muted small">Cadastro e consulta</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <a href="/PurchaseOrders" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-info bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
+                            <i class="bi bi-cart3 text-info" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h5 class="card-title">Pedidos de Compra</h5>
+                        <p class="card-text text-muted small">Solicitações e aprovações</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Visão Geral do Estoque</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3">
+                                <h3 class="text-success" id="totalItems">-</h3>
+                                <p class="text-muted mb-0">Total de Itens Ativos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 border-start">
+                            <div class="text-center p-3">
+                                <h3 class="text-warning" id="lowStockItems">-</h3>
+                                <p class="text-muted mb-0">Itens com Estoque Baixo</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 border-start">
+                            <div class="text-center p-3">
+                                <h3 class="text-danger" id="outOfStockItems">-</h3>
+                                <p class="text-muted mb-0">Itens Sem Estoque</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    }
+</style>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadStats();
+    });
+
+    async function loadStats() {
+        try {
+            // Carregar alertas de estoque baixo
+            const response = await fetch('/api/PDV/low-stock-alerts', {
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                const lowStock = result.data.filter(i => i.currentQuantity > 0).length;
+                const outOfStock = result.data.filter(i => i.currentQuantity <= 0).length;
+                
+                document.getElementById('badgeLowStock').textContent = `${result.data.length} alertas`;
+                document.getElementById('lowStockItems').textContent = lowStock;
+                document.getElementById('outOfStockItems').textContent = outOfStock;
+            }
+
+            // Carregar total de matérias-primas
+            const rmResponse = await fetch('/api/RawMaterials', {
+                credentials: 'include'
+            });
+            const rmResult = await rmResponse.json();
+
+            if (rmResult.success) {
+                document.getElementById('totalItems').textContent = rmResult.data.length;
+            }
+
+        } catch (error) {
+            console.error('Erro ao carregar estatísticas:', error);
+        }
+    }
+</script>
+}
