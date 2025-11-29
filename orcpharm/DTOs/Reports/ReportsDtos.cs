@@ -91,9 +91,9 @@ public class YieldReportDto
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int TotalProductions { get; set; }
-    public decimal AverageYield { get; set; }
-    public decimal MinYield { get; set; }
-    public decimal MaxYield { get; set; }
+    public decimal? AverageYield { get; set; }
+    public decimal? MinYield { get; set; }
+    public decimal? MaxYield { get; set; }
     public int WithinAcceptableRange { get; set; }
     public int BelowAcceptable { get; set; }
     public int AboveAcceptable { get; set; }
@@ -110,9 +110,9 @@ public class YieldByFormulaDto
     public string FormulaCode { get; set; } = default!;
     public string FormulaName { get; set; } = default!;
     public int ProductionCount { get; set; }
-    public decimal AverageYield { get; set; }
-    public decimal MinYield { get; set; }
-    public decimal MaxYield { get; set; }
+    public decimal? AverageYield { get; set; }
+    public decimal? MinYield { get; set; }
+    public decimal? MaxYield { get; set; }
     public decimal StandardDeviation { get; set; }
 }
 
@@ -121,8 +121,8 @@ public class YieldByEmployeeDto
     public Guid EmployeeId { get; set; }
     public string EmployeeName { get; set; } = default!;
     public int ProductionCount { get; set; }
-    public decimal AverageYield { get; set; }
-    public decimal AverageTimeMinutes { get; set; }
+    public decimal? AverageYield { get; set; }
+    public decimal? AverageTimeMinutes { get; set; }
 }
 
 public class YieldDetailDto
@@ -130,9 +130,9 @@ public class YieldDetailDto
     public Guid OrderId { get; set; }
     public string OrderNumber { get; set; } = default!;
     public string? FormulaName { get; set; }
-    public decimal ExpectedQuantity { get; set; }
-    public decimal ActualQuantity { get; set; }
-    public decimal YieldPercentage { get; set; }
+    public decimal? ExpectedQuantity { get; set; }
+    public decimal? ActualQuantity { get; set; }
+    public decimal? YieldPercentage { get; set; }
     public string? DeviationReason { get; set; }
     public string? ProducedBy { get; set; }
     public DateTime ProductionDate { get; set; }
@@ -224,7 +224,7 @@ public class CostReportDto
     public decimal TotalCost { get; set; }
     public decimal TotalLossValue { get; set; }
     public decimal AverageCostPerOrder { get; set; }
-    public decimal AverageUnitCost { get; set; }
+    public decimal? AverageUnitCost { get; set; }
     public List<CostByFormulaDto> ByFormula { get; set; } = new();
     public List<CostByMonthDto> ByMonth { get; set; } = new();
     public List<CostByComponentDto> TopComponents { get; set; } = new();
@@ -237,9 +237,9 @@ public class CostByFormulaDto
     public string FormulaCode { get; set; } = default!;
     public string FormulaName { get; set; } = default!;
     public int ProductionCount { get; set; }
-    public decimal TotalQuantity { get; set; }
+    public decimal? TotalQuantity { get; set; }
     public decimal TotalCost { get; set; }
-    public decimal AverageUnitCost { get; set; }
+    public decimal? AverageUnitCost { get; set; }
     public decimal PercentageOfTotal { get; set; }
 }
 
@@ -271,13 +271,13 @@ public class CostDetailDto
     public Guid OrderId { get; set; }
     public string OrderNumber { get; set; } = default!;
     public string? FormulaName { get; set; }
-    public decimal Quantity { get; set; }
+    public decimal? Quantity { get; set; }
     public string Unit { get; set; } = default!;
     public decimal MaterialCost { get; set; }
     public decimal LaborCost { get; set; }
     public decimal OverheadCost { get; set; }
     public decimal TotalCost { get; set; }
-    public decimal UnitCost { get; set; }
+    public decimal? UnitCost { get; set; }
     public DateTime ProductionDate { get; set; }
 }
 
@@ -306,7 +306,7 @@ public class ProductivityByEmployeeDto
     public int OrdersCompleted { get; set; }
     public decimal TotalQuantityProduced { get; set; }
     public decimal AverageProductionTimeMinutes { get; set; }
-    public decimal AverageYield { get; set; }
+    public decimal? AverageYield { get; set; }
     public int LossCount { get; set; }
     public decimal Efficiency { get; set; } // % de ordens no prazo
 }
@@ -377,7 +377,7 @@ public class TopEmployeeDto
 {
     public string EmployeeName { get; set; } = default!;
     public int OrdersCompleted { get; set; }
-    public decimal AverageYield { get; set; }
+    public decimal? AverageYield { get; set; }
 }
 
 public class TopCustomerDto

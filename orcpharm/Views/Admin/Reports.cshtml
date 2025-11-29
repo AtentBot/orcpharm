@@ -1,0 +1,6 @@
+@{ViewData["Title"] = "Relatórios"; Layout = "_LayoutAdmin";}
+<div class="row g-4">
+<div class="col-md-6"><div class="chart-container"><canvas id="growthChart"></canvas></div></div>
+<div class="col-md-6"><div class="chart-container"><canvas id="churnChart"></canvas></div></div>
+</div>
+@section Scripts {<script src="~/js/admin-charts.js"></script>}

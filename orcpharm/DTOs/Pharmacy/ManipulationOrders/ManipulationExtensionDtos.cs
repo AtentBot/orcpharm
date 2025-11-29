@@ -142,17 +142,17 @@ public class ProductionRecordDto
     public Guid Id { get; set; }
     public Guid ManipulationOrderId { get; set; }
     public string OrderNumber { get; set; } = default!;
-    public decimal ExpectedQuantity { get; set; }
-    public decimal ActualQuantity { get; set; }
+    public decimal? ExpectedQuantity { get; set; }
+    public decimal? ActualQuantity { get; set; }
     public string Unit { get; set; } = default!;
-    public decimal YieldPercentage { get; set; }
+    public decimal? YieldPercentage { get; set; }
     public bool IsYieldAcceptable { get; set; }
     public string? YieldDeviationReason { get; set; }
     public string BatchNumber { get; set; } = default!;
-    public DateTime ExpiryDate { get; set; }
-    public DateTime ProductionStart { get; set; }
-    public DateTime ProductionEnd { get; set; }
-    public int TotalProductionTimeMinutes { get; set; }
+    public DateTime? ExpiryDate { get; set; }
+    public DateTime? ProductionStart { get; set; }
+    public DateTime? ProductionEnd { get; set; }
+    public int? TotalProductionTimeMinutes { get; set; }
     public string? ProducedByEmployeeName { get; set; }
     public string? VerifiedByEmployeeName { get; set; }
     public string? ApprovedByPharmacistName { get; set; }

@@ -109,4 +109,20 @@ public class Establishment
     public ICollection<Models.Pharmacy.Supplier>? Suppliers { get; set; }
     = new List<Models.Pharmacy.Supplier>();
 
+    [Column("Subscription_status")]
+    [StringLength(50)]
+    public string? SubscriptionStatus { get; set; }
+
+    [Column("TrialEndsAt")]
+    public DateTime? TrialEndsAt { get; set; }
+
+    [Column("MaxEmployeesLimit")]
+    public int? MaxEmployeesLimit { get; set; }
+
+    [Column("MaxOrdersLimit")]
+    public int? MaxOrdersLimit { get; set; }
+
+    [Column("FeaturesEnabled", TypeName = "jsonb")]
+    public string? FeaturesEnabled { get; set; }
+
 }

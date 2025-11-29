@@ -243,7 +243,7 @@ public class ReportsController : ControllerBase
                     AverageYield = g.Average(r => r.YieldPercentage),
                     MinYield = g.Min(r => r.YieldPercentage),
                     MaxYield = g.Max(r => r.YieldPercentage),
-                    StandardDeviation = CalculateStdDev(g.Select(r => r.YieldPercentage))
+                    StandardDeviation = CalculateStdDev(g.Where(r => r.YieldPercentage.HasValue).Select(r => r.YieldPercentage!.Value))
                 })
                 .OrderByDescending(x => x.ProductionCount)
                 .ToList();

@@ -1,0 +1,14 @@
+@{ViewData["Title"] = "Estabelecimentos"; Layout = "_LayoutAdmin";}
+<div class="table-container">
+<div class="table-header">
+<h3>Estabelecimentos</h3>
+<div class="table-filters">
+<select class="form-select" id="filterStatus"><option value="">Todos Status</option><option value="ACTIVE">Ativos</option><option value="INACTIVE">Inativos</option></select>
+<input type="text" class="form-control" id="searchInput" placeholder="Buscar..."/>
+</div>
+</div>
+<table class="admin-table"><thead><tr><th>Nome</th><th>CNPJ</th><th>Status</th><th>Assinatura</th><th>Ações</th></tr></thead>
+<tbody id="establishmentsTableBody"></tbody></table>
+<div class="table-pagination" id="pagination"></div>
+</div>
+@section Scripts {<script src="~/js/admin-establishments.js"></script>}

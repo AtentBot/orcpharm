@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -38,6 +38,7 @@
     <Folder Include="Views\Employees\" />
     <Folder Include="Views\Manipulacoes\" />
     <Folder Include="Views\Formulas\" />
+    <Folder Include="Views\Public\" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,17 @@
 ﻿<Project>
   <ItemGroup>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/admin.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-B6Gb941gMflkRAl2g7ga6LpHqBiGC9mBWiS5\u002BtpGNP8="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"12463"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022B6Gb941gMflkRAl2g7ga6LpHqBiGC9mBWiS5\u002BtpGNP8=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:32 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/admin.n4u2sw8k67.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\admin.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"n4u2sw8k67"},{"Name":"integrity","Value":"sha256-B6Gb941gMflkRAl2g7ga6LpHqBiGC9mBWiS5\u002BtpGNP8="},{"Name":"label","Value":"_content/orcpharm/css/admin.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"12463"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022B6Gb941gMflkRAl2g7ga6LpHqBiGC9mBWiS5\u002BtpGNP8=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:32 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/css/employees-shared.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\employees-shared.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
@@ -11,6 +23,42 @@
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"mt0ck4zlm8"},{"Name":"integrity","Value":"sha256-KiMENTZ/Fk5dItRRnvZ1XtKmaQWq3hI3P/CRk5KjbwI="},{"Name":"label","Value":"_content/orcpharm/css/employees-shared.css"}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"13966"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022KiMENTZ/Fk5dItRRnvZ1XtKmaQWq3hI3P/CRk5KjbwI=\u0022"},{"Name":"Last-Modified","Value":"Sun, 23 Nov 2025 19:39:43 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/pricing.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\pricing.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-I2UDjRibFqz1EFnkW00hS84MbZo5UA0FyAR0p/36Lzk="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"12705"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022I2UDjRibFqz1EFnkW00hS84MbZo5UA0FyAR0p/36Lzk=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:33 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/pricing.xn0m66prao.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\pricing.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xn0m66prao"},{"Name":"integrity","Value":"sha256-I2UDjRibFqz1EFnkW00hS84MbZo5UA0FyAR0p/36Lzk="},{"Name":"label","Value":"_content/orcpharm/css/pricing.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"12705"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022I2UDjRibFqz1EFnkW00hS84MbZo5UA0FyAR0p/36Lzk=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:33 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/public.aj2rayqwjo.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\public.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"aj2rayqwjo"},{"Name":"integrity","Value":"sha256-lvf/4ZRlsTASGGCS9vy\u002BwqLHnR1vHYOnHPPGc9VqpUo="},{"Name":"label","Value":"_content/orcpharm/css/public.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"11588"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022lvf/4ZRlsTASGGCS9vy\u002BwqLHnR1vHYOnHPPGc9VqpUo=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:23 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/public.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\public.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-lvf/4ZRlsTASGGCS9vy\u002BwqLHnR1vHYOnHPPGc9VqpUo="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"11588"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022lvf/4ZRlsTASGGCS9vy\u002BwqLHnR1vHYOnHPPGc9VqpUo=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:23 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/signup.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\signup.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-6fZ3BFJOK3fuPteKo1Rx3u60yN5i22uOTxEXk35GQ3U="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"10539"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00226fZ3BFJOK3fuPteKo1Rx3u60yN5i22uOTxEXk35GQ3U=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:24 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/signup.r7oevu2r1d.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\signup.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"r7oevu2r1d"},{"Name":"integrity","Value":"sha256-6fZ3BFJOK3fuPteKo1Rx3u60yN5i22uOTxEXk35GQ3U="},{"Name":"label","Value":"_content/orcpharm/css/signup.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"10539"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00226fZ3BFJOK3fuPteKo1Rx3u60yN5i22uOTxEXk35GQ3U=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:24 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/css/site.b9sayid5wm.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
@@ -24,6 +72,18 @@
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-j6fhJSuuyLpOSLuPJU0TsDV0iNjor5S3rDnvxJrt4bg="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"667"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022j6fhJSuuyLpOSLuPJU0TsDV0iNjor5S3rDnvxJrt4bg=\u0022"},{"Name":"Last-Modified","Value":"Fri, 07 Nov 2025 19:00:01 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/SubscriptionPlansController.cs">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\SubscriptionPlansController.cs'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-bx1sqmypQnLCV46bz\u002Bmudpm8bZto9H1Y6RcndsQG9MM="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"2304"},{"Name":"Content-Type","Value":"application/octet-stream"},{"Name":"ETag","Value":"\u0022bx1sqmypQnLCV46bz\u002Bmudpm8bZto9H1Y6RcndsQG9MM=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 10:44:16 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/css/SubscriptionPlansController.x8pjolh549.cs">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\SubscriptionPlansController.cs'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"x8pjolh549"},{"Name":"integrity","Value":"sha256-bx1sqmypQnLCV46bz\u002Bmudpm8bZto9H1Y6RcndsQG9MM="},{"Name":"label","Value":"_content/orcpharm/css/SubscriptionPlansController.cs"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"2304"},{"Name":"Content-Type","Value":"application/octet-stream"},{"Name":"ETag","Value":"\u0022bx1sqmypQnLCV46bz\u002Bmudpm8bZto9H1Y6RcndsQG9MM=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 10:44:16 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/favicon.61n19gt1b8.ico">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\favicon.ico'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
@@ -35,6 +95,42 @@
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-Jtxf9L\u002B5ITKRc1gIRl4VbUpGkRNfOBXjYTdhJD4facM="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=3600, must-revalidate"},{"Name":"Content-Length","Value":"5430"},{"Name":"Content-Type","Value":"image/x-icon"},{"Name":"ETag","Value":"\u0022Jtxf9L\u002B5ITKRc1gIRl4VbUpGkRNfOBXjYTdhJD4facM=\u0022"},{"Name":"Last-Modified","Value":"Fri, 07 Nov 2025 19:00:01 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/admin-charts.9j0vet4k8o.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-charts.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"9j0vet4k8o"},{"Name":"integrity","Value":"sha256-i0mdJTbI\u002B4L9QZ5229lYk80xJI5934Alb2gHGxUVCKM="},{"Name":"label","Value":"_content/orcpharm/js/admin-charts.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"19204"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022i0mdJTbI\u002B4L9QZ5229lYk80xJI5934Alb2gHGxUVCKM=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:21 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/admin-charts.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-charts.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-i0mdJTbI\u002B4L9QZ5229lYk80xJI5934Alb2gHGxUVCKM="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"19204"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022i0mdJTbI\u002B4L9QZ5229lYk80xJI5934Alb2gHGxUVCKM=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:21 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/admin-dashboard.h4uc9seby0.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-dashboard.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"h4uc9seby0"},{"Name":"integrity","Value":"sha256-gVxb6a7vS\u002BReNcB9Mcm64q4nHIb0JBgSyeUab\u002BOUiSs="},{"Name":"label","Value":"_content/orcpharm/js/admin-dashboard.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"15211"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022gVxb6a7vS\u002BReNcB9Mcm64q4nHIb0JBgSyeUab\u002BOUiSs=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:18 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/admin-dashboard.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-dashboard.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-gVxb6a7vS\u002BReNcB9Mcm64q4nHIb0JBgSyeUab\u002BOUiSs="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"15211"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022gVxb6a7vS\u002BReNcB9Mcm64q4nHIb0JBgSyeUab\u002BOUiSs=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:18 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/admin-establishments.54qophht4b.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-establishments.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"54qophht4b"},{"Name":"integrity","Value":"sha256-y3grNsukLknvpBdYt5RMa2pcGFsYQZdqT0zG7Ae9y4c="},{"Name":"label","Value":"_content/orcpharm/js/admin-establishments.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"17581"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022y3grNsukLknvpBdYt5RMa2pcGFsYQZdqT0zG7Ae9y4c=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:20 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/admin-establishments.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\admin-establishments.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-y3grNsukLknvpBdYt5RMa2pcGFsYQZdqT0zG7Ae9y4c="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"17581"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022y3grNsukLknvpBdYt5RMa2pcGFsYQZdqT0zG7Ae9y4c=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:20 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/js/employees-auth-adapter.hn87q3nes3.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\employees-auth-adapter.js'))</AssetFile>
@@ -120,6 +216,18 @@
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-tA7U6Cjh2T04ZRLNEyi1a8nPA\u002BORlw\u002BPomxhxIT3knI="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"18248"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022tA7U6Cjh2T04ZRLNEyi1a8nPA\u002BORlw\u002BPomxhxIT3knI=\u0022"},{"Name":"Last-Modified","Value":"Thu, 27 Nov 2025 02:48:56 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/public-homepage.fcwsfty7vy.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\public-homepage.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"fcwsfty7vy"},{"Name":"integrity","Value":"sha256-QYrr8zvHsWD0VUGVQO\u002BGnBeSba\u002BjG0T5vRX1SvELDJ0="},{"Name":"label","Value":"_content/orcpharm/js/public-homepage.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"8764"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022QYrr8zvHsWD0VUGVQO\u002BGnBeSba\u002BjG0T5vRX1SvELDJ0=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:15 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/public-homepage.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\public-homepage.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-QYrr8zvHsWD0VUGVQO\u002BGnBeSba\u002BjG0T5vRX1SvELDJ0="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"8764"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022QYrr8zvHsWD0VUGVQO\u002BGnBeSba\u002BjG0T5vRX1SvELDJ0=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:15 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/js/purchase-orders-create.3w64oua0jt.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\purchase-orders-create.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
@@ -180,6 +288,18 @@
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xnpcd841rv"},{"Name":"integrity","Value":"sha256-EybzSbkNooLgVXUZbqDApNLVYrCDXXehK8Vnj9av5wc="},{"Name":"label","Value":"_content/orcpharm/js/purchase-orders.js"}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"6075"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022EybzSbkNooLgVXUZbqDApNLVYrCDXXehK8Vnj9av5wc=\u0022"},{"Name":"Last-Modified","Value":"Tue, 25 Nov 2025 14:44:26 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/signup.5zaa25r3iy.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\signup.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"5zaa25r3iy"},{"Name":"integrity","Value":"sha256-ETx7ZW/7N5gF/LipJHL8/liXZEcWovGDcH\u002BYe5Q1pr8="},{"Name":"label","Value":"_content/orcpharm/js/signup.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"18639"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022ETx7ZW/7N5gF/LipJHL8/liXZEcWovGDcH\u002BYe5Q1pr8=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:15 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/signup.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\signup.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-ETx7ZW/7N5gF/LipJHL8/liXZEcWovGDcH\u002BYe5Q1pr8="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"18639"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022ETx7ZW/7N5gF/LipJHL8/liXZEcWovGDcH\u002BYe5Q1pr8=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:15 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/js/site.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
@@ -191,6 +311,18 @@
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xtxxf3hu2r"},{"Name":"integrity","Value":"sha256-hRQyftXiu1lLX2P9Ly9xa4gHJgLeR1uGN5qegUobtGo="},{"Name":"label","Value":"_content/orcpharm/js/site.js"}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"231"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022hRQyftXiu1lLX2P9Ly9xa4gHJgLeR1uGN5qegUobtGo=\u0022"},{"Name":"Last-Modified","Value":"Fri, 07 Nov 2025 19:00:01 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/stripe-checkout.776g90b3cp.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\stripe-checkout.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"776g90b3cp"},{"Name":"integrity","Value":"sha256-nWOt5MPSxbDdwXz\u002Bd63Jdo9b6QUkHTX1F1jrMZbqc4Q="},{"Name":"label","Value":"_content/orcpharm/js/stripe-checkout.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"14854"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022nWOt5MPSxbDdwXz\u002Bd63Jdo9b6QUkHTX1F1jrMZbqc4Q=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:16 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/stripe-checkout.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\stripe-checkout.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-nWOt5MPSxbDdwXz\u002Bd63Jdo9b6QUkHTX1F1jrMZbqc4Q="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"14854"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022nWOt5MPSxbDdwXz\u002Bd63Jdo9b6QUkHTX1F1jrMZbqc4Q=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 12:41:16 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/lib/bootstrap/dist/css/bootstrap-grid.bqjiyaj88i.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\lib\bootstrap\dist\css\bootstrap-grid.css'))</AssetFile>
@@ -916,13 +1048,13 @@
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\orcpharm.kefrm7xlu8.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Thu, 27 Nov 2025 00:11:57 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 18:20:36 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/orcpharm.kefrm7xlu8.bundle.scp.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\orcpharm.kefrm7xlu8.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"kefrm7xlu8"},{"Name":"integrity","Value":"sha256-vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY="},{"Name":"label","Value":"_content/orcpharm/orcpharm.bundle.scp.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Thu, 27 Nov 2025 00:11:57 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 18:20:36 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/page/prescription-ocr.9t8vzp6elu.html">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\page\prescription-ocr.html'))</AssetFile>

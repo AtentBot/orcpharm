@@ -15,6 +15,9 @@ namespace Models
         [Required]
         public Guid EstablishmentId { get; set; }
 
+        [ForeignKey("EstablishmentId")]
+        public Establishment? Establishment { get; set; }
+
         [Column("whats_app")]
         [MaxLength(30)]
         [Required]

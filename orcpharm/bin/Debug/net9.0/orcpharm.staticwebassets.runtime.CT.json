@@ -8,11 +8,43 @@
     "Children": {
       "css": {
         "Children": {
+          "admin.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/admin.css"
+            },
+            "Patterns": null
+          },
           "employees-shared.css": {
             "Children": null,
             "Asset": {
               "ContentRootIndex": 0,
               "SubPath": "css/employees-shared.css"
+            },
+            "Patterns": null
+          },
+          "pricing.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/pricing.css"
+            },
+            "Patterns": null
+          },
+          "public.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/public.css"
+            },
+            "Patterns": null
+          },
+          "signup.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/signup.css"
             },
             "Patterns": null
           },
@@ -24,11 +56,51 @@
             },
             "Patterns": null
           },
+          "SubscriptionPlansController.cs": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/SubscriptionPlansController.cs"
+            },
+            "Patterns": null
+          },
+          "admin.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "kuutxiijqy-n4u2sw8k67.gz"
+            },
+            "Patterns": null
+          },
           "employees-shared.css.gz": {
             "Children": null,
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "ofpng2l96d-mt0ck4zlm8.gz"
+            },
+            "Patterns": null
+          },
+          "pricing.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "o59daxqbiy-xn0m66prao.gz"
+            },
+            "Patterns": null
+          },
+          "public.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "qy06au8hc4-aj2rayqwjo.gz"
+            },
+            "Patterns": null
+          },
+          "signup.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "j1qwy77mq3-r7oevu2r1d.gz"
             },
             "Patterns": null
           },
@@ -54,6 +126,30 @@
       },
       "js": {
         "Children": {
+          "admin-charts.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/admin-charts.js"
+            },
+            "Patterns": null
+          },
+          "admin-dashboard.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/admin-dashboard.js"
+            },
+            "Patterns": null
+          },
+          "admin-establishments.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/admin-establishments.js"
+            },
+            "Patterns": null
+          },
           "employees-auth-adapter.js": {
             "Children": null,
             "Asset": {
@@ -110,6 +206,14 @@
             },
             "Patterns": null
           },
+          "public-homepage.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/public-homepage.js"
+            },
+            "Patterns": null
+          },
           "purchase-orders-create.js": {
             "Children": null,
             "Asset": {
@@ -150,11 +254,51 @@
             },
             "Patterns": null
           },
+          "signup.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/signup.js"
+            },
+            "Patterns": null
+          },
           "site.js": {
             "Children": null,
             "Asset": {
               "ContentRootIndex": 0,
               "SubPath": "js/site.js"
+            },
+            "Patterns": null
+          },
+          "stripe-checkout.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/stripe-checkout.js"
+            },
+            "Patterns": null
+          },
+          "admin-charts.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "7ai0ymz9gt-9j0vet4k8o.gz"
+            },
+            "Patterns": null
+          },
+          "admin-dashboard.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "59eltcg49n-h4uc9seby0.gz"
+            },
+            "Patterns": null
+          },
+          "admin-establishments.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "o3lmohkt09-54qophht4b.gz"
             },
             "Patterns": null
           },
@@ -214,6 +358,14 @@
             },
             "Patterns": null
           },
+          "public-homepage.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "1kzblzrife-fcwsfty7vy.gz"
+            },
+            "Patterns": null
+          },
           "purchase-orders-create.js.gz": {
             "Children": null,
             "Asset": {
@@ -254,11 +406,27 @@
             },
             "Patterns": null
           },
+          "signup.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "jlt2ittcay-5zaa25r3iy.gz"
+            },
+            "Patterns": null
+          },
           "site.js.gz": {
             "Children": null,
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "zayd9t6ioj-xtxxf3hu2r.gz"
+            },
+            "Patterns": null
+          },
+          "stripe-checkout.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "c8m92ithj9-776g90b3cp.gz"
             },
             "Patterns": null
           }

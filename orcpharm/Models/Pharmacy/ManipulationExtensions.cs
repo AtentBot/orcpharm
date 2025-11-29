@@ -184,60 +184,142 @@ public class ProductionRecord
 
     [Column("manipulation_order_id")]
     public Guid ManipulationOrderId { get; set; }
-    public ManipulationOrder? ManipulationOrder { get; set; }
-
-    [Column("expected_quantity")]
-    public decimal ExpectedQuantity { get; set; }
-
-    [Column("actual_quantity")]
-    public decimal ActualQuantity { get; set; }
-
-    [Column("unit")]
-    [MaxLength(20)]
-    public string Unit { get; set; } = default!;
-
-    [Column("yield_percentage")]
-    public decimal YieldPercentage { get; set; }
-
-    [Column("is_yield_acceptable")]
-    public bool IsYieldAcceptable { get; set; }
-
-    [Column("yield_deviation_reason")]
-    [MaxLength(500)]
-    public string? YieldDeviationReason { get; set; }
-
-    [Column("batch_number")]
-    [MaxLength(50)]
-    public string BatchNumber { get; set; } = default!;
-
-    [Column("expiry_date")]
-    public DateTime ExpiryDate { get; set; }
-
-    [Column("production_start")]
-    public DateTime ProductionStart { get; set; }
-
-    [Column("production_end")]
-    public DateTime ProductionEnd { get; set; }
-
-    [Column("total_production_time_minutes")]
-    public int TotalProductionTimeMinutes { get; set; }
 
     [Column("produced_by_employee_id")]
     public Guid ProducedByEmployeeId { get; set; }
-    public Employee? ProducedByEmployee { get; set; }
 
     [Column("verified_by_employee_id")]
     public Guid? VerifiedByEmployeeId { get; set; }
-    public Employee? VerifiedByEmployee { get; set; }
 
     [Column("approved_by_pharmacist_id")]
     public Guid? ApprovedByPharmacistId { get; set; }
-    public Employee? ApprovedByPharmacist { get; set; }
 
-    [Column("quality_notes")]
-    [MaxLength(1000)]
-    public string? QualityNotes { get; set; }
+    // Dados da Produção
+    [Column("batch_number")]
+    [StringLength(50)]
+    public string BatchNumber { get; set; } = string.Empty;
 
+    [Column("production_date")]
+    public DateTime ProductionDate { get; set; }
+
+    [Column("expiration_date")]
+    public DateTime ExpirationDate { get; set; }
+
+    [Column("quantity_produced")]
+    public decimal QuantityProduced { get; set; }
+
+    [Column("unit")]
+    [StringLength(20)]
+    public string Unit { get; set; } = string.Empty;
+
+    // Condições Ambientais
+    [Column("temperature")]
+    public decimal? Temperature { get; set; }
+
+    [Column("humidity")]
+    public decimal? Humidity { get; set; }
+
+    [Column("environmental_conditions")]
+    [StringLength(500)]
+    public string? EnvironmentalConditions { get; set; }
+
+    // Equipamentos Utilizados
+    [Column("equipment_used")]
+    [StringLength(1000)]
+    public string? EquipmentUsed { get; set; }
+
+    // Observações
+    [Column("observations")]
+    [StringLength(2000)]
+    public string? Observations { get; set; }
+
+    // Controle de Qualidade
+    [Column("quality_check_passed")]
+    public bool QualityCheckPassed { get; set; }
+
+    [Column("quality_check_notes")]
+    [StringLength(1000)]
+    public string? QualityCheckNotes { get; set; }
+
+    // Status
+    [Column("status")]
+    [StringLength(50)]
+    public string Status { get; set; } = "PENDING"; // PENDING, APPROVED, REJECTED
+
+    [Column("approved_at")]
+    public DateTime? ApprovedAt { get; set; }
+
+    // Auditoria
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
+
+    [Column("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+
+    // ==================== NAVIGATION PROPERTIES ====================
+
+    /// <summary>
+    /// Ordem de manipulação relacionada
+    /// </summary>
+    [ForeignKey("ManipulationOrderId")]
+    public virtual ManipulationOrder? ManipulationOrder { get; set; }
+
+    /// <summary>
+    /// Funcionário que registrou/produziu
+    /// </summary>
+    [ForeignKey("ProducedByEmployeeId")]
+    public virtual Employee? RecordedByEmployee { get; set; }
+
+    /// <summary>
+    /// Funcionário que produziu (mesmo que RecordedByEmployee)
+    /// </summary>
+    [ForeignKey("ProducedByEmployeeId")]
+    public virtual Employee? ProducedByEmployee { get; set; }
+
+    /// <summary>
+    /// Funcionário que verificou
+    /// </summary>
+    [ForeignKey("VerifiedByEmployeeId")]
+    public virtual Employee? VerifiedByEmployee { get; set; }
+
+    /// <summary>
+    /// Farmacêutico que aprovou
+    /// </summary>
+    [ForeignKey("ApprovedByPharmacistId")]
+    public virtual Employee? ApprovedByPharmacist { get; set; }
+
+    // ==================== YIELD/RENDIMENTO ====================
+    [Column("expected_quantity")]
+    public decimal? ExpectedQuantity { get; set; }
+
+    [Column("actual_quantity")]
+    public decimal? ActualQuantity { get; set; }
+
+    [Column("yield_percentage")]
+    public decimal? YieldPercentage { get; set; }
+
+    [Column("is_yield_acceptable")]
+    public bool IsYieldAcceptable { get; set; } = true;
+
+    [Column("yield_deviation_reason")]
+    [StringLength(500)]
+    public string? YieldDeviationReason { get; set; }
+
+    // ==================== DATAS DE PRODUÇÃO ====================
+    [Column("expiry_date")]
+    public DateTime? ExpiryDate { get; set; }
+
+    [Column("production_start")]
+    public DateTime? ProductionStart { get; set; }
+
+    [Column("production_end")]
+    public DateTime? ProductionEnd { get; set; }
+
+    [Column("total_production_time_minutes")]
+    public int? TotalProductionTimeMinutes { get; set; }
+
+    // ==================== QUALIDADE ====================
+    [Column("quality_notes")]
+    [StringLength(2000)]
+    public string? QualityNotes { get; set; }
 }

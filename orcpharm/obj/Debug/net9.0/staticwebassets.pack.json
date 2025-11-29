@@ -5,8 +5,28 @@
       "PackagePath": "staticwebassets\\orcpharm.kefrm7xlu8.bundle.scp.css"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\SubscriptionPlansController.cs",
+      "PackagePath": "staticwebassets\\css\\SubscriptionPlansController.cs"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\admin.css",
+      "PackagePath": "staticwebassets\\css\\admin.css"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\employees-shared.css",
       "PackagePath": "staticwebassets\\css\\employees-shared.css"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\pricing.css",
+      "PackagePath": "staticwebassets\\css\\pricing.css"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\public.css",
+      "PackagePath": "staticwebassets\\css\\public.css"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\signup.css",
+      "PackagePath": "staticwebassets\\css\\signup.css"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\site.css",
@@ -15,6 +35,18 @@
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\favicon.ico",
       "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\admin-charts.js",
+      "PackagePath": "staticwebassets\\js\\admin-charts.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\admin-dashboard.js",
+      "PackagePath": "staticwebassets\\js\\admin-dashboard.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\admin-establishments.js",
+      "PackagePath": "staticwebassets\\js\\admin-establishments.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\employees-auth-adapter.js",
@@ -45,6 +77,10 @@
       "PackagePath": "staticwebassets\\js\\prescription-ocr.js"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\public-homepage.js",
+      "PackagePath": "staticwebassets\\js\\public-homepage.js"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-create.js",
       "PackagePath": "staticwebassets\\js\\purchase-orders-create.js"
     },
@@ -65,8 +101,16 @@
       "PackagePath": "staticwebassets\\js\\purchase-orders.js"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\signup.js",
+      "PackagePath": "staticwebassets\\js\\signup.js"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\stripe-checkout.js",
+      "PackagePath": "staticwebassets\\js\\stripe-checkout.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\lib\\bootstrap\\LICENSE",
