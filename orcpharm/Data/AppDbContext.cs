@@ -194,6 +194,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureLabelEntities(modelBuilder);
         ConfigureSubscriptionInvoices(modelBuilder);
         ConfigureFiscalInvoices(modelBuilder);
+        ConfigureSaasAdminEntities(modelBuilder);
 
         // ──────────────────────────────────────────────────────────────────
         // SEED DE DADOS INICIAIS
@@ -337,6 +338,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(e => e.ApprovedByPharmacistId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        // ──────────────────────────────────────────────────────────────────
+        // STOCK MOVEMENT (Employee relationships)
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<StockMovement>(entity =>
+        {
+            entity.HasOne(sm => sm.PerformedByEmployee)
+                .WithMany(e => e.StockMovements)
+                .HasForeignKey(sm => sm.PerformedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(sm => sm.AuthorizedByEmployee)
+                .WithMany()
+                .HasForeignKey(sm => sm.AuthorizedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 
     /// <summary>
@@ -410,6 +428,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         modelBuilder.Entity<SubscriptionInvoice>(entity =>
         {
+            entity.ToTable("subscription_invoices");
+            entity.HasKey(e => e.Id);
+
             entity.HasKey(e => e.Id);
             entity.ToTable("subscription_invoices");
 
@@ -737,5 +758,55 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         };
 
         modelBuilder.Entity<Permission>().HasData(permissions);
+    }
+    private void ConfigureSaasAdminEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // SAAS ADMIN
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<SaasAdmin>(entity =>
+        {
+            entity.ToTable("saas_admins");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.Email).IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // SAAS ADMIN SESSION
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<SaasAdminSession>(entity =>
+        {
+            entity.ToTable("saas_admin_sessions");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.SaasAdminId);
+
+            entity.HasOne(e => e.SaasAdmin)
+                .WithMany(a => a.Sessions)
+                .HasForeignKey(e => e.SaasAdminId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.LastActivityAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+        });
     }
 }

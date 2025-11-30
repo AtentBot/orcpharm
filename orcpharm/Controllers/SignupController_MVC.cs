@@ -5,12 +5,12 @@ using Models;
 
 namespace Controllers;
 
-public class SignupController : Controller
+public class SignupMvcController : Controller
 {
     private readonly AppDbContext _context;
-    private readonly ILogger<SignupController> _logger;
+    private readonly ILogger<SignupMvcController> _logger;
 
-    public SignupController(AppDbContext context, ILogger<SignupController> logger)
+    public SignupMvcController(AppDbContext context, ILogger<SignupMvcController> logger)
     {
         _context = context;
         _logger = logger;

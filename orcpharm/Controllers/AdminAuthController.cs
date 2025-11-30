@@ -90,6 +90,13 @@ public class AdminAuthController : ControllerBase
         }
     }
 
+    [HttpGet("generate-hash")]
+    public IActionResult GenerateHash([FromQuery] string password = "OrcPharm@2024")
+    {
+        var hash = Argon2.Hash(password);
+        return Ok(new { password, hash });
+    }
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {

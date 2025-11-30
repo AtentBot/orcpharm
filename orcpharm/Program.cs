@@ -16,6 +16,7 @@ using Validators.Formulas;
 using Service.BatchQuality;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Extensions;
+using Isopoh.Cryptography.Argon2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -168,21 +169,56 @@ try
 
         if (await db.Database.CanConnectAsync())
         {
+            // ══════════════════════════════════════════════════════════
+            // SEED ACCESS LEVEL (para Establishments)
+            // ══════════════════════════════════════════════════════════
             if (!await db.AccessLevels.AnyAsync())
             {
-                var accessLevel = new AccessLevel
+                db.AccessLevels.Add(new AccessLevel
                 {
                     Id = Guid.NewGuid(),
+                    Code = "FARM",
                     Name = "Farmácia",
                     Description = "Nível de acesso para farmácias de manipulação",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
-                };
-
-                db.AccessLevels.Add(accessLevel);
+                });
                 await db.SaveChangesAsync();
-                Console.WriteLine($"✅ AccessLevel criado: {accessLevel.Id}");
+                Console.WriteLine("✅ AccessLevel 'FARM' criado");
+            }
+
+            // ══════════════════════════════════════════════════════════
+            // SEED SAAS ADMIN (Primeiro Administrador)
+            // ══════════════════════════════════════════════════════════
+            if (!await db.SaasAdmins.AnyAsync())
+            {
+                var senhaAdmin = "OrcPharm@2024"; // ⚠️ TROQUE EM PRODUÇÃO!
+                var hashSenha = Argon2.Hash(senhaAdmin);
+
+                db.SaasAdmins.Add(new SaasAdmin
+                {
+                    Id = Guid.Parse("a0000000-0000-0000-0000-000000000001"),
+                    FullName = "Douglas - Administrador",
+                    Email = "admin@orcpharm.com.br",
+                    PasswordHash = hashSenha,
+                    PasswordAlgorithm = "argon2id-v1",
+                    Role = "SUPER_ADMIN",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+                await db.SaveChangesAsync();
+
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("✅ SAAS ADMIN CRIADO!");
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine($"   Email: admin@orcpharm.com.br");
+                Console.WriteLine($"   Senha: {senhaAdmin}");
+                Console.WriteLine($"   URL:   /admin/login");
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("   ⚠️  TROQUE A SENHA APÓS O PRIMEIRO LOGIN!");
+                Console.WriteLine("═══════════════════════════════════════════════════════════");
             }
         }
         else
@@ -220,7 +256,9 @@ app.UseRouting();
 app.UseSession();
 
 app.UseAuthentication();
+app.UseAdminAuth();           
 app.UseEmployeeAuth();
+app.UseSubscriptionLimits();  
 app.UseAuthorization();
 
 app.MapStaticAssets();

@@ -11,15 +11,19 @@ public class AdminController : Controller
         _logger = logger;
     }
 
+    [HttpGet("/admin")]
+    public IActionResult Index()
+    {
+        return RedirectToAction("Dashboard");
+    }
+
     [HttpGet("/admin/login")]
     public IActionResult Login()
     {
-        // Se já estiver logado, redirecionar para dashboard
         if (HttpContext.Items["SaasAdmin"] != null)
         {
             return RedirectToAction("Index", "AdminDashboard");
         }
-
         return View();
     }
 
@@ -48,8 +52,21 @@ public class AdminController : Controller
         return View();
     }
 
+    [HttpGet("/admin/subscriptions/{id}")]
+    public IActionResult SubscriptionDetails(Guid id)
+    {
+        ViewBag.SubscriptionId = id;
+        return View();
+    }
+
     [HttpGet("/admin/plans")]
     public IActionResult Plans()
+    {
+        return View();
+    }
+
+    [HttpGet("/admin/invoices")]
+    public IActionResult Invoices()
     {
         return View();
     }

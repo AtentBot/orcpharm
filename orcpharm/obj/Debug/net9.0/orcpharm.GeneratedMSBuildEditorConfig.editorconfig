@@ -56,6 +56,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGFzaGJvYXJkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Admin/Dashboard_old.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRGFzaGJvYXJkX29sZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Admin/EstablishmentDetails.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRXN0YWJsaXNobWVudERldGFpbHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -64,8 +68,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cRXN0YWJsaXNobWVudHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Admin/Invoices.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cSW52b2ljZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Admin/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTG9naW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Admin/Login_old.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cTG9naW5fb2xkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/orcpharm/orcpharm/orcpharm/Views/Admin/Plans.cshtml]
@@ -78,6 +90,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [E:/orcpharm/orcpharm/orcpharm/Views/Admin/Settings.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cU2V0dGluZ3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/Admin/SubscriptionDetails.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cU3Vic2NyaXB0aW9uRGV0YWlscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/orcpharm/orcpharm/orcpharm/Views/Admin/Subscriptions.cshtml]
@@ -272,6 +288,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVibGljXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Public/Terms.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVibGljXFRlcm1zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/PurchaseOrders/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHVyY2hhc2VPcmRlcnNcQ3JlYXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -304,6 +324,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9HZW5lcmF0ZUxhYmVsQnV0dG9uLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Shared/_LayoutAdmin.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRBZG1pbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Shared/_Layout_old.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRfb2xkLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -312,20 +336,24 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/orcpharm/orcpharm/orcpharm/Views/Signup/Complete.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwXENvbXBsZXRlLmNzaHRtbA==
+[E:/orcpharm/orcpharm/orcpharm/Views/Shared/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WaWV3U3RhcnQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/orcpharm/orcpharm/orcpharm/Views/Signup/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwXEluZGV4LmNzaHRtbA==
+[E:/orcpharm/orcpharm/orcpharm/Views/SignupMvc/Complete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwTXZjXENvbXBsZXRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/orcpharm/orcpharm/orcpharm/Views/Signup/Payment.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwXFBheW1lbnQuY3NodG1s
+[E:/orcpharm/orcpharm/orcpharm/Views/SignupMvc/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwTXZjXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/orcpharm/orcpharm/orcpharm/Views/Signup/Verify.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwXFZlcmlmeS5jc2h0bWw=
+[E:/orcpharm/orcpharm/orcpharm/Views/SignupMvc/Payment.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwTXZjXFBheW1lbnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/SignupMvc/Verify.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2lnbnVwTXZjXFZlcmlmeS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/orcpharm/orcpharm/orcpharm/Views/Stock/Index.cshtml]

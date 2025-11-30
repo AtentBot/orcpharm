@@ -1,7 +1,303 @@
-@{ViewData["Title"] = "Planos"; Layout = "_LayoutAdmin";}
-<div class="mb-3"><button class="btn btn-primary">Novo Plano</button></div>
-<div class="row g-4">
-<div class="col-md-4"><div class="card"><div class="card-body"><h4>Básico</h4><p class="h3">R$ 149/mês</p><p>5 funcionários, 100 ordens/mês</p></div></div></div>
-<div class="col-md-4"><div class="card"><div class="card-body"><h4>Profissional</h4><p class="h3">R$ 299/mês</p><p>15 funcionários, 500 ordens/mês</p></div></div></div>
-<div class="col-md-4"><div class="card"><div class="card-body"><h4>Enterprise</h4><p class="h3">R$ 599/mês</p><p>50 funcionários, 2000 ordens/mês</p></div></div></div>
+@{
+    ViewData["Title"] = "Planos";
+    ViewData["Subtitle"] = "Gerenciar planos de assinatura";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div></div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#planModal" onclick="openNewPlanModal()">
+        <i class="bi bi-plus-lg me-2"></i>Novo Plano
+    </button>
 </div>
+
+<div class="row g-4" id="plansContainer">
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border"></div>
+        <p class="mt-2 text-muted">Carregando planos...</p>
+    </div>
+</div>
+
+<!-- Plan Modal -->
+<div class="modal fade" id="planModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planModalTitle">Novo Plano</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="planForm">
+                    <input type="hidden" id="planId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Plano</label>
+                        <input type="text" class="form-control" id="planName" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descrição</label>
+                        <textarea class="form-control" id="planDescription" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Preço Mensal (R$)</label>
+                            <input type="number" class="form-control" id="priceMonthly" step="0.01" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Preço Anual (R$)</label>
+                            <input type="number" class="form-control" id="priceYearly" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Limite de Funcionários</label>
+                            <input type="number" class="form-control" id="maxEmployees" value="5">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Limite de Pedidos/Mês</label>
+                            <input type="number" class="form-control" id="maxOrders" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">Plano Ativo</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="savePlan()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPlans();
+    });
+
+    async function loadPlans() {
+        try {
+            // CORRIGIDO: usar /api/subscriptionplans (sem hífen)
+            const response = await fetch('/api/subscriptionplans?activeOnly=false');
+            if (response.ok) {
+                const plans = await response.json();
+                renderPlans(plans);
+            } else {
+                document.getElementById('plansContainer').innerHTML = `
+                    <div class="col-12 text-center py-5 text-danger">
+                        <i class="bi bi-exclamation-triangle display-4"></i>
+                        <p class="mt-3">Erro ao carregar planos</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            document.getElementById('plansContainer').innerHTML = `
+                <div class="col-12 text-center py-5 text-danger">
+                    <i class="bi bi-exclamation-triangle display-4"></i>
+                    <p class="mt-3">Erro ao carregar planos</p>
+                </div>
+            `;
+        }
+    }
+
+    function renderPlans(plans) {
+        const container = document.getElementById('plansContainer');
+
+        if (!plans || plans.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5 text-muted">
+                    <i class="bi bi-collection display-4"></i>
+                    <p class="mt-3">Nenhum plano cadastrado</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = plans.map(p => `
+            <div class="col-md-6 col-lg-4">
+                <div class="admin-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1">${p.name}</h5>
+                                <span class="status-badge ${p.isActive ? 'active' : 'inactive'}">
+                                    ${p.isActive ? 'Ativo' : 'Inativo'}
+                                </span>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="editPlan('${p.id}')">
+                                        <i class="bi bi-pencil me-2"></i>Editar
+                                    </a></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deletePlan('${p.id}')">
+                                        <i class="bi bi-trash me-2"></i>Excluir
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted small mb-3">${p.description || 'Sem descrição'}</p>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted small">Mensal</span>
+                                <strong class="text-primary">${formatCurrency(p.priceMonthly)}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">Anual</span>
+                                <strong class="text-success">${formatCurrency(p.priceYearly)}</strong>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="small text-muted">
+                            <div class="mb-1">
+                                <i class="bi bi-people me-2"></i>
+                                Até ${p.maxEmployees || '∞'} funcionários
+                            </div>
+                            <div>
+                                <i class="bi bi-box me-2"></i>
+                                Até ${p.maxMonthlyOrders || '∞'} pedidos/mês
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openNewPlanModal() {
+        document.getElementById('planModalTitle').textContent = 'Novo Plano';
+        document.getElementById('planForm').reset();
+        document.getElementById('planId').value = '';
+        document.getElementById('isActive').checked = true;
+    }
+
+    async function editPlan(id) {
+        try {
+            const response = await fetch(`/api/subscriptionplans/${id}`);
+            if (response.ok) {
+                const plan = await response.json();
+                
+                document.getElementById('planModalTitle').textContent = 'Editar Plano';
+                document.getElementById('planId').value = plan.id;
+                document.getElementById('planName').value = plan.name;
+                document.getElementById('planDescription').value = plan.description || '';
+                document.getElementById('priceMonthly').value = plan.priceMonthly;
+                document.getElementById('priceYearly').value = plan.priceYearly;
+                document.getElementById('maxEmployees').value = plan.maxEmployees || '';
+                document.getElementById('maxOrders').value = plan.maxMonthlyOrders || '';
+                document.getElementById('isActive').checked = plan.isActive;
+                
+                new bootstrap.Modal(document.getElementById('planModal')).show();
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+    }
+
+    async function savePlan() {
+        const id = document.getElementById('planId').value;
+        const data = {
+            name: document.getElementById('planName').value,
+            description: document.getElementById('planDescription').value,
+            priceMonthly: parseFloat(document.getElementById('priceMonthly').value),
+            priceYearly: parseFloat(document.getElementById('priceYearly').value),
+            maxEmployees: parseInt(document.getElementById('maxEmployees').value) || null,
+            maxMonthlyOrders: parseInt(document.getElementById('maxOrders').value) || null,
+            isActive: document.getElementById('isActive').checked
+        };
+
+        try {
+            const url = id ? `/api/admin/plans/${id}` : '/api/admin/plans';
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('planModal')).hide();
+                showToast('Plano salvo com sucesso!', 'success');
+                loadPlans();
+            } else {
+                const error = await response.json();
+                showToast('Erro: ' + (error.message || 'Erro ao salvar'), 'danger');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('Erro ao salvar plano', 'danger');
+        }
+    }
+
+    async function deletePlan(id) {
+        if (!confirm('Excluir este plano? Esta ação não pode ser desfeita.')) return;
+
+        try {
+            const response = await fetch(`/api/admin/plans/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                showToast('Plano excluído!', 'success');
+                loadPlans();
+            } else {
+                const error = await response.json();
+                showToast('Erro: ' + (error.message || 'Erro ao excluir'), 'danger');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('Erro ao excluir plano', 'danger');
+        }
+    }
+
+    function showToast(message, type = 'info') {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1100';
+            document.body.appendChild(container);
+        }
+
+        const toastId = 'toast-' + Date.now();
+        const iconMap = {
+            success: 'bi-check-circle-fill text-success',
+            danger: 'bi-x-circle-fill text-danger',
+            warning: 'bi-exclamation-triangle-fill text-warning',
+            info: 'bi-info-circle-fill text-primary'
+        };
+
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${iconMap[type] || iconMap.info} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', toastHtml);
+        const toastEl = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+        toast.show();
+
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    }
+</script>
+}

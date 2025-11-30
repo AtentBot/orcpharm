@@ -27,10 +27,10 @@ public class SubscriptionPlan
     public decimal PriceYearly { get; set; }
 
     [Column("max_employees")]
-    public int MaxEmployees { get; set; }
+    public int? MaxEmployees { get; set; }
 
     [Column("max_monthly_orders")]
-    public int MaxMonthlyOrders { get; set; }
+    public int? MaxMonthlyOrders { get; set; }
 
     [Column("features")]
     [Required]

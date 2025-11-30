@@ -75,6 +75,15 @@ public class EmployeeAuthMiddleware
     /// </summary>
     private static bool IsPublicPath(string path)
     {
+        // ===== ROTAS ADMIN (tratadas pelo AdminAuthMiddleware) =====
+        // O AdminAuthMiddleware cuida da autenticação dessas rotas
+        if (path.StartsWith("/admin"))
+            return true;
+
+        // ===== ROTAS API ADMIN (tratadas pelo AdminAuthMiddleware) =====
+        if (path.StartsWith("/api/admin"))
+            return true;
+
         // ===== ROTAS EXATAS =====
         var exactPublicPaths = new[]
         {
@@ -83,7 +92,19 @@ public class EmployeeAuthMiddleware
             "/home",
             "/home/index",
             "/home/error",
-            "/home/privacy"
+            "/home/privacy",
+            "/pricing",
+            "/features",
+            "/about",
+            "/contact",
+            "/terms",
+            "/privacy",
+            "/signup",
+            "/signup/index",
+            "/signup/plans",
+            "/signup/payment",
+            "/signup/complete",
+            "/signup/verify"
         };
 
         if (exactPublicPaths.Contains(path))
@@ -107,12 +128,15 @@ public class EmployeeAuthMiddleware
         var publicApiPrefixes = new[]
         {
             "/swagger",
-            "/api/auth/login",              // API de autenticação
-            "/api/auth/logout",             // API de logout
-            "/api/auth/register",           // API de registro
-            "/api/employees/login",         // API alternativa
-            "/api/employees/generate-hash", // Geração de hash
-            "/api/establishment/login"      // Login de estabelecimento
+            "/api/auth/login",
+            "/api/auth/logout",
+            "/api/auth/register",
+            "/api/employees/login",
+            "/api/employees/generate-hash",
+            "/api/establishment/login",
+            "/api/signup",
+            "/api/subscriptionplans",
+            "/api/stripe/webhook"
         };
 
         if (publicApiPrefixes.Any(prefix => path.StartsWith(prefix)))

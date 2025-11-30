@@ -1,0 +1,22 @@
+@{ViewData["Title"] = "Cadastro"; Layout = null;}
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"/><title>Cadastro - OrcPharm</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="~/css/signup.css"/></head><body>
+<div class="signup-wrapper"><div class="signup-container">
+<div class="signup-header"><h1>Criar Conta</h1><p>Preencha os dados para começar</p></div>
+<div class="signup-body"><form id="signupForm">
+<input type="hidden" id="planId" value="@ViewBag.PlanId"/>
+<div class="form-floating mb-3"><input type="text" class="form-control" id="nomeFantasia" required/><label>Nome Fantasia</label></div>
+<div class="form-floating mb-3"><input type="text" class="form-control" id="razaoSocial" required/><label>Razão Social</label></div>
+<div class="form-floating mb-3"><input type="text" class="form-control" id="cnpj" required/><label>CNPJ</label></div>
+<div class="form-floating mb-3"><input type="text" class="form-control" id="whatsapp" required/><label>WhatsApp</label></div>
+<div class="form-floating mb-3"><input type="email" class="form-control" id="email" required/><label>E-mail</label></div>
+<div class="form-floating mb-3"><input type="password" class="form-control" id="password" required/><label>Senha</label></div>
+<div class="form-floating mb-3"><input type="password" class="form-control" id="passwordConfirm" required/><label>Confirmar Senha</label></div>
+<div class="form-check mb-3"><input type="checkbox" class="form-check-input" id="acceptTerms" required/><label class="form-check-label">Aceito os <a href="/terms">termos de uso</a></label></div>
+<button type="submit" class="btn btn-signup w-100">Criar Conta</button>
+</form></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/signup.js"></script></body></html>

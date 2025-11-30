@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BillingInvoice = Models.Billing.Invoice;
 using Data;
-using DTOs;
-using Models;
 
 namespace Controllers.Api;
 
@@ -22,30 +19,28 @@ public class AdminEstablishmentsController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
-        [FromQuery] string? status = null,
         [FromQuery] string? search = null,
+        [FromQuery] string? status = null,
         [FromQuery] int skip = 0,
-        [FromQuery] int take = 50)
+        [FromQuery] int take = 20)
     {
         try
         {
             var query = _context.Establishments.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                if (status.ToUpper() == "ACTIVE")
-                    query = query.Where(e => e.IsActive);
-                else if (status.ToUpper() == "INACTIVE")
-                    query = query.Where(e => !e.IsActive);
-            }
-
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var searchUpper = search.ToUpper();
-                query = query.Where(e => 
-                    e.NomeFantasia.Contains(searchUpper) ||
-                    (e.Cnpj != null && e.Cnpj.Contains(searchUpper)) ||
-                    e.Email.Contains(searchUpper));
+                var searchLower = search.ToLower();
+                query = query.Where(e =>
+                    e.NomeFantasia.ToLower().Contains(searchLower) ||
+                    (e.Cnpj != null && e.Cnpj.Contains(search)) ||
+                    (e.Email != null && e.Email.ToLower().Contains(searchLower)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var isActive = status.ToUpper() == "ACTIVE";
+                query = query.Where(e => e.IsActive == isActive);
             }
 
             var total = await query.CountAsync();
@@ -61,13 +56,12 @@ public class AdminEstablishmentsController : ControllerBase
                     e.RazaoSocial,
                     e.Cnpj,
                     e.Email,
+                    e.Phone,
                     e.WhatsApp,
                     e.City,
                     e.State,
                     e.IsActive,
-                    e.OnboardingCompleted,
                     e.SubscriptionStatus,
-                    e.TrialEndsAt,
                     e.CreatedAt
                 })
                 .ToListAsync();
@@ -76,7 +70,7 @@ public class AdminEstablishmentsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar establishments");
+            _logger.LogError(ex, "Erro ao buscar estabelecimentos");
             return StatusCode(500, new { message = "Erro ao buscar dados" });
         }
     }
@@ -86,91 +80,169 @@ public class AdminEstablishmentsController : ControllerBase
     {
         try
         {
-            var establishment = await _context.Establishments.FindAsync(id);
+            var establishment = await _context.Establishments
+                .Where(e => e.Id == id)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.NomeFantasia,
+                    e.RazaoSocial,
+                    e.Cnpj,
+                    e.Email,
+                    e.Phone,
+                    e.WhatsApp,
+                    e.Street,
+                    e.Number,
+                    e.Complement,
+                    e.Neighborhood,
+                    e.City,
+                    e.State,
+                    e.PostalCode,
+                    e.Country,
+                    e.IsActive,
+                    e.SubscriptionStatus,
+                    e.OnboardingCompleted,
+                    e.MaxEmployeesLimit,
+                    e.MaxOrdersLimit,
+                    e.TrialEndsAt,
+                    e.CreatedAt,
+                    e.UpdatedAt,
+                    Subscription = _context.Subscriptions
+                        .Where(s => s.EstablishmentId == e.Id)
+                        .OrderByDescending(s => s.CreatedAt)
+                        .Select(s => new
+                        {
+                            s.Id,
+                            s.Status,
+                            s.BillingCycle,
+                            s.CurrentPeriodStart,
+                            s.CurrentPeriodEnd,
+                            s.TrialStart,
+                            s.TrialEnd,
+                            s.CanceledAt,
+                            PlanName = s.SubscriptionPlan != null ? s.SubscriptionPlan.Name : null,
+                            Amount = s.SubscriptionPlan != null ? 
+                                (s.BillingCycle == "YEARLY" ? s.SubscriptionPlan.PriceYearly : s.SubscriptionPlan.PriceMonthly) : 0
+                        })
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
             if (establishment == null)
-                return NotFound(new { message = "Establishment não encontrado" });
-
-            var subscription = await _context.Set<Subscription>()
-                .Include(s => s.SubscriptionPlan)
-                .FirstOrDefaultAsync(s => s.EstablishmentId == id);
-
-            var invoices = await _context.Set<BillingInvoice>()
-                .Where(i => i.SubscriptionId == subscription.Id)
-                .OrderByDescending(i => i.CreatedAt)
-                .Take(10)
-                .ToListAsync();
+                return NotFound(new { message = "Estabelecimento não encontrado" });
 
             var employeesCount = await _context.Employees
                 .CountAsync(e => e.EstablishmentId == id);
 
-            var result = new EstablishmentAdminDto
-            {
-                Id = establishment.Id,
-                NomeFantasia = establishment.NomeFantasia,
-                RazaoSocial = establishment.RazaoSocial ?? "",
-                Cnpj = establishment.Cnpj ?? "",
-                Email = establishment.Email,
-                WhatsApp = establishment.WhatsApp ?? "",
-                City = establishment.City,
-                State = establishment.State,
-                IsActive = establishment.IsActive,
-                OnboardingCompleted = establishment.OnboardingCompleted,
-                CreatedAt = establishment.CreatedAt,
-                Subscription = subscription != null ? new SubscriptionResponseDto
-                {
-                    Id = subscription.Id,
-                    EstablishmentId = subscription.EstablishmentId,
-                    EstablishmentName = establishment.NomeFantasia,
-                    SubscriptionPlanId = subscription.SubscriptionPlanId,
-                    PlanName = subscription.SubscriptionPlan?.Name ?? "",
-                    Status = subscription.Status,
-                    BillingCycle = subscription.BillingCycle,
-                    Amount = subscription.BillingCycle == "YEARLY"
-                        ? (subscription.SubscriptionPlan?.PriceYearly ?? 0)
-                        : (subscription.SubscriptionPlan?.PriceMonthly ?? 0),
-                    CurrentPeriodStart = subscription.CurrentPeriodStart,
-                    CurrentPeriodEnd = subscription.CurrentPeriodEnd,
-                    TrialEnd = subscription.TrialEnd,
-                    CancelAtPeriodEnd = subscription.CancelAtPeriodEnd,
-                    CreatedAt = subscription.CreatedAt
-                } : null
-            };
-
-            return Ok(new
-            {
-                establishment = result,
-                employeesCount,
-                recentInvoices = invoices
-            });
+            return Ok(new { establishment, employeesCount });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar establishment {Id}", id);
+            _logger.LogError(ex, "Erro ao buscar estabelecimento {Id}", id);
             return StatusCode(500, new { message = "Erro ao buscar dados" });
         }
     }
 
-    [HttpPost("{id}/block")]
-    public async Task<IActionResult> Block(Guid id, [FromBody] BlockEstablishmentDto dto)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEstablishmentDto dto)
     {
         try
         {
             var establishment = await _context.Establishments.FindAsync(id);
             if (establishment == null)
-                return NotFound(new { message = "Establishment não encontrado" });
+                return NotFound(new { message = "Estabelecimento não encontrado" });
+
+            // Atualizar campos básicos
+            if (!string.IsNullOrWhiteSpace(dto.NomeFantasia))
+                establishment.NomeFantasia = dto.NomeFantasia;
+
+            if (dto.RazaoSocial != null)
+                establishment.RazaoSocial = dto.RazaoSocial;
+
+            if (!string.IsNullOrWhiteSpace(dto.Cnpj))
+                establishment.Cnpj = dto.Cnpj.Replace(".", "").Replace("/", "").Replace("-", "");
+
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+                establishment.Email = dto.Email;
+
+            if (dto.WhatsApp != null)
+                establishment.WhatsApp = dto.WhatsApp;
+
+            if (dto.Phone != null)
+                establishment.Phone = dto.Phone;
+
+            // Endereço
+            if (dto.Street != null)
+                establishment.Street = dto.Street;
+
+            if (dto.Number != null)
+                establishment.Number = dto.Number;
+
+            if (dto.Complement != null)
+                establishment.Complement = dto.Complement;
+
+            if (dto.Neighborhood != null)
+                establishment.Neighborhood = dto.Neighborhood;
+
+            if (dto.City != null)
+                establishment.City = dto.City;
+
+            if (dto.State != null)
+                establishment.State = dto.State.ToUpper();
+
+            if (dto.PostalCode != null)
+                establishment.PostalCode = dto.PostalCode;
+
+            // Limites
+            if (dto.MaxEmployeesLimit.HasValue)
+                establishment.MaxEmployeesLimit = dto.MaxEmployeesLimit.Value;
+
+            if (dto.MaxOrdersLimit.HasValue)
+                establishment.MaxOrdersLimit = dto.MaxOrdersLimit.Value;
+
+            // Status
+            if (dto.IsActive.HasValue)
+                establishment.IsActive = dto.IsActive.Value;
+
+            if (dto.OnboardingCompleted.HasValue)
+                establishment.OnboardingCompleted = dto.OnboardingCompleted.Value;
+
+            establishment.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Estabelecimento {Id} atualizado", id);
+
+            return Ok(new { message = "Estabelecimento atualizado com sucesso" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar estabelecimento {Id}", id);
+            return StatusCode(500, new { message = "Erro ao atualizar dados" });
+        }
+    }
+
+    [HttpPost("{id}/block")]
+    public async Task<IActionResult> Block(Guid id, [FromBody] BlockReasonDto dto)
+    {
+        try
+        {
+            var establishment = await _context.Establishments.FindAsync(id);
+            if (establishment == null)
+                return NotFound(new { message = "Estabelecimento não encontrado" });
 
             establishment.IsActive = false;
             establishment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            _logger.LogWarning("Establishment {Id} bloqueado. Motivo: {Reason}", id, dto.Reason);
+            _logger.LogWarning("Estabelecimento {Id} bloqueado. Motivo: {Reason}", id, dto.Reason);
 
-            return Ok(new { message = "Establishment bloqueado com sucesso" });
+            return Ok(new { message = "Estabelecimento bloqueado" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao bloquear establishment {Id}", id);
+            _logger.LogError(ex, "Erro ao bloquear estabelecimento {Id}", id);
             return StatusCode(500, new { message = "Erro ao bloquear" });
         }
     }
@@ -182,65 +254,87 @@ public class AdminEstablishmentsController : ControllerBase
         {
             var establishment = await _context.Establishments.FindAsync(id);
             if (establishment == null)
-                return NotFound(new { message = "Establishment não encontrado" });
-
-            // Verificar se tem subscription ativa
-            var subscription = await _context.Set<Subscription>()
-                .FirstOrDefaultAsync(s => s.EstablishmentId == id);
-
-            if (subscription == null || subscription.Status == "CANCELED")
-                return BadRequest(new { message = "Não é possível desbloquear sem subscription ativa" });
+                return NotFound(new { message = "Estabelecimento não encontrado" });
 
             establishment.IsActive = true;
             establishment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Establishment {Id} desbloqueado", id);
+            _logger.LogInformation("Estabelecimento {Id} desbloqueado", id);
 
-            return Ok(new { message = "Establishment desbloqueado com sucesso" });
+            return Ok(new { message = "Estabelecimento desbloqueado" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao desbloquear establishment {Id}", id);
+            _logger.LogError(ex, "Erro ao desbloquear estabelecimento {Id}", id);
             return StatusCode(500, new { message = "Erro ao desbloquear" });
         }
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    [HttpGet("export")]
+    public async Task<IActionResult> Export()
     {
         try
         {
-            var establishment = await _context.Establishments.FindAsync(id);
-            if (establishment == null)
-                return NotFound(new { message = "Establishment não encontrado" });
+            var establishments = await _context.Establishments
+                .OrderByDescending(e => e.CreatedAt)
+                .Select(e => new
+                {
+                    e.NomeFantasia,
+                    e.RazaoSocial,
+                    e.Cnpj,
+                    e.Email,
+                    e.WhatsApp,
+                    e.City,
+                    e.State,
+                    e.IsActive,
+                    e.SubscriptionStatus,
+                    e.CreatedAt
+                })
+                .ToListAsync();
 
-            // Soft delete
-            establishment.IsActive = false;
-            establishment.UpdatedAt = DateTime.UtcNow;
-
-            // Cancelar subscription se existir
-            var subscription = await _context.Set<Subscription>()
-                .FirstOrDefaultAsync(s => s.EstablishmentId == id);
-
-            if (subscription != null)
+            var csv = "Nome Fantasia;Razão Social;CNPJ;Email;WhatsApp;Cidade;UF;Ativo;Assinatura;Cadastro\n";
+            foreach (var e in establishments)
             {
-                subscription.Status = "CANCELED";
-                subscription.CanceledAt = DateTime.UtcNow;
-                subscription.UpdatedAt = DateTime.UtcNow;
+                csv += $"{e.NomeFantasia};{e.RazaoSocial};{e.Cnpj};{e.Email};{e.WhatsApp};{e.City};{e.State};{(e.IsActive ? "Sim" : "Não")};{e.SubscriptionStatus};{e.CreatedAt:dd/MM/yyyy}\n";
             }
 
-            await _context.SaveChangesAsync();
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+            var fileName = $"estabelecimentos_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
 
-            _logger.LogWarning("Establishment {Id} deletado (soft delete)", id);
-
-            return Ok(new { message = "Establishment removido com sucesso" });
+            return File(bytes, "text/csv", fileName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao deletar establishment {Id}", id);
-            return StatusCode(500, new { message = "Erro ao remover" });
+            _logger.LogError(ex, "Erro ao exportar estabelecimentos");
+            return StatusCode(500, new { message = "Erro ao exportar" });
         }
     }
+}
+
+public class UpdateEstablishmentDto
+{
+    public string? NomeFantasia { get; set; }
+    public string? RazaoSocial { get; set; }
+    public string? Cnpj { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? WhatsApp { get; set; }
+    public string? Street { get; set; }
+    public string? Number { get; set; }
+    public string? Complement { get; set; }
+    public string? Neighborhood { get; set; }
+    public string? City { get; set; }
+    public string? State { get; set; }
+    public string? PostalCode { get; set; }
+    public int? MaxEmployeesLimit { get; set; }
+    public int? MaxOrdersLimit { get; set; }
+    public bool? IsActive { get; set; }
+    public bool? OnboardingCompleted { get; set; }
+}
+
+public class BlockReasonDto
+{
+    public string? Reason { get; set; }
 }

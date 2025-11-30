@@ -267,8 +267,8 @@ public class ProductionRecord
     /// <summary>
     /// Funcionário que registrou/produziu
     /// </summary>
-    [ForeignKey("ProducedByEmployeeId")]
-    public virtual Employee? RecordedByEmployee { get; set; }
+    //[ForeignKey("ProducedByEmployeeId")]
+    //public virtual Employee? RecordedByEmployee { get; set; }
 
     /// <summary>
     /// Funcionário que produziu (mesmo que RecordedByEmployee)

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BillingInvoice = Models.Billing.Invoice;
 using Data;
 using DTOs;
+using Models;
 
 namespace Controllers.Api;
 
@@ -28,7 +28,7 @@ public class AdminDashboardController : ControllerBase
             var activeEstablishments = await _context.Establishments.CountAsync(e => e.IsActive);
             var inactiveEstablishments = totalEstablishments - activeEstablishments;
 
-            var subscriptions = await _context.Set<Models.Subscription>()
+            var subscriptions = await _context.Subscriptions
                 .Include(s => s.SubscriptionPlan)
                 .ToListAsync();
 
@@ -46,9 +46,11 @@ public class AdminDashboardController : ControllerBase
             var mrr = monthlyRevenue + yearlyRevenue;
             var arr = mrr * 12;
 
-            var firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
-            var newSubscriptionsThisMonth = await _context.Set<Models.Subscription>()
-                .CountAsync(s => s.CreatedAt >= firstDayOfMonth);
+            // IMPORTANTE: Usar DateTimeKind.Utc para PostgreSQL
+            var firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            // Calcular em memória para evitar problemas de timezone
+            var newSubscriptionsThisMonth = subscriptions.Count(s => s.CreatedAt >= firstDayOfMonth);
 
             var subscriptionsByPlan = subscriptions
                 .Where(s => s.Status == "ACTIVE")
@@ -56,12 +58,11 @@ public class AdminDashboardController : ControllerBase
                 .ToDictionary(g => g.Key, g => g.Count());
 
             // Cálculo simples de churn (cancelamentos no mês / total ativo no início do mês)
-            var canceledThisMonth = await _context.Set<Models.Subscription>()
-                .CountAsync(s => s.CanceledAt.HasValue && s.CanceledAt.Value >= firstDayOfMonth);
-            
+            var canceledThisMonth = subscriptions.Count(s => s.CanceledAt.HasValue && s.CanceledAt.Value >= firstDayOfMonth);
+
             var activeAtStartOfMonth = activeEstablishments + canceledThisMonth;
-            var churnRate = activeAtStartOfMonth > 0 
-                ? (decimal)canceledThisMonth / activeAtStartOfMonth * 100 
+            var churnRate = activeAtStartOfMonth > 0
+                ? (decimal)canceledThisMonth / activeAtStartOfMonth * 100
                 : 0;
 
             var metrics = new DashboardMetricsDto
@@ -125,11 +126,16 @@ public class AdminDashboardController : ControllerBase
         {
             var startDate = DateTime.UtcNow.AddMonths(-months);
 
-            var invoices = await _context.Set<BillingInvoice>()
-                .Where(i => i.Status == "PAID" && i.PaidAt >= startDate)
-                .GroupBy(i => new { 
-                    Year = i.PaidAt!.Value.Year, 
-                    Month = i.PaidAt.Value.Month 
+            // Usar SubscriptionInvoices (nome correto do DbSet)
+            var invoices = await _context.SubscriptionInvoices
+                .Where(i => i.Status == "PAID" && i.PaidAt != null && i.PaidAt >= startDate)
+                .ToListAsync();
+
+            // Agrupar em memória para evitar problemas com tradução de query
+            var grouped = invoices
+                .GroupBy(i => new {
+                    Year = i.PaidAt!.Value.Year,
+                    Month = i.PaidAt.Value.Month
                 })
                 .Select(g => new
                 {
@@ -139,13 +145,21 @@ public class AdminDashboardController : ControllerBase
                 })
                 .OrderBy(x => x.Year)
                 .ThenBy(x => x.Month)
-                .ToListAsync();
+                .ToList();
 
-            var chartData = invoices.Select(i => new
+            // Preencher meses sem dados
+            var chartData = new List<object>();
+            for (int i = months - 1; i >= 0; i--)
             {
-                Label = $"{i.Month:D2}/{i.Year}",
-                Value = i.Revenue
-            });
+                var date = DateTime.UtcNow.AddMonths(-i);
+                var existing = grouped.FirstOrDefault(g => g.Year == date.Year && g.Month == date.Month);
+
+                chartData.Add(new
+                {
+                    Label = $"{date.Month:D2}/{date.Year}",
+                    Value = existing?.Revenue ?? 0
+                });
+            }
 
             return Ok(chartData);
         }
