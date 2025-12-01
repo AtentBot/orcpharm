@@ -84,6 +84,9 @@ public class EmployeeAuthMiddleware
         if (path.StartsWith("/api/admin"))
             return true;
 
+        if (path.StartsWith("/orcamento/"))
+            return true;
+
         // ===== ROTAS EXATAS =====
         var exactPublicPaths = new[]
         {
@@ -126,7 +129,7 @@ public class EmployeeAuthMiddleware
 
         // ===== ROTAS DE API PÚBLICAS =====
         var publicApiPrefixes = new[]
-        {
+                {
             "/swagger",
             "/api/auth/login",
             "/api/auth/logout",
@@ -136,7 +139,8 @@ public class EmployeeAuthMiddleware
             "/api/establishment/login",
             "/api/signup",
             "/api/subscriptionplans",
-            "/api/stripe/webhook"
+            "/api/stripe/webhook",
+            "/api/prescriptionquotes/public"
         };
 
         if (publicApiPrefixes.Any(prefix => path.StartsWith(prefix)))

@@ -54,7 +54,7 @@ public class PrescriptionFile
     [Column("ocr_processed_at")]
     public DateTime? OcrProcessedAt { get; set; }
 
-    [Column("ocr_result")]
+    [Column("ocr_result", TypeName = "jsonb")]
     public string? OcrResult { get; set; } // JSON com resultado estruturado
 
     [Column("ocr_confidence")]
