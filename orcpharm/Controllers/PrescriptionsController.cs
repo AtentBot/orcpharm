@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Service.Prescriptions;
 using Data;
 using DTOs;
 using Service;
@@ -343,7 +344,7 @@ public class PrescriptionsController : ControllerBase
             file.OcrStatus = "COMPLETED";
             file.OcrProcessedAt = DateTime.UtcNow;
             file.OcrResult = System.Text.Json.JsonSerializer.Serialize(ocrResult);
-            file.OcrConfidence = ocrResult.OverallConfidence;
+            file.OcrConfidence = (decimal)ocrResult.OverallConfidence;
             file.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 

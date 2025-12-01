@@ -170,6 +170,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // ════════════════════════════════════════════════════════════════════════
 
     public DbSet<CompanySettings> CompanySettings { get; set; } = null!;
+    public DbSet<PrescriptionQuote> PrescriptionQuotes { get; set; } = null!;
+    public DbSet<ManipulationOrderComponent> ManipulationOrderComponents { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
     // CONFIGURAÇÃO DO MODELO

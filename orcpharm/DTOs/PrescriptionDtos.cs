@@ -107,6 +107,8 @@ public class GenerateManipulationFromPrescriptionDto
     public DateTime ExpectedDate { get; set; }
     public string? AdditionalNotes { get; set; }
 }
+
+// ===== CLASSES PARA OCR E MATCHING =====
 public class UploadPrescriptionFileDto
 {
     public string FileBase64 { get; set; } = string.Empty;
@@ -148,6 +150,13 @@ public class OcrItemDto
     public string? Quantity { get; set; }
     public string? Unit { get; set; }
     public decimal Confidence { get; set; }
+
+    // Alias para compatibilidade - Name = Component
+    public string Name
+    {
+        get => Component;
+        set => Component = value;
+    }
 }
 
 public class IngredientMatchResponseDto
@@ -173,6 +182,13 @@ public class RawMaterialSuggestionDto
     public bool InStock { get; set; }
     public decimal AvailableQuantity { get; set; }
     public string Unit { get; set; } = string.Empty;
+
+    // Campos adicionais para compatibilidade com Service.IngredientMatcherService
+    public string Code { get; set; } = string.Empty;
+    public string? DcbCode { get; set; }
+    public decimal UnitCost { get; set; }
+    public string ControlType { get; set; } = "COMUM";
+    public bool IsControlled => ControlType != "COMUM";
 }
 
 public class CreateOrderFromPrescriptionDto
@@ -205,10 +221,13 @@ public class ManipulationOrderQuoteDto
 
 public class QuoteComponentDto
 {
+    public Guid RawMaterialId { get; set; }      
     public string Name { get; set; } = string.Empty;
+    public string? DcbCode { get; set; }         
     public decimal Quantity { get; set; }
     public string Unit { get; set; } = string.Empty;
     public decimal UnitCost { get; set; }
     public decimal TotalCost { get; set; }
+    public bool IsQsp { get; set; }              
+    public bool IsControlled { get; set; }      
 }
-

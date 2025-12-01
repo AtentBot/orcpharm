@@ -353,6 +353,51 @@ namespace Controllers
             }
         }
 
+        [HttpGet("OcrUpload")]
+        public async Task<IActionResult> OcrUploadNew()
+        {
+            try
+            {
+                var employeeId = GetEmployeeId();
+                var establishmentId = GetEstablishmentId();
+
+                // Criar uma nova prescrição temporária
+                var prescription = new Prescription
+                {
+                    Id = Guid.NewGuid(),
+                    EstablishmentId = establishmentId,
+                    Code = await GeneratePrescriptionCode(),
+                    CustomerId = Guid.Empty,
+                    PrescriptionDate = DateTime.UtcNow,
+                    ExpirationDate = DateTime.UtcNow.AddDays(30), // Padrão 30 dias
+                    DoctorName = "A ser identificado via OCR",
+                    Status = "RASCUNHO",
+                    PrescriptionType = "SIMPLES",
+                    CreatedByEmployeeId = employeeId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Prescriptions.Add(prescription);
+                await _context.SaveChangesAsync();
+
+                // Redirecionar para a página de OCR com o ID
+                return RedirectToAction(nameof(OcrUpload), new { id = prescription.Id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao criar prescrição para OCR");
+                TempData["Error"] = "Erro ao iniciar processamento";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpGet("Upload")]
+        public IActionResult Upload()
+        {
+            return View("OcrUploadDirect");
+        }
+
         // ====================================================================
         // MÉTODOS AUXILIARES
         // ====================================================================

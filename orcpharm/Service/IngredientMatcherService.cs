@@ -190,7 +190,7 @@ public class IngredientMatcherService
     {
         var totalStock = await _context.Set<Batch>()
             .Where(b => b.RawMaterialId == rawMaterialId
-                && b.Status == "APPROVED"
+                && b.Status == "APROVADO"
                 && b.CurrentQuantity > 0
                 && b.ExpiryDate > DateTime.UtcNow)
             .SumAsync(b => (decimal?)b.CurrentQuantity) ?? 0;

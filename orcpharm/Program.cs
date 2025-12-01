@@ -67,6 +67,12 @@ builder.Services.AddScoped<PurchaseOrderService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<WhatsAppService>();
 builder.Services.AddScoped<BatchQualityService>();
+builder.Services.AddManipulationServices();
+builder.Services.AddScoped<Service.Prescriptions.PrescriptionQuoteService>();
+builder.Services.AddScoped<Service.Prescriptions.QuoteWhatsAppService>();
+builder.Services.AddScoped<Service.Prescriptions.OpenAIPrescriptionParserService>();
+builder.Services.AddScoped<Service.Prescriptions.PrescriptionWorkflowService>();
+builder.Services.AddScoped<Service.IngredientMatcherService>();
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation();

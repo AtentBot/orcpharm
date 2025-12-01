@@ -1048,13 +1048,13 @@
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\orcpharm.kefrm7xlu8.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 18:20:36 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 01 Dec 2025 18:12:32 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/orcpharm.kefrm7xlu8.bundle.scp.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\orcpharm.kefrm7xlu8.bundle.scp.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"kefrm7xlu8"},{"Name":"integrity","Value":"sha256-vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY="},{"Name":"label","Value":"_content/orcpharm/orcpharm.bundle.scp.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Sat, 29 Nov 2025 18:20:36 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"1126"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022vCg8E1m7LXsWueUsvzlj\u002BQ6B5YPBORGYZ7cV7hOLIZY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 01 Dec 2025 18:12:32 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/page/prescription-ocr.9t8vzp6elu.html">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\page\prescription-ocr.html'))</AssetFile>

@@ -59,35 +59,101 @@ public class DashboardController : Controller
         // Buscar estatísticas se tiver permissão
         if (dashboardData.CanViewReports)
         {
+            var establishmentId = fullEmployee.EstablishmentId;
+            var today = DateTime.UtcNow.Date;
+
+            // Estatísticas existentes
             dashboardData.TotalSuppliers = await _db.Suppliers
-                .Where(s => s.EstablishmentId == fullEmployee.EstablishmentId && s.IsActive)
+                .Where(s => s.EstablishmentId == establishmentId && s.IsActive)
                 .CountAsync();
 
             dashboardData.TotalRawMaterials = await _db.RawMaterials
-                .Where(rm => rm.EstablishmentId == fullEmployee.EstablishmentId && rm.IsActive)
+                .Where(rm => rm.EstablishmentId == establishmentId && rm.IsActive)
                 .CountAsync();
 
             dashboardData.LowStockItems = await _db.RawMaterials
-                .Where(rm => rm.EstablishmentId == fullEmployee.EstablishmentId
+                .Where(rm => rm.EstablishmentId == establishmentId
                     && rm.IsActive
                     && rm.CurrentStock <= rm.MinimumStock)
                 .CountAsync();
 
             dashboardData.PendingPurchases = await _db.PurchaseOrders
-                .Where(p => p.EstablishmentId == fullEmployee.EstablishmentId
+                .Where(p => p.EstablishmentId == establishmentId
                     && p.Status == "PENDENTE")
                 .CountAsync();
 
-            // ✅ ADICIONADO: Total de manipulações atrasadas
-            var today = DateTime.UtcNow.Date;
+            // Manipulações atrasadas
             dashboardData.TotalAtrasados = await _db.ManipulationOrders
-                .Where(mo => mo.EstablishmentId == fullEmployee.EstablishmentId
+                .Where(mo => mo.EstablishmentId == establishmentId
                     && mo.Status != "FINALIZADO"
                     && mo.Status != "ENTREGUE"
                     && mo.Status != "CANCELADO"
                     && mo.ExpectedDate.Date < today)
-
                 .CountAsync();
+
+            // ========== NOVAS ESTATÍSTICAS DE PRESCRIÇÕES ==========
+            dashboardData.PrescriptionsPendentes = await _db.Prescriptions
+                .Where(p => p.EstablishmentId == establishmentId && p.Status == "PENDENTE")
+                .CountAsync();
+
+            dashboardData.PrescriptionsValidadas = await _db.Prescriptions
+                .Where(p => p.EstablishmentId == establishmentId && p.Status == "VALIDADA")
+                .CountAsync();
+
+            dashboardData.PrescriptionsHoje = await _db.Prescriptions
+                .Where(p => p.EstablishmentId == establishmentId && p.CreatedAt.Date == today)
+                .CountAsync();
+
+            // Prescrições vencendo em 7 dias
+            var seteDias = today.AddDays(7);
+            dashboardData.PrescriptionsVencendo = await _db.Prescriptions
+                .Where(p => p.EstablishmentId == establishmentId
+                    && p.Status != "CANCELADA"
+                    && p.Status != "CONCLUIDA"
+                    && p.ExpirationDate.Date <= seteDias
+                    && p.ExpirationDate.Date >= today)
+                .CountAsync();
+
+            // ========== ESTATÍSTICAS DE ORÇAMENTOS ==========
+            dashboardData.OrcamentosPendentes = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId && q.Status == "PENDENTE")
+                .CountAsync();
+
+            dashboardData.OrcamentosAprovados = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId && q.Status == "APROVADO")
+                .CountAsync();
+
+            dashboardData.OrcamentosHoje = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId && q.CreatedAt.Date == today)
+                .CountAsync();
+
+            // Orçamentos expirando hoje
+            dashboardData.OrcamentosExpirando = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId
+                    && q.Status == "PENDENTE"
+                    && q.ValidUntil.Date <= today.AddDays(1))
+                .CountAsync();
+
+            // Valor total de orçamentos pendentes
+            dashboardData.ValorOrcamentosPendentes = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId && q.Status == "PENDENTE")
+                .SumAsync(q => (decimal?)q.FinalPrice) ?? 0;
+
+            // Taxa de conversão (últimos 30 dias)
+            var trintaDiasAtras = today.AddDays(-30);
+            var totalOrcamentos30Dias = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId && q.CreatedAt >= trintaDiasAtras)
+                .CountAsync();
+
+            var aprovados30Dias = await _db.PrescriptionQuotes
+                .Where(q => q.EstablishmentId == establishmentId
+                    && q.CreatedAt >= trintaDiasAtras
+                    && (q.Status == "APROVADO" || q.Status == "CONVERTIDO"))
+                .CountAsync();
+
+            dashboardData.TaxaConversaoOrcamentos = totalOrcamentos30Dias > 0
+                ? Math.Round((decimal)aprovados30Dias / totalOrcamentos30Dias * 100, 1)
+                : 0;
         }
 
         return View(dashboardData);

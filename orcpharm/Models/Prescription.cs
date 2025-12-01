@@ -1,8 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Models.Pharmacy;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models;
 
+/// <summary>
+/// Prescrição médica (receita)
+/// </summary>
 [Table("prescriptions")]
 public class Prescription
 {
@@ -57,7 +61,7 @@ public class Prescription
 
     // Conteúdo da receita
     [Column("medications")]
-    public string Medications { get; set; } = string.Empty; // JSON ou texto
+    public string Medications { get; set; } = string.Empty;
 
     [Column("posology")]
     public string Posology { get; set; } = string.Empty;
@@ -65,7 +69,7 @@ public class Prescription
     [Column("observations")]
     public string? Observations { get; set; }
 
-    // Imagem da receita
+    // Imagem da receita (legado - usar PrescriptionFile)
     [Column("image_url")]
     public string? ImageUrl { get; set; }
 
@@ -87,7 +91,7 @@ public class Prescription
     [Column("validation_notes")]
     public string? ValidationNotes { get; set; }
 
-    // Vínculo com OM
+    // Vínculo com Ordem de Manipulação
     [Column("manipulation_order_id")]
     public Guid? ManipulationOrderId { get; set; }
 
@@ -106,78 +110,27 @@ public class Prescription
 
     // Auditoria
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("created_by_employee_id")]
     public Guid CreatedByEmployeeId { get; set; }
 
     [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("updated_by_employee_id")]
     public Guid? UpdatedByEmployeeId { get; set; }
-}
-[Table("prescription_files")]
-public class PrescriptionFile
-{
-    [Key]
-    [Column("id")]
-    public Guid Id { get; set; }
 
-    [Required]
-    [Column("prescription_id")]
-    public Guid PrescriptionId { get; set; }
+    // Navigation properties
+    [ForeignKey("EstablishmentId")]
+    public virtual Establishment? Establishment { get; set; }
 
-    [Required]
-    [MaxLength(255)]
-    [Column("file_name")]
-    public string FileName { get; set; } = string.Empty;
+    [ForeignKey("CustomerId")]
+    public virtual Customer? Customer { get; set; }
 
-    [Required]
-    [MaxLength(50)]
-    [Column("file_type")]
-    public string FileType { get; set; } = string.Empty;
+    [ForeignKey("ManipulationOrderId")]
+    public virtual ManipulationOrder? ManipulationOrder { get; set; }
 
-    [Column("file_url")]
-    public string? FileUrl { get; set; }
-
-    [Column("file_base64")]
-    public string? FileBase64 { get; set; }
-
-    [Column("file_size_bytes")]
-    public long FileSizeBytes { get; set; }
-
-    [Required]
-    [Column("uploaded_at")]
-    public DateTime UploadedAt { get; set; }
-
-    [Column("uploaded_by_employee_id")]
-    public Guid? UploadedByEmployeeId { get; set; }
-
-    [Required]
-    [MaxLength(20)]
-    [Column("ocr_status")]
-    public string OcrStatus { get; set; } = "PENDING";
-
-    [Column("ocr_processed_at")]
-    public DateTime? OcrProcessedAt { get; set; }
-
-    [Column("ocr_result")]
-    public string? OcrResult { get; set; }
-
-    [Column("ocr_confidence")]
-    public decimal? OcrConfidence { get; set; }
-
-    [Column("ocr_error_message")]
-    public string? OcrErrorMessage { get; set; }
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
-
-    // Navigation property
-    [ForeignKey("PrescriptionId")]
-    public virtual Prescription? Prescription { get; set; }
+    // Coleção de arquivos
+    public virtual ICollection<PrescriptionFile>? Files { get; set; }
 }

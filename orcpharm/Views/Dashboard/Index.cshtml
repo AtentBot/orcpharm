@@ -432,6 +432,32 @@
                                 </div>
                             </a>
                         </div>
+
+                        @* ========== PROCESSAR RECEITA OCR - DESTAQUE ========== *@
+                        <div class="col-md-3 mb-3">
+                            <a href="/PrescriptionsView/OcrUpload" class="text-decoration-none">
+                                <div class="card h-100 border-0 bg-gradient-success hover-card">
+                                    <div class="card-body text-center text-white">
+                                        <i class="bi bi-camera fs-1 mb-3"></i>
+                                        <h6 class="card-title">Processar Receita</h6>
+                                        <p class="card-text small opacity-75">Upload e OCR de Receitas</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        @* ========== ORÇAMENTOS ========== *@
+                        <div class="col-md-3 mb-3">
+                            <a href="/Orcamentos" class="text-decoration-none">
+                                <div class="card h-100 border-0 bg-light hover-card">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-cash-coin text-success fs-1 mb-3"></i>
+                                        <h6 class="card-title">Orçamentos</h6>
+                                        <p class="card-text small text-muted">Gerenciar orçamentos</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
                     }
 
                     @if (Model.CanManageInventory)
@@ -633,6 +659,11 @@
     /* Card de Prescrições em Destaque */
     .bg-gradient-info {
         background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);
+    }
+
+    /* Card de OCR em Destaque */
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #198754 0%, #146c43 100%);
     }
 
     .production-card {
