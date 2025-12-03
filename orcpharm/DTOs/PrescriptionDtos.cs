@@ -107,6 +107,11 @@ public class GenerateManipulationFromPrescriptionDto
     public DateTime ExpectedDate { get; set; }
     public string? AdditionalNotes { get; set; }
 }
+public class SendQuoteEmailDto
+{
+    public string Email { get; set; } = string.Empty;
+    public string? Message { get; set; }
+}
 
 // ===== CLASSES PARA OCR E MATCHING =====
 public class UploadPrescriptionFileDto

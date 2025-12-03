@@ -16,6 +16,7 @@ public class PrescriptionQuotesController : ControllerBase
     private readonly PrescriptionQuoteService _quoteService;
     private readonly PrescriptionWorkflowService _workflowService;
     private readonly QuoteWhatsAppService _whatsAppService;
+    private readonly QuoteEmailService _emailService;
     private readonly OpenAIPrescriptionParserService _parserService;
     private readonly IngredientMatcherService _matcherService;
 
@@ -24,6 +25,7 @@ public class PrescriptionQuotesController : ControllerBase
         PrescriptionQuoteService quoteService,
         PrescriptionWorkflowService workflowService,
         QuoteWhatsAppService whatsAppService,
+        QuoteEmailService emailService,
         OpenAIPrescriptionParserService parserService,
         IngredientMatcherService matcherService)
     {
@@ -31,6 +33,7 @@ public class PrescriptionQuotesController : ControllerBase
         _quoteService = quoteService;
         _workflowService = workflowService;
         _whatsAppService = whatsAppService;
+        _emailService = emailService;
         _parserService = parserService;
         _matcherService = matcherService;
     }
@@ -141,6 +144,29 @@ public class PrescriptionQuotesController : ControllerBase
             return NotFound(new { message = "Estabelecimento não encontrado" });
 
         var (success, message) = await _whatsAppService.SendQuoteAsync(id, establishmentId.Value);
+
+        if (!success)
+            return BadRequest(new { message });
+
+        return Ok(new { message });
+    }
+
+    /// <summary>
+    /// Envia orçamento por E-mail
+    /// </summary>
+    [HttpPost("{id}/send-email")]
+    public async Task<IActionResult> SendEmail(Guid id, [FromBody] SendQuoteEmailDto dto)
+    {
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { message = "Estabelecimento não encontrado" });
+
+        var (success, message) = await _emailService.SendQuoteEmailAsync(
+            id, dto.Email, dto.Message, establishmentId.Value);
 
         if (!success)
             return BadRequest(new { message });
@@ -338,4 +364,10 @@ public class UpdateQuotePricingDto
     public decimal? DiscountPercentage { get; set; }
     public decimal? LaborCost { get; set; }
     public decimal? PackagingCost { get; set; }
+}
+
+public class SendQuoteEmailDto
+{
+    public string Email { get; set; } = string.Empty;
+    public string? Message { get; set; }
 }

@@ -12,6 +12,7 @@ using Service.Auth;
 using Service.Notifications;
 using Service;
 using Service.Formulas;
+using Service.Prescriptions;
 using Validators.Formulas;
 using Service.BatchQuality;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -32,6 +33,11 @@ builder.Services.AddScoped<SngpcService>();
 builder.Services.AddScoped<LabelService>();
 builder.Services.AddManipulationServices();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<QuoteEmailService>();
+
+builder.Services.Configure<Configuration.EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<Service.IEmailService, Service.EmailService>();
 
 // ADICIONAR DbContext para PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>

@@ -65,6 +65,16 @@
             color: #0d6efd;
             margin-bottom: 10px;
         }
+        .forgot-password-link {
+            color: #0d6efd;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .forgot-password-link:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -84,12 +94,12 @@
                        class="form-control" 
                        id="email" 
                        name="email"
-                       placeholder="admin@orcpharm.com.br" 
+                       placeholder="admin&#64;orcpharm.com.br" 
                        required 
                        autofocus />
             </div>
 
-            <div class="mb-4">
+            <div class="mb-3">
                 <label for="password" class="form-label">Senha</label>
                 <div class="input-group">
                     <input type="password" 
@@ -102,6 +112,12 @@
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
+            </div>
+
+            <div class="mb-4 text-end">
+                <a href="/admin/forgot-password" class="forgot-password-link">
+                    <i class="bi bi-key me-1"></i>Esqueci minha senha
+                </a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-login" id="btnLogin">
@@ -122,29 +138,26 @@
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const btnText = document.getElementById('btnText');
-            const btnSpinner = document.getElementById('btnSpinner');
-            const btnLogin = document.getElementById('btnLogin');
-            const alertContainer = document.getElementById('alertContainer');
+            var email = document.getElementById('email').value.trim();
+            var password = document.getElementById('password').value;
+            var btnText = document.getElementById('btnText');
+            var btnSpinner = document.getElementById('btnSpinner');
+            var btnLogin = document.getElementById('btnLogin');
+            var alertContainer = document.getElementById('alertContainer');
             
-            // Limpar alertas anteriores
             alertContainer.innerHTML = '';
             
-            // Validação básica
             if (!email || !password) {
                 showAlert('Preencha todos os campos', 'warning');
                 return;
             }
             
-            // Mostrar loading
             btnLogin.disabled = true;
             btnText.textContent = 'Entrando...';
             btnSpinner.classList.remove('d-none');
             
             try {
-                const response = await fetch('/api/admin/auth/login', {
+                var response = await fetch('/api/admin/auth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -155,13 +168,11 @@
                     })
                 });
                 
-                const data = await response.json();
+                var data = await response.json();
                 
                 if (response.ok) {
                     showAlert('Login realizado com sucesso! Redirecionando...', 'success');
-                    
-                    // Redirecionar para o dashboard admin
-                    setTimeout(() => {
+                    setTimeout(function() {
                         window.location.href = '/admin/dashboard';
                     }, 1000);
                 } else {
@@ -171,17 +182,15 @@
                 console.error('Erro no login:', error);
                 showAlert('Erro ao conectar com o servidor. Tente novamente.', 'danger');
             } finally {
-                // Restaurar botão
                 btnLogin.disabled = false;
                 btnText.textContent = 'Entrar';
                 btnSpinner.classList.add('d-none');
             }
         });
         
-        // Toggle password visibility
         document.getElementById('togglePassword').addEventListener('click', function() {
-            const passwordInput = document.getElementById('password');
-            const icon = this.querySelector('i');
+            var passwordInput = document.getElementById('password');
+            var icon = this.querySelector('i');
             
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -195,17 +204,18 @@
         });
         
         function showAlert(message, type) {
-            const alertContainer = document.getElementById('alertContainer');
-            alertContainer.innerHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
+            var alertContainer = document.getElementById('alertContainer');
+            var icon = type === 'success' ? 'check-circle' : 
+                       type === 'danger' ? 'exclamation-circle' : 'info-circle';
+            
+            alertContainer.innerHTML = 
+                '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+                    '<i class="bi bi-' + icon + ' me-2"></i>' +
+                    message +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                '</div>';
         }
         
-        // Enter key support
         document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('loginForm').dispatchEvent(new Event('submit'));

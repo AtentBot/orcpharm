@@ -27,6 +27,35 @@ public class AdminController : Controller
         return View();
     }
 
+    [HttpGet("/admin/forgot-password")]
+    public IActionResult ForgotPassword()
+    {
+        // Se já estiver logado, redirecionar
+        if (HttpContext.Items["SaasAdmin"] != null)
+        {
+            return RedirectToAction("Dashboard");
+        }
+        return View();
+    }
+
+    [HttpGet("/admin/reset-password")]
+    public IActionResult ResetPassword([FromQuery] string? token)
+    {
+        // Se já estiver logado, redirecionar
+        if (HttpContext.Items["SaasAdmin"] != null)
+        {
+            return RedirectToAction("Dashboard");
+        }
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return RedirectToAction("Login");
+        }
+
+        ViewBag.Token = token;
+        return View();
+    }
+
     [HttpGet("/admin/dashboard")]
     public IActionResult Dashboard()
     {

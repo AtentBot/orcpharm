@@ -253,6 +253,7 @@
             
             <nav class="sidebar-nav">
                 <ul class="nav flex-column">
+                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link @(currentController == "Dashboard" ? "active" : "")"
                            href="/Dashboard">
@@ -261,44 +262,33 @@
                         </a>
                     </li>
 
+                    <!-- Estoque -->
                     @if (canManageInventory)
                     {
                         <li class="nav-item">
-                            <a class="nav-link has-submenu @(currentController == "Estoque" || currentController == "MateriasPrimas" ? "active open" : "")" 
+                            <a class="nav-link has-submenu @(currentController == "Stock" || currentController == "MateriasPrimas" || currentController == "RawMaterialsView" ? "active open" : "")" 
                                href="#" 
                                onclick="toggleSubmenu(event, 'estoqueSubmenu')">
                                 <i class="bi bi-boxes"></i>
                                 Estoque
                             </a>
-                            <ul class="nav flex-column nav-submenu @(currentController == "Estoque" || currentController == "MateriasPrimas" ? "show" : "")" id="estoqueSubmenu">
+                            <ul class="nav flex-column nav-submenu @(currentController == "Stock" || currentController == "MateriasPrimas" || currentController == "RawMaterialsView" ? "show" : "")" id="estoqueSubmenu">
                                 <li class="nav-item">
-                                    <a class="nav-link @(currentController == "Estoque" ? "active" : "")" href="/Estoque">
+                                    <a class="nav-link" href="/Stock">
                                         <i class="bi bi-grid"></i>
-                                        Logistica
+                                        Visão Geral
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link @(currentController == "MateriasPrimas" ? "active" : "")" href="/MateriasPrimas">
+                                    <a class="nav-link" href="/MateriasPrimas">
                                         <i class="bi bi-file-earmark-medical"></i>
                                         Matérias-Primas
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Estoque/Lotes">
-                                        <i class="bi bi-box-seam"></i>
-                                        Lotes
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/Estoque/Movimentacoes">
+                                    <a class="nav-link" href="/Stock/Movements">
                                         <i class="bi bi-arrow-left-right"></i>
                                         Movimentações
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/Stock">
-                                        <i class="bi bi-box-seam"></i>
-                                        Dashboard Estoque
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -311,32 +301,57 @@
                         </li>
                     }
 
+                    <!-- Compras -->
                     @if (canManagePurchases)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="/compras">
+                            <a class="nav-link @(currentController == "PurchaseOrdersView" ? "active" : "")" 
+                               href="/compras">
                                 <i class="bi bi-cart3"></i>
                                 Compras
                             </a>
                         </li>
                     }
 
+                    <!-- Fórmulas e Manipulação -->
                     @if (canManageFormulas)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link has-submenu @(currentController == "Formulas" || currentController == "Workflow" || currentController == "Manipulacoes" ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'producaoSubmenu')">
                                 <i class="bi bi-clipboard2-pulse"></i>
-                                Fórmulas
+                                Produção
                             </a>
+                            <ul class="nav flex-column nav-submenu @(currentController == "Formulas" || currentController == "Workflow" || currentController == "Manipulacoes" ? "show" : "")" id="producaoSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Formulas">
+                                        <i class="bi bi-journal-medical"></i>
+                                        Fórmulas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Workflow">
+                                        <i class="bi bi-list-task"></i>
+                                        Ordens de Manipulação
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Workflow/Kanban">
+                                        <i class="bi bi-columns-gap"></i>
+                                        Kanban
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Workflow/Dashboard">
+                                        <i class="bi bi-graph-up"></i>
+                                        Dashboard Produção
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="bi bi-file-medical"></i>
-                                Manipulações
-                            </a>
-                        </li>
-                        <!-- Menu Prescrições -->
+
+                        <!-- Prescrições -->
                         <li class="nav-item">
                             <a class="nav-link has-submenu @(currentController == "PrescriptionsView" ? "active open" : "")"
                                href="#"
@@ -371,43 +386,8 @@
                                 </li>
                             </ul>
                         </li>
-                        <!-- Menu Workflow de Produção -->
-                        <li class="nav-item">
-                            <a class="nav-link has-submenu @(currentController == "Workflow" || currentController == "Manipulacoes" ? "active open" : "")"
-                               href="#"
-                               onclick="toggleSubmenu(event, 'workflowSubmenu')">
-                                <i class="bi bi-kanban"></i>
-                                Produção
-                            </a>
-                            <ul class="nav flex-column nav-submenu @(currentController == "Workflow" || currentController == "Manipulacoes" ? "show" : "")" id="workflowSubmenu">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/Workflow">
-                                        <i class="bi bi-list-task"></i>
-                                        Ordens
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/Workflow/Kanban">
-                                        <i class="bi bi-columns-gap"></i>
-                                        Kanban
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="/Workflow/Dashboard">
-                                        <i class="bi bi-graph-up"></i>
-                                        Dashboard
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Customers">
-                                <i class="bi bi-people"></i>
-                                <span>Clientes</span>
-                            </a>
-                        </li>
-                        
+                        <!-- Rótulos -->
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "LabelsView" ? "active" : "")" 
                                href="/Labels">
@@ -417,14 +397,16 @@
                         </li>
                     }
 
-
+                    <!-- Clientes -->
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link @(currentController == "Customers" ? "active" : "")" 
+                           href="/Customers">
                             <i class="bi bi-people"></i>
                             Clientes
                         </a>
                     </li>
 
+                    <!-- Fornecedores -->
                     <li class="nav-item">
                         <a class="nav-link @(currentController == "SuppliersView" ? "active" : "")"
                            href="/suppliers">
@@ -433,16 +415,7 @@
                         </a>
                     </li>
 
-                    @if (canViewReports)
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="bi bi-graph-up"></i>
-                                Relatórios
-                            </a>
-                        </li>
-                    }
-                    <!-- Menu Financeiro -->
+                    <!-- Financeiro -->
                     <li class="nav-item">
                         <a class="nav-link has-submenu @(currentController == "PDV" || currentController == "PaymentManagement" ? "active open" : "")"
                            href="#"
@@ -464,12 +437,6 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/PaymentManagement/Configuration">
-                                    <i class="bi bi-gear"></i>
-                                    Configurações
-                                </a>
-                            </li>
-                            <li class="nav-item">
                                 <a class="nav-link" href="/PaymentManagement/DailyReport">
                                     <i class="bi bi-file-earmark-bar-graph"></i>
                                     Relatório Diário
@@ -482,26 +449,42 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="/PaymentManagement/GatewaySettings">
-                                    <i class="bi bi-plugin"></i>
-                                    Gateways
+                                <a class="nav-link" href="/PaymentManagement/Configuration">
+                                    <i class="bi bi-gear"></i>
+                                    Configurações
                                 </a>
                             </li>
                         </ul>
                     </li>
 
+                    <!-- Relatórios -->
+                    @if (canViewReports)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Reports" ? "active" : "")" 
+                               href="/Reports">
+                                <i class="bi bi-bar-chart-line"></i>
+                                Relatórios
+                            </a>
+                        </li>
+                    }
+
+                    <!-- Funcionários -->
                     @if (canManageEmployees)
                     {
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link @(currentController == "Employees" ? "active" : "")" 
+                               href="/Employees">
                                 <i class="bi bi-person-badge"></i>
                                 Funcionários
                             </a>
                         </li>
                     }
 
+                    <!-- Configurações -->
                     <li class="nav-item mt-3">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link @(currentController == "Settings" ? "active" : "")" 
+                           href="/Settings">
                             <i class="bi bi-gear"></i>
                             Configurações
                         </a>
@@ -556,8 +539,8 @@
     <script>
         function toggleSubmenu(event, submenuId) {
             event.preventDefault();
-            const submenu = document.getElementById(submenuId);
-            const link = event.currentTarget;
+            var submenu = document.getElementById(submenuId);
+            var link = event.currentTarget;
             
             submenu.classList.toggle('show');
             link.classList.toggle('open');

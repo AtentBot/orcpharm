@@ -1,0 +1,361 @@
+@{
+    ViewData["Title"] = "Matérias-Primas";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-boxes me-2"></i>Matérias-Primas</h2>
+            <p class="text-muted mb-0">Gerencie o cadastro de insumos e matérias-primas</p>
+        </div>
+        <a href="/MateriasPrimas/Criar" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Nova Matéria-Prima
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nome, código ou CAS...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="filterCategory">
+                        <option value="">Todas Categorias</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="filterStatus">
+                        <option value="">Todos Status</option>
+                        <option value="normal">Estoque Normal</option>
+                        <option value="low">Estoque Baixo</option>
+                        <option value="out">Sem Estoque</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="filterControlled">
+                        <option value="">Controlado?</option>
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-lg me-1"></i>Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-0" id="statTotal">-</h3>
+                    <small class="text-muted">Total Cadastradas</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-0" id="statNormal">-</h3>
+                    <small class="text-muted">Estoque Normal</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-0" id="statLow">-</h3>
+                    <small class="text-muted">Estoque Baixo</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-danger mb-0" id="statOut">-</h3>
+                    <small class="text-muted">Sem Estoque</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>CAS</th>
+                            <th>Categoria</th>
+                            <th class="text-center">Estoque Atual</th>
+                            <th class="text-center">Mín/Máx</th>
+                            <th class="text-center">Controlado</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Carregando matérias-primas...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    <nav class="mt-4" id="paginationContainer" style="display: none;">
+        <ul class="pagination justify-content-center" id="pagination">
+        </ul>
+    </nav>
+</div>
+
+@section Scripts {
+<script>
+    var allMaterials = [];
+    var filteredMaterials = [];
+    var currentPage = 1;
+    var pageSize = 20;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMaterials();
+        loadCategories();
+        
+        document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
+        document.getElementById('filterCategory').addEventListener('change', applyFilters);
+        document.getElementById('filterStatus').addEventListener('change', applyFilters);
+        document.getElementById('filterControlled').addEventListener('change', applyFilters);
+    });
+
+    async function loadMaterials() {
+        try {
+            var response = await fetch('/api/RawMaterials', {
+                credentials: 'include'
+            });
+            var result = await response.json();
+            
+            if (result.success) {
+                allMaterials = result.data;
+                filteredMaterials = allMaterials;
+                updateStats();
+                renderTable();
+            } else {
+                showError('Erro ao carregar matérias-primas');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showError('Erro ao conectar com o servidor');
+        }
+    }
+
+    async function loadCategories() {
+        try {
+            var response = await fetch('/api/Categories', {
+                credentials: 'include'
+            });
+            var result = await response.json();
+            
+            if (result.success) {
+                var select = document.getElementById('filterCategory');
+                result.data.forEach(function(cat) {
+                    var option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar categorias:', error);
+        }
+    }
+
+    function applyFilters() {
+        var search = document.getElementById('searchInput').value.toLowerCase();
+        var category = document.getElementById('filterCategory').value;
+        var status = document.getElementById('filterStatus').value;
+        var controlled = document.getElementById('filterControlled').value;
+
+        filteredMaterials = allMaterials.filter(function(m) {
+            var matchSearch = !search || 
+                (m.name && m.name.toLowerCase().includes(search)) ||
+                (m.code && m.code.toLowerCase().includes(search)) ||
+                (m.casNumber && m.casNumber.toLowerCase().includes(search));
+
+            var matchCategory = !category || m.categoryId === category;
+
+            var stockStatus = getStockStatus(m);
+            var matchStatus = !status || stockStatus === status;
+
+            var matchControlled = !controlled || 
+                (controlled === 'true' && m.isControlled) ||
+                (controlled === 'false' && !m.isControlled);
+
+            return matchSearch && matchCategory && matchStatus && matchControlled;
+        });
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterCategory').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterControlled').value = '';
+        filteredMaterials = allMaterials;
+        currentPage = 1;
+        renderTable();
+    }
+
+    function getStockStatus(material) {
+        var qty = material.currentQuantity || 0;
+        var min = material.minimumQuantity || 0;
+        
+        if (qty <= 0) return 'out';
+        if (qty <= min) return 'low';
+        return 'normal';
+    }
+
+    function updateStats() {
+        var total = allMaterials.length;
+        var normal = 0, low = 0, out = 0;
+
+        allMaterials.forEach(function(m) {
+            var status = getStockStatus(m);
+            if (status === 'normal') normal++;
+            else if (status === 'low') low++;
+            else out++;
+        });
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statNormal').textContent = normal;
+        document.getElementById('statLow').textContent = low;
+        document.getElementById('statOut').textContent = out;
+    }
+
+    function renderTable() {
+        var tbody = document.getElementById('tableBody');
+        var start = (currentPage - 1) * pageSize;
+        var end = start + pageSize;
+        var pageData = filteredMaterials.slice(start, end);
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-muted">' +
+                '<i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma matéria-prima encontrada</td></tr>';
+            document.getElementById('paginationContainer').style.display = 'none';
+            return;
+        }
+
+        var html = '';
+        pageData.forEach(function(m) {
+            var status = getStockStatus(m);
+            var statusBadge = status === 'normal' ? '<span class="badge bg-success">Normal</span>' :
+                              status === 'low' ? '<span class="badge bg-warning">Baixo</span>' :
+                              '<span class="badge bg-danger">Sem Estoque</span>';
+
+            var controlledBadge = m.isControlled ? 
+                '<span class="badge bg-danger"><i class="bi bi-shield-exclamation"></i></span>' : 
+                '<span class="text-muted">-</span>';
+
+            html += '<tr>' +
+                '<td><code>' + (m.code || '-') + '</code></td>' +
+                '<td><strong>' + (m.name || '-') + '</strong></td>' +
+                '<td><small class="text-muted">' + (m.casNumber || '-') + '</small></td>' +
+                '<td>' + (m.categoryName || '-') + '</td>' +
+                '<td class="text-center"><strong>' + (m.currentQuantity || 0).toFixed(2) + '</strong> ' + (m.unit || '') + '</td>' +
+                '<td class="text-center"><small>' + (m.minimumQuantity || 0) + ' / ' + (m.maximumQuantity || 0) + '</small></td>' +
+                '<td class="text-center">' + controlledBadge + '</td>' +
+                '<td class="text-center">' + statusBadge + '</td>' +
+                '<td class="text-end">' +
+                    '<div class="btn-group btn-group-sm">' +
+                        '<a href="/MateriasPrimas/Detalhes/' + m.id + '" class="btn btn-outline-primary" title="Detalhes">' +
+                            '<i class="bi bi-eye"></i>' +
+                        '</a>' +
+                        '<a href="/MateriasPrimas/Editar/' + m.id + '" class="btn btn-outline-secondary" title="Editar">' +
+                            '<i class="bi bi-pencil"></i>' +
+                        '</a>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+        });
+
+        tbody.innerHTML = html;
+        renderPagination();
+    }
+
+    function renderPagination() {
+        var totalPages = Math.ceil(filteredMaterials.length / pageSize);
+        var container = document.getElementById('paginationContainer');
+        var pagination = document.getElementById('pagination');
+
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        var html = '';
+
+        html += '<li class="page-item ' + (currentPage === 1 ? 'disabled' : '') + '">' +
+            '<a class="page-link" href="#" onclick="goToPage(' + (currentPage - 1) + '); return false;">Anterior</a></li>';
+
+        for (var i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                html += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">' +
+                    '<a class="page-link" href="#" onclick="goToPage(' + i + '); return false;">' + i + '</a></li>';
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        html += '<li class="page-item ' + (currentPage === totalPages ? 'disabled' : '') + '">' +
+            '<a class="page-link" href="#" onclick="goToPage(' + (currentPage + 1) + '); return false;">Próximo</a></li>';
+
+        pagination.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        var totalPages = Math.ceil(filteredMaterials.length / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderTable();
+        window.scrollTo(0, 0);
+    }
+
+    function showError(message) {
+        var tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-danger">' +
+            '<i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>' + message + '</td></tr>';
+    }
+
+    function debounce(func, wait) {
+        var timeout;
+        return function() {
+            var context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+</script>
+}

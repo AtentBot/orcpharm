@@ -9,6 +9,18 @@ public class AdminAuthMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<AdminAuthMiddleware> _logger;
 
+    // Rotas admin que NÃO precisam de autenticação
+    private static readonly string[] PublicAdminPaths = new[]
+    {
+        "/admin/login",
+        "/admin/forgot-password",
+        "/admin/reset-password",
+        "/api/admin/auth/login",
+        "/api/admin/auth/forgot-password",
+        "/api/admin/auth/reset-password",
+        "/api/admin/auth/validate-reset-token"
+    };
+
     public AdminAuthMiddleware(RequestDelegate next, ILogger<AdminAuthMiddleware> logger)
     {
         _next = next;
@@ -19,18 +31,18 @@ public class AdminAuthMiddleware
     {
         var path = context.Request.Path.Value?.ToLower() ?? "";
 
-        // Rotas públicas (não precisam de autenticação)
+        // Rotas públicas gerais (não precisam de autenticação)
         if (IsPublicRoute(path))
         {
             await _next(context);
             return;
         }
 
-        // Rotas admin (precisam de autenticação admin)
-        if (path.StartsWith("/admin"))
+        // Rotas admin
+        if (path.StartsWith("/admin") || path.StartsWith("/api/admin"))
         {
-            // Permitir acesso à página de login
-            if (path == "/admin/login")
+            // Verificar se é rota pública do admin (login, forgot-password, etc)
+            if (IsPublicAdminPath(path))
             {
                 await _next(context);
                 return;
@@ -40,7 +52,7 @@ public class AdminAuthMiddleware
             
             if (string.IsNullOrEmpty(sessionToken))
             {
-                if (path.StartsWith("/admin/api") || path.StartsWith("/api/admin"))
+                if (path.StartsWith("/api/admin"))
                 {
                     context.Response.StatusCode = 401;
                     await context.Response.WriteAsJsonAsync(new { message = "Não autenticado" });
@@ -61,7 +73,7 @@ public class AdminAuthMiddleware
             {
                 context.Response.Cookies.Delete("AdminSessionId");
                 
-                if (path.StartsWith("/admin/api") || path.StartsWith("/api/admin"))
+                if (path.StartsWith("/api/admin"))
                 {
                     context.Response.StatusCode = 401;
                     await context.Response.WriteAsJsonAsync(new { message = "Sessão inválida ou expirada" });
@@ -83,6 +95,12 @@ public class AdminAuthMiddleware
         }
 
         await _next(context);
+    }
+
+    private static bool IsPublicAdminPath(string path)
+    {
+        return PublicAdminPaths.Any(p => path.Equals(p, StringComparison.OrdinalIgnoreCase) ||
+                                         path.StartsWith(p + "?", StringComparison.OrdinalIgnoreCase));
     }
 
     private bool IsPublicRoute(string path)

@@ -1,0 +1,2022 @@
+@{
+    ViewData["Title"] = "Novo Orçamento - Processar Receita";
+    Layout = "_Layout";
+}
+
+<style>
+    .upload-zone {
+        border: 3px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 60px 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: #0d6efd;
+        background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+    }
+    .upload-zone.has-file {
+        border-color: #198754;
+        background: linear-gradient(135deg, #d1e7dd 0%, #badbcc 100%);
+    }
+    .upload-zone i {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    .upload-zone.has-file i {
+        color: #198754;
+    }
+    .preview-image {
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    .step {
+        display: flex;
+        align-items: center;
+        padding: 0 1.5rem;
+    }
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 0.5rem;
+        transition: all 0.3s;
+    }
+    .step.active .step-number {
+        background: #0d6efd;
+        color: white;
+    }
+    .step.completed .step-number {
+        background: #198754;
+        color: white;
+    }
+    .step-connector {
+        width: 60px;
+        height: 3px;
+        background: #e9ecef;
+    }
+    .step.completed + .step-connector,
+    .step-connector.completed {
+        background: #198754;
+    }
+    .ingredient-card {
+        border-left: 4px solid #0d6efd;
+        transition: all 0.2s;
+    }
+    .ingredient-card:hover {
+        transform: translateX(5px);
+    }
+    .ingredient-card.matched {
+        border-left-color: #198754;
+    }
+    .ingredient-card.unmatched {
+        border-left-color: #dc3545;
+    }
+    .confidence-badge {
+        font-size: 0.75rem;
+    }
+    .match-select {
+        max-width: 100%;
+    }
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    .loading-text {
+        margin-top: 1rem;
+        font-size: 1.2rem;
+        color: #495057;
+    }
+    .quote-summary {
+        background: linear-gradient(135deg, #198754 0%, #157347 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+    .ocr-result-card {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .customer-card {
+        border-left: 4px solid #0d6efd;
+    }
+    .raw-material-item:hover {
+        background-color: #e7f1ff;
+    }
+    .action-btn {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+    }
+    .action-btn i {
+        font-size: 1.2rem;
+    }
+    .sent-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #198754;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="/Prescriptions">Orçamentos</a></li>
+                    <li class="breadcrumb-item active">Novo Orçamento</li>
+                </ol>
+            </nav>
+            <h4 class="mb-0">
+                <i class="bi bi-file-earmark-medical text-success"></i> Processar Receita
+            </h4>
+        </div>
+        <a href="/Prescriptions" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator mb-4">
+        <div class="step active" id="step1">
+            <div class="step-number">1</div>
+            <span>Upload</span>
+        </div>
+        <div class="step-connector" id="connector1"></div>
+        <div class="step" id="step2">
+            <div class="step-number">2</div>
+            <span>OCR</span>
+        </div>
+        <div class="step-connector" id="connector2"></div>
+        <div class="step" id="step3">
+            <div class="step-number">3</div>
+            <span>Revisar</span>
+        </div>
+        <div class="step-connector" id="connector3"></div>
+        <div class="step" id="step4">
+            <div class="step-number">4</div>
+            <span>Orçamento</span>
+        </div>
+    </div>
+
+    <!-- Step 1: Upload -->
+    <div id="uploadSection">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <h5>Arraste a imagem da receita aqui</h5>
+                            <p class="text-muted mb-2">ou clique para selecionar</p>
+                            <small class="text-muted">Formatos: JPG, PNG, PDF (máx. 5MB)</small>
+                        </div>
+                        <input type="file" id="fileInput" class="d-none" accept="image/*,.pdf" onchange="handleFileSelect(event)">
+                        
+                        <!-- Preview -->
+                        <div id="previewSection" class="mt-4 d-none">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="bi bi-image"></i> Preview</h6>
+                                    <img id="previewImage" class="preview-image" src="" alt="Preview">
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="bi bi-info-circle"></i> Informações</h6>
+                                    <table class="table table-sm">
+                                        <tr><td>Arquivo:</td><td id="fileName">-</td></tr>
+                                        <tr><td>Tamanho:</td><td id="fileSize">-</td></tr>
+                                        <tr><td>Tipo:</td><td id="fileType">-</td></tr>
+                                    </table>
+                                    
+                                    <button class="btn btn-success btn-lg w-100 mt-3" onclick="processOcr()">
+                                        <i class="bi bi-cpu"></i> Processar com IA
+                                    </button>
+                                    <button class="btn btn-outline-secondary w-100 mt-2" onclick="resetUpload()">
+                                        <i class="bi bi-x-lg"></i> Remover
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2-3: OCR Results & Review -->
+    <div id="reviewSection" class="d-none">
+        <div class="row">
+            <!-- Coluna Esquerda: Imagem -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-image"></i> Receita Original</h6>
+                    </div>
+                    <div class="card-body p-2">
+                        <img id="reviewImage" class="w-100 rounded" src="" alt="Receita">
+                    </div>
+                </div>
+
+                <!-- Dados do Prescritor -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-person-badge"></i> Prescritor</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label small">Nome do Médico</label>
+                            <input type="text" class="form-control" id="doctorName" placeholder="Dr(a).">
+                        </div>
+                        <div class="row">
+                            <div class="col-8">
+                                <label class="form-label small">CRM</label>
+                                <input type="text" class="form-control" id="doctorCrm" placeholder="00000">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small">UF</label>
+                                <select class="form-select" id="doctorCrmState">
+                                    <option value="">-</option>
+                                    <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                                    <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                                    <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                                    <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                                    <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                                    <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+                                    <option>SP</option><option>SE</option><option>TO</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cliente -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-person"></i> Cliente</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="customerSearch" placeholder="Nome, CPF ou Telefone">
+                            <button class="btn btn-outline-primary" onclick="searchCustomer()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Cliente Encontrado -->
+                        <div id="customerResult" class="d-none">
+                            <div class="alert alert-success py-2 mb-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong id="customerName">-</strong>
+                                        <br><small id="customerPhone">-</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="clearCustomer()">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Novo Cliente -->
+                        <div class="text-center mb-2">
+                            <button class="btn btn-sm btn-link" onclick="toggleNewCustomer()">
+                                <i class="bi bi-plus-circle"></i> Novo Cliente
+                            </button>
+                        </div>
+                        <div id="newCustomerForm" class="d-none">
+                            <div class="mb-2">
+                                <input type="text" class="form-control form-control-sm" id="newCustomerName" placeholder="Nome completo *">
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" class="form-control form-control-sm" id="newCustomerPhone" placeholder="Telefone/WhatsApp *">
+                            </div>
+                            <div class="mb-2">
+                                <input type="email" class="form-control form-control-sm" id="newCustomerEmail" placeholder="E-mail (opcional)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Ingredientes e Fórmula -->
+            <div class="col-lg-8">
+                <!-- Ingredientes -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="bi bi-capsule"></i> Ingredientes Identificados</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary" id="ingredientCount">0</span>
+                            <button class="btn btn-sm btn-success" onclick="toggleAddIngredient()">
+                                <i class="bi bi-plus-lg"></i> Adicionar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário Adicionar Ingrediente -->
+                    <div id="addIngredientForm" class="card-body border-bottom bg-light d-none">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-5">
+                                <label class="form-label small">Matéria-Prima</label>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="searchRawMaterial" 
+                                           placeholder="Buscar por nome ou código..." 
+                                           autocomplete="off"
+                                           onkeyup="searchRawMaterials(this.value)">
+                                    <div id="rawMaterialResults" class="position-absolute w-100 bg-white border rounded-bottom shadow-sm d-none" 
+                                         style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                    </div>
+                                </div>
+                                <input type="hidden" id="selectedRawMaterialId">
+                                <input type="hidden" id="selectedRawMaterialName">
+                                <input type="hidden" id="selectedRawMaterialUnitCost">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Quantidade</label>
+                                <input type="number" class="form-control" id="addQuantity" placeholder="Ex: 500" step="0.01" min="0.01">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Unidade</label>
+                                <select class="form-select" id="addUnit">
+                                    <option value="mg">mg</option>
+                                    <option value="mcg">mcg</option>
+                                    <option value="g">g</option>
+                                    <option value="ml">mL</option>
+                                    <option value="UI">UI</option>
+                                    <option value="%">%</option>
+                                    <option value="qsp">qsp</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary w-100" onclick="addIngredientManual()">
+                                    <i class="bi bi-plus-circle"></i> Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="selectedRawMaterialInfo" class="mt-2 d-none">
+                            <small class="text-success">
+                                <i class="bi bi-check-circle"></i> 
+                                <span id="selectedRawMaterialDisplay"></span>
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body ocr-result-card" id="ingredientsList">
+                        <!-- Ingredientes serão inseridos aqui -->
+                        <div id="noIngredientsMessage" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mb-0 mt-2">Nenhum ingrediente identificado</p>
+                            <small>Clique em "Adicionar" para incluir manualmente</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações da Fórmula -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-prescription2"></i> Informações da Fórmula</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small">Forma Farmacêutica</label>
+                                <select class="form-select" id="pharmaceuticalForm">
+                                    <option value="CAPSULAS">Cápsulas</option>
+                                    <option value="COMPRIMIDOS">Comprimidos</option>
+                                    <option value="CREME">Creme</option>
+                                    <option value="GEL">Gel</option>
+                                    <option value="LOCAO">Loção</option>
+                                    <option value="POMADA">Pomada</option>
+                                    <option value="SOLUCAO">Solução</option>
+                                    <option value="XAROPE">Xarope</option>
+                                    <option value="PO">Pó</option>
+                                    <option value="SACHE">Sachê</option>
+                                    <option value="SUPOSITORIO">Supositório</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small">Quantidade Total</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="totalQuantity" value="30" min="1">
+                                    <select class="form-select" id="quantityUnit" style="max-width: 80px;">
+                                        <option value="un">un</option>
+                                        <option value="ml">ml</option>
+                                        <option value="g">g</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small">Uso</label>
+                                <select class="form-select" id="usageType">
+                                    <option value="ORAL">Interno/Oral</option>
+                                    <option value="TOPICO">Tópico/Externo</option>
+                                    <option value="OFTALMICO">Oftálmico</option>
+                                    <option value="NASAL">Nasal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <label class="form-label small">Posologia / Instruções</label>
+                                <textarea class="form-control" id="instructions" rows="2" placeholder="Ex: Tomar 1 cápsula ao dia"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="backToUpload()">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </button>
+                    <button class="btn btn-success btn-lg flex-grow-1" onclick="generateQuote()">
+                        <i class="bi bi-calculator"></i> Gerar Orçamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Quote Result -->
+    <div id="quoteSection" class="d-none">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <!-- Resumo do Orçamento -->
+                <div class="quote-summary mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-1"><i class="bi bi-check-circle"></i> Orçamento Gerado!</h4>
+                            <p class="mb-0 opacity-75">Código: <strong id="quoteCode">-</strong></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h2 class="mb-0" id="quoteTotalValue">R$ 0,00</h2>
+                            <small class="opacity-75">Valor Total</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Coluna Esquerda: Cliente, Médico e Ações -->
+                    <div class="col-lg-4">
+                        <!-- Card do Cliente -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-person-circle text-primary"></i> Cliente</h6>
+                                <button class="btn btn-sm btn-outline-primary" onclick="toggleQuoteCustomerEdit()">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <!-- Visualização do Cliente -->
+                                <div id="quoteCustomerView">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 45px; height: 45px; font-size: 1.2rem;">
+                                            <i class="bi bi-person"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0" id="quoteCustomerName">Não informado</h6>
+                                            <small class="text-muted" id="quoteCustomerPhone">-</small>
+                                            <div id="quoteCustomerEmailDisplay" class="text-muted small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Edição do Cliente -->
+                                <div id="quoteCustomerEdit" class="d-none">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control" id="quoteCustomerSearch" placeholder="Buscar cliente...">
+                                        <button class="btn btn-outline-primary" onclick="searchQuoteCustomer()">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
+                                    <div id="quoteCustomerSearchResults" class="list-group list-group-flush mb-2 d-none" style="max-height: 150px; overflow-y: auto;"></div>
+                                    
+                                    <div class="border-top pt-2 mt-2">
+                                        <small class="text-muted d-block mb-2">Ou cadastre novo:</small>
+                                        <input type="text" class="form-control form-control-sm mb-1" id="quoteNewCustomerName" placeholder="Nome completo *">
+                                        <input type="text" class="form-control form-control-sm mb-1" id="quoteNewCustomerPhone" placeholder="Telefone/WhatsApp *">
+                                        <input type="email" class="form-control form-control-sm mb-2" id="quoteNewCustomerEmail" placeholder="E-mail (opcional)">
+                                        <button class="btn btn-sm btn-success w-100" onclick="saveQuoteNewCustomer()">
+                                            <i class="bi bi-check"></i> Salvar Cliente
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card do Médico/Prescritor -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-hospital text-info"></i> Prescritor</h6>
+                                <button class="btn btn-sm btn-outline-info" onclick="toggleQuoteDoctorEdit()">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <!-- Visualização do Médico -->
+                                <div id="quoteDoctorView">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center" 
+                                             style="width: 45px; height: 45px; font-size: 1.2rem;">
+                                            <i class="bi bi-person-badge"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0" id="quoteDoctorName">Não informado</h6>
+                                            <small class="text-muted" id="quoteDoctorCrm">-</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Edição do Médico -->
+                                <div id="quoteDoctorEdit" class="d-none">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control" id="quoteDoctorSearch" placeholder="Buscar por nome ou CRM...">
+                                        <button class="btn btn-outline-info" onclick="searchQuoteDoctor()">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
+                                    <div id="quoteDoctorSearchResults" class="list-group list-group-flush mb-2 d-none" style="max-height: 150px; overflow-y: auto;"></div>
+                                    
+                                    <div class="border-top pt-2 mt-2">
+                                        <small class="text-muted d-block mb-2">Ou informe manualmente:</small>
+                                        <input type="text" class="form-control form-control-sm mb-1" id="quoteNewDoctorName" placeholder="Nome do médico *">
+                                        <div class="row g-1 mb-2">
+                                            <div class="col-8">
+                                                <input type="text" class="form-control form-control-sm" id="quoteNewDoctorCrm" placeholder="CRM *">
+                                            </div>
+                                            <div class="col-4">
+                                                <select class="form-select form-select-sm" id="quoteNewDoctorCrmState">
+                                                    <option value="SE">SE</option>
+                                                    <option value="BA">BA</option>
+                                                    <option value="AL">AL</option>
+                                                    <option value="SP">SP</option>
+                                                    <option value="RJ">RJ</option>
+                                                    <option value="MG">MG</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <input type="text" class="form-control form-control-sm mb-2" id="quoteNewDoctorSpecialty" placeholder="Especialidade (opcional)">
+                                        <button class="btn btn-sm btn-info w-100 text-white" onclick="saveQuoteDoctor()">
+                                            <i class="bi bi-check"></i> Confirmar Prescritor
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prazo e Validade -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-body py-2">
+                                <div class="row text-center">
+                                    <div class="col-6 border-end">
+                                        <div class="text-muted small">Prazo</div>
+                                        <strong id="quoteEstimatedDays">3 dias</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-muted small">Válido até</div>
+                                        <strong id="quoteValidUntil">-</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações de Envio -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0"><i class="bi bi-send"></i> Enviar Orçamento</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success position-relative" id="btnWhatsApp" onclick="sendWhatsApp()">
+                                        <i class="bi bi-whatsapp me-2"></i> WhatsApp
+                                        <span class="sent-badge d-none" id="whatsappSentBadge"><i class="bi bi-check"></i></span>
+                                    </button>
+                                    <button class="btn btn-primary position-relative" id="btnEmail" onclick="sendEmail()">
+                                        <i class="bi bi-envelope me-2"></i> E-mail
+                                        <span class="sent-badge d-none" id="emailSentBadge"><i class="bi bi-check"></i></span>
+                                    </button>
+                                    <div class="btn-group">
+                                        <button class="btn btn-outline-secondary" onclick="printQuote()">
+                                            <i class="bi bi-printer"></i> Imprimir
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="copyLink()">
+                                            <i class="bi bi-link-45deg"></i> Copiar Link
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Central: Itens do Orçamento -->
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-capsule text-success"></i> Itens da Fórmula</h6>
+                                <button class="btn btn-sm btn-success" onclick="toggleAddQuoteItem()">
+                                    <i class="bi bi-plus-lg"></i> Adicionar
+                                </button>
+                            </div>
+                            
+                            <!-- Form Adicionar Item -->
+                            <div id="addQuoteItemForm" class="card-body border-bottom bg-light d-none">
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="position-relative">
+                                            <input type="text" class="form-control form-control-sm" id="quoteItemSearch" 
+                                                   placeholder="Buscar matéria-prima..." autocomplete="off"
+                                                   onkeyup="searchQuoteRawMaterial(this.value)">
+                                            <div id="quoteItemSearchResults" class="position-absolute w-100 bg-white border rounded shadow-sm d-none" 
+                                                 style="z-index: 1050; max-height: 200px; overflow-y: auto;"></div>
+                                        </div>
+                                        <input type="hidden" id="quoteItemSelectedId">
+                                        <input type="hidden" id="quoteItemSelectedName">
+                                        <input type="hidden" id="quoteItemSelectedCost">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" class="form-control form-control-sm" id="quoteItemQuantity" placeholder="Qtd" step="0.01">
+                                    </div>
+                                    <div class="col-6">
+                                        <select class="form-select form-select-sm" id="quoteItemUnit">
+                                            <option value="mg">mg</option>
+                                            <option value="mcg">mcg</option>
+                                            <option value="g">g</option>
+                                            <option value="ml">mL</option>
+                                            <option value="UI">UI</option>
+                                            <option value="%">%</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-sm btn-success w-100" onclick="addQuoteItem()">
+                                            <i class="bi bi-plus-circle"></i> Adicionar Item
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 50%">Componente</th>
+                                                <th class="text-center">Qtd</th>
+                                                <th class="text-end">Custo</th>
+                                                <th style="width: 40px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="quoteItemsBody">
+                                            <!-- Itens serão inseridos aqui -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="noQuoteItemsMsg" class="text-center text-muted py-4 d-none">
+                                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 mt-2">Nenhum item adicionado</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informações da Fórmula -->
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0"><i class="bi bi-prescription2 text-warning"></i> Dados da Fórmula</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small mb-1">Forma Farmacêutica</label>
+                                        <select class="form-select form-select-sm" id="quotePharmForm">
+                                            <option value="Cápsulas">Cápsulas</option>
+                                            <option value="Creme">Creme</option>
+                                            <option value="Gel">Gel</option>
+                                            <option value="Loção">Loção</option>
+                                            <option value="Solução">Solução</option>
+                                            <option value="Pomada">Pomada</option>
+                                            <option value="Xarope">Xarope</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-3">
+                                        <label class="form-label small mb-1">Quantidade</label>
+                                        <input type="number" class="form-control form-control-sm" id="quoteTotalQty" value="30">
+                                    </div>
+                                    <div class="col-3">
+                                        <label class="form-label small mb-1">Unidade</label>
+                                        <select class="form-select form-select-sm" id="quoteTotalUnit">
+                                            <option value="un">un</option>
+                                            <option value="g">g</option>
+                                            <option value="ml">ml</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small mb-1">Posologia</label>
+                                        <input type="text" class="form-control form-control-sm" id="quoteInstructions" placeholder="Ex: Tomar 1 cápsula ao dia">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Valores -->
+                    <div class="col-lg-3">
+                        <div class="card shadow-sm mb-3">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0"><i class="bi bi-calculator text-danger"></i> Valores</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <td>Materiais</td>
+                                            <td class="text-end fw-bold" id="quoteMaterialsCost">R$ 0,00</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Markup
+                                                <input type="number" class="form-control form-control-sm d-inline-block ms-1" 
+                                                       id="quoteMarkupInput" value="150" min="0" max="500" 
+                                                       style="width: 60px;" onchange="recalculateQuote()">%
+                                            </td>
+                                            <td class="text-end" id="quoteMarkupValue">R$ 0,00</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Mão de Obra</td>
+                                            <td class="text-end">
+                                                <input type="number" class="form-control form-control-sm text-end" 
+                                                       id="quoteLaborInput" value="10" min="0" step="0.01"
+                                                       style="width: 80px;" onchange="recalculateQuote()">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Embalagem</td>
+                                            <td class="text-end">
+                                                <input type="number" class="form-control form-control-sm text-end" 
+                                                       id="quotePackagingInput" value="3" min="0" step="0.01"
+                                                       style="width: 80px;" onchange="recalculateQuote()">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Desconto (%)</td>
+                                            <td class="text-end">
+                                                <input type="number" class="form-control form-control-sm text-end" 
+                                                       id="quoteDiscountInput" value="0" min="0" max="100" step="0.01"
+                                                       style="width: 80px;" onchange="recalculateQuote()">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-success">
+                                            <td><strong>TOTAL</strong></td>
+                                            <td class="text-end"><strong class="fs-5" id="quoteFinalPrice">R$ 0,00</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                
+                                <button class="btn btn-warning w-100 mt-3" onclick="updateQuotePricing()">
+                                    <i class="bi bi-arrow-repeat"></i> Atualizar Valores
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botões Finais -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-secondary" onclick="createNewQuote()">
+                                <i class="bi bi-plus-lg"></i> Novo Orçamento
+                            </button>
+                            <a href="/Prescriptions" class="btn btn-primary">
+                                <i class="bi bi-list"></i> Ver Orçamentos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay d-none" id="loadingOverlay">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+    <p class="loading-text" id="loadingText">Processando...</p>
+</div>
+
+<!-- Modal Email -->
+<div class="modal fade" id="emailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-envelope me-2"></i>Enviar por E-mail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">E-mail do Cliente</label>
+                    <input type="email" class="form-control" id="emailTo" placeholder="cliente@email.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mensagem (opcional)</label>
+                    <textarea class="form-control" id="emailMessage" rows="3" placeholder="Mensagem personalizada..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSendEmail()">
+                    <i class="bi bi-send"></i> Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let uploadedFile = null;
+let fileBase64 = null;
+let ocrResult = null;
+let ingredientMatches = [];
+let selectedCustomerId = null;
+let selectedCustomerData = null;
+let createdQuote = null;
+
+// Step 4 - Variáveis do orçamento
+let quoteItems = [];
+let quoteCustomerData = null;
+let quoteDoctorData = null;
+
+// ========== UPLOAD ==========
+
+document.addEventListener('DOMContentLoaded', function() {
+    const zone = document.getElementById('uploadZone');
+    
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+    
+    zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+    });
+    
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) processFile(file);
+    });
+});
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) processFile(file);
+}
+
+function processFile(file) {
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Arquivo muito grande. Máximo 5MB.', 'error');
+        return;
+    }
+    
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+        showToast('Formato não suportado. Use JPG, PNG ou PDF.', 'error');
+        return;
+    }
+    
+    uploadedFile = file;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        fileBase64 = e.target.result.split(',')[1];
+        
+        document.getElementById('previewImage').src = e.target.result;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = formatFileSize(file.size);
+        document.getElementById('fileType').textContent = file.type;
+        
+        document.getElementById('uploadZone').classList.add('has-file');
+        document.getElementById('previewSection').classList.remove('d-none');
+    };
+    reader.readAsDataURL(file);
+}
+
+function resetUpload() {
+    uploadedFile = null;
+    fileBase64 = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadZone').classList.remove('has-file');
+    document.getElementById('previewSection').classList.add('d-none');
+}
+
+// ========== OCR PROCESSING ==========
+
+async function processOcr() {
+    if (!fileBase64) {
+        showToast('Selecione uma imagem primeiro', 'warning');
+        return;
+    }
+    
+    showLoading(true, 'Analisando receita com IA...');
+    setStep(2);
+    
+    try {
+        const response = await fetch('/api/PrescriptionQuotes/quick-process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                imageBase64: fileBase64,
+                imageType: uploadedFile.type
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.quote) {
+            showQuoteResult(result.quote);
+            setStep(4);
+        } else if (result.ocrResult) {
+            ocrResult = result.ocrResult;
+            displayOcrResults(result);
+            setStep(3);
+        } else {
+            throw new Error(result.message || 'Erro no processamento');
+        }
+    } catch (error) {
+        console.error('Erro OCR:', error);
+        showToast('Erro: ' + error.message, 'error');
+        setStep(1);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayOcrResults(result) {
+    document.getElementById('reviewImage').src = document.getElementById('previewImage').src;
+    
+    if (result.ocrResult) {
+        document.getElementById('doctorName').value = result.ocrResult.doctorName || '';
+        document.getElementById('doctorCrm').value = result.ocrResult.doctorCrm || '';
+        document.getElementById('doctorCrmState').value = result.ocrResult.doctorCrmState || '';
+        
+        if (result.ocrResult.pharmaceuticalForm) {
+            document.getElementById('pharmaceuticalForm').value = result.ocrResult.pharmaceuticalForm;
+        }
+        if (result.ocrResult.totalQuantity) {
+            document.getElementById('totalQuantity').value = result.ocrResult.totalQuantity;
+        }
+        if (result.ocrResult.instructions) {
+            document.getElementById('instructions').value = result.ocrResult.instructions;
+        }
+    }
+    
+    if (result.matchedIngredients) {
+        ingredientMatches = result.matchedIngredients;
+        renderIngredients();
+    }
+    
+    document.getElementById('uploadSection').classList.add('d-none');
+    document.getElementById('reviewSection').classList.remove('d-none');
+}
+
+function renderIngredients() {
+    const container = document.getElementById('ingredientsList');
+    const noIngredientsMsg = document.getElementById('noIngredientsMessage');
+    
+    document.getElementById('ingredientCount').textContent = ingredientMatches.length;
+    
+    // Mostrar/esconder mensagem de vazio
+    if (ingredientMatches.length === 0) {
+        container.innerHTML = '';
+        if (noIngredientsMsg) {
+            noIngredientsMsg.classList.remove('d-none');
+            container.appendChild(noIngredientsMsg);
+        }
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    ingredientMatches.forEach((ingredient, index) => {
+        const hasMatch = ingredient.matchedRawMaterial != null;
+        const confidence = ingredient.confidence || (hasMatch ? 100 : 0);
+        const confidenceClass = confidence >= 80 ? 'success' : confidence >= 50 ? 'warning' : 'danger';
+        const name = ingredient.matchedRawMaterial?.name || ingredient.originalName || ingredient.name || 'Ingrediente';
+        
+        container.innerHTML += `
+            <div class="card mb-2 ingredient-card ${hasMatch ? 'matched' : 'unmatched'}">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <strong class="me-2">${escapeHtml(name)}</strong>
+                                ${hasMatch ? '<span class="badge bg-success confidence-badge"><i class="bi bi-check"></i></span>' : `<span class="badge bg-${confidenceClass} confidence-badge">${confidence}%</span>`}
+                            </div>
+                            <small class="text-muted">${ingredient.quantity || ''} ${ingredient.unit || ''}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeIngredient(${index})">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    ${!hasMatch && ingredient.suggestions && ingredient.suggestions.length > 0 ? `
+                    <div class="mt-2">
+                        <select class="form-select form-select-sm match-select" onchange="updateMatch(${index}, this.value)">
+                            <option value="">Selecione a matéria-prima...</option>
+                            ${ingredient.suggestions.map(s => 
+                                `<option value="${s.id}" ${ingredient.matchedRawMaterial?.id === s.id ? 'selected' : ''}>
+                                    ${escapeHtml(s.name)} ${s.dcbCode ? '(' + s.dcbCode + ')' : ''}
+                                </option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+}
+
+function updateMatch(index, rawMaterialId) {
+    if (rawMaterialId && ingredientMatches[index].suggestions) {
+        ingredientMatches[index].matchedRawMaterial = ingredientMatches[index].suggestions.find(s => s.id === rawMaterialId);
+    } else {
+        ingredientMatches[index].matchedRawMaterial = null;
+    }
+    renderIngredients();
+}
+
+function removeIngredient(index) {
+    ingredientMatches.splice(index, 1);
+    renderIngredients();
+}
+
+// ========== ADICIONAR INGREDIENTE MANUAL ==========
+
+let searchTimeout = null;
+
+function toggleAddIngredient() {
+    const form = document.getElementById('addIngredientForm');
+    form.classList.toggle('d-none');
+    
+    if (!form.classList.contains('d-none')) {
+        document.getElementById('searchRawMaterial').focus();
+    }
+    
+    // Limpar campos
+    document.getElementById('searchRawMaterial').value = '';
+    document.getElementById('addQuantity').value = '';
+    document.getElementById('addUnit').value = 'mg';
+    document.getElementById('selectedRawMaterialId').value = '';
+    document.getElementById('selectedRawMaterialName').value = '';
+    document.getElementById('selectedRawMaterialInfo').classList.add('d-none');
+    document.getElementById('rawMaterialResults').classList.add('d-none');
+}
+
+async function searchRawMaterials(query) {
+    const resultsDiv = document.getElementById('rawMaterialResults');
+    
+    if (!query || query.length < 2) {
+        resultsDiv.classList.add('d-none');
+        return;
+    }
+    
+    // Debounce
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`/api/RawMaterials?search=${encodeURIComponent(query)}&pageSize=10`);
+            
+            if (!response.ok) {
+                throw new Error('Erro na busca');
+            }
+            
+            const result = await response.json();
+            const materials = result.data || result || [];
+            
+            if (materials && materials.length > 0) {
+                resultsDiv.innerHTML = materials.map(m => `
+                    <div class="p-2 border-bottom cursor-pointer raw-material-item" 
+                         style="cursor: pointer;"
+                         onclick="selectRawMaterial('${m.id}', '${escapeHtml(m.name)}', ${m.unitCost || 0}, '${m.dcbCode || ''}')">
+                        <div class="fw-bold">${escapeHtml(m.name)}</div>
+                        <small class="text-muted">
+                            ${m.dcbCode ? `DCB: ${m.dcbCode} | ` : ''}
+                            ${m.casNumber || ''} 
+                            ${m.stockStatus === 'NORMAL' || m.stockStatus === 'EXCESSO' ? '<span class="text-success">• Em estoque</span>' : '<span class="text-warning">• Estoque baixo</span>'}
+                        </small>
+                    </div>
+                `).join('');
+                resultsDiv.classList.remove('d-none');
+            } else {
+                resultsDiv.innerHTML = '<div class="p-3 text-muted text-center">Nenhuma matéria-prima encontrada</div>';
+                resultsDiv.classList.remove('d-none');
+            }
+        } catch (error) {
+            console.error('Erro na busca:', error);
+            resultsDiv.innerHTML = '<div class="p-3 text-danger text-center">Erro ao buscar</div>';
+            resultsDiv.classList.remove('d-none');
+        }
+    }, 300);
+}
+
+function selectRawMaterial(id, name, unitCost, dcbCode) {
+    document.getElementById('selectedRawMaterialId').value = id;
+    document.getElementById('selectedRawMaterialName').value = name;
+    document.getElementById('selectedRawMaterialUnitCost').value = unitCost;
+    document.getElementById('searchRawMaterial').value = name;
+    document.getElementById('rawMaterialResults').classList.add('d-none');
+    
+    // Mostrar info selecionada
+    document.getElementById('selectedRawMaterialDisplay').textContent = `${name}${dcbCode ? ' (DCB: ' + dcbCode + ')' : ''}`;
+    document.getElementById('selectedRawMaterialInfo').classList.remove('d-none');
+    
+    // Focar no campo quantidade
+    document.getElementById('addQuantity').focus();
+}
+
+function addIngredientManual() {
+    const rawMaterialId = document.getElementById('selectedRawMaterialId').value;
+    const rawMaterialName = document.getElementById('selectedRawMaterialName').value;
+    const unitCost = parseFloat(document.getElementById('selectedRawMaterialUnitCost').value) || 0;
+    const quantity = document.getElementById('addQuantity').value;
+    const unit = document.getElementById('addUnit').value;
+    
+    if (!rawMaterialId) {
+        showToast('Selecione uma matéria-prima', 'warning');
+        return;
+    }
+    
+    if (!quantity || parseFloat(quantity) <= 0) {
+        showToast('Informe a quantidade', 'warning');
+        return;
+    }
+    
+    // Verificar se já existe
+    const exists = ingredientMatches.some(i => i.matchedRawMaterial?.id === rawMaterialId);
+    if (exists) {
+        showToast('Esta matéria-prima já foi adicionada', 'warning');
+        return;
+    }
+    
+    // Adicionar ao array
+    ingredientMatches.push({
+        originalName: rawMaterialName,
+        name: rawMaterialName,
+        quantity: quantity,
+        unit: unit,
+        confidence: 100,
+        matchedRawMaterial: {
+            id: rawMaterialId,
+            name: rawMaterialName,
+            unitCost: unitCost
+        },
+        suggestions: []
+    });
+    
+    // Renderizar
+    renderIngredients();
+    
+    // Limpar e fechar formulário
+    document.getElementById('searchRawMaterial').value = '';
+    document.getElementById('addQuantity').value = '';
+    document.getElementById('selectedRawMaterialId').value = '';
+    document.getElementById('selectedRawMaterialName').value = '';
+    document.getElementById('selectedRawMaterialInfo').classList.add('d-none');
+    
+    showToast(`${rawMaterialName} adicionado`, 'success');
+    
+    // Manter form aberto para adicionar mais
+    document.getElementById('searchRawMaterial').focus();
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+    const resultsDiv = document.getElementById('rawMaterialResults');
+    const searchInput = document.getElementById('searchRawMaterial');
+    
+    if (resultsDiv && searchInput && !resultsDiv.contains(e.target) && e.target !== searchInput) {
+        resultsDiv.classList.add('d-none');
+    }
+});
+
+// ========== CUSTOMER ==========
+
+async function searchCustomer() {
+    const search = document.getElementById('customerSearch').value.trim();
+    if (!search) {
+        showToast('Digite um termo de busca', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/Customers/search?query=${encodeURIComponent(search)}`);
+        const result = await response.json();
+        
+        if (result && result.length > 0) {
+            const customer = result[0];
+            selectedCustomerId = customer.id;
+            selectedCustomerData = customer;
+            document.getElementById('customerName').textContent = customer.fullName;
+            document.getElementById('customerPhone').textContent = customer.phone || customer.whatsApp || '-';
+            document.getElementById('customerResult').classList.remove('d-none');
+            document.getElementById('newCustomerForm').classList.add('d-none');
+        } else {
+            showToast('Cliente não encontrado', 'warning');
+            selectedCustomerId = null;
+            selectedCustomerData = null;
+        }
+    } catch (error) {
+        showToast('Erro ao buscar cliente', 'error');
+    }
+}
+
+function clearCustomer() {
+    selectedCustomerId = null;
+    selectedCustomerData = null;
+    document.getElementById('customerResult').classList.add('d-none');
+    document.getElementById('customerSearch').value = '';
+}
+
+function toggleNewCustomer() {
+    const form = document.getElementById('newCustomerForm');
+    form.classList.toggle('d-none');
+    document.getElementById('customerResult').classList.add('d-none');
+    selectedCustomerId = null;
+    selectedCustomerData = null;
+}
+
+// ========== GENERATE QUOTE ==========
+
+async function generateQuote() {
+    const validIngredients = ingredientMatches.filter(i => i.matchedRawMaterial);
+    
+    if (validIngredients.length === 0) {
+        showToast('Selecione pelo menos um ingrediente', 'warning');
+        return;
+    }
+    
+    // Capturar dados do cliente
+    const customerName = selectedCustomerData?.fullName || document.getElementById('newCustomerName')?.value || null;
+    const customerPhone = selectedCustomerData?.phone || selectedCustomerData?.whatsApp || document.getElementById('newCustomerPhone')?.value || null;
+    const customerEmail = selectedCustomerData?.email || document.getElementById('newCustomerEmail')?.value || null;
+    
+    showLoading(true, 'Gerando orçamento...');
+    
+    try {
+        const payload = {
+            imageBase64: fileBase64,
+            imageType: uploadedFile.type,
+            customerId: selectedCustomerId,
+            customerName: customerName,
+            customerPhone: customerPhone,
+            customerEmail: customerEmail,
+            doctorName: document.getElementById('doctorName').value,
+            doctorCrm: document.getElementById('doctorCrm').value,
+            doctorCrmState: document.getElementById('doctorCrmState').value,
+            pharmaceuticalForm: document.getElementById('pharmaceuticalForm').value,
+            totalQuantity: parseInt(document.getElementById('totalQuantity').value) || 30,
+            quantityUnit: document.getElementById('quantityUnit').value,
+            usageType: document.getElementById('usageType').value,
+            instructions: document.getElementById('instructions').value,
+            confirmedIngredients: validIngredients.map(i => ({
+                rawMaterialId: i.matchedRawMaterial.id,
+                name: i.matchedRawMaterial.name,
+                quantity: parseFloat(i.quantity) || 1,
+                unit: i.unit || 'mg'
+            }))
+        };
+        
+        const response = await fetch('/api/PrescriptionQuotes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || 'Erro ao gerar orçamento');
+        }
+        
+        showQuoteResult(result);
+        setStep(4);
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('Erro: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function showQuoteResult(quote) {
+    createdQuote = quote;
+    
+    document.getElementById('reviewSection').classList.add('d-none');
+    document.getElementById('uploadSection').classList.add('d-none');
+    document.getElementById('quoteSection').classList.remove('d-none');
+    
+    // Dados básicos
+    document.getElementById('quoteCode').textContent = quote.code;
+    document.getElementById('quoteTotalValue').textContent = formatMoney(quote.finalPrice);
+    document.getElementById('quoteMaterialsCost').textContent = formatMoney(quote.materialsCost);
+    document.getElementById('quoteMarkupInput').value = quote.markupPercentage || 150;
+    document.getElementById('quoteMarkupValue').textContent = formatMoney(quote.markupValue);
+    document.getElementById('quoteLaborInput').value = quote.laborCost || 10;
+    document.getElementById('quotePackagingInput').value = quote.packagingCost || 3;
+    document.getElementById('quoteDiscountInput').value = quote.discountPercentage || 0;
+    document.getElementById('quoteFinalPrice').textContent = formatMoney(quote.finalPrice);
+    
+    // Dados do cliente
+    quoteCustomerData = {
+        id: quote.customerId || selectedCustomerId,
+        name: quote.customerName || selectedCustomerData?.fullName || document.getElementById('newCustomerName')?.value || '',
+        phone: quote.customerPhone || selectedCustomerData?.phone || document.getElementById('newCustomerPhone')?.value || '',
+        email: quote.customerEmail || selectedCustomerData?.email || document.getElementById('newCustomerEmail')?.value || ''
+    };
+    updateQuoteCustomerDisplay();
+    
+    // Dados do médico
+    quoteDoctorData = {
+        name: quote.doctorName || document.getElementById('doctorName')?.value || '',
+        crm: quote.doctorCrm || document.getElementById('doctorCrm')?.value || '',
+        crmState: quote.doctorCrmState || document.getElementById('doctorCrmState')?.value || 'SE',
+        specialty: quote.doctorSpecialty || ''
+    };
+    updateQuoteDoctorDisplay();
+    
+    // Dados da fórmula
+    document.getElementById('quotePharmForm').value = quote.pharmaceuticalForm || 'Cápsulas';
+    document.getElementById('quoteTotalQty').value = quote.totalQuantityNumeric || 30;
+    document.getElementById('quoteTotalUnit').value = quote.totalQuantityUnit || 'un';
+    document.getElementById('quoteInstructions').value = quote.instructions || '';
+    
+    // Prazo e validade
+    document.getElementById('quoteEstimatedDays').textContent = (quote.estimatedDays || 3) + ' dias';
+    if (quote.validUntil) {
+        document.getElementById('quoteValidUntil').textContent = new Date(quote.validUntil).toLocaleDateString('pt-BR');
+    }
+    
+    // Popular itens do orçamento
+    quoteItems = [];
+    if (quote.items && quote.items.length > 0) {
+        quote.items.forEach(item => {
+            quoteItems.push({
+                rawMaterialId: item.rawMaterialId || item.id,
+                name: item.rawMaterialName || item.name,
+                quantity: item.quantity,
+                unit: item.unit || '',
+                unitCost: item.unitCost || 0,
+                totalCost: item.totalCost || item.cost || 0
+            });
+        });
+    } else if (ingredientMatches && ingredientMatches.length > 0) {
+        // Fallback: usar ingredientMatches se não tiver items
+        ingredientMatches.filter(i => i.matchedRawMaterial).forEach(ing => {
+            quoteItems.push({
+                rawMaterialId: ing.matchedRawMaterial.id,
+                name: ing.matchedRawMaterial.name,
+                quantity: parseFloat(ing.quantity) || 0,
+                unit: ing.unit || '',
+                unitCost: ing.matchedRawMaterial.unitCost || 0,
+                totalCost: 0
+            });
+        });
+    }
+    renderQuoteItems();
+    
+    // Reset estados de edição
+    document.getElementById('quoteCustomerEdit').classList.add('d-none');
+    document.getElementById('quoteCustomerView').classList.remove('d-none');
+    document.getElementById('quoteDoctorEdit').classList.add('d-none');
+    document.getElementById('quoteDoctorView').classList.remove('d-none');
+    document.getElementById('addQuoteItemForm').classList.add('d-none');
+    
+    // Reset badges de envio
+    document.getElementById('whatsappSentBadge').classList.add('d-none');
+    document.getElementById('emailSentBadge').classList.add('d-none');
+    
+    // Check if already sent
+    if (quote.whatsAppSent) {
+        document.getElementById('whatsappSentBadge').classList.remove('d-none');
+    }
+    if (quote.emailSent) {
+        document.getElementById('emailSentBadge').classList.remove('d-none');
+    }
+}
+
+// ========== QUOTE CUSTOMER FUNCTIONS ==========
+
+function updateQuoteCustomerDisplay() {
+    document.getElementById('quoteCustomerName').textContent = quoteCustomerData?.name || 'Não informado';
+    document.getElementById('quoteCustomerPhone').textContent = quoteCustomerData?.phone || '-';
+    
+    const emailDisplay = document.getElementById('quoteCustomerEmailDisplay');
+    if (quoteCustomerData?.email) {
+        emailDisplay.innerHTML = `<i class="bi bi-envelope me-1"></i>${quoteCustomerData.email}`;
+    } else {
+        emailDisplay.innerHTML = '';
+    }
+}
+
+function toggleQuoteCustomerEdit() {
+    const viewDiv = document.getElementById('quoteCustomerView');
+    const editDiv = document.getElementById('quoteCustomerEdit');
+    
+    if (editDiv.classList.contains('d-none')) {
+        viewDiv.classList.add('d-none');
+        editDiv.classList.remove('d-none');
+        document.getElementById('quoteCustomerSearch').focus();
+    } else {
+        viewDiv.classList.remove('d-none');
+        editDiv.classList.add('d-none');
+    }
+}
+
+async function searchQuoteCustomer() {
+    const search = document.getElementById('quoteCustomerSearch').value.trim();
+    if (!search || search.length < 2) {
+        showToast('Digite pelo menos 2 caracteres', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/Customers/search?query=${encodeURIComponent(search)}`);
+        const customers = await response.json();
+        
+        const resultsDiv = document.getElementById('quoteCustomerSearchResults');
+        
+        if (customers && customers.length > 0) {
+            resultsDiv.innerHTML = customers.slice(0, 5).map(c => `
+                <a href="#" class="list-group-item list-group-item-action py-2" 
+                   onclick="selectQuoteCustomer('${c.id}', '${escapeHtml(c.fullName)}', '${c.phone || c.whatsApp || ''}', '${c.email || ''}'); return false;">
+                    <strong>${escapeHtml(c.fullName)}</strong>
+                    <br><small class="text-muted">${c.phone || c.whatsApp || 'Sem telefone'}</small>
+                </a>
+            `).join('');
+            resultsDiv.classList.remove('d-none');
+        } else {
+            resultsDiv.innerHTML = '<div class="p-2 text-muted text-center">Nenhum cliente encontrado</div>';
+            resultsDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        showToast('Erro ao buscar', 'error');
+    }
+}
+
+function selectQuoteCustomer(id, name, phone, email) {
+    quoteCustomerData = { id, name, phone, email };
+    updateQuoteCustomerDisplay();
+    toggleQuoteCustomerEdit();
+    document.getElementById('quoteCustomerSearchResults').classList.add('d-none');
+    showToast('Cliente selecionado', 'success');
+}
+
+function saveQuoteNewCustomer() {
+    const name = document.getElementById('quoteNewCustomerName').value.trim();
+    const phone = document.getElementById('quoteNewCustomerPhone').value.trim();
+    const email = document.getElementById('quoteNewCustomerEmail').value.trim();
+    
+    if (!name) {
+        showToast('Informe o nome do cliente', 'warning');
+        return;
+    }
+    if (!phone) {
+        showToast('Informe o telefone', 'warning');
+        return;
+    }
+    
+    quoteCustomerData = { id: null, name, phone, email };
+    updateQuoteCustomerDisplay();
+    toggleQuoteCustomerEdit();
+    
+    // Limpar campos
+    document.getElementById('quoteNewCustomerName').value = '';
+    document.getElementById('quoteNewCustomerPhone').value = '';
+    document.getElementById('quoteNewCustomerEmail').value = '';
+    
+    showToast('Cliente adicionado', 'success');
+}
+
+// ========== QUOTE DOCTOR FUNCTIONS ==========
+
+function updateQuoteDoctorDisplay() {
+    document.getElementById('quoteDoctorName').textContent = quoteDoctorData?.name ? `Dr(a). ${quoteDoctorData.name}` : 'Não informado';
+    
+    let crmText = '-';
+    if (quoteDoctorData?.crm) {
+        crmText = `CRM ${quoteDoctorData.crm}`;
+        if (quoteDoctorData.crmState) crmText += `/${quoteDoctorData.crmState}`;
+        if (quoteDoctorData.specialty) crmText += ` - ${quoteDoctorData.specialty}`;
+    }
+    document.getElementById('quoteDoctorCrm').textContent = crmText;
+}
+
+function toggleQuoteDoctorEdit() {
+    const viewDiv = document.getElementById('quoteDoctorView');
+    const editDiv = document.getElementById('quoteDoctorEdit');
+    
+    if (editDiv.classList.contains('d-none')) {
+        viewDiv.classList.add('d-none');
+        editDiv.classList.remove('d-none');
+        
+        // Preencher com dados atuais
+        if (quoteDoctorData) {
+            document.getElementById('quoteNewDoctorName').value = quoteDoctorData.name || '';
+            document.getElementById('quoteNewDoctorCrm').value = quoteDoctorData.crm || '';
+            document.getElementById('quoteNewDoctorCrmState').value = quoteDoctorData.crmState || 'SE';
+            document.getElementById('quoteNewDoctorSpecialty').value = quoteDoctorData.specialty || '';
+        }
+    } else {
+        viewDiv.classList.remove('d-none');
+        editDiv.classList.add('d-none');
+    }
+}
+
+async function searchQuoteDoctor() {
+    const search = document.getElementById('quoteDoctorSearch').value.trim();
+    if (!search || search.length < 2) {
+        showToast('Digite pelo menos 2 caracteres', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/Prescribers/search?query=${encodeURIComponent(search)}`);
+        
+        if (!response.ok) {
+            // API pode não existir - mostrar formulário manual
+            document.getElementById('quoteDoctorSearchResults').innerHTML = '<div class="p-2 text-muted text-center">Use o formulário abaixo</div>';
+            document.getElementById('quoteDoctorSearchResults').classList.remove('d-none');
+            return;
+        }
+        
+        const doctors = await response.json();
+        const resultsDiv = document.getElementById('quoteDoctorSearchResults');
+        
+        if (doctors && doctors.length > 0) {
+            resultsDiv.innerHTML = doctors.slice(0, 5).map(d => `
+                <a href="#" class="list-group-item list-group-item-action py-2" 
+                   onclick="selectQuoteDoctor('${escapeHtml(d.name)}', '${d.crm || ''}', '${d.crmState || ''}', '${d.specialty || ''}'); return false;">
+                    <strong>Dr(a). ${escapeHtml(d.name)}</strong>
+                    <br><small class="text-muted">CRM ${d.crm}/${d.crmState}</small>
+                </a>
+            `).join('');
+            resultsDiv.classList.remove('d-none');
+        } else {
+            resultsDiv.innerHTML = '<div class="p-2 text-muted text-center">Nenhum prescritor encontrado</div>';
+            resultsDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        document.getElementById('quoteDoctorSearchResults').innerHTML = '<div class="p-2 text-muted text-center">Use o formulário abaixo</div>';
+        document.getElementById('quoteDoctorSearchResults').classList.remove('d-none');
+    }
+}
+
+function selectQuoteDoctor(name, crm, crmState, specialty) {
+    quoteDoctorData = { name, crm, crmState, specialty };
+    updateQuoteDoctorDisplay();
+    toggleQuoteDoctorEdit();
+    document.getElementById('quoteDoctorSearchResults').classList.add('d-none');
+    showToast('Prescritor selecionado', 'success');
+}
+
+function saveQuoteDoctor() {
+    const name = document.getElementById('quoteNewDoctorName').value.trim();
+    const crm = document.getElementById('quoteNewDoctorCrm').value.trim();
+    const crmState = document.getElementById('quoteNewDoctorCrmState').value;
+    const specialty = document.getElementById('quoteNewDoctorSpecialty').value.trim();
+    
+    if (!name) {
+        showToast('Informe o nome do médico', 'warning');
+        return;
+    }
+    
+    quoteDoctorData = { name, crm, crmState, specialty };
+    updateQuoteDoctorDisplay();
+    toggleQuoteDoctorEdit();
+    showToast('Prescritor confirmado', 'success');
+}
+
+// ========== QUOTE ITEMS FUNCTIONS ==========
+
+function renderQuoteItems() {
+    const tbody = document.getElementById('quoteItemsBody');
+    const noItemsMsg = document.getElementById('noQuoteItemsMsg');
+    
+    if (!quoteItems || quoteItems.length === 0) {
+        tbody.innerHTML = '';
+        noItemsMsg.classList.remove('d-none');
+        return;
+    }
+    
+    noItemsMsg.classList.add('d-none');
+    
+    tbody.innerHTML = quoteItems.map((item, index) => `
+        <tr>
+            <td>
+                <strong>${escapeHtml(item.name)}</strong>
+            </td>
+            <td class="text-center">${item.quantity} ${item.unit}</td>
+            <td class="text-end">${formatMoney(item.totalCost)}</td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger p-0 px-1" onclick="removeQuoteItem(${index})">
+                    <i class="bi bi-x"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Atualizar custo total de materiais
+    const totalMaterials = quoteItems.reduce((sum, item) => sum + (item.totalCost || 0), 0);
+    document.getElementById('quoteMaterialsCost').textContent = formatMoney(totalMaterials);
+}
+
+function toggleAddQuoteItem() {
+    const form = document.getElementById('addQuoteItemForm');
+    form.classList.toggle('d-none');
+    
+    if (!form.classList.contains('d-none')) {
+        document.getElementById('quoteItemSearch').value = '';
+        document.getElementById('quoteItemQuantity').value = '';
+        document.getElementById('quoteItemSelectedId').value = '';
+        document.getElementById('quoteItemSearch').focus();
+    }
+}
+
+let quoteItemSearchTimeout = null;
+
+async function searchQuoteRawMaterial(query) {
+    const resultsDiv = document.getElementById('quoteItemSearchResults');
+    
+    if (!query || query.length < 2) {
+        resultsDiv.classList.add('d-none');
+        return;
+    }
+    
+    clearTimeout(quoteItemSearchTimeout);
+    quoteItemSearchTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`/api/RawMaterials?search=${encodeURIComponent(query)}&pageSize=8`);
+            const result = await response.json();
+            const materials = result.data || result || [];
+            
+            if (materials.length > 0) {
+                resultsDiv.innerHTML = materials.map(m => `
+                    <div class="p-2 border-bottom raw-material-item" style="cursor: pointer;"
+                         onclick="selectQuoteRawMaterial('${m.id}', '${escapeHtml(m.name)}', ${m.unitCost || 0})">
+                        <strong>${escapeHtml(m.name)}</strong>
+                        <br><small class="text-muted">${m.dcbCode || ''} ${m.unit || ''}</small>
+                    </div>
+                `).join('');
+            } else {
+                resultsDiv.innerHTML = '<div class="p-2 text-center text-muted">Nenhum resultado</div>';
+            }
+            resultsDiv.classList.remove('d-none');
+        } catch (error) {
+            console.error(error);
+        }
+    }, 300);
+}
+
+function selectQuoteRawMaterial(id, name, unitCost) {
+    document.getElementById('quoteItemSelectedId').value = id;
+    document.getElementById('quoteItemSelectedName').value = name;
+    document.getElementById('quoteItemSelectedCost').value = unitCost;
+    document.getElementById('quoteItemSearch').value = name;
+    document.getElementById('quoteItemSearchResults').classList.add('d-none');
+    document.getElementById('quoteItemQuantity').focus();
+}
+
+function addQuoteItem() {
+    const id = document.getElementById('quoteItemSelectedId').value;
+    const name = document.getElementById('quoteItemSelectedName').value;
+    const unitCost = parseFloat(document.getElementById('quoteItemSelectedCost').value) || 0;
+    const quantity = parseFloat(document.getElementById('quoteItemQuantity').value) || 0;
+    const unit = document.getElementById('quoteItemUnit').value;
+    
+    if (!id || !name) {
+        showToast('Selecione uma matéria-prima', 'warning');
+        return;
+    }
+    if (quantity <= 0) {
+        showToast('Informe a quantidade', 'warning');
+        return;
+    }
+    
+    // Verificar duplicata
+    if (quoteItems.some(i => i.rawMaterialId === id)) {
+        showToast('Item já adicionado', 'warning');
+        return;
+    }
+    
+    // Calcular custo (simplificado - precisa ajustar conforme lógica real)
+    const totalCost = unitCost * quantity / 1000; // Assumindo mg para g
+    
+    quoteItems.push({
+        rawMaterialId: id,
+        name: name,
+        quantity: quantity,
+        unit: unit,
+        unitCost: unitCost,
+        totalCost: totalCost
+    });
+    
+    renderQuoteItems();
+    recalculateQuote();
+    
+    // Limpar form
+    document.getElementById('quoteItemSearch').value = '';
+    document.getElementById('quoteItemQuantity').value = '';
+    document.getElementById('quoteItemSelectedId').value = '';
+    document.getElementById('quoteItemSearch').focus();
+    
+    showToast(`${name} adicionado`, 'success');
+}
+
+function removeQuoteItem(index) {
+    const removed = quoteItems.splice(index, 1);
+    renderQuoteItems();
+    recalculateQuote();
+    showToast(`${removed[0]?.name || 'Item'} removido`, 'info');
+}
+
+// ========== QUOTE RECALCULATION ==========
+
+function recalculateQuote() {
+    const materialsCost = quoteItems.reduce((sum, item) => sum + (item.totalCost || 0), 0);
+    const markupPercent = parseFloat(document.getElementById('quoteMarkupInput').value) || 0;
+    const laborCost = parseFloat(document.getElementById('quoteLaborInput').value) || 0;
+    const packagingCost = parseFloat(document.getElementById('quotePackagingInput').value) || 0;
+    const discountPercent = parseFloat(document.getElementById('quoteDiscountInput').value) || 0;
+    
+    const markupValue = materialsCost * (markupPercent / 100);
+    const subtotal = materialsCost + markupValue + laborCost + packagingCost;
+    const discountValue = subtotal * (discountPercent / 100);
+    const finalPrice = subtotal - discountValue;
+    
+    document.getElementById('quoteMaterialsCost').textContent = formatMoney(materialsCost);
+    document.getElementById('quoteMarkupValue').textContent = formatMoney(markupValue);
+    document.getElementById('quoteFinalPrice').textContent = formatMoney(finalPrice);
+    document.getElementById('quoteTotalValue').textContent = formatMoney(finalPrice);
+}
+
+async function updateQuotePricing() {
+    if (!createdQuote) {
+        showToast('Orçamento não encontrado', 'error');
+        return;
+    }
+    
+    const markupPercentage = parseFloat(document.getElementById('quoteMarkupInput').value) || 150;
+    const laborCost = parseFloat(document.getElementById('quoteLaborInput').value) || 0;
+    const packagingCost = parseFloat(document.getElementById('quotePackagingInput').value) || 0;
+    const discountPercentage = parseFloat(document.getElementById('quoteDiscountInput').value) || 0;
+    
+    showLoading(true, 'Atualizando valores...');
+    
+    try {
+        const response = await fetch(`/api/PrescriptionQuotes/${createdQuote.id}/pricing`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                markupPercentage,
+                laborCost,
+                packagingCost,
+                discountPercentage
+            })
+        });
+        
+        if (response.ok) {
+            showToast('Valores atualizados!', 'success');
+            recalculateQuote();
+        } else {
+            const result = await response.json();
+            showToast('Erro: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showToast('Erro ao atualizar: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ========== ACTIONS ==========
+
+async function sendWhatsApp() {
+    if (!createdQuote) return;
+    
+    const phone = quoteCustomerData?.phone || createdQuote.customerPhone || selectedCustomerData?.phone;
+    
+    if (!phone) {
+        showToast('Telefone do cliente não informado', 'warning');
+        return;
+    }
+    
+    showLoading(true, 'Enviando WhatsApp...');
+    
+    try {
+        const response = await fetch(`/api/PrescriptionQuotes/${createdQuote.id}/send-whatsapp`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showToast('Orçamento enviado por WhatsApp!', 'success');
+            document.getElementById('whatsappSentBadge').classList.remove('d-none');
+        } else {
+            showToast('Erro: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showToast('Erro ao enviar: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function sendEmail() {
+    if (!createdQuote) return;
+    
+    const email = quoteCustomerData?.email || createdQuote.customerEmail || selectedCustomerData?.email || '';
+    document.getElementById('emailTo').value = email;
+    
+    const modal = new bootstrap.Modal(document.getElementById('emailModal'));
+    modal.show();
+}
+
+async function confirmSendEmail() {
+    const email = document.getElementById('emailTo').value.trim();
+    const message = document.getElementById('emailMessage').value.trim();
+    
+    if (!email) {
+        showToast('Informe o e-mail', 'warning');
+        return;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('emailModal')).hide();
+    showLoading(true, 'Enviando e-mail...');
+    
+    try {
+        const response = await fetch(`/api/PrescriptionQuotes/${createdQuote.id}/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, message })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showToast('Orçamento enviado por e-mail!', 'success');
+            document.getElementById('emailSentBadge').classList.remove('d-none');
+        } else {
+            showToast('Erro: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showToast('Erro ao enviar: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function printQuote() {
+    if (!createdQuote) return;
+    window.open(`/Prescriptions/Print/${createdQuote.id}`, '_blank');
+}
+
+function copyLink() {
+    if (!createdQuote || !createdQuote.publicToken) {
+        showToast('Link não disponível', 'warning');
+        return;
+    }
+    
+    const link = `${window.location.origin}/Prescriptions/Quote/${createdQuote.publicToken}`;
+    navigator.clipboard.writeText(link).then(() => {
+        showToast('Link copiado!', 'success');
+    });
+}
+
+function createNewQuote() {
+    // Reset tudo
+    uploadedFile = null;
+    fileBase64 = null;
+    ocrResult = null;
+    ingredientMatches = [];
+    selectedCustomerId = null;
+    selectedCustomerData = null;
+    createdQuote = null;
+    
+    // Reset Step 4 variables
+    quoteItems = [];
+    quoteCustomerData = null;
+    quoteDoctorData = null;
+    
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadZone').classList.remove('has-file');
+    document.getElementById('previewSection').classList.add('d-none');
+    document.getElementById('customerResult').classList.add('d-none');
+    document.getElementById('newCustomerForm').classList.add('d-none');
+    document.getElementById('customerSearch').value = '';
+    
+    document.getElementById('quoteSection').classList.add('d-none');
+    document.getElementById('reviewSection').classList.add('d-none');
+    document.getElementById('uploadSection').classList.remove('d-none');
+    
+    setStep(1);
+}
+
+function backToUpload() {
+    document.getElementById('reviewSection').classList.add('d-none');
+    document.getElementById('uploadSection').classList.remove('d-none');
+    setStep(1);
+}
+
+// ========== HELPERS ==========
+
+function setStep(step) {
+    for (let i = 1; i <= 4; i++) {
+        const stepEl = document.getElementById(`step${i}`);
+        const connectorEl = document.getElementById(`connector${i}`);
+        
+        stepEl.classList.remove('active', 'completed');
+        if (connectorEl) connectorEl.classList.remove('completed');
+        
+        if (i < step) {
+            stepEl.classList.add('completed');
+            if (connectorEl) connectorEl.classList.add('completed');
+        } else if (i === step) {
+            stepEl.classList.add('active');
+        }
+    }
+}
+
+function showLoading(show, text = 'Processando...') {
+    const overlay = document.getElementById('loadingOverlay');
+    document.getElementById('loadingText').textContent = text;
+    overlay.classList.toggle('d-none', !show);
+}
+
+function showToast(message, type = 'info') {
+    const alertClass = type === 'error' ? 'danger' : type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'info';
+    
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${alertClass} position-fixed shadow-lg`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-${type === 'error' ? 'x' : type === 'success' ? 'check' : 'info'}-circle me-2"></i>
+            <span>${escapeHtml(message)}</span>
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function formatMoney(value) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+}

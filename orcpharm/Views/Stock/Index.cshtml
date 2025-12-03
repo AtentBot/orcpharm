@@ -41,7 +41,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <a href="/RawMaterials" class="text-decoration-none">
+            <a href="/MateriasPrimas" class="text-decoration-none">
                 <div class="card border-0 shadow-sm hover-card h-100">
                     <div class="card-body text-center p-4">
                         <div class="bg-success bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
@@ -55,7 +55,7 @@
         </div>
 
         <div class="col-md-3 mb-3">
-            <a href="/PurchaseOrders" class="text-decoration-none">
+            <a href="/compras" class="text-decoration-none">
                 <div class="card border-0 shadow-sm hover-card h-100">
                     <div class="card-body text-center p-4">
                         <div class="bg-info bg-opacity-10 p-4 rounded-circle d-inline-block mb-3">
@@ -124,25 +124,25 @@
     async function loadStats() {
         try {
             // Carregar alertas de estoque baixo
-            const response = await fetch('/api/PDV/low-stock-alerts', {
+            var response = await fetch('/api/PDV/low-stock-alerts', {
                 credentials: 'include'
             });
-            const result = await response.json();
+            var result = await response.json();
 
             if (result.success) {
-                const lowStock = result.data.filter(i => i.currentQuantity > 0).length;
-                const outOfStock = result.data.filter(i => i.currentQuantity <= 0).length;
+                var lowStock = result.data.filter(function(i) { return i.currentQuantity > 0; }).length;
+                var outOfStock = result.data.filter(function(i) { return i.currentQuantity <= 0; }).length;
                 
-                document.getElementById('badgeLowStock').textContent = `${result.data.length} alertas`;
+                document.getElementById('badgeLowStock').textContent = result.data.length + ' alertas';
                 document.getElementById('lowStockItems').textContent = lowStock;
                 document.getElementById('outOfStockItems').textContent = outOfStock;
             }
 
             // Carregar total de matérias-primas
-            const rmResponse = await fetch('/api/RawMaterials', {
+            var rmResponse = await fetch('/api/RawMaterials', {
                 credentials: 'include'
             });
-            const rmResult = await rmResponse.json();
+            var rmResult = await rmResponse.json();
 
             if (rmResult.success) {
                 document.getElementById('totalItems').textContent = rmResult.data.length;

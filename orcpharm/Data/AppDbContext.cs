@@ -172,6 +172,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CompanySettings> CompanySettings { get; set; } = null!;
     public DbSet<PrescriptionQuote> PrescriptionQuotes { get; set; } = null!;
     public DbSet<ManipulationOrderComponent> ManipulationOrderComponents { get; set; } = null!;
+    public DbSet<SaasAdminPasswordReset> SaasAdminPasswordResets { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
     // CONFIGURAÇÃO DO MODELO
@@ -810,5 +811,58 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true);
         });
+        modelBuilder.Entity<SaasAdminPasswordReset>(entity =>
+        {
+            entity.ToTable("saas_admin_password_resets");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .HasColumnName("id");
+
+            entity.Property(e => e.SaasAdminId)
+                .HasColumnName("saas_admin_id")
+                .IsRequired();
+
+            entity.Property(e => e.Token)
+                .HasColumnName("token")
+                .HasMaxLength(128)
+                .IsRequired();
+
+            entity.Property(e => e.IpAddress)
+                .HasColumnName("ip_address")
+                .HasMaxLength(45);
+
+            entity.Property(e => e.UserAgent)
+                .HasColumnName("user_agent")
+                .HasMaxLength(500);
+
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnName("expires_at")
+                .IsRequired();
+
+            entity.Property(e => e.UsedAt)
+                .HasColumnName("used_at");
+
+            entity.Property(e => e.IsUsed)
+                .HasColumnName("is_used")
+                .HasDefaultValue(false);
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .HasDefaultValueSql("NOW()");
+
+            // Relacionamento
+            entity.HasOne(e => e.SaasAdmin)
+                .WithMany()
+                .HasForeignKey(e => e.SaasAdminId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Índices
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.SaasAdminId);
+            entity.HasIndex(e => e.ExpiresAt);
+        });
+
     }
 }
