@@ -20,23 +20,23 @@ public class EmployeeAuthMiddleware
     {
         var path = context.Request.Path.Value?.ToLower() ?? "";
 
-        // ==================== 1. ROTAS PÚBLICAS (sem autenticação) ====================
+        // 1. ROTAS PÚBLICAS (sem autenticação)
         if (IsPublicPath(path))
         {
-            _logger.LogDebug("Rota pública acessada: {Path}", path);
+            _logger.LogDebug("Rota pública: {Path}", path);
             await _next(context);
             return;
         }
 
-        // ==================== 2. ROTAS COM API KEY (sem necessidade de sessão) ====================
+        // 2. ROTAS COM API KEY (sem necessidade de sessão)
         if (IsApiKeyOnlyPath(path))
         {
-            _logger.LogDebug("Rota protegida apenas com API Key: {Path}", path);
+            _logger.LogDebug("Rota API Key: {Path}", path);
             await _next(context);
             return;
         }
 
-        // ==================== 3. ROTAS PROTEGIDAS (requerem X-SESSION-TOKEN) ====================
+        // 3. ROTAS PROTEGIDAS (requerem X-SESSION-TOKEN)
         var token = GetSessionToken(context);
 
         if (string.IsNullOrEmpty(token))
@@ -45,7 +45,6 @@ public class EmployeeAuthMiddleware
             return;
         }
 
-        // Validar sessão
         var validationResult = await ValidateSession(db, token, path);
 
         if (!validationResult.IsValid)
@@ -54,13 +53,10 @@ public class EmployeeAuthMiddleware
             return;
         }
 
-        // Sessão válida - adicionar informações no contexto
         AddSessionToContext(context, validationResult.Session!);
-
-        // ✅ Adicionar claims ao User.ClaimsPrincipal
         AddClaimsToUser(context, validationResult.Session!);
 
-        _logger.LogDebug("Autenticação bem-sucedida: {EmployeeName} (ID: {EmployeeId}) acessando {Path}",
+        _logger.LogDebug("Auth OK: {EmployeeName} ({EmployeeId}) -> {Path}",
             validationResult.Session!.Employee.FullName,
             validationResult.Session.Employee.Id,
             path);
@@ -68,27 +64,31 @@ public class EmployeeAuthMiddleware
         await _next(context);
     }
 
-    // ==================== MÉTODOS AUXILIARES ====================
-
     /// <summary>
-    /// Verifica se o path é de uma rota pública (sem autenticação)
+    /// Verifica se o path é de uma rota pública
     /// </summary>
     private static bool IsPublicPath(string path)
     {
-        // ===== ROTAS ADMIN (tratadas pelo AdminAuthMiddleware) =====
-        // O AdminAuthMiddleware cuida da autenticação dessas rotas
-        if (path.StartsWith("/admin"))
-            return true;
+        // ===== PREFIXOS PÚBLICOS =====
+        var publicPrefixes = new[]
+        {
+            "/admin",           // AdminAuthMiddleware cuida
+            "/api/admin",       // AdminAuthMiddleware cuida
+            "/signup",          // Cadastro (todas as rotas)
+            "/orcamento/",      // Orçamentos públicos
+            "/swagger",         // Documentação API
+            "/account/login",
+            "/account/register",
+            "/account/forgotpassword",
+            "/account/resetpassword",
+            "/account/validatecode"
+        };
 
-        // ===== ROTAS API ADMIN (tratadas pelo AdminAuthMiddleware) =====
-        if (path.StartsWith("/api/admin"))
-            return true;
-
-        if (path.StartsWith("/orcamento/"))
+        if (publicPrefixes.Any(prefix => path.StartsWith(prefix)))
             return true;
 
         // ===== ROTAS EXATAS =====
-        var exactPublicPaths = new[]
+        var exactPaths = new[]
         {
             "/",
             "/health",
@@ -102,35 +102,15 @@ public class EmployeeAuthMiddleware
             "/contact",
             "/terms",
             "/privacy",
-            "/signup",
-            "/signup/index",
-            "/signup/plans",
-            "/signup/payment",
-            "/signup/complete",
-            "/signup/verify"
+            "/login"
         };
 
-        if (exactPublicPaths.Contains(path))
+        if (exactPaths.Contains(path))
             return true;
 
-        // ===== ROTAS DE AUTENTICAÇÃO - VIEWS MVC (AccountController) =====
-        // Convenção padrão ASP.NET: /Account/Action
-        var accountPaths = new[]
+        // ===== APIs PÚBLICAS =====
+        var publicApis = new[]
         {
-            "/account/login",
-            "/account/register",
-            "/account/forgotpassword",
-            "/account/resetpassword",
-            "/account/validatecode"
-        };
-
-        if (accountPaths.Any(p => path.StartsWith(p)))
-            return true;
-
-        // ===== ROTAS DE API PÚBLICAS =====
-        var publicApiPrefixes = new[]
-                {
-            "/swagger",
             "/api/auth/login",
             "/api/auth/logout",
             "/api/auth/register",
@@ -143,7 +123,7 @@ public class EmployeeAuthMiddleware
             "/api/prescriptionquotes/public"
         };
 
-        if (publicApiPrefixes.Any(prefix => path.StartsWith(prefix)))
+        if (publicApis.Any(api => path.StartsWith(api)))
             return true;
 
         // ===== ARQUIVOS ESTÁTICOS =====
@@ -160,18 +140,18 @@ public class EmployeeAuthMiddleware
     }
 
     /// <summary>
-    /// Verifica se o path é de uma rota protegida apenas com API Key (sem sessão)
+    /// Rotas protegidas apenas com API Key (sem sessão)
     /// </summary>
     private static bool IsApiKeyOnlyPath(string path)
     {
-        var apiKeyOnlyPaths = new[]
+        var apiKeyPaths = new[]
         {
             "/api/auth/password/request-reset",
             "/api/auth/password/verify-code",
             "/api/auth/password/reset"
         };
 
-        return apiKeyOnlyPaths.Any(p => path.Equals(p, StringComparison.OrdinalIgnoreCase));
+        return apiKeyPaths.Any(p => path.Equals(p, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -179,17 +159,17 @@ public class EmployeeAuthMiddleware
     /// </summary>
     private static string? GetSessionToken(HttpContext context)
     {
-        // Primeiro tenta obter do header (APIs, mobile)
+        // Header (APIs, mobile)
         var headerToken = context.Request.Headers["X-Session-Token"].FirstOrDefault();
         if (!string.IsNullOrEmpty(headerToken))
             return headerToken;
 
-        // Cookie correto usado pelo sistema
+        // Cookie principal
         var cookieToken = context.Request.Cookies["X-SESSION-TOKEN"];
         if (!string.IsNullOrEmpty(cookieToken))
             return cookieToken;
 
-        // Fallback para cookie antigo (compatibilidade)
+        // Fallback (compatibilidade)
         return context.Request.Cookies["SessionId"];
     }
 
@@ -200,7 +180,6 @@ public class EmployeeAuthMiddleware
     {
         try
         {
-            // Buscar sessão com todas as relações necessárias
             var session = await db.EmployeeSessions
                 .Include(s => s.Employee)
                     .ThenInclude(e => e.JobPosition)
@@ -210,46 +189,36 @@ public class EmployeeAuthMiddleware
 
             if (session == null)
             {
-                _logger.LogWarning("Token inválido ou sessão não encontrada: {TokenPrefix}...",
-                    token.Substring(0, Math.Min(10, token.Length)));
+                _logger.LogWarning("Token inválido: {TokenPrefix}...", token[..Math.Min(10, token.Length)]);
                 return SessionValidationResult.Fail("Token inválido ou sessão não encontrada");
             }
 
-            // Verificar expiração
             if (session.ExpiresAt < DateTime.UtcNow)
             {
-                _logger.LogWarning("Sessão expirada: Employee {EmployeeId}, Expirou em {ExpiresAt}",
-                    session.EmployeeId, session.ExpiresAt);
-
+                _logger.LogWarning("Sessão expirada: {EmployeeId}", session.EmployeeId);
                 session.IsActive = false;
                 await db.SaveChangesAsync();
-
                 return SessionValidationResult.Fail("Sessão expirada. Faça login novamente.");
             }
 
-            // Verificar se employee existe e está ativo
             if (session.Employee == null)
             {
-                _logger.LogWarning("Sessão sem Employee associado: SessionId {SessionId}", session.Id);
+                _logger.LogWarning("Sessão sem Employee: {SessionId}", session.Id);
                 return SessionValidationResult.Fail("Funcionário não encontrado");
             }
 
             if (session.Employee.Status.ToUpper() != "ATIVO")
             {
-                _logger.LogWarning("Tentativa de acesso com funcionário inativo: {EmployeeId}, Status: {Status}",
-                    session.EmployeeId, session.Employee.Status);
+                _logger.LogWarning("Employee inativo: {EmployeeId}", session.EmployeeId);
                 return SessionValidationResult.Fail("Funcionário inativo");
             }
 
-            // Verificar se estabelecimento está ativo
             if (session.Employee.Establishment == null || !session.Employee.Establishment.IsActive)
             {
-                _logger.LogWarning("Tentativa de acesso com estabelecimento inativo: {EstablishmentId}",
-                    session.Employee.EstablishmentId);
+                _logger.LogWarning("Establishment inativo: {EstablishmentId}", session.Employee.EstablishmentId);
                 return SessionValidationResult.Fail("Estabelecimento inativo");
             }
 
-            // Atualizar última atividade
             session.LastActivityAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
 
@@ -262,9 +231,6 @@ public class EmployeeAuthMiddleware
         }
     }
 
-    /// <summary>
-    /// Adiciona informações da sessão no HttpContext para uso nos controllers
-    /// </summary>
     private static void AddSessionToContext(HttpContext context, EmployeeSession session)
     {
         context.Items["EmployeeId"] = session.EmployeeId;
@@ -275,50 +241,33 @@ public class EmployeeAuthMiddleware
         context.Items["SessionId"] = session.Id;
     }
 
-    /// <summary>
-    /// Adiciona claims ao User.ClaimsPrincipal
-    /// </summary>
     private static void AddClaimsToUser(HttpContext context, EmployeeSession session)
     {
         var claims = new List<Claim>
         {
-            new Claim("EmployeeId", session.EmployeeId.ToString()),
-            new Claim("EstablishmentId", session.Employee.EstablishmentId.ToString()),
-            new Claim("EmployeeName", session.Employee.FullName),
-            new Claim(ClaimTypes.Name, session.Employee.FullName),
-            new Claim("SessionId", session.Id.ToString())
+            new("EmployeeId", session.EmployeeId.ToString()),
+            new("EstablishmentId", session.Employee.EstablishmentId.ToString()),
+            new("EmployeeName", session.Employee.FullName),
+            new(ClaimTypes.Name, session.Employee.FullName),
+            new("SessionId", session.Id.ToString())
         };
 
-        // Adicionar JobPositionCode se existir
         if (session.Employee.JobPosition != null)
-        {
             claims.Add(new Claim("JobPositionCode", session.Employee.JobPosition.Code));
-        }
 
-        // Adicionar Email se existir
         if (!string.IsNullOrEmpty(session.Employee.Email))
-        {
             claims.Add(new Claim(ClaimTypes.Email, session.Employee.Email));
-        }
 
-        // Criar identidade e principal
         var identity = new ClaimsIdentity(claims, "Cookies");
-        var principal = new ClaimsPrincipal(identity);
-
-        // Substituir o User atual
-        context.User = principal;
+        context.User = new ClaimsPrincipal(identity);
     }
 
-    /// <summary>
-    /// Trata requisições sem token
-    /// </summary>
     private async Task HandleMissingToken(HttpContext context, string path)
     {
-        _logger.LogWarning("Tentativa de acesso sem token: {Path}", path);
+        _logger.LogWarning("Acesso sem token: {Path}", path);
 
         if (path.StartsWith("/api/"))
         {
-            // Requisições de API retornam 401 JSON
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new
             {
@@ -328,31 +277,23 @@ public class EmployeeAuthMiddleware
         }
         else
         {
-            // Views web - redirecionar para login MVC
             context.Response.Redirect("/Account/Login");
         }
     }
 
-    /// <summary>
-    /// Trata requisições com sessão inválida
-    /// </summary>
     private async Task HandleInvalidSession(HttpContext context, string path, string errorMessage)
     {
         if (path.StartsWith("/api/"))
         {
-            // Requisições de API retornam 401 JSON
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new { error = errorMessage });
         }
         else
         {
-            // Views web - redirecionar para login MVC
             context.Response.Redirect("/Account/Login");
         }
     }
 }
-
-// ==================== CLASSES AUXILIARES ====================
 
 internal class SessionValidationResult
 {
@@ -362,31 +303,21 @@ internal class SessionValidationResult
 
     private SessionValidationResult() { }
 
-    public static SessionValidationResult Success(EmployeeSession session)
+    public static SessionValidationResult Success(EmployeeSession session) => new()
     {
-        return new SessionValidationResult
-        {
-            IsValid = true,
-            Session = session
-        };
-    }
+        IsValid = true,
+        Session = session
+    };
 
-    public static SessionValidationResult Fail(string errorMessage)
+    public static SessionValidationResult Fail(string errorMessage) => new()
     {
-        return new SessionValidationResult
-        {
-            IsValid = false,
-            ErrorMessage = errorMessage
-        };
-    }
+        IsValid = false,
+        ErrorMessage = errorMessage
+    };
 }
-
-// ==================== EXTENSION METHOD ====================
 
 public static class EmployeeAuthMiddlewareExtensions
 {
     public static IApplicationBuilder UseEmployeeAuth(this IApplicationBuilder builder)
-    {
-        return builder.UseMiddleware<EmployeeAuthMiddleware>();
-    }
+        => builder.UseMiddleware<EmployeeAuthMiddleware>();
 }

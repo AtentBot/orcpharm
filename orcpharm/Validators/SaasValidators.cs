@@ -27,8 +27,8 @@ public class SignupRequestValidator : AbstractValidator<SignupRequestDto>
             .NotEmpty().WithMessage("Email é obrigatório")
             .EmailAddress().WithMessage("Email inválido");
 
-        RuleFor(x => x.PlanId)
-            .NotEmpty().WithMessage("Plano é obrigatório");
+        //RuleFor(x => x.PlanId)
+        //    .NotEmpty().WithMessage("Plano é obrigatório");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Senha é obrigatória")

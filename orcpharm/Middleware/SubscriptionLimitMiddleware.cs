@@ -20,6 +20,7 @@ public class SubscriptionLimitMiddleware
         var method = context.Request.Method;
 
         // Verificar apenas em rotas que criam recursos
+        
         if (method == "POST" && ShouldCheckLimit(path))
         {
             var establishmentId = GetEstablishmentId(context);

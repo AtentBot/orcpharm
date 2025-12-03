@@ -17,6 +17,9 @@ public class SignupController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Passo 1: Registra o estabelecimento e envia código de verificação via WhatsApp
+    /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] SignupRequestDto dto)
     {
@@ -36,6 +39,9 @@ public class SignupController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Passo 2: Verifica o código enviado via WhatsApp
+    /// </summary>
     [HttpPost("verify")]
     public async Task<IActionResult> Verify([FromBody] VerifySignupCodeDto dto)
     {
@@ -44,29 +50,66 @@ public class SignupController : ControllerBase
         if (!success)
             return BadRequest(new { message });
 
-        return Ok(new 
+        return Ok(new VerifyCodeResponseDto
         { 
-            message, 
-            establishmentId,
-            redirectTo = "/signup/payment"
+            EstablishmentId = establishmentId ?? Guid.Empty,
+            Message = message, 
+            RedirectTo = $"/signup/complete-profile?establishmentId={establishmentId}"
         });
     }
 
+    /// <summary>
+    /// Passo 3: Completa o perfil do proprietário (CPF, nome completo)
+    /// </summary>
+    [HttpPost("complete-profile")]
+    public async Task<IActionResult> CompleteProfile([FromBody] CompleteOwnerProfileDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.FullName))
+            return BadRequest(new { message = "Nome completo é obrigatório" });
+
+        if (string.IsNullOrWhiteSpace(dto.Cpf))
+            return BadRequest(new { message = "CPF é obrigatório" });
+
+        var (success, message, employeeId) = await _signupService.CompleteOwnerProfileAsync(dto);
+
+        if (!success)
+            return BadRequest(new { message });
+
+        return Ok(new CompleteOwnerProfileResponseDto
+        {
+            EmployeeId = employeeId ?? Guid.Empty,
+            Message = message,
+            RedirectTo = "/login"
+        });
+    }
+
+    /// <summary>
+    /// Passo 4 (opcional): Finaliza após pagamento do Stripe
+    /// </summary>
     [HttpPost("complete")]
     public async Task<IActionResult> Complete([FromBody] CompleteSignupDto dto)
     {
-        // Aqui seria processado após o checkout do Stripe
-        // Por enquanto, apenas registrar
-        
         _logger.LogInformation("Signup completo para establishment {EstablishmentId}", dto.EstablishmentId);
 
         return Ok(new { message = "Cadastro finalizado com sucesso" });
     }
 
+    /// <summary>
+    /// Reenvia o código de verificação
+    /// </summary>
     [HttpPost("resend-code")]
-    public async Task<IActionResult> ResendCode([FromBody] VerifySignupCodeDto dto)
+    public async Task<IActionResult> ResendCode([FromBody] ResendCodeDto dto)
     {
-        // TODO: Implementar reenvio de código
-        return Ok(new { message = "Código reenviado" });
+        var (success, message) = await _signupService.ResendCodeAsync(dto.WhatsApp);
+
+        if (!success)
+            return BadRequest(new { message });
+
+        return Ok(new { message });
     }
+}
+
+public class ResendCodeDto
+{
+    public string WhatsApp { get; set; } = string.Empty;
 }

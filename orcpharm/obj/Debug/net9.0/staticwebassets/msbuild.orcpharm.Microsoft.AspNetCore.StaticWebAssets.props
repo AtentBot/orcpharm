@@ -444,8 +444,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>5zaa25r3iy</Fingerprint>
-      <Integrity>ETx7ZW/7N5gF/LipJHL8/liXZEcWovGDcH+Ye5Q1pr8=</Integrity>
+      <Fingerprint>1tj4q87imj</Fingerprint>
+      <Integrity>u1jxWs3ZaTDQepJiA5eajQ5TcpGQFV4UXZS+IEEfT44=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\signup.js'))</OriginalItemSpec>

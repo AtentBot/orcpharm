@@ -7,7 +7,7 @@ public class SignupRequestDto
     public string Cnpj { get; set; } = string.Empty;
     public string WhatsApp { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public Guid PlanId { get; set; }
+    public Guid? PlanId { get; set; }
     public string BillingCycle { get; set; } = "MONTHLY";
     public string Password { get; set; } = string.Empty;
     public bool AcceptTerms { get; set; }
@@ -33,8 +33,53 @@ public class SignupResponseDto
     public bool RequiresVerification { get; set; }
 }
 
+public class VerifyCodeResponseDto
+{
+    public Guid EstablishmentId { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string RedirectTo { get; set; } = string.Empty;
+}
+
 public class CompleteSignupDto
 {
     public Guid EstablishmentId { get; set; }
     public string StripeSessionId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para completar o perfil do proprietário após verificação do código
+/// </summary>
+public class CompleteOwnerProfileDto
+{
+    /// <summary>
+    /// ID do estabelecimento (retornado na verificação do código)
+    /// </summary>
+    public Guid EstablishmentId { get; set; }
+    
+    /// <summary>
+    /// Nome completo do proprietário
+    /// </summary>
+    public string FullName { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// CPF do proprietário (apenas dígitos ou formatado)
+    /// </summary>
+    public string Cpf { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Data de nascimento (opcional)
+    /// </summary>
+    public DateOnly? DateOfBirth { get; set; }
+    
+    /// <summary>
+    /// Telefone pessoal (opcional, diferente do WhatsApp da empresa)
+    /// </summary>
+    public string? Phone { get; set; }
+}
+
+public class CompleteOwnerProfileResponseDto
+{
+    public Guid EmployeeId { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string RedirectTo { get; set; } = string.Empty;
 }

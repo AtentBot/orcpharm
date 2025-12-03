@@ -37,9 +37,9 @@ public class Employee
     [MaxLength(100)]
     public string? SocialName { get; set; } // Nome social (LGPD+)
 
-    // CPF apenas dígitos (11 caracteres)
-    [Required, MaxLength(11)]
-    public string Cpf { get; set; } = default!;
+    // CPF apenas dígitos (11 caracteres) - Opcional para signup inicial
+    [MaxLength(11)]
+    public string? Cpf { get; set; }
 
     [MaxLength(20)]
     public string? Rg { get; set; }
@@ -49,7 +49,7 @@ public class Employee
 
     public DateOnly? RgIssueDate { get; set; }
 
-    public DateOnly DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
 
     [MaxLength(20)]
     public string? Gender { get; set; } // Masculino, Feminino, Outro, Prefiro não informar
@@ -102,42 +102,41 @@ public class Employee
     [Required, MaxLength(200), EmailAddress]
     public string Email { get; set; } = default!;
 
-    // ==================== ENDEREÇO ====================
-    [Required, MaxLength(200)]
-    public string Street { get; set; } = default!;
+    // ==================== ENDEREÇO (Opcional para signup inicial) ====================
+    [MaxLength(200)]
+    public string? Street { get; set; }
 
-    [Required, MaxLength(20)]
-    public string Number { get; set; } = default!;
+    [MaxLength(20)]
+    public string? Number { get; set; }
 
     [MaxLength(120)]
     public string? Complement { get; set; }
 
-    [Required, MaxLength(120)]
-    public string Neighborhood { get; set; } = default!;
+    [MaxLength(120)]
+    public string? Neighborhood { get; set; }
 
-    [Required, MaxLength(120)]
-    public string City { get; set; } = default!;
+    [MaxLength(120)]
+    public string? City { get; set; }
 
-    [Required, MaxLength(2)]
-    public string State { get; set; } = default!;
+    [MaxLength(2)]
+    public string? State { get; set; }
 
-    [Required, MaxLength(8)]
-    public string PostalCode { get; set; } = default!; // CEP apenas dígitos
+    [MaxLength(8)]
+    public string? PostalCode { get; set; } // CEP apenas dígitos
 
     // ==================== DADOS TRABALHISTAS ====================
-    [Required]
-    public DateOnly HireDate { get; set; } // Data de admissão
+    public DateOnly? HireDate { get; set; } // Data de admissão - Opcional para proprietário
 
     public DateOnly? TerminationDate { get; set; } // Data de demissão
 
-    [Required, MaxLength(50)]
-    public string ContractType { get; set; } = "CLT"; // CLT, PJ, Estagiário, Temporário
+    [MaxLength(50)]
+    public string ContractType { get; set; } = "Proprietário"; // CLT, PJ, Estagiário, Temporário, Proprietário
 
     [MaxLength(50)]
     public string? WorkShift { get; set; } // Diurno, Noturno, Misto
 
     [Column(TypeName = "decimal(10,2)")]
-    public decimal Salary { get; set; } // Salário atual
+    public decimal? Salary { get; set; } // Salário atual - Opcional para proprietário
 
     [MaxLength(50)]
     public string? Department { get; set; } // Departamento
@@ -202,7 +201,7 @@ public class Employee
     [Required, MaxLength(40)]
     public string PasswordAlgorithm { get; set; } = "argon2id-v1";
 
-    public bool RequirePasswordChange { get; set; } = true; // Primeira senha é temporária
+    public bool RequirePasswordChange { get; set; } = false; // Proprietário não precisa trocar senha
 
     public bool TwoFactorEnabled { get; set; } = false;
 

@@ -26,32 +26,32 @@ public class Establishment
     public string NomeFantasia { get; set; } = default!;
 
     // CNPJ apenas dígitos (formatação fica para o front/DTO)
-    [Required, MaxLength(14)]
-    public string Cnpj { get; set; } = default!;
+    [MaxLength(14)]
+    public string? Cnpj { get; set; }  // Nullable para permitir cadastro sem CNPJ inicialmente
 
-    // Endereço (Brasil)
-    [Required, MaxLength(200)]
-    public string Street { get; set; } = default!;      // Logradouro
+    // Endereço (Brasil) - Todos opcionais para signup inicial
+    [MaxLength(200)]
+    public string? Street { get; set; }      // Logradouro
 
-    [Required, MaxLength(20)]
-    public string Number { get; set; } = default!;
+    [MaxLength(20)]
+    public string? Number { get; set; }
 
     [MaxLength(120)]
     public string? Complement { get; set; }
 
-    [Required, MaxLength(120)]
-    public string Neighborhood { get; set; } = default!; // Bairro
+    [MaxLength(120)]
+    public string? Neighborhood { get; set; } // Bairro
 
-    [Required, MaxLength(120)]
-    public string City { get; set; } = default!;
+    [MaxLength(120)]
+    public string? City { get; set; }
 
-    [Required, MaxLength(2)]
-    public string State { get; set; } = default!; // UF (ex.: SP)
+    [MaxLength(2)]
+    public string? State { get; set; } // UF (ex.: SP)
 
-    [Required, MaxLength(8)]
-    public string PostalCode { get; set; } = default!; // CEP (só dígitos)
+    [MaxLength(8)]
+    public string? PostalCode { get; set; } // CEP (só dígitos)
 
-    [Required, MaxLength(60)]
+    [MaxLength(60)]
     public string Country { get; set; } = "Brasil";
 
     // Geolocalização (opcional)
@@ -99,15 +99,16 @@ public class Establishment
     [ForeignKey(nameof(AccessLevelId))]
     public AccessLevel? AccessLevel { get; set; }
 
-    // 👇 ADICIONADO: Navegação para Category
+    // Navegação para Category
     [ForeignKey(nameof(CategoryId))]
     public Category? Category { get; set; }
 
     // Status do estabelecimento
     public bool OnboardingCompleted { get; set; } = false;
     public bool IsActive { get; set; } = true;
+
     public ICollection<Models.Pharmacy.Supplier>? Suppliers { get; set; }
-    = new List<Models.Pharmacy.Supplier>();
+        = new List<Models.Pharmacy.Supplier>();
 
     [Column("Subscription_status")]
     [StringLength(50)]
@@ -124,5 +125,4 @@ public class Establishment
 
     [Column("FeaturesEnabled", TypeName = "jsonb")]
     public string? FeaturesEnabled { get; set; }
-
 }

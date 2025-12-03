@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "E:\\orcpharm\\orcpharm\\orcpharm\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\views\\signupmvc\\completeprofile.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:views\\signupmvc\\completeprofile.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\controllers\\signupcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:controllers\\signupcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\middleware\\employeeauthmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:middleware\\employeeauthmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -27,14 +35,40 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "CompleteProfile.cshtml",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\SignupMvc\\CompleteProfile.cshtml",
+              "RelativeDocumentMoniker": "Views\\SignupMvc\\CompleteProfile.cshtml",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\SignupMvc\\CompleteProfile.cshtml*",
+              "RelativeToolTip": "Views\\SignupMvc\\CompleteProfile.cshtml*",
+              "ViewState": "AgIAABMBAAAAAAAAAAAQwCABAABIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-03T00:38:58.316Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SignupController.cs",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\SignupController.cs",
+              "RelativeDocumentMoniker": "Controllers\\SignupController.cs",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\SignupController.cs",
+              "RelativeToolTip": "Controllers\\SignupController.cs",
+              "ViewState": "AgIAABsAAAAAAAAAAAAUwC4AAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-03T00:32:13.96Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "EmployeeAuthMiddleware.cs",
               "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Middleware\\EmployeeAuthMiddleware.cs",
               "RelativeDocumentMoniker": "Middleware\\EmployeeAuthMiddleware.cs",
               "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Middleware\\EmployeeAuthMiddleware.cs",
               "RelativeToolTip": "Middleware\\EmployeeAuthMiddleware.cs",
-              "ViewState": "AgIAAG4AAAAAAAAAAAAkwI8AAAAKAAAAAAAAAA==",
+              "ViewState": "AgIAACkBAAAAAAAAAAA0wEIBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-01T20:45:23.718Z",
+              "WhenOpened": "2025-12-03T00:27:04.214Z",
               "EditorCaption": ""
             }
           ]
