@@ -98,9 +98,9 @@ public class QuoteEmailService
                 <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" width=""600"" style=""margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"">
                     <!-- Header -->
                     <tr>
-                        <td style=""background: linear-gradient(135deg, #198754 0%, #157347 100%); padding: 30px 40px; border-radius: 8px 8px 0 0; text-align: center;"">
+                        <td style=""background-color: #198754; padding: 30px 40px; border-radius: 8px 8px 0 0; text-align: center;"">
                             <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;"">{establishmentName}</h1>
-                            <p style=""color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;"">Orçamento #{quote.Code}</p>
+                            <p style=""color: #e9ecef; margin: 10px 0 0 0; font-size: 16px;"">Orçamento #{quote.Code}</p>
                         </td>
                     </tr>
                     <!-- Content -->
@@ -134,8 +134,16 @@ public class QuoteEmailService
                             <!-- CTA Button -->
                             <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" style=""margin: 0 auto 30px auto;"">
                                 <tr>
-                                    <td style=""border-radius: 8px; background: linear-gradient(135deg, #198754 0%, #157347 100%);"">
-                                        <a href=""{quoteLink}"" target=""_blank"" style=""display: inline-block; padding: 18px 50px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px;"">Ver Orçamento Completo</a>
+                                    <td style=""border-radius: 8px; background-color: #198754;"">
+                                        <!--[if mso]>
+                                        <v:roundrect xmlns:v=""urn:schemas-microsoft-com:vml"" xmlns:w=""urn:schemas-microsoft-com:office:word"" href=""{quoteLink}"" style=""height:56px;v-text-anchor:middle;width:280px;"" arcsize=""14%"" strokecolor=""#157347"" fillcolor=""#198754"">
+                                        <w:anchorlock/>
+                                        <center style=""color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;"">Ver Orçamento Completo</center>
+                                        </v:roundrect>
+                                        <![endif]-->
+                                        <!--[if !mso]><!-->
+                                        <a href=""{quoteLink}"" target=""_blank"" style=""display: inline-block; padding: 18px 50px; color: #ffffff !important; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; background-color: #198754; border: 2px solid #157347; mso-hide: all;"">Ver Orçamento Completo</a>
+                                        <!--<![endif]-->
                                     </td>
                                 </tr>
                             </table>

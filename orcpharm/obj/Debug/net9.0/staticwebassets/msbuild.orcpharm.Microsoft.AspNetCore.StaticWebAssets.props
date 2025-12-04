@@ -300,8 +300,8 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>j0znzs81zp</Fingerprint>
-      <Integrity>A8SZVr44AtpsmEt/A6XjcALHNsnLJ+c7nM4K8WIMnwE=</Integrity>
+      <Fingerprint>t6c2du7egx</Fingerprint>
+      <Integrity>ywAt81/XXhrL0KL07t+1E67PFsESbdANyM4Wq4xRrRM=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\pdv.js'))</OriginalItemSpec>

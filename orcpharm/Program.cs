@@ -34,6 +34,8 @@ builder.Services.AddScoped<LabelService>();
 builder.Services.AddManipulationServices();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<QuoteEmailService>();
+builder.Services.AddScoped<PrescriptionWorkflowService>();
+builder.Services.AddScoped<CashRegisterService>();
 
 builder.Services.Configure<Configuration.EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));

@@ -1,116 +1,268 @@
-// pdv.js
+// ===== PDV - Ponto de Venda JavaScript =====
 
+// Estado do PDV
 let cart = [];
-let payments = [];
 let selectedCustomer = null;
-let currentPaymentModal = null;
+let currentCashRegister = null;
+let payments = [];
+let selectedPaymentMethod = null;
 
+// ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
-    initializePDV();
     updateClock();
     setInterval(updateClock, 1000);
+    loadCashRegisterStatus();
+    
+    // Enter na busca de produtos
+    document.getElementById('productSearch')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchProduct(this.value);
+        }
+    });
+    
+    // Calcular troco ao digitar valor recebido
+    document.getElementById('cashReceived')?.addEventListener('input', calculateChange);
 });
-
-function initializePDV() {
-    setupProductSearch();
-    loadCashRegisterInfo();
-    calculateTotal();
-}
 
 function updateClock() {
     const now = new Date();
-    document.getElementById('currentTime').textContent = now.toLocaleString('pt-BR');
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    document.getElementById('currentTime').textContent = now.toLocaleString('pt-BR', options);
 }
 
-function setupProductSearch() {
-    const searchInput = document.getElementById('productSearch');
-    let timeout;
-
-    searchInput.addEventListener('input', function() {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            if (this.value.length >= 3) {
-                searchProducts(this.value);
-            }
-        }, 300);
-    });
-
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchProducts(this.value);
-        }
-    });
-}
-
-async function searchProducts(query) {
+// ===== CAIXA =====
+async function loadCashRegisterStatus() {
     try {
-        // Buscar produtos prontos e ordens de manipulação
-        const [productsResponse, ordersResponse] = await Promise.all([
-            fetch(`/api/Products/search?query=${encodeURIComponent(query)}`),
-            fetch(`/api/ManipulationOrders/pending-sale?search=${encodeURIComponent(query)}`)
-        ]);
-
-        const productsResult = await productsResponse.json();
-        const ordersResult = await ordersResponse.json();
-
-        if (productsResult.success && productsResult.data.length > 0) {
-            // Adicionar primeiro produto encontrado
-            addToCart(productsResult.data[0]);
-        } else if (ordersResult.success && ordersResult.data.length > 0) {
-            // Adicionar primeira ordem encontrada
-            addOrderToCart(ordersResult.data[0]);
+        const response = await fetch('/api/CashRegister/current');
+        const data = await response.json();
+        
+        if (data.success && data.isOpen) {
+            currentCashRegister = data.cashRegister;
+            updateCashRegisterUI(true);
         } else {
-            showToast('Produto não encontrado', 'warning');
+            currentCashRegister = null;
+            updateCashRegisterUI(false);
         }
-
-        document.getElementById('productSearch').value = '';
-        document.getElementById('productSearch').focus();
     } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
+        console.error('Erro ao carregar status do caixa:', error);
+        showToast('Erro ao verificar caixa', 'danger');
     }
 }
 
-function addToCart(product) {
-    const existingItem = cart.find(item => item.id === product.id && item.type === 'PRODUCT');
+function updateCashRegisterUI(isOpen) {
+    const infoEl = document.getElementById('cashRegisterInfo');
+    const openBtn = document.querySelector('button[onclick="openCashRegister()"], button[onclick="closeCashRegister()"]');
     
-    if (existingItem) {
-        existingItem.quantity++;
+    if (isOpen && currentCashRegister) {
+        // Propriedades vêm em camelCase do .NET
+        const code = currentCashRegister.code || 'N/A';
+        const balance = currentCashRegister.currentCashBalance || 0;
+        
+        infoEl.innerHTML = `<i class="bi bi-check-circle text-success"></i> Caixa: ${code} | Saldo: R$ ${formatMoney(balance)}`;
+        if (openBtn) {
+            openBtn.innerHTML = '<i class="bi bi-cash-stack"></i> Fechar Caixa';
+            openBtn.setAttribute('onclick', 'closeCashRegister()');
+            openBtn.classList.remove('btn-light');
+            openBtn.classList.add('btn-warning');
+        }
+    } else {
+        infoEl.innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> Nenhum caixa aberto';
+        if (openBtn) {
+            openBtn.innerHTML = '<i class="bi bi-cash-stack"></i> Abrir Caixa';
+            openBtn.setAttribute('onclick', 'openCashRegister()');
+            openBtn.classList.remove('btn-warning');
+            openBtn.classList.add('btn-light');
+        }
+    }
+}
+
+async function openCashRegister() {
+    // Verificar se já tem caixa aberto
+    if (currentCashRegister) {
+        showToast('Já existe um caixa aberto!', 'warning');
+        return;
+    }
+    
+    // Mostrar modal para informar saldo inicial
+    const result = await Swal.fire({
+        title: 'Abrir Caixa',
+        html: `
+            <div class="text-start">
+                <label class="form-label">Saldo Inicial (Fundo de Troco)</label>
+                <div class="input-group">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" id="openingBalance" class="form-control" 
+                           value="200.00" step="0.01" min="0">
+                </div>
+                <small class="text-muted">Valor em dinheiro disponível para troco</small>
+                
+                <label class="form-label mt-3">Observações (opcional)</label>
+                <textarea id="openingObs" class="form-control" rows="2" 
+                          placeholder="Ex: Conferido com João"></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-check-lg"></i> Abrir Caixa',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#198754',
+        preConfirm: () => {
+            const balance = parseFloat(document.getElementById('openingBalance').value) || 0;
+            const obs = document.getElementById('openingObs').value;
+            return { openingBalance: balance, observations: obs };
+        }
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+        const response = await fetch('/api/CashRegister/open', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(result.value)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(`Caixa ${data.code} aberto com sucesso!`, 'success');
+            await loadCashRegisterStatus();
+        } else {
+            showToast(data.message || 'Erro ao abrir caixa', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao abrir caixa:', error);
+        showToast('Erro ao abrir caixa', 'danger');
+    }
+}
+
+async function closeCashRegister() {
+    if (!currentCashRegister) {
+        showToast('Nenhum caixa aberto!', 'warning');
+        return;
+    }
+    
+    // Propriedades vêm em camelCase
+    const code = currentCashRegister.code || 'N/A';
+    const expectedBalance = currentCashRegister.currentCashBalance || 0;
+    
+    const result = await Swal.fire({
+        title: 'Fechar Caixa',
+        html: `
+            <div class="text-start">
+                <div class="alert alert-info">
+                    <strong>Caixa:</strong> ${code}<br>
+                    <strong>Saldo Esperado:</strong> R$ ${formatMoney(expectedBalance)}
+                </div>
+                
+                <label class="form-label">Saldo Contado (Dinheiro em Caixa)</label>
+                <div class="input-group">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" id="actualBalance" class="form-control" 
+                           value="${expectedBalance.toFixed(2)}" step="0.01" min="0">
+                </div>
+                
+                <label class="form-label mt-3">Observações de Fechamento</label>
+                <textarea id="closingObs" class="form-control" rows="2" 
+                          placeholder="Ex: Conferido e fechado"></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-lock"></i> Fechar Caixa',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#dc3545',
+        preConfirm: () => {
+            const actual = parseFloat(document.getElementById('actualBalance').value) || 0;
+            const obs = document.getElementById('closingObs').value;
+            return { actualClosingBalance: actual, observations: obs };
+        }
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+        const response = await fetch('/api/CashRegister/close', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(result.value)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Caixa fechado com sucesso!', 'success');
+            currentCashRegister = null;
+            updateCashRegisterUI(false);
+        } else {
+            showToast(data.message || 'Erro ao fechar caixa', 'danger');
+        }
+    } catch (error) {
+        console.error('Erro ao fechar caixa:', error);
+        showToast('Erro ao fechar caixa', 'danger');
+    }
+}
+
+// ===== CARRINHO =====
+function addToCart(item) {
+    if (!currentCashRegister) {
+        showToast('Abra o caixa antes de adicionar itens!', 'warning');
+        return;
+    }
+    
+    // Verificar se já existe no carrinho
+    const existingIndex = cart.findIndex(i => i.id === item.id);
+    
+    if (existingIndex >= 0) {
+        cart[existingIndex].quantity += 1;
     } else {
         cart.push({
-            id: product.id,
-            type: 'PRODUCT',
-            description: product.name,
-            unitPrice: product.price,
-            quantity: 1
+            id: item.id,
+            description: item.description || item.name,
+            quantity: 1,
+            unitPrice: item.unitPrice || item.price,
+            manipulationOrderId: item.manipulationOrderId || null
         });
     }
     
     renderCart();
     calculateTotal();
-    showToast('Item adicionado ao carrinho', 'success');
 }
 
-function addOrderToCart(order) {
-    const existingItem = cart.find(item => 
-        item.id === order.id && item.type === 'MANIPULATION_ORDER'
-    );
-    
-    if (existingItem) {
-        showToast('Esta ordem já está no carrinho', 'warning');
-        return;
-    }
-    
-    cart.push({
-        id: order.id,
-        type: 'MANIPULATION_ORDER',
-        description: order.formulaName || 'Manipulação',
-        unitPrice: order.suggestedPrice || 0,
-        quantity: 1
-    });
-    
+function removeFromCart(index) {
+    cart.splice(index, 1);
     renderCart();
     calculateTotal();
-    showToast('Ordem de manipulação adicionada', 'success');
+}
+
+function updateQuantity(index, delta) {
+    cart[index].quantity += delta;
+    if (cart[index].quantity <= 0) {
+        removeFromCart(index);
+    } else {
+        renderCart();
+        calculateTotal();
+    }
+}
+
+function clearCart() {
+    if (cart.length === 0) return;
+    
+    Swal.fire({
+        title: 'Limpar Carrinho?',
+        text: 'Todos os itens serão removidos',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Sim, Limpar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            cart = [];
+            payments = [];
+            renderCart();
+            renderPayments();
+            calculateTotal();
+        }
+    });
 }
 
 function renderCart() {
@@ -121,207 +273,454 @@ function renderCart() {
             <div class="text-center text-muted py-5">
                 <i class="bi bi-cart-x fs-1 d-block mb-3"></i>
                 <p>Carrinho vazio</p>
+                <p class="small">Busque produtos ou escaneie código de barras</p>
             </div>
         `;
         return;
     }
     
     container.innerHTML = cart.map((item, index) => `
-        <div class="card mb-2">
-            <div class="card-body p-2">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-0">${item.description}</h6>
-                        <small class="text-muted">
-                            ${formatCurrency(item.unitPrice)} 
-                            ${item.type === 'MANIPULATION_ORDER' ? '(Manipulação)' : ''}
-                        </small>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="decreaseQuantity(${index})">
-                            <i class="bi bi-dash"></i>
-                        </button>
-                        <input type="number" class="form-control form-control-sm text-center" 
-                               style="width: 60px;" value="${item.quantity}" min="1"
-                               onchange="updateQuantity(${index}, this.value)">
-                        <button class="btn btn-sm btn-outline-secondary" onclick="increaseQuantity(${index})">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                        <strong class="ms-2" style="min-width: 80px; text-align: right;">
-                            ${formatCurrency(item.unitPrice * item.quantity)}
-                        </strong>
-                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+            <div class="flex-grow-1">
+                <strong>${item.description}</strong>
+                <div class="small text-muted">
+                    R$ ${formatMoney(item.unitPrice)} x ${item.quantity} = 
+                    <strong>R$ ${formatMoney(item.unitPrice * item.quantity)}</strong>
                 </div>
+            </div>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity(${index}, -1)">
+                    <i class="bi bi-dash"></i>
+                </button>
+                <span class="btn btn-outline-secondary disabled">${item.quantity}</span>
+                <button class="btn btn-outline-secondary" onclick="updateQuantity(${index}, 1)">
+                    <i class="bi bi-plus"></i>
+                </button>
+                <button class="btn btn-outline-danger" onclick="removeFromCart(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
             </div>
         </div>
     `).join('');
 }
 
-function increaseQuantity(index) {
-    cart[index].quantity++;
-    renderCart();
-    calculateTotal();
-}
-
-function decreaseQuantity(index) {
-    if (cart[index].quantity > 1) {
-        cart[index].quantity--;
-        renderCart();
-        calculateTotal();
-    }
-}
-
-function updateQuantity(index, value) {
-    const qty = parseInt(value);
-    if (qty > 0) {
-        cart[index].quantity = qty;
-        renderCart();
-        calculateTotal();
-    }
-}
-
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    renderCart();
-    calculateTotal();
-    showToast('Item removido', 'info');
-}
-
-function clearCart() {
-    if (confirm('Deseja limpar todo o carrinho?')) {
-        cart = [];
-        payments = [];
-        renderCart();
-        renderPayments();
-        calculateTotal();
-    }
-}
-
 function calculateTotal() {
     const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
-    const discountPercentage = parseFloat(document.getElementById('discountInput').value) || 0;
-    const discountAmount = subtotal * (discountPercentage / 100);
+    const discountPercent = parseFloat(document.getElementById('discountInput')?.value) || 0;
+    const discountAmount = subtotal * (discountPercent / 100);
     const total = subtotal - discountAmount;
+    const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+    const remaining = total - totalPaid;
     
-    document.getElementById('subtotal').textContent = formatCurrency(subtotal);
-    document.getElementById('discountAmount').textContent = '- ' + formatCurrency(discountAmount);
-    document.getElementById('totalAmount').textContent = formatCurrency(total);
+    document.getElementById('subtotal').textContent = `R$ ${formatMoney(subtotal)}`;
+    document.getElementById('discountAmount').textContent = `- R$ ${formatMoney(discountAmount)}`;
+    document.getElementById('totalAmount').textContent = `R$ ${formatMoney(total)}`;
+    document.getElementById('totalPaid').textContent = `R$ ${formatMoney(totalPaid)}`;
+    document.getElementById('remaining').textContent = `R$ ${formatMoney(remaining)}`;
     
-    updatePaymentsSummary();
+    // Mudar cor do restante
+    const remainingEl = document.getElementById('remaining');
+    if (remaining <= 0) {
+        remainingEl.classList.remove('text-danger');
+        remainingEl.classList.add('text-success');
+    } else {
+        remainingEl.classList.remove('text-success');
+        remainingEl.classList.add('text-danger');
+    }
+    
+    // Habilitar/desabilitar botão de finalizar
+    const finishBtn = document.getElementById('finishSaleBtn');
+    if (finishBtn) {
+        finishBtn.disabled = cart.length === 0 || remaining > 0.01;
+    }
+    
+    return { subtotal, discountAmount, total, totalPaid, remaining };
 }
 
-function showPaymentModal(method) {
-    if (cart.length === 0) {
-        showToast('Adicione itens ao carrinho primeiro', 'warning');
+// Função chamada pelo botão Finalizar Venda
+async function finishSale() {
+    await finalizeSale();
+}
+
+// ===== BUSCA DE PRODUTOS =====
+async function searchProduct(query) {
+    if (!query || query.length < 2) return;
+    
+    if (!currentCashRegister) {
+        showToast('Abra o caixa antes de adicionar itens!', 'warning');
         return;
     }
     
-    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    currentPaymentModal = modal;
-    
-    document.getElementById('paymentMethod').value = method;
-    document.getElementById('paymentModalTitle').textContent = `Adicionar Pagamento - ${formatPaymentMethod(method)}`;
-    
-    // Limpar campos
-    document.getElementById('paymentAmount').value = '';
-    document.getElementById('paymentObs').value = '';
-    
-    // Mostrar/ocultar campos específicos
-    document.querySelectorAll('[id$="Fields"]').forEach(el => el.classList.add('d-none'));
-    
-    if (method === 'DINHEIRO') {
-        document.getElementById('cashFields').classList.remove('d-none');
-        document.getElementById('cashReceived').addEventListener('input', calculateChange);
-    } else if (method.includes('CARTAO')) {
-        document.getElementById('cardFields').classList.remove('d-none');
-        if (method === 'CARTAO_DEBITO') {
-            document.getElementById('installmentsField').style.display = 'none';
+    try {
+        // Usar endpoint unificado de busca do PDV
+        const response = await fetch(`/api/PrescriptionQuotes/pdv-search?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.length > 0) {
+            showSearchResults(data.data);
         } else {
-            document.getElementById('installmentsField').style.display = 'block';
+            showToast('Nenhum orçamento ou pedido encontrado', 'info');
         }
-    } else if (method === 'PIX') {
-        document.getElementById('pixFields').classList.remove('d-none');
+    } catch (error) {
+        console.error('Erro na busca:', error);
+        showToast('Erro ao buscar', 'danger');
     }
-    
-    // Sugerir valor restante
-    const remaining = getRemainingAmount();
-    if (remaining > 0) {
-        document.getElementById('paymentAmount').value = remaining.toFixed(2);
-    }
-    
-    modal.show();
-    setTimeout(() => document.getElementById('paymentAmount').focus(), 500);
 }
 
-function calculateChange() {
-    const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
-    const received = parseFloat(document.getElementById('cashReceived').value) || 0;
-    const change = received - amount;
+function showSearchResults(results) {
+    const typeLabels = {
+        'quote': { label: 'Orçamento', color: 'success' },
+        'order': { label: 'OM Pronta', color: 'primary' }
+    };
     
-    if (change >= 0) {
-        document.getElementById('changeAmount').textContent = formatCurrency(change);
-        document.getElementById('changeDisplay').style.display = 'block';
+    Swal.fire({
+        title: 'Selecione para Vender',
+        html: `
+            <div class="list-group text-start" style="max-height: 400px; overflow-y: auto;">
+                ${results.map((item, i) => `
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="selectSearchResult(${i})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-${typeLabels[item.type].color} me-2">${typeLabels[item.type].label}</span>
+                                <strong>${item.code}</strong>
+                            </div>
+                            <span class="badge bg-dark fs-6">R$ ${formatMoney(item.price)}</span>
+                        </div>
+                        <div class="mt-1">
+                            <i class="bi bi-person"></i> ${item.customerName || 'Cliente não identificado'}
+                        </div>
+                        <small class="text-muted">
+                            ${item.description} - ${item.totalQuantity}
+                        </small>
+                    </button>
+                `).join('')}
+            </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true,
+        width: '500px'
+    });
+    
+    window._searchResults = results;
+}
+
+async function selectSearchResult(index) {
+    const item = window._searchResults[index];
+    Swal.close();
+    
+    if (item.type === 'quote') {
+        // Orçamento aprovado - mostrar modal de pagamento para converter em venda
+        await showQuotePaymentModal(item);
     } else {
-        document.getElementById('changeDisplay').style.display = 'none';
+        // OM finalizada - adicionar ao carrinho normal
+        addToCart({
+            id: item.id,
+            description: `${item.description} - ${item.code}`,
+            unitPrice: item.price,
+            manipulationOrderId: item.id
+        });
+        document.getElementById('productSearch').value = '';
     }
+}
+
+async function showQuotePaymentModal(quote) {
+    const result = await Swal.fire({
+        title: 'Finalizar Venda do Orçamento',
+        html: `
+            <div class="text-start">
+                <div class="alert alert-success">
+                    <strong>Orçamento:</strong> ${quote.code}<br>
+                    <strong>Cliente:</strong> ${quote.customerName || 'Não identificado'}<br>
+                    <strong>Produto:</strong> ${quote.description} - ${quote.totalQuantity}
+                </div>
+                
+                <h5 class="text-center mb-3">
+                    Total: <strong class="text-success fs-4">R$ ${formatMoney(quote.price)}</strong>
+                </h5>
+                
+                <hr>
+                
+                <label class="form-label fw-bold">Forma de Pagamento</label>
+                <select class="form-select mb-3" id="quotePaymentMethod">
+                    <option value="DINHEIRO">💵 Dinheiro</option>
+                    <option value="CARTAO_DEBITO">💳 Cartão de Débito</option>
+                    <option value="CARTAO_CREDITO">💳 Cartão de Crédito</option>
+                    <option value="PIX">📱 PIX</option>
+                </select>
+                
+                <label class="form-label">Valor Pago</label>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" class="form-control" id="quoteAmountPaid" 
+                           value="${quote.price.toFixed(2)}" step="0.01" min="0">
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <label class="form-label">Desconto</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" class="form-control" id="quoteDiscount" 
+                                   value="0" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Parcelas</label>
+                        <select class="form-select" id="quoteInstallments">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="3">3x</option>
+                            <option value="4">4x</option>
+                            <option value="5">5x</option>
+                            <option value="6">6x</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-check-circle"></i> Finalizar Venda',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#198754',
+        width: '450px',
+        preConfirm: () => {
+            return {
+                paymentMethod: document.getElementById('quotePaymentMethod').value,
+                amountPaid: parseFloat(document.getElementById('quoteAmountPaid').value) || 0,
+                discountAmount: parseFloat(document.getElementById('quoteDiscount').value) || 0,
+                installments: parseInt(document.getElementById('quoteInstallments').value) || 1
+            };
+        }
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    // Converter orçamento em venda
+    await convertQuoteToSale(quote.id, result.value);
+}
+
+async function convertQuoteToSale(quoteId, paymentData) {
+    try {
+        Swal.fire({ title: 'Processando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        
+        const response = await fetch(`/api/PrescriptionQuotes/${quoteId}/convert-to-sale`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paymentMethod: paymentData.paymentMethod,
+                amountPaid: paymentData.amountPaid,
+                installments: paymentData.installments,
+                discountAmount: paymentData.discountAmount,
+                discountReason: null
+            })
+        });
+        
+        const data = await response.json();
+        
+        Swal.close();
+        
+        if (data.message && !data.message.includes('Erro')) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Venda Realizada!',
+                html: `
+                    <p>${data.message}</p>
+                    <hr>
+                    <small class="text-muted">
+                        Venda ID: ${data.saleId}<br>
+                        Ordem de Manipulação: ${data.manipulationOrderId}
+                    </small>
+                `,
+                confirmButtonText: 'OK'
+            });
+            
+            // Atualizar caixa
+            await loadCashRegisterStatus();
+            
+            // Limpar busca
+            document.getElementById('productSearch').value = '';
+        } else {
+            showToast(data.message || 'Erro ao processar venda', 'danger');
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Erro ao converter orçamento:', error);
+        showToast('Erro ao processar venda', 'danger');
+    }
+}
+
+// ===== PAGAMENTOS =====
+function showPaymentModal(method) {
+    selectedPaymentMethod = method;
+    document.getElementById('paymentMethod').value = method;
+    
+    // Atualizar título do modal
+    const methodNames = {
+        'DINHEIRO': 'Dinheiro',
+        'CARTAO_DEBITO': 'Cartão de Débito',
+        'CARTAO_CREDITO': 'Cartão de Crédito',
+        'PIX': 'PIX'
+    };
+    document.getElementById('paymentModalTitle').textContent = `Pagamento: ${methodNames[method] || method}`;
+    
+    // Mostrar campos específicos
+    document.getElementById('cashFields').classList.add('d-none');
+    document.getElementById('cardFields').classList.add('d-none');
+    document.getElementById('pixFields').classList.add('d-none');
+    
+    const { remaining } = calculateTotal();
+    document.getElementById('paymentAmount').value = remaining.toFixed(2);
+    
+    switch(method) {
+        case 'DINHEIRO':
+            document.getElementById('cashFields').classList.remove('d-none');
+            document.getElementById('cashReceived').value = remaining.toFixed(2);
+            calculateChange();
+            break;
+        case 'CARTAO_DEBITO':
+        case 'CARTAO_CREDITO':
+            document.getElementById('cardFields').classList.remove('d-none');
+            document.getElementById('installmentsField').style.display = 
+                method === 'CARTAO_CREDITO' ? 'block' : 'none';
+            break;
+        case 'PIX':
+            document.getElementById('pixFields').classList.remove('d-none');
+            break;
+    }
+    
+    // Abrir modal
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
 }
 
 function setRemainingAmount() {
-    const remaining = getRemainingAmount();
+    const { remaining } = calculateTotal();
     document.getElementById('paymentAmount').value = remaining.toFixed(2);
+    if (selectedPaymentMethod === 'DINHEIRO') {
+        document.getElementById('cashReceived').value = remaining.toFixed(2);
+        calculateChange();
+    }
 }
 
-function getRemainingAmount() {
-    const total = parseFloat(document.getElementById('totalAmount').textContent.replace('R$', '').replace('.', '').replace(',', '.'));
-    const paid = payments.reduce((sum, p) => sum + p.amount, 0);
-    return Math.max(0, total - paid);
+function selectPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    
+    // Atualizar botões
+    document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.closest('.btn').classList.add('active');
+    
+    // Mostrar campos específicos
+    document.getElementById('cashFields').classList.add('d-none');
+    document.getElementById('cardFields').classList.add('d-none');
+    document.getElementById('pixFields').classList.add('d-none');
+    
+    switch(method) {
+        case 'DINHEIRO':
+            document.getElementById('cashFields').classList.remove('d-none');
+            const { remaining } = calculateTotal();
+            document.getElementById('cashReceived').value = remaining.toFixed(2);
+            calculateChange();
+            break;
+        case 'CARTAO_DEBITO':
+        case 'CARTAO_CREDITO':
+            document.getElementById('cardFields').classList.remove('d-none');
+            document.getElementById('installmentsField').style.display = 
+                method === 'CARTAO_CREDITO' ? 'block' : 'none';
+            break;
+        case 'PIX':
+            document.getElementById('pixFields').classList.remove('d-none');
+            break;
+    }
+    
+    // Abrir modal
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+}
+
+function calculateChange() {
+    const { total, totalPaid } = calculateTotal();
+    const remaining = total - totalPaid;
+    const received = parseFloat(document.getElementById('cashReceived')?.value) || 0;
+    const change = received - remaining;
+    
+    const changeDisplay = document.getElementById('changeDisplay');
+    const changeAmount = document.getElementById('changeAmount');
+    
+    if (change > 0) {
+        changeDisplay.style.display = 'block';
+        changeAmount.textContent = `R$ ${formatMoney(change)}`;
+    } else {
+        changeDisplay.style.display = 'none';
+    }
 }
 
 function addPayment() {
-    const method = document.getElementById('paymentMethod').value;
-    const amount = parseFloat(document.getElementById('paymentAmount').value);
+    if (!selectedPaymentMethod) {
+        showToast('Selecione uma forma de pagamento', 'warning');
+        return;
+    }
     
-    if (!amount || amount <= 0) {
+    const { remaining } = calculateTotal();
+    let amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    
+    if (amount <= 0) {
         showToast('Informe um valor válido', 'warning');
         return;
     }
     
-    const remaining = getRemainingAmount();
-    if (amount > remaining) {
-        showToast(`Valor excede o restante (${formatCurrency(remaining)})`, 'warning');
-        return;
+    // Limitar ao valor restante
+    amount = Math.min(amount, remaining);
+    
+    let details = {};
+    
+    switch(selectedPaymentMethod) {
+        case 'DINHEIRO':
+            const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+            // Para dinheiro, o valor do pagamento é o restante, não o recebido
+            // O troco é calculado separadamente
+            details = {
+                cashReceived: received,
+                changeAmount: Math.max(0, received - remaining)
+            };
+            break;
+        case 'CARTAO_DEBITO':
+        case 'CARTAO_CREDITO':
+            details = {
+                cardBrand: document.getElementById('cardBrand').value,
+                cardLastDigits: document.getElementById('cardLastDigits').value,
+                installments: parseInt(document.getElementById('installments').value) || 1,
+                nsu: document.getElementById('nsu').value,
+                authorizationCode: document.getElementById('authCode').value
+            };
+            break;
+        case 'PIX':
+            details = {
+                pixKey: document.getElementById('pixKey').value,
+                pixTransactionId: document.getElementById('pixTransactionId').value
+            };
+            break;
     }
     
-    const payment = {
-        method: method,
+    payments.push({
+        method: selectedPaymentMethod,
         amount: amount,
-        observations: document.getElementById('paymentObs').value
-    };
+        ...details
+    });
     
-    // Adicionar campos específicos
-    if (method === 'DINHEIRO') {
-        payment.cashReceived = parseFloat(document.getElementById('cashReceived').value) || amount;
-        payment.changeAmount = payment.cashReceived - amount;
-    } else if (method.includes('CARTAO')) {
-        payment.cardBrand = document.getElementById('cardBrand').value;
-        payment.cardLastDigits = document.getElementById('cardLastDigits').value;
-        payment.installments = parseInt(document.getElementById('installments').value);
-        payment.nsu = document.getElementById('nsu').value;
-        payment.authorizationCode = document.getElementById('authCode').value;
-    } else if (method === 'PIX') {
-        payment.pixKey = document.getElementById('pixKey').value;
-        payment.pixTransactionId = document.getElementById('pixTransactionId').value;
-    }
-    
-    payments.push(payment);
     renderPayments();
-    updatePaymentsSummary();
+    calculateTotal();
     
-    currentPaymentModal.hide();
-    showToast('Pagamento adicionado', 'success');
+    // Fechar modal
+    bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+    
+    // Verificar se pode finalizar
+    const totals = calculateTotal();
+    if (totals.remaining <= 0) {
+        promptFinalizeSale();
+    }
 }
 
 function renderPayments() {
@@ -332,281 +731,301 @@ function renderPayments() {
         return;
     }
     
-    container.innerHTML = payments.map((payment, index) => {
-        let details = '';
-        if (payment.method === 'DINHEIRO' && payment.changeAmount) {
-            details = `<small class="text-muted d-block">Troco: ${formatCurrency(payment.changeAmount)}</small>`;
-        } else if (payment.method.includes('CARTAO') && payment.installments) {
-            details = `<small class="text-muted d-block">${payment.installments}x - ${payment.cardBrand || ''}</small>`;
-        }
-        
-        return `
-            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
-                <div>
-                    <strong>${formatPaymentMethod(payment.method)}</strong>
-                    ${details}
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <strong>${formatCurrency(payment.amount)}</strong>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removePayment(${index})">
-                        <i class="bi bi-x"></i>
-                    </button>
-                </div>
+    const methodNames = {
+        'DINHEIRO': 'Dinheiro',
+        'CARTAO_DEBITO': 'Débito',
+        'CARTAO_CREDITO': 'Crédito',
+        'PIX': 'PIX'
+    };
+    
+    container.innerHTML = payments.map((p, i) => `
+        <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+            <span>${methodNames[p.method] || p.method}</span>
+            <div>
+                <strong>R$ ${formatMoney(p.amount)}</strong>
+                <button class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="removePayment(${i})">
+                    <i class="bi bi-x-circle"></i>
+                </button>
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
 }
 
 function removePayment(index) {
     payments.splice(index, 1);
     renderPayments();
-    updatePaymentsSummary();
-    showToast('Pagamento removido', 'info');
+    calculateTotal();
 }
 
-function updatePaymentsSummary() {
-    const total = parseFloat(document.getElementById('totalAmount').textContent.replace('R$', '').replace('.', '').replace(',', '.'));
-    const paid = payments.reduce((sum, p) => sum + p.amount, 0);
-    const remaining = Math.max(0, total - paid);
+// ===== FINALIZAÇÃO =====
+async function promptFinalizeSale() {
+    const result = await Swal.fire({
+        title: 'Finalizar Venda?',
+        text: 'Confirma a finalização desta venda?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        confirmButtonText: '<i class="bi bi-check-lg"></i> Finalizar',
+        cancelButtonText: 'Continuar Editando'
+    });
     
-    document.getElementById('totalPaid').textContent = formatCurrency(paid);
-    document.getElementById('remaining').textContent = formatCurrency(remaining);
-    
-    // Habilitar botão de finalizar se totalmente pago
-    const finishBtn = document.getElementById('finishSaleBtn');
-    if (remaining === 0 && payments.length > 0) {
-        finishBtn.disabled = false;
-    } else {
-        finishBtn.disabled = true;
+    if (result.isConfirmed) {
+        await finalizeSale();
     }
 }
 
-async function finishSale() {
+async function finalizeSale() {
+    if (!currentCashRegister) {
+        showToast('Abra o caixa antes de finalizar!', 'warning');
+        return;
+    }
+    
     if (cart.length === 0) {
-        showToast('Carrinho vazio', 'warning');
+        showToast('Adicione itens ao carrinho!', 'warning');
         return;
     }
     
-    if (payments.length === 0) {
-        showToast('Adicione pelo menos uma forma de pagamento', 'warning');
+    const totals = calculateTotal();
+    if (totals.remaining > 0.01) {
+        showToast('Adicione mais pagamentos para cobrir o total!', 'warning');
         return;
     }
     
-    const remaining = getRemainingAmount();
-    if (remaining > 0) {
-        showToast(`Falta pagar ${formatCurrency(remaining)}`, 'warning');
-        return;
-    }
+    const discountPercent = parseFloat(document.getElementById('discountInput')?.value) || 0;
     
-    if (!confirm('Confirma a finalização da venda?')) {
-        return;
-    }
+    // Montar DTO
+    const saleData = {
+        customerId: selectedCustomer?.id || null,
+        items: cart.map(item => ({
+            manipulationOrderId: item.manipulationOrderId,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            discountPercentage: 0
+        })),
+        paymentMethod: payments[0]?.method || 'DINHEIRO',
+        paidAmount: totals.totalPaid,
+        discountPercentage: discountPercent,
+        observations: document.getElementById('paymentObs')?.value || ''
+    };
     
     try {
-        // 1. Criar a venda
-        const saleData = {
-            customerId: selectedCustomer ? selectedCustomer.id : null,
-            items: cart.map(item => ({
-                manipulationOrderId: item.type === 'MANIPULATION_ORDER' ? item.id : null,
-                productId: item.type === 'PRODUCT' ? item.id : null,
-                description: item.description,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                discountPercentage: 0
-            })),
-            saleDate: new Date().toISOString(),
-            discountPercentage: parseFloat(document.getElementById('discountInput').value) || 0,
-            observations: ''
-        };
+        Swal.fire({ title: 'Processando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         
-        const saleResponse = await fetch('/api/Sales', {
+        const response = await fetch('/api/PDV/quick-sale', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(saleData)
         });
         
-        const saleResult = await saleResponse.json();
+        const data = await response.json();
         
-        if (!saleResult.success) {
-            throw new Error(saleResult.message || 'Erro ao criar venda');
-        }
+        Swal.close();
         
-        const saleId = saleResult.data.id;
-        
-        // 2. Adicionar todos os pagamentos
-        for (const payment of payments) {
-            const paymentResponse = await fetch(`/api/Payments/sales/${saleId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payment)
-            });
+        if (data.success) {
+            showToast('Venda realizada com sucesso!', 'success');
             
-            const paymentResult = await paymentResponse.json();
-            
-            if (!paymentResult.success) {
-                throw new Error(`Erro ao registrar pagamento: ${paymentResult.message}`);
+            // Mostrar recibo
+            if (data.data) {
+                showReceipt(data.data);
             }
-        }
-        
-        // Sucesso!
-        showToast('Venda finalizada com sucesso!', 'success');
-        
-        // Perguntar se quer imprimir
-        if (confirm('Deseja imprimir o cupom?')) {
-            printReceipt(saleId);
-        }
-        
-        // Limpar PDV
-        resetPDV();
-        
-    } catch (error) {
-        console.error('Erro ao finalizar venda:', error);
-        showToast('Erro ao finalizar venda: ' + error.message, 'error');
-    }
-}
-
-function resetPDV() {
-    cart = [];
-    payments = [];
-    selectedCustomer = null;
-    
-    renderCart();
-    renderPayments();
-    calculateTotal();
-    
-    document.getElementById('customerSearch').value = '';
-    document.getElementById('selectedCustomerId').value = '';
-    document.getElementById('discountInput').value = '0';
-    document.getElementById('productSearch').focus();
-}
-
-async function loadCashRegisterInfo() {
-    try {
-        const response = await fetch('/api/CashRegister/current');
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-            const info = result.data;
-            document.getElementById('cashRegisterInfo').textContent = 
-                `Caixa: ${info.code} - Aberto às ${new Date(info.openingDate).toLocaleTimeString('pt-BR')}`;
+            
+            // Limpar carrinho
+            cart = [];
+            payments = [];
+            selectedCustomer = null;
+            renderCart();
+            renderPayments();
+            calculateTotal();
+            document.getElementById('customerSearch').value = '';
+            document.getElementById('selectedCustomerId').value = '';
+            
+            // Atualizar caixa
+            await loadCashRegisterStatus();
         } else {
-            document.getElementById('cashRegisterInfo').textContent = 'Nenhum caixa aberto';
+            showToast(data.message || 'Erro ao finalizar venda', 'danger');
         }
     } catch (error) {
-        console.error('Erro ao carregar info do caixa:', error);
+        Swal.close();
+        console.error('Erro ao finalizar:', error);
+        showToast('Erro ao finalizar venda', 'danger');
     }
 }
 
-async function searchCustomer() {
+function showReceipt(receipt) {
+    Swal.fire({
+        title: 'Venda Finalizada!',
+        html: `
+            <div class="text-start">
+                <div class="text-center mb-3">
+                    <strong>${receipt.establishmentName}</strong><br>
+                    <small>${receipt.establishmentAddress}</small><br>
+                    <small>CNPJ: ${receipt.establishmentCnpj}</small>
+                </div>
+                <hr>
+                <strong>Código:</strong> ${receipt.code}<br>
+                <strong>Data:</strong> ${new Date(receipt.saleDate).toLocaleString('pt-BR')}<br>
+                ${receipt.customerName ? `<strong>Cliente:</strong> ${receipt.customerName}<br>` : ''}
+                <hr>
+                <table class="table table-sm">
+                    <thead><tr><th>Item</th><th class="text-end">Valor</th></tr></thead>
+                    <tbody>
+                        ${receipt.items.map(i => `
+                            <tr>
+                                <td>${i.description} (${i.quantity}x)</td>
+                                <td class="text-end">R$ ${formatMoney(i.totalPrice)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span>Subtotal:</span>
+                    <span>R$ ${formatMoney(receipt.subtotal)}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Desconto:</span>
+                    <span>- R$ ${formatMoney(receipt.discountAmount)}</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold fs-5">
+                    <span>TOTAL:</span>
+                    <span>R$ ${formatMoney(receipt.totalAmount)}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span>Pago:</span>
+                    <span>R$ ${formatMoney(receipt.paidAmount)}</span>
+                </div>
+                ${receipt.changeAmount > 0 ? `
+                    <div class="d-flex justify-content-between text-success">
+                        <span>Troco:</span>
+                        <span>R$ ${formatMoney(receipt.changeAmount)}</span>
+                    </div>
+                ` : ''}
+            </div>
+        `,
+        confirmButtonText: '<i class="bi bi-printer"></i> Imprimir',
+        showCancelButton: true,
+        cancelButtonText: 'Fechar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.print();
+        }
+    });
+}
+
+// ===== CLIENTE =====
+function searchCustomer() {
     const modal = new bootstrap.Modal(document.getElementById('customerModal'));
     modal.show();
     
-    const searchInput = document.getElementById('customerModalSearch');
-    searchInput.addEventListener('input', async function() {
-        if (this.value.length >= 3) {
-            await loadCustomers(this.value);
-        }
-    });
+    document.getElementById('customerModalSearch').value = '';
+    document.getElementById('customersList').innerHTML = '';
     
-    await loadCustomers('');
+    // Carregar todos os clientes
+    loadCustomers('');
 }
 
 async function loadCustomers(query) {
     try {
         const response = await fetch(`/api/Customers?search=${encodeURIComponent(query)}`);
-        const result = await response.json();
+        const data = await response.json();
         
         const container = document.getElementById('customersList');
         
-        if (result.success && result.data.length > 0) {
-            container.innerHTML = result.data.map(customer => `
-                <div class="card mb-2 cursor-pointer" onclick="selectCustomer(${JSON.stringify(customer).replace(/"/g, '&quot;')})">
-                    <div class="card-body p-2">
-                        <strong>${customer.fullName}</strong><br>
-                        <small class="text-muted">${customer.cpf || ''} - ${customer.phone || ''}</small>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            container.innerHTML = '<p class="text-muted text-center">Nenhum cliente encontrado</p>';
+        if (!data.data || data.data.length === 0) {
+            container.innerHTML = '<p class="text-muted">Nenhum cliente encontrado</p>';
+            return;
         }
+        
+        container.innerHTML = data.data.map(c => `
+            <div class="list-group-item list-group-item-action" 
+                 onclick="selectCustomer('${c.id}', '${c.fullName}', '${c.cpf || ''}')">
+                <div class="d-flex justify-content-between">
+                    <strong>${c.fullName}</strong>
+                    <span class="text-muted">${c.cpf || 'Sem CPF'}</span>
+                </div>
+                <small class="text-muted">${c.phone || ''} ${c.email || ''}</small>
+            </div>
+        `).join('');
     } catch (error) {
         console.error('Erro ao buscar clientes:', error);
     }
 }
 
-function selectCustomer(customer) {
-    selectedCustomer = customer;
-    document.getElementById('customerSearch').value = customer.fullName;
-    document.getElementById('selectedCustomerId').value = customer.id;
+function selectCustomer(id, name, cpf) {
+    selectedCustomer = { id, name, cpf };
+    document.getElementById('selectedCustomerId').value = id;
+    document.getElementById('customerSearch').value = `${name} ${cpf ? '(' + cpf + ')' : ''}`;
+    
     bootstrap.Modal.getInstance(document.getElementById('customerModal')).hide();
-    showToast('Cliente selecionado', 'success');
 }
 
 function clearCustomer() {
     selectedCustomer = null;
-    document.getElementById('customerSearch').value = '';
     document.getElementById('selectedCustomerId').value = '';
+    document.getElementById('customerSearch').value = '';
 }
 
-function printReceipt(saleId) {
-    window.open(`/Sales/Receipt/${saleId}`, '_blank');
-}
-
+// ===== PDV CONTROL =====
 function closePDV() {
-    if (confirm('Deseja realmente fechar o PDV?')) {
-        window.location.href = '/';
-    }
+    Swal.fire({
+        title: 'Fechar PDV?',
+        text: 'Deseja sair do Ponto de Venda?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, Sair',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/';
+        }
+    });
 }
 
-// Funções auxiliares
-function formatCurrency(value) {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-    }).format(value);
+function showProductsModal() {
+    // TODO: Implementar modal com catálogo de produtos
+    showToast('Catálogo em desenvolvimento', 'info');
 }
 
-function formatPaymentMethod(method) {
-    const methods = {
-        'DINHEIRO': 'Dinheiro',
-        'CARTAO_DEBITO': 'Cartão de Débito',
-        'CARTAO_CREDITO': 'Cartão de Crédito',
-        'PIX': 'PIX',
-        'BOLETO': 'Boleto'
-    };
-    return methods[method] || method;
+// ===== UTILITÁRIOS =====
+function formatMoney(value) {
+    return (value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function showToast(message, type = 'info') {
-    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
-    
-    const bgColor = type === 'error' ? 'danger' : 
-                    type === 'warning' ? 'warning' : 
-                    type === 'success' ? 'success' : 'info';
-    
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${bgColor} border-0`;
-    toast.setAttribute('role', 'alert');
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-    
-    toastContainer.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-    
-    setTimeout(() => toast.remove(), 3000);
+    // Usar Toastr se disponível, senão alert
+    if (typeof toastr !== 'undefined') {
+        toastr[type](message);
+    } else if (typeof Swal !== 'undefined') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        
+        const icons = { success: 'success', danger: 'error', warning: 'warning', info: 'info' };
+        Toast.fire({ icon: icons[type] || 'info', title: message });
+    } else {
+        alert(message);
+    }
 }
 
-function createToastContainer() {
-    const container = document.createElement('div');
-    container.id = 'toastContainer';
-    container.className = 'toast-container position-fixed top-0 end-0 p-3';
-    container.style.zIndex = '9999';
-    document.body.appendChild(container);
-    return container;
+// Busca de clientes com debounce
+document.getElementById('customerModalSearch')?.addEventListener('input', debounce(function() {
+    loadCustomers(this.value);
+}, 300));
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }

@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Data;
@@ -18,9 +17,8 @@ public class QuoteWhatsAppService
     private readonly AppDbContext _context;
     private readonly HttpClient _httpClient;
     private readonly ILogger<QuoteWhatsAppService> _logger;
+    private readonly string _apiKey;
     private readonly string _apiUrl;
-    private readonly string _apiToken;
-    private readonly string _instanceId;
     private readonly string _baseUrl;
 
     public QuoteWhatsAppService(
@@ -32,15 +30,10 @@ public class QuoteWhatsAppService
         _httpClient = new HttpClient();
         _logger = logger;
 
-        _apiUrl = configuration["AtentBot:ApiUrl"] ?? "https://api.atentbot.com";
-        _apiToken = configuration["AtentBot:ApiToken"] ?? "";
-        _instanceId = configuration["AtentBot:InstanceId"] ?? "";
+        // Usar credenciais da configuração ou fallback para valores padrão
+        _apiKey = configuration["AtentBot:ApiKey"] ?? "33B2682CFAFB-4184-966E-71A3028B7A37";
+        _apiUrl = configuration["AtentBot:ApiUrl"] ?? "https://api.atentbot.com/message/sendText/pharm";
         _baseUrl = configuration["App:BaseUrl"] ?? "https://orcpharm.atentbot.com";
-
-        if (!string.IsNullOrEmpty(_apiToken))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiToken);
-        }
     }
 
     /// <summary>
@@ -275,19 +268,12 @@ Qualquer dúvida, estamos à disposição!";
     private async Task<(bool Success, string Message, string? MessageId)> SendWhatsAppMessageAsync(
         string phone, string message)
     {
-        if (string.IsNullOrEmpty(_apiToken) || string.IsNullOrEmpty(_instanceId))
-        {
-            _logger.LogWarning("AtentBot não configurado. Mensagem não enviada.");
-            return (true, "WhatsApp não configurado - mensagem simulada", null);
-        }
-
         try
         {
             var payload = new
             {
-                instance_id = _instanceId,
-                to = phone,
-                message = message
+                number = phone,
+                text = message
             };
 
             var content = new StringContent(
@@ -295,20 +281,21 @@ Qualquer dúvida, estamos à disposição!";
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _httpClient.PostAsync($"{_apiUrl}/message/send", content);
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("apikey", _apiKey);
+
+            var response = await _httpClient.PostAsync(_apiUrl, content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
             {
-                var result = JsonSerializer.Deserialize<AtentBotResponse>(responseContent,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                return (true, "Mensagem enviada com sucesso", result?.MessageId);
+                _logger.LogInformation("WhatsApp enviado com sucesso para {Phone}", phone);
+                return (true, "Mensagem enviada com sucesso", null);
             }
             else
             {
                 _logger.LogError("Erro AtentBot: {Status} - {Response}", response.StatusCode, responseContent);
-                return (false, $"Erro ao enviar: {response.StatusCode}", null);
+                return (false, $"Erro ao enviar: {response.StatusCode} - {responseContent}", null);
             }
         }
         catch (Exception ex)
@@ -334,10 +321,4 @@ Qualquer dúvida, estamos à disposição!";
         return numbers;
     }
 
-    private class AtentBotResponse
-    {
-        public string? MessageId { get; set; }
-        public bool Success { get; set; }
-        public string? Error { get; set; }
-    }
 }

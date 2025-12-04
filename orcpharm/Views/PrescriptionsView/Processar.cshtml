@@ -878,7 +878,7 @@ let quoteDoctorData = null;
 
 // ========== UPLOAD ==========
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const zone = document.getElementById('uploadZone');
     
     zone.addEventListener('dragover', (e) => {
@@ -896,7 +896,224 @@ document.addEventListener('DOMContentLoaded', function() {
         const file = e.dataTransfer.files[0];
         if (file) processFile(file);
     });
+    
+    // Verificar se é edição de orçamento existente
+    const urlParams = new URLSearchParams(window.location.search);
+    const quoteId = urlParams.get('quoteId');
+    if (quoteId) {
+        await loadExistingQuote(quoteId);
+    }
 });
+
+// Carregar orçamento existente para edição
+async function loadExistingQuote(quoteId) {
+    try {
+        showLoading(true);
+        const response = await fetch(`/api/PrescriptionQuotes/${quoteId}`);
+        
+        if (!response.ok) {
+            throw new Error('Orçamento não encontrado');
+        }
+        
+        const quote = await response.json();
+        console.log('Orçamento carregado para edição:', quote);
+        
+        // IMPORTANTE: Preencher createdQuote para os botões funcionarem
+        createdQuote = quote;
+        
+        // Guardar ID do orçamento para atualização
+        window.editingQuoteId = quoteId;
+        
+        // Preencher dados do cliente
+        if (quote.customerId || quote.customerName) {
+            quoteCustomerData = {
+                id: quote.customerId,
+                name: quote.customerName,
+                phone: quote.customerPhone,
+                email: quote.customerEmail
+            };
+        }
+        
+        // Preencher dados do prescritor
+        if (quote.doctorName) {
+            quoteDoctorData = {
+                id: quote.prescriberId,
+                name: quote.doctorName,
+                crm: quote.doctorCrm,
+                crmState: quote.doctorCrmState
+            };
+        }
+        
+        // Parse dos componentes
+        let components = [];
+        if (quote.components && Array.isArray(quote.components)) {
+            components = quote.components;
+        } else if (quote.componentsJson) {
+            try {
+                components = typeof quote.componentsJson === 'string' 
+                    ? JSON.parse(quote.componentsJson) 
+                    : quote.componentsJson;
+            } catch (e) {
+                console.error('Erro ao parsear componentsJson:', e);
+            }
+        } else if (quote.components_json) {
+            try {
+                components = typeof quote.components_json === 'string' 
+                    ? JSON.parse(quote.components_json) 
+                    : quote.components_json;
+            } catch (e) {
+                console.error('Erro ao parsear components_json:', e);
+            }
+        }
+        
+        // Preencher itens do orçamento
+        quoteItems = components.map(item => ({
+            rawMaterialId: item.rawMaterialId || item.RawMaterialId || item.id,
+            name: item.name || item.Name || item.rawMaterialName,
+            quantity: item.quantity || item.Quantity || 0,
+            unit: item.unit || item.Unit || '',
+            unitCost: item.unitCost || item.UnitCost || 0,
+            totalCost: item.totalCost || item.TotalCost || item.cost || 0
+        }));
+        
+        // Ir direto para o Step 4 (resultado)
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('reviewSection').classList.add('d-none');
+        document.getElementById('quoteSection').classList.remove('d-none');
+        
+        // Marcar steps como completados visualmente
+        document.querySelectorAll('.step').forEach((step, index) => {
+            if (index < 3) {
+                step.classList.remove('active');
+                step.classList.add('completed');
+            } else {
+                step.classList.add('active');
+            }
+        });
+        document.querySelectorAll('.step-connector').forEach(conn => {
+            conn.classList.add('completed');
+        });
+        
+        // Atualizar título
+        document.querySelector('h4.mb-1').innerHTML = '<i class="bi bi-pencil-fill text-info"></i> Editar Orçamento - ' + quote.code;
+        
+        // Exibir o resultado
+        showQuoteResultFromExisting(quote);
+        
+    } catch (error) {
+        console.error('Erro ao carregar orçamento:', error);
+        showToast('Erro ao carregar orçamento: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Exibir resultado de orçamento existente
+function showQuoteResultFromExisting(quote) {
+    console.log('showQuoteResultFromExisting - quote:', quote);
+    
+    // Preencher código
+    document.getElementById('quoteCode').textContent = quote.code;
+    
+    // Preencher valor total no header
+    document.getElementById('quoteTotalValue').textContent = formatMoney(quote.finalPrice || 0);
+    
+    // Preencher cliente
+    if (quoteCustomerData && quoteCustomerData.name) {
+        document.getElementById('quoteCustomerName').textContent = quoteCustomerData.name;
+        document.getElementById('quoteCustomerPhone').textContent = quoteCustomerData.phone || '-';
+        const emailDisplay = document.getElementById('quoteCustomerEmailDisplay');
+        if (emailDisplay) {
+            emailDisplay.textContent = quoteCustomerData.email || '';
+        }
+    }
+    
+    // Preencher prescritor
+    if (quoteDoctorData && quoteDoctorData.name) {
+        document.getElementById('quoteDoctorName').textContent = 'Dr(a). ' + quoteDoctorData.name;
+        const crmText = quoteDoctorData.crm ? `CRM: ${quoteDoctorData.crm}${quoteDoctorData.crmState ? '/' + quoteDoctorData.crmState : ''}` : '-';
+        document.getElementById('quoteDoctorCrm').textContent = crmText;
+    }
+    
+    // Renderizar itens
+    renderQuoteItems();
+    
+    // Preencher dados da fórmula
+    const pharmFormSelect = document.getElementById('quotePharmForm');
+    if (pharmFormSelect && quote.pharmaceuticalForm) {
+        // Tentar selecionar a opção correspondente
+        for (let option of pharmFormSelect.options) {
+            if (option.value.toLowerCase() === quote.pharmaceuticalForm.toLowerCase() ||
+                option.text.toLowerCase() === quote.pharmaceuticalForm.toLowerCase()) {
+                option.selected = true;
+                break;
+            }
+        }
+    }
+    
+    const totalQty = document.getElementById('quoteTotalQty');
+    if (totalQty) {
+        totalQty.value = quote.totalQuantityNumeric || quote.totalQuantity || 30;
+    }
+    
+    const totalUnit = document.getElementById('quoteTotalUnit');
+    if (totalUnit && quote.totalQuantityUnit) {
+        totalUnit.value = quote.totalQuantityUnit;
+    }
+    
+    const instructions = document.getElementById('quoteInstructions');
+    if (instructions) {
+        instructions.value = quote.instructions || '';
+    }
+    
+    // Preencher valores
+    document.getElementById('quoteMaterialsCost').textContent = formatMoney(quote.materialsCost || 0);
+    
+    const markupInput = document.getElementById('quoteMarkupInput');
+    if (markupInput) {
+        markupInput.value = quote.markupPercentage || 150;
+    }
+    
+    document.getElementById('quoteMarkupValue').textContent = formatMoney(quote.markupValue || 0);
+    
+    const laborInput = document.getElementById('quoteLaborInput');
+    if (laborInput) {
+        laborInput.value = (quote.laborCost || 10).toFixed(2);
+    }
+    
+    const packagingInput = document.getElementById('quotePackagingInput');
+    if (packagingInput) {
+        packagingInput.value = (quote.packagingCost || 3).toFixed(2);
+    }
+    
+    const discountInput = document.getElementById('quoteDiscountInput');
+    if (discountInput) {
+        discountInput.value = (quote.discountPercentage || 0).toFixed(2);
+    }
+    
+    document.getElementById('quoteFinalPrice').textContent = formatMoney(quote.finalPrice || 0);
+    
+    // Prazo e validade
+    const estimatedDays = document.getElementById('quoteEstimatedDays');
+    if (estimatedDays) {
+        estimatedDays.textContent = (quote.estimatedDays || 3) + ' dias';
+    }
+    
+    const validUntil = document.getElementById('quoteValidUntil');
+    if (validUntil && quote.validUntil) {
+        validUntil.textContent = new Date(quote.validUntil).toLocaleDateString('pt-BR');
+    }
+    
+    // Mostrar badges se já foram enviados
+    if (quote.whatsappSent) {
+        const badge = document.getElementById('whatsappSentBadge');
+        if (badge) badge.classList.remove('d-none');
+    }
+    if (quote.emailSent) {
+        const badge = document.getElementById('emailSentBadge');
+        if (badge) badge.classList.remove('d-none');
+    }
+}
 
 function handleFileSelect(event) {
     const file = event.target.files[0];
@@ -1389,20 +1606,55 @@ function showQuoteResult(quote) {
     }
     
     // Popular itens do orçamento
+    // O backend pode retornar em 'components', 'items', ou 'componentsJson' (como string JSON)
     quoteItems = [];
-    if (quote.items && quote.items.length > 0) {
-        quote.items.forEach(item => {
+    
+    // Tentar obter components de várias fontes possíveis
+    let quoteComponents = quote.components || quote.items || [];
+    
+    // Se componentsJson existir como string, fazer parse
+    if ((!quoteComponents || quoteComponents.length === 0) && quote.componentsJson) {
+        try {
+            if (typeof quote.componentsJson === 'string') {
+                quoteComponents = JSON.parse(quote.componentsJson);
+            } else {
+                quoteComponents = quote.componentsJson;
+            }
+        } catch (e) {
+            console.error('Erro ao fazer parse de componentsJson:', e);
+        }
+    }
+    
+    // Também verificar components_json (snake_case)
+    if ((!quoteComponents || quoteComponents.length === 0) && quote.components_json) {
+        try {
+            if (typeof quote.components_json === 'string') {
+                quoteComponents = JSON.parse(quote.components_json);
+            } else {
+                quoteComponents = quote.components_json;
+            }
+        } catch (e) {
+            console.error('Erro ao fazer parse de components_json:', e);
+        }
+    }
+    
+    console.log('Quote recebido:', quote);
+    console.log('Components após parse:', quoteComponents);
+    console.log('ingredientMatches:', ingredientMatches);
+    
+    if (quoteComponents && quoteComponents.length > 0) {
+        quoteComponents.forEach(item => {
             quoteItems.push({
-                rawMaterialId: item.rawMaterialId || item.id,
-                name: item.rawMaterialName || item.name,
-                quantity: item.quantity,
-                unit: item.unit || '',
-                unitCost: item.unitCost || 0,
-                totalCost: item.totalCost || item.cost || 0
+                rawMaterialId: item.rawMaterialId || item.RawMaterialId || item.id,
+                name: item.name || item.Name || item.rawMaterialName,
+                quantity: item.quantity || item.Quantity || 0,
+                unit: item.unit || item.Unit || '',
+                unitCost: item.unitCost || item.UnitCost || 0,
+                totalCost: item.totalCost || item.TotalCost || item.cost || 0
             });
         });
     } else if (ingredientMatches && ingredientMatches.length > 0) {
-        // Fallback: usar ingredientMatches se não tiver items
+        // Fallback: usar ingredientMatches se não tiver components
         ingredientMatches.filter(i => i.matchedRawMaterial).forEach(ing => {
             quoteItems.push({
                 rawMaterialId: ing.matchedRawMaterial.id,
@@ -1414,6 +1666,8 @@ function showQuoteResult(quote) {
             });
         });
     }
+    
+    console.log('quoteItems após processamento:', quoteItems);
     renderQuoteItems();
     
     // Reset estados de edição
@@ -1500,10 +1754,16 @@ function selectQuoteCustomer(id, name, phone, email) {
     updateQuoteCustomerDisplay();
     toggleQuoteCustomerEdit();
     document.getElementById('quoteCustomerSearchResults').classList.add('d-none');
+    
+    // Salvar no banco se estiver editando
+    if (createdQuote) {
+        saveQuoteCustomerToDb();
+    }
+    
     showToast('Cliente selecionado', 'success');
 }
 
-function saveQuoteNewCustomer() {
+async function saveQuoteNewCustomer() {
     const name = document.getElementById('quoteNewCustomerName').value.trim();
     const phone = document.getElementById('quoteNewCustomerPhone').value.trim();
     const email = document.getElementById('quoteNewCustomerEmail').value.trim();
@@ -1526,7 +1786,43 @@ function saveQuoteNewCustomer() {
     document.getElementById('quoteNewCustomerPhone').value = '';
     document.getElementById('quoteNewCustomerEmail').value = '';
     
+    // Salvar no banco se estiver editando
+    if (createdQuote) {
+        await saveQuoteCustomerToDb();
+    }
+    
     showToast('Cliente adicionado', 'success');
+}
+
+async function saveQuoteCustomerToDb() {
+    if (!createdQuote || !quoteCustomerData) return;
+    
+    try {
+        const response = await fetch(`/api/PrescriptionQuotes/${createdQuote.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customerId: quoteCustomerData.id,
+                customerName: quoteCustomerData.name,
+                customerPhone: quoteCustomerData.phone,
+                customerEmail: quoteCustomerData.email
+            })
+        });
+        
+        if (response.ok) {
+            // Atualizar createdQuote com os novos dados
+            createdQuote.customerId = quoteCustomerData.id;
+            createdQuote.customerName = quoteCustomerData.name;
+            createdQuote.customerPhone = quoteCustomerData.phone;
+            createdQuote.customerEmail = quoteCustomerData.email;
+            console.log('Cliente salvo no orçamento');
+        } else {
+            const result = await response.json();
+            console.error('Erro ao salvar cliente:', result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao salvar cliente:', error);
+    }
 }
 
 // ========== QUOTE DOCTOR FUNCTIONS ==========
@@ -1608,10 +1904,16 @@ function selectQuoteDoctor(name, crm, crmState, specialty) {
     updateQuoteDoctorDisplay();
     toggleQuoteDoctorEdit();
     document.getElementById('quoteDoctorSearchResults').classList.add('d-none');
+    
+    // Salvar no banco se estiver editando
+    if (createdQuote) {
+        saveQuoteDoctorToDb();
+    }
+    
     showToast('Prescritor selecionado', 'success');
 }
 
-function saveQuoteDoctor() {
+async function saveQuoteDoctor() {
     const name = document.getElementById('quoteNewDoctorName').value.trim();
     const crm = document.getElementById('quoteNewDoctorCrm').value.trim();
     const crmState = document.getElementById('quoteNewDoctorCrmState').value;
@@ -1625,7 +1927,44 @@ function saveQuoteDoctor() {
     quoteDoctorData = { name, crm, crmState, specialty };
     updateQuoteDoctorDisplay();
     toggleQuoteDoctorEdit();
+    
+    // Salvar no banco se estiver editando
+    if (createdQuote) {
+        await saveQuoteDoctorToDb();
+    }
+    
     showToast('Prescritor confirmado', 'success');
+}
+
+async function saveQuoteDoctorToDb() {
+    if (!createdQuote || !quoteDoctorData) return;
+    
+    try {
+        const response = await fetch(`/api/PrescriptionQuotes/${createdQuote.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                doctorName: quoteDoctorData.name,
+                doctorCrm: quoteDoctorData.crm,
+                doctorCrmState: quoteDoctorData.crmState,
+                doctorSpecialty: quoteDoctorData.specialty
+            })
+        });
+        
+        if (response.ok) {
+            // Atualizar createdQuote com os novos dados
+            createdQuote.doctorName = quoteDoctorData.name;
+            createdQuote.doctorCrm = quoteDoctorData.crm;
+            createdQuote.doctorCrmState = quoteDoctorData.crmState;
+            createdQuote.doctorSpecialty = quoteDoctorData.specialty;
+            console.log('Prescritor salvo no orçamento');
+        } else {
+            const result = await response.json();
+            console.error('Erro ao salvar prescritor:', result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao salvar prescritor:', error);
+    }
 }
 
 // ========== QUOTE ITEMS FUNCTIONS ==========
@@ -1833,13 +2172,22 @@ async function updateQuotePricing() {
 // ========== ACTIONS ==========
 
 async function sendWhatsApp() {
-    if (!createdQuote) return;
+    if (!createdQuote) {
+        showToast('Orçamento não encontrado', 'error');
+        return;
+    }
     
     const phone = quoteCustomerData?.phone || createdQuote.customerPhone || selectedCustomerData?.phone;
     
     if (!phone) {
         showToast('Telefone do cliente não informado', 'warning');
         return;
+    }
+    
+    // Garantir que os dados do cliente estejam salvos no banco antes de enviar
+    if (quoteCustomerData && quoteCustomerData.phone) {
+        showLoading(true, 'Salvando dados do cliente...');
+        await saveQuoteCustomerToDb();
     }
     
     showLoading(true, 'Enviando WhatsApp...');
@@ -1853,7 +2201,8 @@ async function sendWhatsApp() {
         
         if (response.ok) {
             showToast('Orçamento enviado por WhatsApp!', 'success');
-            document.getElementById('whatsappSentBadge').classList.remove('d-none');
+            const badge = document.getElementById('whatsappSentBadge');
+            if (badge) badge.classList.remove('d-none');
         } else {
             showToast('Erro: ' + result.message, 'error');
         }
@@ -1884,6 +2233,17 @@ async function confirmSendEmail() {
     }
     
     bootstrap.Modal.getInstance(document.getElementById('emailModal')).hide();
+    
+    // Garantir que os dados do cliente estejam salvos no banco antes de enviar
+    if (quoteCustomerData) {
+        // Atualizar email se foi preenchido manualmente
+        if (email && email !== quoteCustomerData.email) {
+            quoteCustomerData.email = email;
+        }
+        showLoading(true, 'Salvando dados...');
+        await saveQuoteCustomerToDb();
+    }
+    
     showLoading(true, 'Enviando e-mail...');
     
     try {
@@ -1897,7 +2257,8 @@ async function confirmSendEmail() {
         
         if (response.ok) {
             showToast('Orçamento enviado por e-mail!', 'success');
-            document.getElementById('emailSentBadge').classList.remove('d-none');
+            const badge = document.getElementById('emailSentBadge');
+            if (badge) badge.classList.remove('d-none');
         } else {
             showToast('Erro: ' + result.message, 'error');
         }
@@ -1910,7 +2271,7 @@ async function confirmSendEmail() {
 
 function printQuote() {
     if (!createdQuote) return;
-    window.open(`/Prescriptions/Print/${createdQuote.id}`, '_blank');
+    window.open(`/PrescriptionsView/Print/${createdQuote.id}`, '_blank');
 }
 
 function copyLink() {

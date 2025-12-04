@@ -1,10 +1,12 @@
-﻿using Data;
-using DTOs.Cash;
 using Microsoft.EntityFrameworkCore;
+using Data;
 using Models;
 
 namespace Service;
 
+/// <summary>
+/// Serviço para gerenciamento de caixa
+/// </summary>
 public class CashRegisterService
 {
     private readonly AppDbContext _context;
@@ -14,19 +16,25 @@ public class CashRegisterService
         _context = context;
     }
 
+    /// <summary>
+    /// Abre um novo caixa
+    /// </summary>
     public async Task<(bool Success, string Message, CashRegister? CashRegister)> OpenCashRegisterAsync(
         Guid establishmentId,
         Guid employeeId,
         decimal openingBalance,
-        string? observations)
+        string? observations = null)
     {
-        var existingOpen = await _context.Set<CashRegister>()
-            .AnyAsync(c => c.EstablishmentId == establishmentId && c.Status == "ABERTO");
+        // Verificar se já existe caixa aberto
+        var existingOpen = await _context.CashRegisters
+            .FirstOrDefaultAsync(c => c.EstablishmentId == establishmentId && 
+                                     c.Status == "ABERTO" &&
+                                     c.ClosingDate == null);
 
-        if (existingOpen)
-            return (false, "Já existe um caixa aberto para este estabelecimento", null);
+        if (existingOpen != null)
+            return (false, $"Já existe um caixa aberto: {existingOpen.Code}", null);
 
-        var code = await GenerateCashRegisterCode(establishmentId);
+        var code = await GenerateCashRegisterCodeAsync(establishmentId);
 
         var cashRegister = new CashRegister
         {
@@ -36,128 +44,116 @@ public class CashRegisterService
             OpeningDate = DateTime.UtcNow,
             OpenedByEmployeeId = employeeId,
             OpeningBalance = openingBalance,
+            TotalCash = openingBalance,
+            TotalCard = 0,
+            TotalPix = 0,
+            TotalSales = 0,
+            SalesCount = 0,
             Status = "ABERTO",
             Observations = observations,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        _context.Set<CashRegister>().Add(cashRegister);
-
-        var movement = new CashMovement
-        {
-            Id = Guid.NewGuid(),
-            CashRegisterId = cashRegister.Id,
-            MovementType = "ABERTURA",
-            Amount = openingBalance,
-            Description = "Abertura de caixa",
-            EmployeeId = employeeId,
-            MovementDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Set<CashMovement>().Add(movement);
-
+        _context.CashRegisters.Add(cashRegister);
         await _context.SaveChangesAsync();
 
-        return (true, "Caixa aberto com sucesso", cashRegister);
+        return (true, $"Caixa {code} aberto com sucesso", cashRegister);
     }
 
+    /// <summary>
+    /// Fecha o caixa
+    /// </summary>
     public async Task<(bool Success, string Message)> CloseCashRegisterAsync(
         Guid cashRegisterId,
         Guid employeeId,
-        decimal closingBalance,
-        string? observations)
+        decimal actualClosingBalance,
+        string? observations = null)
     {
-        var cashRegister = await _context.Set<CashRegister>()
-            .FirstOrDefaultAsync(c => c.Id == cashRegisterId);
+        var cashRegister = await _context.CashRegisters
+            .FirstOrDefaultAsync(c => c.Id == cashRegisterId && c.Status == "ABERTO");
 
         if (cashRegister == null)
-            return (false, "Caixa não encontrado");
+            return (false, "Caixa não encontrado ou já fechado");
 
-        if (cashRegister.Status == "FECHADO")
-            return (false, "Caixa já está fechado");
-
-        var expectedBalance = await CalculateExpectedBalance(cashRegisterId);
+        // Calcular valor esperado (saldo inicial + entradas - sangrias + suprimentos)
+        var expectedBalance = cashRegister.OpeningBalance + 
+                             cashRegister.TotalCash - 
+                             cashRegister.TotalWithdrawals + 
+                             cashRegister.TotalSupplies;
 
         cashRegister.ClosingDate = DateTime.UtcNow;
         cashRegister.ClosedByEmployeeId = employeeId;
-        cashRegister.ClosingBalance = closingBalance;
         cashRegister.ExpectedBalance = expectedBalance;
-        cashRegister.Difference = closingBalance - expectedBalance;
+        cashRegister.ClosingBalance = actualClosingBalance;
+        cashRegister.Difference = actualClosingBalance - expectedBalance;
         cashRegister.Status = "FECHADO";
-        cashRegister.Observations = observations;
+        cashRegister.ClosingObservations = observations;
         cashRegister.UpdatedAt = DateTime.UtcNow;
-
-        var movement = new CashMovement
-        {
-            Id = Guid.NewGuid(),
-            CashRegisterId = cashRegisterId,
-            MovementType = "FECHAMENTO",
-            Amount = closingBalance,
-            Description = $"Fechamento de caixa - Diferença: {cashRegister.Difference:C}",
-            EmployeeId = employeeId,
-            MovementDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Set<CashMovement>().Add(movement);
 
         await _context.SaveChangesAsync();
 
-        return (true, "Caixa fechado com sucesso");
+        var differenceText = cashRegister.Difference switch
+        {
+            > 0 => $"Sobra de R$ {cashRegister.Difference:F2}",
+            < 0 => $"Falta de R$ {Math.Abs(cashRegister.Difference.Value):F2}",
+            _ => "Sem diferença"
+        };
+
+        return (true, $"Caixa fechado com sucesso. {differenceText}");
     }
 
+    /// <summary>
+    /// Busca caixa aberto
+    /// </summary>
     public async Task<CashRegister?> GetOpenCashRegisterAsync(Guid establishmentId)
     {
-        return await _context.Set<CashRegister>()
-            .Include(c => c.OpenedByEmployee)
-            .Include(c => c.Movements)
-            .FirstOrDefaultAsync(c => c.EstablishmentId == establishmentId && c.Status == "ABERTO");
+        return await _context.CashRegisters
+            .FirstOrDefaultAsync(c => c.EstablishmentId == establishmentId && 
+                                     c.Status == "ABERTO" &&
+                                     c.ClosingDate == null);
     }
 
-    public async Task<(bool Success, string Message)> RegisterSaleInCashRegisterAsync(
+    /// <summary>
+    /// Registra uma venda no caixa
+    /// </summary>
+    public async Task<bool> RegisterSaleInCashRegisterAsync(
         Guid cashRegisterId,
         Guid saleId,
         decimal amount,
         string paymentMethod,
         Guid employeeId)
     {
-        var cashRegister = await _context.Set<CashRegister>()
-            .FirstOrDefaultAsync(c => c.Id == cashRegisterId);
+        var cashRegister = await _context.CashRegisters
+            .FirstOrDefaultAsync(c => c.Id == cashRegisterId && c.Status == "ABERTO");
 
         if (cashRegister == null)
-            return (false, "Caixa não encontrado");
-
-        if (cashRegister.Status != "ABERTO")
-            return (false, "Caixa não está aberto");
+            return false;
 
         var movement = new CashMovement
         {
             Id = Guid.NewGuid(),
             CashRegisterId = cashRegisterId,
-            MovementType = "VENDA",
-            Amount = amount,
-            PaymentMethod = paymentMethod,
             SaleId = saleId,
-            Description = $"Venda {paymentMethod}",
+            MovementType = "ENTRADA",
+            PaymentMethod = paymentMethod,
+            Amount = amount,
+            Description = $"Venda registrada",
             EmployeeId = employeeId,
             MovementDate = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Set<CashMovement>().Add(movement);
+        _context.CashMovements.Add(movement);
 
-        cashRegister.TotalSales += amount;
-        cashRegister.SalesCount++;
-
+        // Atualizar totais
         switch (paymentMethod.ToUpper())
         {
             case "DINHEIRO":
                 cashRegister.TotalCash += amount;
                 break;
-            case "CARTAO_CREDITO":
             case "CARTAO_DEBITO":
+            case "CARTAO_CREDITO":
                 cashRegister.TotalCard += amount;
                 break;
             case "PIX":
@@ -165,140 +161,148 @@ public class CashRegisterService
                 break;
         }
 
+        cashRegister.TotalSales += amount;
+        cashRegister.SalesCount++;
         cashRegister.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
-        return (true, "Venda registrada no caixa");
+        return true;
     }
 
-    public async Task<(bool Success, string Message)> AddSupplyAsync(
+    /// <summary>
+    /// Realiza sangria (retirada de dinheiro)
+    /// </summary>
+    public async Task<(bool Success, string Message)> WithdrawCashAsync(
         Guid cashRegisterId,
         decimal amount,
-        string description,
+        string reason,
         Guid employeeId)
     {
-        var cashRegister = await _context.Set<CashRegister>()
-            .FirstOrDefaultAsync(c => c.Id == cashRegisterId);
+        var cashRegister = await _context.CashRegisters
+            .FirstOrDefaultAsync(c => c.Id == cashRegisterId && c.Status == "ABERTO");
 
         if (cashRegister == null)
-            return (false, "Caixa não encontrado");
+            return (false, "Caixa não encontrado ou fechado");
 
-        if (cashRegister.Status != "ABERTO")
-            return (false, "Caixa não está aberto");
-
-        var movement = new CashMovement
-        {
-            Id = Guid.NewGuid(),
-            CashRegisterId = cashRegisterId,
-            MovementType = "SUPRIMENTO",
-            Amount = amount,
-            PaymentMethod = "DINHEIRO",
-            Description = description,
-            EmployeeId = employeeId,
-            MovementDate = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Set<CashMovement>().Add(movement);
-
-        cashRegister.TotalCash += amount;
-        cashRegister.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return (true, "Suprimento adicionado");
-    }
-
-    public async Task<(bool Success, string Message)> AddWithdrawalAsync(
-        Guid cashRegisterId,
-        decimal amount,
-        string description,
-        Guid employeeId)
-    {
-        var cashRegister = await _context.Set<CashRegister>()
-            .FirstOrDefaultAsync(c => c.Id == cashRegisterId);
-
-        if (cashRegister == null)
-            return (false, "Caixa não encontrado");
-
-        if (cashRegister.Status != "ABERTO")
-            return (false, "Caixa não está aberto");
+        var currentCash = cashRegister.OpeningBalance + cashRegister.TotalCash - cashRegister.TotalWithdrawals + cashRegister.TotalSupplies;
+        if (amount > currentCash)
+            return (false, $"Valor da sangria (R$ {amount:F2}) excede o disponível em caixa (R$ {currentCash:F2})");
 
         var movement = new CashMovement
         {
             Id = Guid.NewGuid(),
             CashRegisterId = cashRegisterId,
             MovementType = "SANGRIA",
-            Amount = amount,
             PaymentMethod = "DINHEIRO",
-            Description = description,
+            Amount = amount,
+            Description = reason,
             EmployeeId = employeeId,
             MovementDate = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Set<CashMovement>().Add(movement);
+        _context.CashMovements.Add(movement);
 
-        cashRegister.TotalCash -= amount;
+        // Registrar sangria
+        cashRegister.TotalWithdrawals += amount;
         cashRegister.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-
-        return (true, "Sangria registrada");
+        return (true, $"Sangria de R$ {amount:F2} realizada com sucesso");
     }
 
-    private async Task<decimal> CalculateExpectedBalance(Guid cashRegisterId)
+    /// <summary>
+    /// Realiza suprimento (entrada de dinheiro)
+    /// </summary>
+    public async Task<(bool Success, string Message)> SupplyCashAsync(
+        Guid cashRegisterId,
+        decimal amount,
+        string reason,
+        Guid employeeId)
     {
-        var cashRegister = await _context.Set<CashRegister>()
-            .FirstOrDefaultAsync(c => c.Id == cashRegisterId);
+        var cashRegister = await _context.CashRegisters
+            .FirstOrDefaultAsync(c => c.Id == cashRegisterId && c.Status == "ABERTO");
 
         if (cashRegister == null)
-            return 0;
+            return (false, "Caixa não encontrado ou fechado");
 
-        var movements = await _context.Set<CashMovement>()
-            .Where(m => m.CashRegisterId == cashRegisterId)
-            .ToListAsync();
-
-        decimal expected = cashRegister.OpeningBalance;
-
-        foreach (var movement in movements)
+        var movement = new CashMovement
         {
-            switch (movement.MovementType)
-            {
-                case "VENDA":
-                    if (movement.PaymentMethod == "DINHEIRO")
-                        expected += movement.Amount;
-                    break;
-                case "SUPRIMENTO":
-                    expected += movement.Amount;
-                    break;
-                case "SANGRIA":
-                    expected -= movement.Amount;
-                    break;
-            }
-        }
+            Id = Guid.NewGuid(),
+            CashRegisterId = cashRegisterId,
+            MovementType = "SUPRIMENTO",
+            PaymentMethod = "DINHEIRO",
+            Amount = amount,
+            Description = reason,
+            EmployeeId = employeeId,
+            MovementDate = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        return expected;
+        _context.CashMovements.Add(movement);
+
+        // Registrar suprimento
+        cashRegister.TotalSupplies += amount;
+        cashRegister.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return (true, $"Suprimento de R$ {amount:F2} realizado com sucesso");
     }
 
-    private async Task<string> GenerateCashRegisterCode(Guid establishmentId)
+    /// <summary>
+    /// Busca histórico de caixas
+    /// </summary>
+    public async Task<List<CashRegister>> GetCashRegisterHistoryAsync(
+        Guid establishmentId,
+        DateTime? startDate = null,
+        DateTime? endDate = null,
+        int limit = 30)
     {
-        var date = DateTime.UtcNow;
-        var prefix = $"CX{date:yyyyMMdd}";
+        var query = _context.CashRegisters
+            .Where(c => c.EstablishmentId == establishmentId);
 
-        var lastCash = await _context.Set<CashRegister>()
+        if (startDate.HasValue)
+            query = query.Where(c => c.OpeningDate >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(c => c.OpeningDate <= endDate.Value);
+
+        return await query
+            .OrderByDescending(c => c.OpeningDate)
+            .Take(limit)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Busca movimentos de um caixa
+    /// </summary>
+    public async Task<List<CashMovement>> GetCashMovementsAsync(Guid cashRegisterId)
+    {
+        return await _context.CashMovements
+            .Where(m => m.CashRegisterId == cashRegisterId)
+            .OrderByDescending(m => m.CreatedAt)
+            .ToListAsync();
+    }
+
+    private async Task<string> GenerateCashRegisterCodeAsync(Guid establishmentId)
+    {
+        var today = DateTime.UtcNow;
+        var prefix = $"CX{today:yyyyMMdd}";
+
+        var lastRegister = await _context.CashRegisters
             .Where(c => c.EstablishmentId == establishmentId && c.Code.StartsWith(prefix))
             .OrderByDescending(c => c.Code)
             .Select(c => c.Code)
             .FirstOrDefaultAsync();
 
         int nextNumber = 1;
-        if (lastCash != null)
+        if (lastRegister != null && lastRegister.Length > prefix.Length)
         {
-            var numberPart = lastCash.Substring(prefix.Length);
+            var numberPart = lastRegister.Substring(prefix.Length);
             if (int.TryParse(numberPart, out int lastNumber))
+            {
                 nextNumber = lastNumber + 1;
+            }
         }
 
         return $"{prefix}{nextNumber:D2}";

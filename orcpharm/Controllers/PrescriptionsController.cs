@@ -163,60 +163,134 @@ public class PrescriptionsController : ControllerBase
             new { message, prescriptionId = prescription.Id });
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePrescriptionDto dto)
+    {
+        try
+        {
+            var employeeId = GetEmployeeId();
+            if (!employeeId.HasValue)
+                return Unauthorized(new { success = false, message = "Sessão inválida" });
+
+            var establishmentId = await GetEstablishmentId(employeeId.Value);
+            if (!establishmentId.HasValue)
+                return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+            var prescription = await _context.Prescriptions
+                .FirstOrDefaultAsync(p => p.Id == id && p.EstablishmentId == establishmentId.Value);
+
+            if (prescription == null)
+                return NotFound(new { success = false, message = "Prescrição não encontrada" });
+
+            // Só pode editar se estiver PENDENTE ou RASCUNHO
+            if (prescription.Status != "PENDENTE" && prescription.Status != "RASCUNHO")
+                return BadRequest(new { success = false, message = "Apenas prescrições pendentes ou rascunhos podem ser editadas" });
+
+            // Atualizar campos
+            if (!string.IsNullOrEmpty(dto.DoctorName))
+                prescription.DoctorName = dto.DoctorName;
+            if (!string.IsNullOrEmpty(dto.DoctorCrm))
+                prescription.DoctorCrm = dto.DoctorCrm;
+            if (!string.IsNullOrEmpty(dto.DoctorCrmState))
+                prescription.DoctorCrmState = dto.DoctorCrmState;
+            if (dto.CustomerId.HasValue)
+                prescription.CustomerId = dto.CustomerId.Value;
+            if (!string.IsNullOrEmpty(dto.Medications))
+                prescription.Medications = dto.Medications;
+            if (!string.IsNullOrEmpty(dto.Posology))
+                prescription.Posology = dto.Posology;
+            if (dto.Observations != null)
+                prescription.Observations = dto.Observations;
+            if (!string.IsNullOrEmpty(dto.PrescriptionType))
+                prescription.PrescriptionType = dto.PrescriptionType;
+            if (dto.ControlledType != null)
+                prescription.ControlledType = dto.ControlledType;
+            if (dto.PrescriptionDate.HasValue)
+                prescription.PrescriptionDate = dto.PrescriptionDate.Value;
+            if (dto.ExpirationDate.HasValue)
+                prescription.ExpirationDate = dto.ExpirationDate.Value;
+
+            prescription.UpdatedByEmployeeId = employeeId.Value;
+            prescription.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Prescrição atualizada com sucesso" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = $"Erro ao atualizar: {ex.Message}" });
+        }
+    }
+
     [HttpPut("{id}/validate")]
     public async Task<IActionResult> Validate(Guid id, [FromBody] ValidatePrescriptionDto dto)
     {
-        var validator = new ValidatePrescriptionValidator();
-        var validationResult = await validator.ValidateAsync(dto);
+        try
+        {
+            var validator = new ValidatePrescriptionValidator();
+            var validationResult = await validator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+            if (!validationResult.IsValid)
+                return BadRequest(new { success = false, message = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)) });
 
-        var employeeId = GetEmployeeId();
-        if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            var employeeId = GetEmployeeId();
+            if (!employeeId.HasValue)
+                return Unauthorized(new { success = false, message = "Sessão inválida" });
 
-        var establishmentId = await GetEstablishmentId(employeeId.Value);
-        if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            var establishmentId = await GetEstablishmentId(employeeId.Value);
+            if (!establishmentId.HasValue)
+                return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
 
-        var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT", "FARMACEUTICO" });
-        if (!hasPermission)
-            return Forbid();
+            var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT", "FARMACEUTICO" });
+            if (!hasPermission)
+                return StatusCode(403, new { success = false, message = "Apenas farmacêuticos podem validar prescrições" });
 
-        var (success, message) = await _service.ValidatePrescriptionAsync(
-            id, dto, establishmentId.Value, employeeId.Value);
+            var (success, message) = await _service.ValidatePrescriptionAsync(
+                id, dto, establishmentId.Value, employeeId.Value);
 
-        if (!success)
-            return BadRequest(new { message });
+            if (!success)
+                return BadRequest(new { success = false, message });
 
-        return Ok(new { message });
+            return Ok(new { success = true, message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = $"Erro ao validar: {ex.Message}" });
+        }
     }
 
     [HttpPut("{id}/cancel")]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelPrescriptionDto dto)
     {
-        var validator = new CancelPrescriptionValidator();
-        var validationResult = await validator.ValidateAsync(dto);
+        try
+        {
+            var validator = new CancelPrescriptionValidator();
+            var validationResult = await validator.ValidateAsync(dto);
 
-        if (!validationResult.IsValid)
-            return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+            if (!validationResult.IsValid)
+                return BadRequest(new { success = false, message = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)) });
 
-        var employeeId = GetEmployeeId();
-        if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            var employeeId = GetEmployeeId();
+            if (!employeeId.HasValue)
+                return Unauthorized(new { success = false, message = "Sessão inválida" });
 
-        var establishmentId = await GetEstablishmentId(employeeId.Value);
-        if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            var establishmentId = await GetEstablishmentId(employeeId.Value);
+            if (!establishmentId.HasValue)
+                return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
 
-        var (success, message) = await _service.CancelPrescriptionAsync(
-            id, dto.Reason, establishmentId.Value, employeeId.Value);
+            var (success, message) = await _service.CancelPrescriptionAsync(
+                id, dto.Reason, establishmentId.Value, employeeId.Value);
 
-        if (!success)
-            return BadRequest(new { message });
+            if (!success)
+                return BadRequest(new { success = false, message });
 
-        return Ok(new { message });
+            return Ok(new { success = true, message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = $"Erro ao cancelar: {ex.Message}" });
+        }
     }
 
     [HttpGet("expiring")]

@@ -18,15 +18,18 @@ public class CreatePrescriptionDto
 
 public class UpdatePrescriptionDto
 {
-    public DateTime PrescriptionDate { get; set; }
-    public string DoctorName { get; set; } = string.Empty;
-    public string DoctorCrm { get; set; } = string.Empty;
-    public string DoctorCrmState { get; set; } = string.Empty;
-    public string PrescriptionType { get; set; } = "COMUM";
+    public DateTime? PrescriptionDate { get; set; }
+    public DateTime? ExpirationDate { get; set; }
+    public string? DoctorName { get; set; }
+    public string? DoctorCrm { get; set; }
+    public string? DoctorCrmState { get; set; }
+    public Guid? CustomerId { get; set; }
+    public string? CustomerName { get; set; }
+    public string? PrescriptionType { get; set; }
     public string? ControlledType { get; set; }
     public string? PrescriptionColor { get; set; }
-    public string Medications { get; set; } = string.Empty;
-    public string Posology { get; set; } = string.Empty;
+    public string? Medications { get; set; }
+    public string? Posology { get; set; }
     public string? Observations { get; set; }
 }
 
@@ -106,11 +109,6 @@ public class GenerateManipulationFromPrescriptionDto
     public decimal Quantity { get; set; }
     public DateTime ExpectedDate { get; set; }
     public string? AdditionalNotes { get; set; }
-}
-public class SendQuoteEmailDto
-{
-    public string Email { get; set; } = string.Empty;
-    public string? Message { get; set; }
 }
 
 // ===== CLASSES PARA OCR E MATCHING =====

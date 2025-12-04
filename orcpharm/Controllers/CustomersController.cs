@@ -23,8 +23,8 @@ public class CustomersController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetAll(
-        [FromQuery] string? status = null,
-        [FromQuery] string? search = null)
+    [FromQuery] string? status = null,
+    [FromQuery] string? search = null)
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
@@ -40,13 +40,15 @@ public class CustomersController : ControllerBase
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(c => c.Status.ToUpper() == status.ToUpper());
 
+        // CORREÇÃO: Usar ILike para busca case-insensitive no PostgreSQL
         if (!string.IsNullOrWhiteSpace(search))
         {
-            search = search.ToUpper();
+            var searchPattern = $"%{search}%";
             query = query.Where(c =>
-                c.FullName.Contains(search) ||
-                (c.Cpf != null && c.Cpf.Contains(search)) ||
-                (c.Phone != null && c.Phone.Contains(search)));
+                EF.Functions.ILike(c.FullName, searchPattern) ||
+                (c.Cpf != null && EF.Functions.ILike(c.Cpf, searchPattern)) ||
+                (c.Phone != null && EF.Functions.ILike(c.Phone, searchPattern)) ||
+                (c.Email != null && EF.Functions.ILike(c.Email, searchPattern)));
         }
 
         var customers = await query
@@ -61,7 +63,7 @@ public class CustomersController : ControllerBase
                 WhatsApp = c.WhatsApp,
                 City = c.City,
                 Status = c.Status,
-                LastPurchase = DateTime.MinValue // TODO: implementar quando tiver vendas
+                LastPurchase = DateTime.MinValue
             })
             .ToListAsync();
 
@@ -317,7 +319,7 @@ public class CustomersController : ControllerBase
         };
 
         return Ok(history);
-    }
+    }    
 
     private Guid? GetEmployeeId()
     {

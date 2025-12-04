@@ -10,7 +10,7 @@ namespace Controllers
     /// MVC Controller para Views de Prescrições e Orçamentos
     /// Rota: /Prescriptions
     /// </summary>
-    [Route("Prescriptions")]
+    [Route("PrescriptionsView")]
     public class PrescriptionsViewController : Controller
     {
         private readonly AppDbContext _context;

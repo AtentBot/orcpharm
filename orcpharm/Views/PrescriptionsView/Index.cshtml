@@ -326,6 +326,12 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-warning" id="btnEditar" onclick="toggleEditMode()">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                </button>
+                <button type="button" class="btn btn-success d-none" id="btnSalvarEdicao" onclick="savePrescriptionEdits()">
+                    <i class="bi bi-check-lg me-1"></i>Salvar Alterações
+                </button>
                 <button type="button" class="btn btn-success" id="btnValidar" onclick="validatePrescription()">
                     <i class="bi bi-check-lg me-1"></i>Validar
                 </button>
@@ -676,8 +682,12 @@ function quickFilter(filter) {
 }
 
 // Ver detalhes
+let isEditMode = false;
+let currentPrescriptionData = null;
+
 async function viewDetails(id) {
     currentPrescription = prescriptions.find(p => p.id === id);
+    isEditMode = false;
     
     const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
     const body = document.getElementById('detailsModalBody');
@@ -688,7 +698,110 @@ async function viewDetails(id) {
     try {
         const response = await fetch(`/api/Prescriptions/${id}`);
         const data = await response.json();
+        currentPrescriptionData = data;
         
+        renderDetailsContent(data, false);
+        
+        // Controlar botões
+        const canEdit = data.status === 'PENDENTE' || data.status === 'RASCUNHO';
+        document.getElementById('btnEditar').style.display = canEdit ? '' : 'none';
+        document.getElementById('btnSalvarEdicao').classList.add('d-none');
+        document.getElementById('btnValidar').style.display = data.status === 'PENDENTE' ? '' : 'none';
+        document.getElementById('btnOrcamento').style.display = data.status === 'VALIDADA' && !data.manipulationOrderId ? '' : 'none';
+        
+    } catch (error) {
+        body.innerHTML = `<div class="alert alert-danger">Erro ao carregar detalhes</div>`;
+    }
+}
+
+function renderDetailsContent(data, editMode) {
+    const body = document.getElementById('detailsModalBody');
+    
+    if (editMode) {
+        body.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Informações Gerais</h6>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Código</label>
+                        <input type="text" class="form-control" value="${data.code}" disabled>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Data</label>
+                            <input type="date" class="form-control" id="editPrescriptionDate" 
+                                   value="${data.prescriptionDate ? data.prescriptionDate.split('T')[0] : ''}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Validade</label>
+                            <input type="date" class="form-control" id="editExpirationDate" 
+                                   value="${data.expirationDate ? data.expirationDate.split('T')[0] : ''}">
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label class="form-label small text-muted">Tipo</label>
+                        <select class="form-select" id="editPrescriptionType">
+                            <option value="SIMPLES" ${data.prescriptionType === 'SIMPLES' ? 'selected' : ''}>Simples</option>
+                            <option value="CONTROLADA" ${data.prescriptionType === 'CONTROLADA' ? 'selected' : ''}>Controlada</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="controlledTypeDiv" style="display: ${data.prescriptionType === 'CONTROLADA' ? 'block' : 'none'}">
+                        <label class="form-label small text-muted">Tipo Controlada</label>
+                        <select class="form-select" id="editControlledType">
+                            <option value="">Selecione...</option>
+                            <option value="C1" ${data.controlledType === 'C1' ? 'selected' : ''}>C1 - Entorpecentes</option>
+                            <option value="C2" ${data.controlledType === 'C2' ? 'selected' : ''}>C2 - Psicotrópicos</option>
+                            <option value="C3" ${data.controlledType === 'C3' ? 'selected' : ''}>C3 - Outras</option>
+                            <option value="C4" ${data.controlledType === 'C4' ? 'selected' : ''}>C4 - Retinoides</option>
+                            <option value="C5" ${data.controlledType === 'C5' ? 'selected' : ''}>C5 - Anabolizantes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Prescritor</h6>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Nome do Médico</label>
+                        <input type="text" class="form-control" id="editDoctorName" value="${data.doctorName || ''}">
+                    </div>
+                    <div class="row">
+                        <div class="col-8">
+                            <label class="form-label small text-muted">CRM</label>
+                            <input type="text" class="form-control" id="editDoctorCrm" value="${data.doctorCrm || ''}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small text-muted">UF</label>
+                            <select class="form-select" id="editDoctorCrmState">
+                                ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
+                                    .map(uf => `<option value="${uf}" ${data.doctorCrmState === uf ? 'selected' : ''}>${uf}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h6 class="text-muted mb-3 mt-4">Cliente</h6>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Nome do Cliente</label>
+                        <input type="text" class="form-control" id="editCustomerName" value="${data.customerName || ''}">
+                    </div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <h6 class="text-muted mb-3">Medicamentos</h6>
+            <textarea class="form-control mb-3" id="editMedications" rows="4">${data.medications || ''}</textarea>
+            
+            <h6 class="text-muted mb-3">Posologia</h6>
+            <textarea class="form-control mb-3" id="editPosology" rows="3">${data.posology || ''}</textarea>
+            
+            <h6 class="text-muted mb-3">Observações</h6>
+            <textarea class="form-control" id="editObservations" rows="2">${data.observations || ''}</textarea>
+        `;
+        
+        // Listener para tipo de prescrição
+        document.getElementById('editPrescriptionType').addEventListener('change', function() {
+            document.getElementById('controlledTypeDiv').style.display = this.value === 'CONTROLADA' ? 'block' : 'none';
+        });
+    } else {
         body.innerHTML = `
             <div class="row">
                 <div class="col-md-6">
@@ -704,8 +817,8 @@ async function viewDetails(id) {
                 <div class="col-md-6">
                     <h6 class="text-muted mb-3">Prescritor</h6>
                     <table class="table table-sm">
-                        <tr><td class="text-muted">Nome:</td><td>${data.doctorName}</td></tr>
-                        <tr><td class="text-muted">CRM:</td><td>${data.doctorCrm}/${data.doctorCrmState}</td></tr>
+                        <tr><td class="text-muted">Nome:</td><td>${data.doctorName || 'Não informado'}</td></tr>
+                        <tr><td class="text-muted">CRM:</td><td>${data.doctorCrm || '-'}/${data.doctorCrmState || '-'}</td></tr>
                     </table>
                     
                     <h6 class="text-muted mb-3 mt-4">Cliente</h6>
@@ -734,13 +847,76 @@ async function viewDetails(id) {
                 </div>
             ` : ''}
         `;
+    }
+}
+
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    
+    if (isEditMode) {
+        document.getElementById('btnEditar').innerHTML = '<i class="bi bi-x-lg me-1"></i>Cancelar';
+        document.getElementById('btnEditar').classList.remove('btn-warning');
+        document.getElementById('btnEditar').classList.add('btn-secondary');
+        document.getElementById('btnSalvarEdicao').classList.remove('d-none');
+        document.getElementById('btnValidar').style.display = 'none';
+        document.getElementById('btnOrcamento').style.display = 'none';
+    } else {
+        document.getElementById('btnEditar').innerHTML = '<i class="bi bi-pencil me-1"></i>Editar';
+        document.getElementById('btnEditar').classList.add('btn-warning');
+        document.getElementById('btnEditar').classList.remove('btn-secondary');
+        document.getElementById('btnSalvarEdicao').classList.add('d-none');
         
-        // Controlar botões
+        // Restaurar botões
+        const data = currentPrescriptionData;
         document.getElementById('btnValidar').style.display = data.status === 'PENDENTE' ? '' : 'none';
         document.getElementById('btnOrcamento').style.display = data.status === 'VALIDADA' && !data.manipulationOrderId ? '' : 'none';
+    }
+    
+    renderDetailsContent(currentPrescriptionData, isEditMode);
+}
+
+async function savePrescriptionEdits() {
+    if (!currentPrescription) return;
+    
+    const updateData = {
+        prescriptionDate: document.getElementById('editPrescriptionDate').value,
+        expirationDate: document.getElementById('editExpirationDate').value,
+        prescriptionType: document.getElementById('editPrescriptionType').value,
+        controlledType: document.getElementById('editControlledType')?.value || null,
+        doctorName: document.getElementById('editDoctorName').value,
+        doctorCrm: document.getElementById('editDoctorCrm').value,
+        doctorCrmState: document.getElementById('editDoctorCrmState').value,
+        customerName: document.getElementById('editCustomerName').value,
+        medications: document.getElementById('editMedications').value,
+        posology: document.getElementById('editPosology').value,
+        observations: document.getElementById('editObservations').value
+    };
+    
+    try {
+        const response = await fetch(`/api/Prescriptions/${currentPrescription.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
         
+        const result = await response.json().catch(() => ({ message: 'Erro de resposta' }));
+        
+        if (response.ok) {
+            showToast('Prescrição atualizada com sucesso!', 'success');
+            
+            // Atualizar dados locais
+            Object.assign(currentPrescriptionData, updateData);
+            
+            // Voltar ao modo visualização
+            toggleEditMode();
+            
+            // Recarregar lista
+            loadPrescriptions();
+        } else {
+            showToast('Erro: ' + (result.message || 'Falha ao salvar'), 'danger');
+        }
     } catch (error) {
-        body.innerHTML = `<div class="alert alert-danger">Erro ao carregar detalhes</div>`;
+        showToast('Erro ao salvar: ' + error.message, 'danger');
     }
 }
 
@@ -763,14 +939,15 @@ async function confirmValidation() {
             body: JSON.stringify({ isValid: true, validationNotes: notes })
         });
         
+        const data = await response.json().catch(() => ({ message: 'Erro de resposta do servidor' }));
+        
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('validateModal')).hide();
             bootstrap.Modal.getInstance(document.getElementById('detailsModal'))?.hide();
-            showToast('Prescrição validada com sucesso!', 'success');
+            showToast(data.message || 'Prescrição validada com sucesso!', 'success');
             loadPrescriptions();
         } else {
-            const data = await response.json();
-            showToast('Erro: ' + data.message, 'danger');
+            showToast('Erro: ' + (data.message || `Status ${response.status}`), 'danger');
         }
     } catch (error) {
         showToast('Erro ao validar: ' + error.message, 'danger');
@@ -806,13 +983,14 @@ async function confirmCancel() {
             body: JSON.stringify({ reason })
         });
         
+        const data = await response.json().catch(() => ({ message: 'Erro de resposta do servidor' }));
+        
         if (response.ok) {
             bootstrap.Modal.getInstance(document.getElementById('cancelModal')).hide();
-            showToast('Prescrição cancelada', 'success');
+            showToast(data.message || 'Prescrição cancelada', 'success');
             loadPrescriptions();
         } else {
-            const data = await response.json();
-            showToast('Erro: ' + data.message, 'danger');
+            showToast('Erro: ' + (data.message || `Status ${response.status}`), 'danger');
         }
     } catch (error) {
         showToast('Erro ao cancelar: ' + error.message, 'danger');

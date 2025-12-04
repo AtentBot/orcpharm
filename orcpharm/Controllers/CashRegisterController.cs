@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs.Common;
-using DTOs.Cash;
-using Models;
-using Models.Employees;
 using Service;
+using Models;
 
 namespace Controllers;
 
@@ -14,203 +11,297 @@ namespace Controllers;
 public class CashRegisterController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly CashRegisterService _service;
+    private readonly CashRegisterService _cashService;
 
     public CashRegisterController(AppDbContext context)
     {
         _context = context;
-        _service = new CashRegisterService(context);
+        _cashService = new CashRegisterService(context);
     }
 
-    private Guid GetEstablishmentId()
-    {
-        var claim = User.FindFirst("EstablishmentId");
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-    }
-
-    private Guid GetEmployeeId()
+    private Guid? GetEmployeeId()
     {
         var claim = User.FindFirst("EmployeeId");
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
+        return claim != null ? Guid.Parse(claim.Value) : null;
     }
 
-    [HttpPost("open")]
-    public async Task<ActionResult<ApiResponse<CashRegisterDto>>> OpenCashRegister([FromBody] OpenCashRegisterDto dto)
+    private async Task<Guid?> GetEstablishmentId(Guid employeeId)
     {
-        var establishmentId = GetEstablishmentId();
+        var employee = await _context.Employees
+            .FirstOrDefaultAsync(e => e.Id == employeeId);
+        return employee?.EstablishmentId;
+    }
 
-        var (success, message, cashRegister) = await _service.OpenCashRegisterAsync(
-            establishmentId,
-            dto.EmployeeId,
+    /// <summary>
+    /// Busca o caixa atualmente aberto
+    /// </summary>
+    [HttpGet("current")]
+    public async Task<IActionResult> GetCurrentCashRegister()
+    {
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+        var cashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId.Value);
+
+        if (cashRegister == null)
+            return Ok(new { success = true, isOpen = false, message = "Nenhum caixa aberto" });
+
+        return Ok(new
+        {
+            success = true,
+            isOpen = true,
+            cashRegister = new
+            {
+                cashRegister.Id,
+                cashRegister.Code,
+                cashRegister.OpeningDate,
+                cashRegister.OpeningBalance,
+                cashRegister.TotalCash,
+                cashRegister.TotalCard,
+                cashRegister.TotalDebit,
+                cashRegister.TotalCredit,
+                cashRegister.TotalPix,
+                cashRegister.TotalBoleto,
+                cashRegister.TotalOther,
+                cashRegister.TotalSales,
+                cashRegister.SalesCount,
+                cashRegister.TotalWithdrawals,
+                cashRegister.TotalSupplies,
+                TotalReceived = cashRegister.TotalCash + cashRegister.TotalCard + cashRegister.TotalPix + cashRegister.TotalBoleto + cashRegister.TotalOther,
+                CurrentCashBalance = cashRegister.OpeningBalance + cashRegister.TotalCash - cashRegister.TotalWithdrawals + cashRegister.TotalSupplies
+            }
+        });
+    }
+
+    /// <summary>
+    /// Abre um novo caixa
+    /// </summary>
+    [HttpPost("open")]
+    public async Task<IActionResult> OpenCashRegister([FromBody] OpenCashRegisterDto dto)
+    {
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+        var (success, message, cashRegister) = await _cashService.OpenCashRegisterAsync(
+            establishmentId.Value,
+            employeeId.Value,
             dto.OpeningBalance,
             dto.Observations);
 
         if (!success)
-            return BadRequest(ApiResponse<CashRegisterDto>.ErrorResponse(message));
+            return BadRequest(new { success = false, message });
 
-        var result = await MapToCashRegisterDto(cashRegister!);
-        return Ok(ApiResponse<CashRegisterDto>.SuccessResponse(result, message));
+        return Ok(new
+        {
+            success = true,
+            message,
+            cashRegisterId = cashRegister!.Id,
+            code = cashRegister.Code
+        });
     }
 
-    [HttpPost("{id}/close")]
-    public async Task<ActionResult<ApiResponse<object>>> CloseCashRegister(Guid id, [FromBody] CloseCashRegisterDto dto)
+    /// <summary>
+    /// Fecha o caixa
+    /// </summary>
+    [HttpPost("close")]
+    public async Task<IActionResult> CloseCashRegister([FromBody] CloseCashRegisterDto dto)
     {
-        var (success, message) = await _service.CloseCashRegisterAsync(
-            id,
-            dto.EmployeeId,
-            dto.ClosingBalance,
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+        // Buscar caixa aberto
+        var cashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId.Value);
+        if (cashRegister == null)
+            return BadRequest(new { success = false, message = "Nenhum caixa aberto" });
+
+        var (success, message) = await _cashService.CloseCashRegisterAsync(
+            cashRegister.Id,
+            employeeId.Value,
+            dto.ActualClosingBalance,
             dto.Observations);
 
         if (!success)
-            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+            return BadRequest(new { success = false, message });
 
-        return Ok(ApiResponse<object>.SuccessResponse(null, message));
+        return Ok(new { success = true, message });
     }
 
-    [HttpGet("current")]
-    public async Task<ActionResult<ApiResponse<CashRegisterDto>>> GetCurrentCashRegister()
-    {
-        var establishmentId = GetEstablishmentId();
-
-        var cashRegister = await _service.GetOpenCashRegisterAsync(establishmentId);
-
-        if (cashRegister == null)
-            return NotFound(ApiResponse<CashRegisterDto>.ErrorResponse("Nenhum caixa aberto"));
-
-        var result = await MapToCashRegisterDto(cashRegister);
-        return Ok(ApiResponse<CashRegisterDto>.SuccessResponse(result));
-    }
-
-    [HttpPost("{id}/supply")]
-    public async Task<ActionResult<ApiResponse<object>>> AddSupply(Guid id, [FromBody] AddCashMovementDto dto)
+    /// <summary>
+    /// Realiza sangria (retirada de dinheiro)
+    /// </summary>
+    [HttpPost("withdraw")]
+    public async Task<IActionResult> WithdrawCash([FromBody] CashOperationDto dto)
     {
         var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
 
-        var (success, message) = await _service.AddSupplyAsync(
-            id,
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+        var cashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId.Value);
+        if (cashRegister == null)
+            return BadRequest(new { success = false, message = "Nenhum caixa aberto" });
+
+        var (success, message) = await _cashService.WithdrawCashAsync(
+            cashRegister.Id,
             dto.Amount,
-            dto.Description,
-            employeeId);
+            dto.Reason ?? "Sangria",
+            employeeId.Value);
 
         if (!success)
-            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+            return BadRequest(new { success = false, message });
 
-        return Ok(ApiResponse<object>.SuccessResponse(null, message));
+        return Ok(new { success = true, message });
     }
 
-    [HttpPost("{id}/withdrawal")]
-    public async Task<ActionResult<ApiResponse<object>>> AddWithdrawal(Guid id, [FromBody] AddCashMovementDto dto)
+    /// <summary>
+    /// Realiza suprimento (entrada de dinheiro)
+    /// </summary>
+    [HttpPost("supply")]
+    public async Task<IActionResult> SupplyCash([FromBody] CashOperationDto dto)
     {
         var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
 
-        var (success, message) = await _service.AddWithdrawalAsync(
-            id,
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+        var cashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId.Value);
+        if (cashRegister == null)
+            return BadRequest(new { success = false, message = "Nenhum caixa aberto" });
+
+        var (success, message) = await _cashService.SupplyCashAsync(
+            cashRegister.Id,
             dto.Amount,
-            dto.Description,
-            employeeId);
+            dto.Reason ?? "Suprimento",
+            employeeId.Value);
 
         if (!success)
-            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+            return BadRequest(new { success = false, message });
 
-        return Ok(ApiResponse<object>.SuccessResponse(null, message));
+        return Ok(new { success = true, message });
     }
 
-    [HttpGet("{id}/report")]
-    public async Task<ActionResult<ApiResponse<CashRegisterReportDto>>> GetCashRegisterReport(Guid id)
+    /// <summary>
+    /// Lista movimentos do caixa atual
+    /// </summary>
+    [HttpGet("movements")]
+    public async Task<IActionResult> GetMovements()
     {
-        var cashRegister = await _context.Set<CashRegister>()
-            .Include(c => c.OpenedByEmployee)
-            .Include(c => c.ClosedByEmployee)
-            .Include(c => c.Movements)
-                .ThenInclude(m => m.Employee)
-            .FirstOrDefaultAsync(c => c.Id == id);
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
 
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
+
+        var cashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId.Value);
         if (cashRegister == null)
-            return NotFound(ApiResponse<CashRegisterReportDto>.ErrorResponse("Caixa não encontrado"));
+            return BadRequest(new { success = false, message = "Nenhum caixa aberto" });
 
-        var report = new CashRegisterReportDto
+        var movements = await _cashService.GetCashMovementsAsync(cashRegister.Id);
+
+        return Ok(new
         {
-            CashRegister = await MapToCashRegisterDto(cashRegister),
-            Movements = cashRegister.Movements.Select(m => new CashMovementDto
+            success = true,
+            movements = movements.Select(m => new
             {
-                Id = m.Id,
-                MovementType = m.MovementType,
-                Amount = m.Amount,
-                PaymentMethod = m.PaymentMethod,
-                SaleId = m.SaleId,
-                Description = m.Description,
-                EmployeeName = m.Employee?.FullName ?? "N/A",
-                MovementDate = m.MovementDate
-            }).OrderBy(m => m.MovementDate).ToList(),
-            ByPaymentMethod = new Dictionary<string, decimal>
-            {
-                { "DINHEIRO", cashRegister.TotalCash },
-                { "CARTAO", cashRegister.TotalCard },
-                { "PIX", cashRegister.TotalPix }
-            },
-            SalesByPaymentMethod = cashRegister.Movements
-                .Where(m => m.MovementType == "VENDA" && m.PaymentMethod != null)
-                .GroupBy(m => m.PaymentMethod!)
-                .ToDictionary(g => g.Key, g => g.Count())
-        };
-
-        return Ok(ApiResponse<CashRegisterReportDto>.SuccessResponse(report));
+                m.Id,
+                m.MovementType,
+                m.PaymentMethod,
+                m.Amount,
+                m.Description,
+                m.CreatedAt
+            })
+        });
     }
 
+    /// <summary>
+    /// Histórico de caixas
+    /// </summary>
     [HttpGet("history")]
-    public async Task<ActionResult<ApiResponse<List<CashRegisterDto>>>> GetHistory([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+    public async Task<IActionResult> GetHistory(
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate,
+        [FromQuery] int limit = 30)
     {
-        var establishmentId = GetEstablishmentId();
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { success = false, message = "Sessão inválida" });
 
-        var query = _context.Set<CashRegister>()
-            .Include(c => c.OpenedByEmployee)
-            .Include(c => c.ClosedByEmployee)
-            .Where(c => c.EstablishmentId == establishmentId);
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { success = false, message = "Estabelecimento não encontrado" });
 
-        if (startDate.HasValue)
-            query = query.Where(c => c.OpeningDate >= startDate.Value);
+        var registers = await _cashService.GetCashRegisterHistoryAsync(
+            establishmentId.Value, startDate, endDate, limit);
 
-        if (endDate.HasValue)
-            query = query.Where(c => c.OpeningDate <= endDate.Value);
-
-        var cashRegisters = await query
-            .OrderByDescending(c => c.OpeningDate)
-            .ToListAsync();
-
-        var result = new List<CashRegisterDto>();
-        foreach (var cr in cashRegisters)
+        return Ok(new
         {
-            result.Add(await MapToCashRegisterDto(cr));
-        }
-
-        return Ok(ApiResponse<List<CashRegisterDto>>.SuccessResponse(result));
-    }
-
-    private async Task<CashRegisterDto> MapToCashRegisterDto(CashRegister cashRegister)
-    {
-        return new CashRegisterDto
-        {
-            Id = cashRegister.Id,
-            Code = cashRegister.Code,
-            OpeningDate = cashRegister.OpeningDate,
-            ClosingDate = cashRegister.ClosingDate,
-            OpenedByEmployeeName = cashRegister.OpenedByEmployee?.FullName ??
-                (await _context.Set<Models.Employees.Employee>().FindAsync(cashRegister.OpenedByEmployeeId))?.FullName ?? "N/A",
-            ClosedByEmployeeName = cashRegister.ClosedByEmployeeId.HasValue ?
-                (cashRegister.ClosedByEmployee?.FullName ??
-                (await _context.Set<Models.Employees.Employee>().FindAsync(cashRegister.ClosedByEmployeeId.Value))?.FullName) : null,
-            OpeningBalance = cashRegister.OpeningBalance,
-            ClosingBalance = cashRegister.ClosingBalance,
-            ExpectedBalance = cashRegister.ExpectedBalance,
-            Difference = cashRegister.Difference,
-            TotalSales = cashRegister.TotalSales,
-            TotalCash = cashRegister.TotalCash,
-            TotalCard = cashRegister.TotalCard,
-            TotalPix = cashRegister.TotalPix,
-            SalesCount = cashRegister.SalesCount,
-            Status = cashRegister.Status,
-            Observations = cashRegister.Observations
-        };
+            success = true,
+            registers = registers.Select(r => new
+            {
+                r.Id,
+                r.Code,
+                r.Status,
+                r.OpeningDate,
+                r.ClosingDate,
+                r.OpeningBalance,
+                r.TotalSales,
+                r.SalesCount,
+                r.TotalCash,
+                r.TotalCard,
+                r.TotalDebit,
+                r.TotalCredit,
+                r.TotalPix,
+                r.TotalBoleto,
+                r.TotalOther,
+                r.TotalWithdrawals,
+                r.TotalSupplies,
+                r.TotalCancellations,
+                r.ClosingBalance,
+                r.ExpectedBalance,
+                r.Difference
+            })
+        });
     }
 }
 
+// DTOs
+public class OpenCashRegisterDto
+{
+    public decimal OpeningBalance { get; set; }
+    public string? Observations { get; set; }
+}
+
+public class CloseCashRegisterDto
+{
+    public decimal ActualClosingBalance { get; set; }
+    public string? Observations { get; set; }
+}
+
+public class CashOperationDto
+{
+    public decimal Amount { get; set; }
+    public string? Reason { get; set; }
+}

@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models.Employees;
 
 namespace Models;
 
+/// <summary>
+/// Registro de abertura e fechamento de caixa
+/// </summary>
 [Table("cash_registers")]
 public class CashRegister
 {
@@ -16,7 +19,7 @@ public class CashRegister
 
     [Column("code")]
     [MaxLength(20)]
-    public string Code { get; set; } = default!;
+    public string Code { get; set; } = string.Empty;
 
     [Column("opening_date")]
     public DateTime OpeningDate { get; set; }
@@ -66,6 +69,30 @@ public class CashRegister
     [Column("observations")]
     public string? Observations { get; set; }
 
+    [Column("total_debit")]
+    public decimal TotalDebit { get; set; } = 0;
+
+    [Column("total_credit")]
+    public decimal TotalCredit { get; set; } = 0;
+
+    [Column("total_boleto")]
+    public decimal TotalBoleto { get; set; } = 0;
+
+    [Column("total_other")]
+    public decimal TotalOther { get; set; } = 0;
+
+    [Column("total_withdrawals")]
+    public decimal TotalWithdrawals { get; set; } = 0;
+
+    [Column("total_supplies")]
+    public decimal TotalSupplies { get; set; } = 0;
+
+    [Column("total_cancellations")]
+    public decimal TotalCancellations { get; set; } = 0;
+
+    [Column("closing_observations")]
+    public string? ClosingObservations { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 
@@ -75,6 +102,9 @@ public class CashRegister
     public virtual ICollection<CashMovement> Movements { get; set; } = new List<CashMovement>();
 }
 
+/// <summary>
+/// Movimentações de caixa (entradas, saídas, sangrias, suprimentos, estornos)
+/// </summary>
 [Table("cash_movements")]
 public class CashMovement
 {
@@ -84,11 +114,13 @@ public class CashMovement
 
     [Column("cash_register_id")]
     public Guid CashRegisterId { get; set; }
+
+    [ForeignKey("CashRegisterId")]
     public CashRegister? CashRegister { get; set; }
 
     [Column("movement_type")]
     [MaxLength(20)]
-    public string MovementType { get; set; } = default!;
+    public string MovementType { get; set; } = string.Empty;
 
     [Column("amount")]
     public decimal Amount { get; set; }
@@ -102,10 +134,12 @@ public class CashMovement
 
     [Column("description")]
     [MaxLength(500)]
-    public string Description { get; set; } = default!;
+    public string Description { get; set; } = string.Empty;
 
     [Column("employee_id")]
     public Guid EmployeeId { get; set; }
+
+    [ForeignKey("EmployeeId")]
     public Employee? Employee { get; set; }
 
     [Column("movement_date")]

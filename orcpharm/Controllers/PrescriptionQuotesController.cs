@@ -197,6 +197,54 @@ public class PrescriptionQuotesController : ControllerBase
     }
 
     /// <summary>
+    /// Atualiza dados gerais do orçamento (cliente, prescritor, etc)
+    /// </summary>
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateQuoteDto dto)
+    {
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { message = "Estabelecimento não encontrado" });
+
+        var quote = await _context.PrescriptionQuotes
+            .FirstOrDefaultAsync(q => q.Id == id && q.EstablishmentId == establishmentId.Value);
+
+        if (quote == null)
+            return NotFound(new { message = "Orçamento não encontrado" });
+
+        // Atualizar dados do cliente
+        if (dto.CustomerName != null) quote.CustomerName = dto.CustomerName;
+        if (dto.CustomerPhone != null) quote.CustomerPhone = dto.CustomerPhone;
+        if (dto.CustomerEmail != null) quote.CustomerEmail = dto.CustomerEmail;
+        if (dto.CustomerId.HasValue) quote.CustomerId = dto.CustomerId;
+
+        // Atualizar dados do prescritor
+        if (dto.DoctorName != null) quote.DoctorName = dto.DoctorName;
+        if (dto.DoctorCrm != null) quote.DoctorCrm = dto.DoctorCrm;
+        if (dto.DoctorCrmState != null) quote.DoctorCrmState = dto.DoctorCrmState;
+        if (dto.DoctorSpecialty != null) quote.DoctorSpecialty = dto.DoctorSpecialty;
+
+        // Atualizar dados da fórmula
+        if (dto.PharmaceuticalForm != null) quote.PharmaceuticalForm = dto.PharmaceuticalForm;
+        if (dto.TotalQuantity != null) quote.TotalQuantity = dto.TotalQuantity;
+        if (dto.TotalQuantityNumeric.HasValue) quote.TotalQuantityNumeric = dto.TotalQuantityNumeric.Value;
+        if (dto.TotalQuantityUnit != null) quote.TotalQuantityUnit = dto.TotalQuantityUnit;
+        if (dto.Instructions != null) quote.Instructions = dto.Instructions;
+        if (dto.UsageType != null) quote.UsageType = dto.UsageType;
+
+        quote.UpdatedAt = DateTime.UtcNow;
+        quote.UpdatedByEmployeeId = employeeId.Value;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Orçamento atualizado com sucesso" });
+    }
+
+    /// <summary>
     /// Atualiza valores do orçamento
     /// </summary>
     [HttpPut("{id}/pricing")]
@@ -246,7 +294,7 @@ public class PrescriptionQuotesController : ControllerBase
             dto.PaymentMethod,
             dto.AmountPaid,
             dto.Installments,
-            dto.DiscountAmount,
+            dto.DiscountAmount ?? 0,
             dto.DiscountReason,
             establishmentId.Value,
             employeeId.Value);
@@ -320,6 +368,95 @@ public class PrescriptionQuotesController : ControllerBase
 
     // ===== MÉTODOS AUXILIARES =====
 
+    [HttpGet("pdv-search")]
+    public async Task<IActionResult> PdvSearch([FromQuery] string? query = null)
+    {
+        var employeeId = GetEmployeeId();
+        if (!employeeId.HasValue)
+            return Unauthorized(new { message = "Sessão inválida" });
+
+        var establishmentId = await GetEstablishmentId(employeeId.Value);
+        if (!establishmentId.HasValue)
+            return NotFound(new { message = "Estabelecimento não encontrado" });
+
+        var results = new List<object>();
+
+        // 1. Buscar orçamentos aprovados/pendentes que ainda não foram vendidos
+        var quotesQuery = _context.PrescriptionQuotes
+            .Where(q => q.EstablishmentId == establishmentId.Value)
+            .Where(q => q.Status == "APROVADO" || q.Status == "PENDENTE")
+            .Where(q => q.SaleId == null); // Não foi convertido em venda ainda
+
+        // Aplicar filtro de busca case-insensitive
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var searchPattern = $"%{query}%";
+            quotesQuery = quotesQuery.Where(q =>
+                EF.Functions.ILike(q.Code, searchPattern) ||
+                EF.Functions.ILike(q.CustomerName ?? "", searchPattern) ||
+                EF.Functions.ILike(q.PharmaceuticalForm ?? "", searchPattern) ||
+                EF.Functions.ILike(q.CustomerPhone ?? "", searchPattern));
+        }
+
+        var quotes = await quotesQuery
+            .OrderByDescending(q => q.Status == "APROVADO") // Aprovados primeiro
+            .ThenByDescending(q => q.CreatedAt)
+            .Take(15)
+            .Select(q => new
+            {
+                type = "quote",
+                id = q.Id,
+                code = q.Code,
+                customerName = q.CustomerName ?? "Cliente não identificado",
+                customerPhone = q.CustomerPhone,
+                description = q.PharmaceuticalForm ?? "Manipulado",
+                totalQuantity = q.TotalQuantity,
+                price = q.FinalPrice,
+                status = q.Status,
+                validUntil = q.ValidUntil,
+                isExpired = q.ValidUntil < DateTime.UtcNow && q.Status == "PENDENTE"
+            })
+            .ToListAsync();
+
+        results.AddRange(quotes.Cast<object>());
+
+        // 2. Buscar OMs finalizadas sem venda vinculada
+        var ordersQuery = _context.ManipulationOrders
+            .Where(m => m.EstablishmentId == establishmentId.Value)
+            .Where(m => m.Status == "FINALIZADO")
+            .Where(m => !_context.SaleItems.Any(si => si.ManipulationOrderId == m.Id));
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var searchPattern = $"%{query}%";
+            ordersQuery = ordersQuery.Where(m =>
+                EF.Functions.ILike(m.OrderNumber, searchPattern) ||
+                EF.Functions.ILike(m.CustomerName ?? "", searchPattern));
+        }
+
+        var orders = await ordersQuery
+            .OrderByDescending(m => m.CompletionDate)
+            .Take(15)
+            .Select(m => new
+            {
+                type = "order",
+                id = m.Id,
+                code = m.OrderNumber,
+                customerName = m.CustomerName ?? "Cliente não identificado",
+                customerPhone = m.CustomerPhone,
+                description = "OM Finalizada",
+                totalQuantity = $"{m.QuantityToProduce} {m.Unit}",
+                price = 0m,
+                status = m.Status,
+                completionDate = m.CompletionDate
+            })
+            .ToListAsync();
+
+        results.AddRange(orders.Cast<object>());
+
+        return Ok(new { success = true, data = results, count = results.Count });
+    }
+
     private decimal ParseQuantity(string quantityText)
     {
         if (string.IsNullOrWhiteSpace(quantityText))
@@ -370,4 +507,27 @@ public class SendQuoteEmailDto
 {
     public string Email { get; set; } = string.Empty;
     public string? Message { get; set; }
+}
+
+public class UpdateQuoteDto
+{
+    // Dados do cliente
+    public Guid? CustomerId { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
+    public string? CustomerEmail { get; set; }
+    
+    // Dados do prescritor
+    public string? DoctorName { get; set; }
+    public string? DoctorCrm { get; set; }
+    public string? DoctorCrmState { get; set; }
+    public string? DoctorSpecialty { get; set; }
+    
+    // Dados da fórmula
+    public string? PharmaceuticalForm { get; set; }
+    public string? TotalQuantity { get; set; }
+    public decimal? TotalQuantityNumeric { get; set; }
+    public string? TotalQuantityUnit { get; set; }
+    public string? Instructions { get; set; }
+    public string? UsageType { get; set; }
 }

@@ -268,6 +268,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JjYW1lbnRvc1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/orcpharm/orcpharm/orcpharm/Views/Orcamentos/Index_old.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JjYW1lbnRvc1xJbmRleF9vbGQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/orcpharm/orcpharm/orcpharm/Views/Orcamento/Expired.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JjYW1lbnRvXEV4cGlyZWQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -306,6 +310,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [E:/orcpharm/orcpharm/orcpharm/Views/PDV/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUERWXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/orcpharm/orcpharm/orcpharm/Views/PDV/Index_old.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUERWXEluZGV4X29sZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/orcpharm/orcpharm/orcpharm/Views/PrescriptionsView/ConvertToSale.cshtml]

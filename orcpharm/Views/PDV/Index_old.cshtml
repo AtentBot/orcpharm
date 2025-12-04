@@ -1,0 +1,288 @@
+@{
+    ViewData["Title"] = "PDV - Ponto de Venda";
+    Layout = "_Layout"; // Layout simplificado para PDV
+}
+
+<div class="container-fluid vh-100 d-flex flex-column p-0">
+    <!-- Cabeçalho -->
+    <div class="bg-primary text-white p-3 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">
+                    <i class="bi bi-shop me-2"></i>
+                    Ponto de Venda
+                </h4>
+                <small id="cashRegisterInfo">Caixa: Carregando...</small>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-light text-dark fs-6" id="currentTime"></span>
+                <button class="btn btn-light btn-sm" onclick="openCashRegister()">
+                    <i class="bi bi-cash-stack"></i> Abrir Caixa
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="closePDV()">
+                    <i class="bi bi-x-circle"></i> Fechar PDV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-0 flex-grow-1">
+        <!-- Coluna Esquerda: Carrinho e Produtos -->
+        <div class="col-lg-8 d-flex flex-column p-3">
+            
+            <!-- Busca de Produtos -->
+            <div class="mb-3">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="productSearch" 
+                           placeholder="Buscar produto, código de barras ou pedido de manipulação..."
+                           autofocus>
+                    <button class="btn btn-outline-secondary" onclick="showProductsModal()">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Carrinho -->
+            <div class="card flex-grow-1 shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Itens do Carrinho</h5>
+                        <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">
+                            <i class="bi bi-trash"></i> Limpar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body overflow-auto">
+                    <div id="cartItems">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-cart-x fs-1 d-block mb-3"></i>
+                            <p>Carrinho vazio</p>
+                            <p class="small">Busque produtos ou escaneie código de barras</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Totais e Pagamento -->
+        <div class="col-lg-4 bg-light p-3 d-flex flex-column">
+            
+            <!-- Cliente -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <label class="form-label fw-bold">Cliente</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="customerSearch" 
+                               placeholder="CPF, Nome ou Telefone" readonly>
+                        <button class="btn btn-outline-primary" onclick="searchCustomer()">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearCustomer()">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" id="selectedCustomerId">
+                </div>
+            </div>
+
+            <!-- Totais -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <strong id="subtotal">R$ 0,00</strong>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Desconto</span>
+                        <input type="number" class="form-control" id="discountInput" 
+                               value="0" min="0" step="0.01" onchange="calculateTotal()">
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Desconto:</span>
+                        <strong class="text-danger" id="discountAmount">- R$ 0,00</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <h4 class="mb-0">TOTAL:</h4>
+                        <h4 class="mb-0 text-success" id="totalAmount">R$ 0,00</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formas de Pagamento -->
+            <div class="card mb-3 shadow-sm flex-grow-1">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Formas de Pagamento</h6>
+                </div>
+                <div class="card-body">
+                    <div id="paymentsContainer">
+                        <p class="text-muted small">Nenhum pagamento adicionado</p>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2 mt-3">
+                        <span>Total Pago:</span>
+                        <strong class="text-info" id="totalPaid">R$ 0,00</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Restante:</span>
+                        <strong class="text-warning" id="remaining">R$ 0,00</strong>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success btn-lg" onclick="showPaymentModal('DINHEIRO')">
+                            <i class="bi bi-cash-coin me-2"></i>Dinheiro
+                        </button>
+                        <button class="btn btn-primary btn-lg" onclick="showPaymentModal('CARTAO_DEBITO')">
+                            <i class="bi bi-credit-card me-2"></i>Débito
+                        </button>
+                        <button class="btn btn-info btn-lg" onclick="showPaymentModal('CARTAO_CREDITO')">
+                            <i class="bi bi-credit-card-2-front me-2"></i>Crédito
+                        </button>
+                        <button class="btn btn-warning btn-lg" onclick="showPaymentModal('PIX')">
+                            <i class="bi bi-qr-code me-2"></i>PIX
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finalizar Venda -->
+            <button class="btn btn-lg btn-success w-100 py-3" id="finishSaleBtn" 
+                    onclick="finishSale()" disabled>
+                <i class="bi bi-check-circle me-2"></i>
+                <strong>FINALIZAR VENDA</strong>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adicionar Pagamento -->
+<div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalTitle">Adicionar Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="paymentMethod">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Valor</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text">R$</span>
+                        <input type="number" class="form-control" id="paymentAmount" 
+                               step="0.01" min="0.01" required autofocus>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="setRemainingAmount()">
+                        Usar valor restante
+                    </button>
+                </div>
+
+                <!-- Campos específicos por método -->
+                <div id="cashFields" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label">Valor Recebido</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" class="form-control" id="cashReceived" 
+                                   step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="alert alert-info" id="changeDisplay" style="display:none;">
+                        <strong>Troco:</strong> <span id="changeAmount">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <div id="cardFields" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label">Bandeira</label>
+                        <select class="form-select" id="cardBrand">
+                            <option value="">Selecione...</option>
+                            <option value="VISA">Visa</option>
+                            <option value="MASTERCARD">Mastercard</option>
+                            <option value="ELO">Elo</option>
+                            <option value="AMEX">American Express</option>
+                            <option value="HIPERCARD">Hipercard</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Últimos 4 Dígitos</label>
+                        <input type="text" class="form-control" id="cardLastDigits" 
+                               maxlength="4" placeholder="1234">
+                    </div>
+                    <div class="mb-3" id="installmentsField">
+                        <label class="form-label">Parcelas</label>
+                        <select class="form-select" id="installments">
+                            <option value="1">1x à vista</option>
+                            <option value="2">2x sem juros</option>
+                            <option value="3">3x sem juros</option>
+                            <option value="4">4x sem juros</option>
+                            <option value="5">5x sem juros</option>
+                            <option value="6">6x sem juros</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">NSU/DOC</label>
+                        <input type="text" class="form-control" id="nsu" 
+                               placeholder="Número do comprovante">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Código de Autorização</label>
+                        <input type="text" class="form-control" id="authCode" 
+                               placeholder="Código de autorização">
+                    </div>
+                </div>
+
+                <div id="pixFields" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label">Chave PIX</label>
+                        <input type="text" class="form-control" id="pixKey" 
+                               placeholder="CPF, Email, Telefone ou Chave Aleatória">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ID da Transação</label>
+                        <input type="text" class="form-control" id="pixTransactionId" 
+                               placeholder="E12345678202411251030...">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Observações</label>
+                    <textarea class="form-control" id="paymentObs" rows="2" 
+                              placeholder="Observações opcionais"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="addPayment()">
+                    <i class="bi bi-plus-circle"></i> Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Buscar Cliente -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Buscar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" id="customerModalSearch" 
+                       placeholder="Buscar por CPF, Nome ou Telefone...">
+                <div id="customersList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Lista de clientes -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pdv.js"></script>
+}

@@ -82,7 +82,7 @@
             <p class="text-muted mb-0">Gerencie orçamentos enviados aos clientes</p>
         </div>
         <div>
-            <a href="/Prescriptions/Processar" class="btn btn-success btn-lg shadow-sm">
+            <a href="/PrescriptionsView/Processar" class="btn btn-success btn-lg shadow-sm">
                 <i class="bi bi-plus-lg"></i> Novo Orçamento
             </a>
         </div>
@@ -496,7 +496,7 @@ function renderTable() {
                         <i class="bi bi-inbox"></i>
                         <h5 class="text-muted">Nenhum orçamento encontrado</h5>
                         <p class="text-muted">Tente ajustar os filtros ou criar um novo orçamento.</p>
-                        <a href="/Prescriptions/Processar" class="btn btn-success">
+                            <a href="/PrescriptionsView/Processar" class="btn btn-success">
                             <i class="bi bi-plus-lg"></i> Novo Orçamento
                         </a>
                     </div>
@@ -541,6 +541,11 @@ function renderTable() {
                         <button class="btn btn-outline-secondary" onclick="copyLink('${escapeHtml(q.publicToken)}')" title="Copiar link">
                             <i class="bi bi-link-45deg"></i>
                         </button>
+                        ${q.status === 'PENDENTE' && !isExpired ? `
+                            <a href="/PrescriptionsView/Processar?quoteId=${q.id}" class="btn btn-outline-info" title="Editar orçamento">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        ` : ''}
                         ${q.status === 'PENDENTE' && !isExpired && q.customerPhone ? `
                             <button class="btn btn-whatsapp" onclick="openWhatsAppModal('${q.id}', '${escapeHtml(q.code)}', '${escapeHtml(q.customerName || '')}', '${escapeHtml(q.customerPhone || '')}')" title="Enviar WhatsApp">
                                 <i class="bi bi-whatsapp"></i>
