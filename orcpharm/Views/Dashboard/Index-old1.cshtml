@@ -391,6 +391,94 @@
             </a>
         </div>
     </div>
+
+    <!-- ========== NOVA SEÇÃO: Cards de Equipe & Administração ========== -->
+    @if (Model.CanManageEmployees)
+    {
+        <div class="row mb-4">
+            <div class="col-12 mb-2">
+                <h5 class="text-muted">
+                    <i class="bi bi-people me-2"></i>Equipe & Administração
+                </h5>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <a href="/Employees/List" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted mb-1 small">Funcionários Ativos</p>
+                                    <h3 class="mb-0 text-primary">@Model.TotalEmployeesActive</h3>
+                                </div>
+                                <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                    <i class="bi bi-people-fill text-primary fs-3"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a href="/Employees/List?status=inactive" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted mb-1 small">Funcionários Inativos</p>
+                                    <h3 class="mb-0 @(Model.TotalEmployeesInactive > 0 ? "text-warning" : "text-muted")">@Model.TotalEmployeesInactive</h3>
+                                </div>
+                                <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                    <i class="bi bi-person-dash text-warning fs-3"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a href="/Employees/Create" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted mb-1 small">Novo Funcionário</p>
+                                    <h3 class="mb-0 text-success">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </h3>
+                                </div>
+                                <div class="bg-success bg-opacity-10 p-3 rounded">
+                                    <i class="bi bi-person-plus text-success fs-3"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <a href="/Employees/List" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm hover-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted mb-1 small">Gerenciar Equipe</p>
+                                    <h3 class="mb-0 text-info">
+                                        <i class="bi bi-arrow-right-circle"></i>
+                                    </h3>
+                                </div>
+                                <div class="bg-info bg-opacity-10 p-3 rounded">
+                                    <i class="bi bi-gear text-info fs-3"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    }
 }
 
 <!-- Acesso Rápido -->
@@ -720,16 +808,15 @@
                     document.getElementById('manipPendentes').textContent = data.data.totalPendentes || 0;
                     document.getElementById('manipProducao').textContent = data.data.totalEmProducao || 0;
                     document.getElementById('manipFinalizadas').textContent = data.data.totalFinalizadosHoje || 0;
-                    document.getElementById('manipPesagem').textContent = data.data.totalPesagem || 0;  // ← ADICIONAR
+                    document.getElementById('manipPesagem').textContent = data.data.totalPesagem || 0;
                     document.getElementById('manipAtrasadas').textContent = data.data.totalAtrasados || 0;
-                        document.getElementById('manipPesagem').textContent = data.data.totalPesagem || 0;
                 }
             } catch (error) {
                 console.error('Erro ao carregar estatísticas:', error);
                 document.getElementById('manipPendentes').textContent = '0';
                 document.getElementById('manipProducao').textContent = '0';
                 document.getElementById('manipFinalizadas').textContent = '0';
-                document.getElementById('manipPesagem').textContent = '0';  // ← ADICIONAR
+                document.getElementById('manipPesagem').textContent = '0';
                 document.getElementById('manipAtrasadas').textContent = '0';
             }
         }

@@ -1,4 +1,4 @@
-﻿using Data;
+using Data;
 using DTOs;
 using DTOs.Prescriptions;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +25,7 @@ public class PrescriptionQuoteService
     private const decimal DefaultPackagingCost = 3m;
     private const int DefaultValidityDays = 7;
     private const int DefaultEstimatedDays = 3;
-    private const decimal DefaultUnitCost = 0.10m; // Custo padrão quando não há batch
+    private const decimal DefaultUnitCost = 0.10m;
 
     public PrescriptionQuoteService(
         AppDbContext context,
@@ -49,11 +49,9 @@ public class PrescriptionQuoteService
         {
             _logger.LogInformation("Criando orçamento para {Count} ingredientes", dto.Ingredients.Count);
 
-            // Validar ingredientes
             if (!dto.Ingredients.Any())
                 return (false, "Nenhum ingrediente informado", null);
 
-            // Buscar matérias-primas com seus batches para calcular custo
             var rawMaterialIds = dto.Ingredients.Select(i => i.RawMaterialId).ToList();
             var rawMaterials = await _context.RawMaterials
                 .Include(rm => rm.Batches!.Where(b => b.Status == "APROVADO" && b.ExpiryDate > DateTime.UtcNow))
@@ -63,25 +61,20 @@ public class PrescriptionQuoteService
             if (rawMaterials.Count != rawMaterialIds.Count)
                 return (false, "Uma ou mais matérias-primas não encontradas", null);
 
-            // Buscar estabelecimento
             var establishment = await _context.Establishments
                 .FirstOrDefaultAsync(e => e.Id == establishmentId);
 
             if (establishment == null)
                 return (false, "Estabelecimento não encontrado", null);
 
-            // Calcular custos
             var components = new List<QuoteComponent>();
             decimal totalMaterialsCost = 0;
 
             foreach (var ing in dto.Ingredients)
             {
                 var rm = rawMaterials[ing.RawMaterialId];
-
-                // Obter custo do último batch aprovado ou usar valor padrão
                 var unitCost = GetUnitCost(rm);
 
-                // Calcular quantidade absoluta se for percentual
                 var quantity = ing.Quantity;
                 if (ing.Unit == "%" && !string.IsNullOrEmpty(dto.TotalQuantity))
                 {
@@ -107,18 +100,15 @@ public class PrescriptionQuoteService
                 });
             }
 
-            // Calcular valores finais
             var markupValue = totalMaterialsCost * (DefaultMarkupPercentage / 100);
             var laborCost = DefaultLaborCostPerItem * components.Count;
             var packagingCost = DefaultPackagingCost;
             var subtotal = totalMaterialsCost + markupValue + laborCost + packagingCost;
-            var finalPrice = subtotal; // Sem desconto inicial
+            var finalPrice = subtotal;
 
-            // Gerar código e token
             var code = await GenerateQuoteCodeAsync(establishmentId);
             var publicToken = GeneratePublicToken();
 
-            // Criar orçamento
             var quote = new PrescriptionQuote
             {
                 Id = Guid.NewGuid(),
@@ -175,13 +165,8 @@ public class PrescriptionQuoteService
         }
     }
 
-    /// <summary>
-    /// Obtém o custo unitário da matéria-prima
-    /// Prioridade: último batch aprovado > valor padrão
-    /// </summary>
     private decimal GetUnitCost(RawMaterial rm)
     {
-        // Buscar o último batch aprovado para obter o custo
         var lastBatch = rm.Batches?
             .OrderByDescending(b => b.ReceivedDate)
             .FirstOrDefault();
@@ -189,11 +174,10 @@ public class PrescriptionQuoteService
         if (lastBatch != null && lastBatch.UnitCost > 0)
             return lastBatch.UnitCost;
 
-        // Se não há batch, usar custo padrão baseado no tipo
         return rm.ControlType switch
         {
             "COMUM" => DefaultUnitCost,
-            "LISTA_A" or "LISTA_B" => DefaultUnitCost * 5, // Controlados mais caros
+            "LISTA_A" or "LISTA_B" => DefaultUnitCost * 5,
             "ANTIMICROBIANO" => DefaultUnitCost * 2,
             _ => DefaultUnitCost
         };
@@ -210,7 +194,6 @@ public class PrescriptionQuoteService
         if (quote == null)
             return null;
 
-        // Incrementar view count
         quote.ViewCount++;
         quote.LastViewedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -270,9 +253,9 @@ public class PrescriptionQuoteService
     }
 
     /// <summary>
-    /// Aprova o orçamento pelo cliente (via link público)
+    /// Aprova o orçamento pelo cliente (via link público) e CRIA ORDEM DE MANIPULAÇÃO
     /// </summary>
-    public async Task<(bool Success, string Message)> ApproveByTokenAsync(
+    public async Task<(bool Success, string Message, Guid? ManipulationOrderId)> ApproveByTokenAsync(
         string token,
         string? customerObservations,
         string? clientIp)
@@ -281,29 +264,191 @@ public class PrescriptionQuoteService
             .FirstOrDefaultAsync(q => q.PublicToken == token);
 
         if (quote == null)
-            return (false, "Orçamento não encontrado");
+            return (false, "Orçamento não encontrado", null);
 
         if (quote.Status != "PENDENTE")
-            return (false, $"Orçamento não pode ser aprovado. Status atual: {quote.Status}");
+            return (false, $"Orçamento não pode ser aprovado. Status atual: {quote.Status}", null);
 
         if (quote.ValidUntil < DateTime.UtcNow)
         {
             quote.Status = "EXPIRADO";
             await _context.SaveChangesAsync();
-            return (false, "Orçamento expirado");
+            return (false, "Orçamento expirado", null);
         }
 
+        // Aprovar o orçamento
         quote.Status = "APROVADO";
         quote.ApprovedAt = DateTime.UtcNow;
         quote.ApprovedIp = clientIp;
         quote.CustomerObservations = customerObservations;
         quote.UpdatedAt = DateTime.UtcNow;
 
+        // ========== CRIAR ORDEM DE MANIPULAÇÃO AUTOMATICAMENTE ==========
+        ManipulationOrder? order = null;
+        try
+        {
+            order = await CreateManipulationOrderFromQuoteAsync(quote);
+            quote.ManipulationOrderId = order.Id;
+            
+            _logger.LogInformation(
+                "Ordem de Manipulação {OrderNumber} criada automaticamente para orçamento {QuoteCode}",
+                order.OrderNumber, quote.Code);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao criar OM automática para orçamento {QuoteCode}. Continuando sem OM.", quote.Code);
+            // Não falha a aprovação, apenas loga o erro
+        }
+
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Orçamento {Code} aprovado pelo cliente", quote.Code);
 
-        return (true, "Orçamento aprovado com sucesso");
+        var message = order != null 
+            ? $"Orçamento aprovado! Ordem de Manipulação {order.OrderNumber} criada."
+            : "Orçamento aprovado com sucesso";
+
+        return (true, message, order?.Id);
+    }
+
+    /// <summary>
+    /// Cria a ordem de manipulação a partir do orçamento aprovado
+    /// </summary>
+    // =====================================================
+    // SUBSTITUIR o método CreateManipulationOrderFromQuoteAsync 
+    // no PrescriptionQuoteService.cs (linhas ~314-400)
+    // =====================================================
+
+    /// <summary>
+    /// Cria a ordem de manipulação a partir do orçamento aprovado
+    /// </summary>
+    private async Task<ManipulationOrder> CreateManipulationOrderFromQuoteAsync(PrescriptionQuote quote)
+    {
+        var orderCode = await GenerateManipulationOrderCodeAsync(quote.EstablishmentId);
+
+        // Extrair quantidade
+        decimal quantity = 1;
+        if (!string.IsNullOrEmpty(quote.TotalQuantity))
+        {
+            var numericPart = new string(quote.TotalQuantity.Where(c => char.IsDigit(c) || c == '.' || c == ',').ToArray());
+            if (!string.IsNullOrEmpty(numericPart))
+            {
+                decimal.TryParse(numericPart.Replace(',', '.'),
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out quantity);
+            }
+            if (quantity <= 0) quantity = 1;
+        }
+
+        // Buscar código da prescrição se existir
+        string? prescriptionCode = null;
+        if (quote.PrescriptionId.HasValue)
+        {
+            var prescription = await _context.Prescriptions.FindAsync(quote.PrescriptionId.Value);
+            prescriptionCode = prescription?.Code;
+        }
+
+        // Buscar um employee do estabelecimento para atribuir (se CreatedByEmployeeId for null)
+        Guid requestedByEmployeeId = quote.CreatedByEmployeeId;
+        if (requestedByEmployeeId == Guid.Empty)
+        {
+            // Buscar qualquer employee do estabelecimento
+            var anyEmployee = await _context.Employees
+                .Where(e => e.EstablishmentId == quote.EstablishmentId )
+                .Select(e => e.Id)
+                .FirstOrDefaultAsync();
+
+            if (anyEmployee != Guid.Empty)
+                requestedByEmployeeId = anyEmployee;
+        }
+
+        var order = new ManipulationOrder
+        {
+            Id = Guid.NewGuid(),
+            EstablishmentId = quote.EstablishmentId,
+            PrescriptionQuoteId = quote.Id,
+            OrderNumber = orderCode,
+            Code = orderCode,
+            PrescriptionNumber = prescriptionCode,
+            PrescriberName = quote.DoctorName,
+            PrescriberRegistration = quote.DoctorCrm,
+            CustomerName = quote.CustomerName ?? "Cliente",
+            CustomerPhone = quote.CustomerPhone,
+            QuantityToProduce = quantity,
+            Unit = quote.TotalQuantityUnit ?? "un",
+            SpecialInstructions = quote.Instructions,
+            Status = "AGUARDANDO_PRODUCAO",
+            Priority = "NORMAL",
+            OrderDate = DateTime.UtcNow,
+            ExpectedDate = DateTime.UtcNow.AddDays(quote.EstimatedDays),
+            RequestedByEmployeeId = requestedByEmployeeId,
+            PassedQualityControl = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.ManipulationOrders.Add(order);
+
+        // Criar componentes da ordem a partir dos componentes do orçamento
+        if (!string.IsNullOrEmpty(quote.ComponentsJson))
+        {
+            try
+            {
+                var components = JsonSerializer.Deserialize<List<QuoteComponent>>(
+                    quote.ComponentsJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (components != null)
+                {
+                    int index = 0;
+                    foreach (var comp in components)
+                    {
+                        var orderComponent = new ManipulationOrderComponent
+                        {
+                            Id = Guid.NewGuid(),
+                            ManipulationOrderId = order.Id,
+                            RawMaterialId = comp.RawMaterialId,
+                            RequiredQuantity = comp.Quantity,
+                            Unit = comp.Unit ?? "g",
+                            UnitCost = comp.UnitCost,
+                            TotalCost = comp.TotalCost,
+                            OrderIndex = index++,
+                            Status = "PENDENTE",
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+
+                        _context.ManipulationOrderComponents.Add(orderComponent);
+                    }
+
+                    _logger.LogInformation("Criados {Count} componentes para OM {OrderNumber}",
+                        components.Count, order.OrderNumber);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Erro ao parsear componentes do orçamento {QuoteId}", quote.Id);
+            }
+        }
+
+        return order;
+    }
+
+    /// <summary>
+    /// Gera código único para ordem de manipulação
+    /// </summary>
+    private async Task<string> GenerateManipulationOrderCodeAsync(Guid establishmentId)
+    {
+        var today = DateTime.UtcNow;
+        var dateStr = today.ToString("yyyyMMdd");
+
+        var count = await _context.ManipulationOrders
+            .Where(o => o.EstablishmentId == establishmentId &&
+                       o.CreatedAt.Date == today.Date)
+            .CountAsync();
+
+        return $"OM{dateStr}{(count + 1):D4}";
     }
 
     /// <summary>
@@ -355,9 +500,6 @@ public class PrescriptionQuoteService
         if (quote.Status != "APROVADO")
             return (false, "Apenas orçamentos aprovados podem ser convertidos em venda", null);
 
-        // TODO: Integrar com SaleService para criar a venda
-        // Por enquanto, apenas marcar como convertido
-
         quote.Status = "CONVERTIDO";
         quote.UpdatedAt = DateTime.UtcNow;
         quote.UpdatedByEmployeeId = employeeId;
@@ -402,7 +544,6 @@ public class PrescriptionQuoteService
         if (packagingCost.HasValue)
             quote.PackagingCost = packagingCost.Value;
 
-        // Recalcular valores
         quote.MarkupValue = quote.MaterialsCost * (quote.MarkupPercentage / 100);
         quote.Subtotal = quote.MaterialsCost + quote.MarkupValue + quote.LaborCost + quote.PackagingCost;
         quote.DiscountValue = quote.Subtotal * (quote.DiscountPercentage / 100);
@@ -500,7 +641,6 @@ public class PrescriptionQuoteService
             }
         }
 
-        // Montar endereço
         var address = "";
         if (establishment != null)
         {
@@ -521,7 +661,7 @@ public class PrescriptionQuoteService
             Id = quote.Id,
             Code = quote.Code,
             PublicToken = quote.PublicToken,
-            PublicUrl = $"{_baseUrl}/orcamento/{quote.PublicToken}",
+            PublicUrl = $"{_baseUrl}/PrescriptionsView/Quote/{quote.PublicToken}",
             CustomerId = quote.CustomerId,
             CustomerName = quote.CustomerName,
             CustomerPhone = quote.CustomerPhone,
@@ -549,10 +689,11 @@ public class PrescriptionQuoteService
             ApprovedAt = quote.ApprovedAt,
             RejectedAt = quote.RejectedAt,
             RejectionReason = quote.RejectionReason,
+            ManipulationOrderId = quote.ManipulationOrderId,
             PharmacyName = establishment?.NomeFantasia ?? establishment?.RazaoSocial ?? "",
             PharmacyPhone = establishment?.Phone ?? "",
             PharmacyAddress = address,
-            PharmacyLogo = null // Establishment não tem LogoUrl
+            PharmacyLogo = null
         };
     }
 }

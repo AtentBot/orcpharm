@@ -455,21 +455,25 @@
             const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
             modal.show();
         }
-        
+
         async function confirmApprove() {
             const observations = document.getElementById('approveObservations').value;
-            
+
             try {
                 const response = await fetch(`/api/PrescriptionQuotes/public/${token}/approve`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ customerObservations: observations })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (response.ok) {
-                    alert('Orçamento aprovado com sucesso! A farmácia entrará em contato.');
+                    // Mensagem personalizada com número da OM se disponível
+                    let successMessage = result.message || 'Orçamento aprovado com sucesso!';
+                    successMessage += '\n\nA farmácia já recebeu seu pedido e entrará em contato em breve.';
+
+                    alert(successMessage);
                     location.reload();
                 } else {
                     alert(result.message || 'Erro ao aprovar orçamento');

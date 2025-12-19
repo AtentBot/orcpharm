@@ -94,6 +94,10 @@
               "target": "Package",
               "version": "[9.*, )"
             },
+            "QRCoder": {
+              "target": "Package",
+              "version": "[1.5.1, )"
+            },
             "Stripe.net": {
               "target": "Package",
               "version": "[49.1.0, )"

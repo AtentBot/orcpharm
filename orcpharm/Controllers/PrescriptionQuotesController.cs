@@ -342,13 +342,18 @@ public class PrescriptionQuotesController : ControllerBase
     {
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-        var (success, message) = await _quoteService.ApproveByTokenAsync(
+        var (success, message, manipulationOrderId) = await _quoteService.ApproveByTokenAsync(
             token, dto.CustomerObservations, clientIp);
 
         if (!success)
             return BadRequest(new { message });
 
-        return Ok(new { message });
+        return Ok(new
+        {
+            success = true,
+            message,
+            manipulationOrderId
+        });
     }
 
     /// <summary>

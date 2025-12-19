@@ -860,6 +860,15 @@
           }
         }
       },
+      "QRCoder/1.5.1": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/QRCoder.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/QRCoder.dll": {}
+        }
+      },
       "Stripe.net/49.1.0": {
         "type": "package",
         "dependencies": {
@@ -3271,6 +3280,27 @@
         "postgresql.png"
       ]
     },
+    "QRCoder/1.5.1": {
+      "sha512": "+v8VntytuDw4R1nCNJkSA7SWSizJoQfiByV1+nUjOwrDZEuaxefG73aKuuQjpaGtoZ7qlXpRbK70C23m1h3WLw==",
+      "type": "package",
+      "path": "qrcoder/1.5.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net35/QRCoder.dll",
+        "lib/net40/QRCoder.dll",
+        "lib/net5.0-windows7.0/QRCoder.dll",
+        "lib/net5.0/QRCoder.dll",
+        "lib/net6.0-windows7.0/QRCoder.dll",
+        "lib/net6.0/QRCoder.dll",
+        "lib/netstandard1.3/QRCoder.dll",
+        "lib/netstandard2.0/QRCoder.dll",
+        "nuget-icon.png",
+        "nuget-readme.md",
+        "qrcoder.1.5.1.nupkg.sha512",
+        "qrcoder.nuspec"
+      ]
+    },
     "Stripe.net/49.1.0": {
       "sha512": "2mNAPVnaocI5Ub1QsG5UqLMd7HduFa3vKazybeqKwOFWLMkck974MDgiDuvEjM/UHXHLLD9oH2uPPpJM9rJ+8w==",
       "type": "package",
@@ -3864,6 +3894,7 @@
       "Microsoft.EntityFrameworkCore.Tools >= 9.0.10",
       "Microsoft.VisualStudio.Azure.Containers.Tools.Targets >= 1.21.0",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 9.*",
+      "QRCoder >= 1.5.1",
       "Stripe.net >= 49.1.0",
       "Swashbuckle.AspNetCore >= 9.0.6"
     ]
@@ -3961,6 +3992,10 @@
           "Npgsql.EntityFrameworkCore.PostgreSQL": {
             "target": "Package",
             "version": "[9.*, )"
+          },
+          "QRCoder": {
+            "target": "Package",
+            "version": "[1.5.1, )"
           },
           "Stripe.net": {
             "target": "Package",

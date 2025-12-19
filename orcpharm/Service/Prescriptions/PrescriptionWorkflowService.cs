@@ -180,37 +180,12 @@ public class PrescriptionWorkflowService
                 // Não falha - permite continuar com revisão manual
             }
 
-            // ===== ETAPA 3: Salvar arquivo da prescrição =====
-            try
-            {
-                var prescriptionFile = new PrescriptionFile
-                {
-                    Id = Guid.NewGuid(),
-                    FileName = $"receita_{DateTime.UtcNow:yyyyMMdd_HHmmss}.{GetExtensionFromMimeType(dto.ImageType)}",
-                    FileType = dto.ImageType,
-                    FileBase64 = dto.ImageBase64,
-                    FileSizeBytes = Convert.FromBase64String(dto.ImageBase64).Length,
-                    UploadedAt = DateTime.UtcNow,
-                    UploadedByEmployeeId = employeeId,
-                    OcrStatus = "COMPLETED",
-                    OcrProcessedAt = DateTime.UtcNow,
-                    OcrResult = System.Text.Json.JsonSerializer.Serialize(ocrResult),
-                    OcrConfidence = (decimal)ocrResult.OverallConfidence,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _context.Set<PrescriptionFile>().Add(prescriptionFile);
-                await _context.SaveChangesAsync();
-
-                result.PrescriptionFileId = prescriptionFile.Id;
-                _logger.LogInformation("Arquivo da prescrição salvo: {FileId}", prescriptionFile.Id);
-            }
-            catch (Exception fileEx)
-            {
-                _logger.LogWarning(fileEx, "Erro ao salvar arquivo da prescrição (não crítico)");
-                // Não falha o processo por erro ao salvar arquivo
-            }
+            // ===== ETAPA 3: Armazenar imagem no resultado =====
+            // O PrescriptionFile será criado quando gerar o orçamento/prescrição definitiva
+            // Isso evita o erro de FK (prescription_id = Guid.Empty)
+            result.ImageBase64 = dto.ImageBase64;
+            result.ImageType = dto.ImageType;
+            _logger.LogInformation("Imagem armazenada no resultado para processamento posterior");
 
             result.Success = true;
             result.Message = result.RequiresManualReview

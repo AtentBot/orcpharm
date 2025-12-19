@@ -1,0 +1,468 @@
+@{
+    ViewData["Title"] = "Dashboard de Pedidos";
+    Layout = "_Layout";
+    
+    var ordersToday = ViewBag.OrdersToday as List<Models.OnlineOrder> ?? new();
+    var pendingAction = ViewBag.PendingAction as List<Models.OnlineOrder> ?? new();
+    var readyOrders = ViewBag.ReadyOrders as List<Models.OnlineOrder> ?? new();
+}
+
+<style>
+    .metric-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        height: 100%;
+    }
+    .metric-card .icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    .metric-card .icon.today { background: #dbeafe; color: #2563eb; }
+    .metric-card .icon.week { background: #d1fae5; color: #059669; }
+    .metric-card .icon.month { background: #ede9fe; color: #7c3aed; }
+    .metric-card .icon.pending { background: #fef3c7; color: #d97706; }
+    
+    .metric-value {
+        font-size: 32px;
+        font-weight: bold;
+        color: #1a1a2e;
+        line-height: 1;
+    }
+    .metric-label {
+        color: #666;
+        font-size: 14px;
+        margin-top: 4px;
+    }
+    .metric-secondary {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #f3f4f6;
+        font-size: 14px;
+        color: #666;
+    }
+    .metric-secondary strong {
+        color: #10b981;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+    .section-card h6 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .section-card h6 .badge {
+        font-size: 12px;
+    }
+    
+    .pending-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        border-radius: 10px;
+        background: #f9fafb;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+    }
+    .pending-item:hover {
+        background: #f3f4f6;
+    }
+    .pending-item .order-info {
+        flex: 1;
+    }
+    .pending-item .order-number {
+        font-weight: 600;
+        color: #4361ee;
+    }
+    .pending-item .customer-name {
+        font-size: 13px;
+        color: #666;
+    }
+    .pending-item .order-time {
+        font-size: 12px;
+        color: #999;
+    }
+    .pending-item .order-total {
+        font-weight: 600;
+        color: #10b981;
+        margin-right: 12px;
+    }
+    
+    .ready-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        margin-bottom: 10px;
+    }
+    .ready-item .pulse {
+        width: 12px;
+        height: 12px;
+        background: #10b981;
+        border-radius: 50%;
+        margin-right: 12px;
+        animation: pulse 2s infinite;
+    }
+    @@keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .ready-item .info {
+        flex: 1;
+    }
+    .ready-item .order-number {
+        font-weight: bold;
+        color: #065f46;
+    }
+    .ready-item .customer-name {
+        font-size: 14px;
+        color: #047857;
+    }
+    .ready-item .waiting-time {
+        font-size: 12px;
+        color: #059669;
+    }
+    
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-confirmed { background: #dbeafe; color: #1e40af; }
+    .badge-preparing { background: #ede9fe; color: #5b21b6; }
+    
+    .quick-action-btn {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        border: none;
+        cursor: pointer;
+    }
+    .quick-action-btn.confirm { background: #3b82f6; color: white; }
+    .quick-action-btn.ready { background: #10b981; color: white; }
+    .quick-action-btn.deliver { background: #059669; color: white; }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+    }
+    .empty-state i {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1"><i class="bi bi-graph-up me-2"></i>Dashboard de Pedidos</h4>
+            <p class="text-muted mb-0">Visão geral dos pedidos online</p>
+        </div>
+        <a href="/OnlineOrders" class="btn btn-primary">
+            <i class="bi bi-list-ul me-1"></i>Ver Todos os Pedidos
+        </a>
+    </div>
+
+    <!-- Métricas -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="icon today"><i class="bi bi-calendar-day"></i></div>
+                <div class="metric-value">@ViewBag.TodayCount</div>
+                <div class="metric-label">Pedidos Hoje</div>
+                <div class="metric-secondary">
+                    Total: <strong>R$ @(((decimal)ViewBag.TodayTotal).ToString("N2"))</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="icon week"><i class="bi bi-calendar-week"></i></div>
+                <div class="metric-value">@ViewBag.WeekCount</div>
+                <div class="metric-label">Pedidos na Semana</div>
+                <div class="metric-secondary">
+                    Total: <strong>R$ @(((decimal)ViewBag.WeekTotal).ToString("N2"))</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="icon month"><i class="bi bi-calendar-month"></i></div>
+                <div class="metric-value">@ViewBag.MonthCount</div>
+                <div class="metric-label">Pedidos no Mês</div>
+                <div class="metric-secondary">
+                    Total: <strong>R$ @(((decimal)ViewBag.MonthTotal).ToString("N2"))</strong>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="icon pending"><i class="bi bi-hourglass-split"></i></div>
+                <div class="metric-value">@pendingAction.Count</div>
+                <div class="metric-label">Aguardando Ação</div>
+                <div class="metric-secondary">
+                    Prontos: <strong>@readyOrders.Count</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Pedidos Prontos para Retirada -->
+        <div class="col-lg-6">
+            <div class="section-card">
+                <h6>
+                    <span><i class="bi bi-check-circle-fill text-success me-2"></i>Prontos para Retirada</span>
+                    <span class="badge bg-success">@readyOrders.Count</span>
+                </h6>
+                
+                @if (readyOrders.Any())
+                {
+                    foreach (var order in readyOrders)
+                    {
+                        var waitingTime = order.ReadyAt.HasValue 
+                            ? (DateTime.UtcNow - order.ReadyAt.Value).TotalMinutes 
+                            : 0;
+                        
+                        <div class="ready-item">
+                            <div class="pulse"></div>
+                            <div class="info">
+                                <div class="order-number">#@order.OrderNumber</div>
+                                <div class="customer-name">@order.Customer?.FullName</div>
+                                <div class="waiting-time">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Aguardando há @((int)waitingTime) minutos
+                                </div>
+                            </div>
+                            <button class="quick-action-btn deliver" onclick="markDelivered('@order.Id')">
+                                <i class="bi bi-bag-check me-1"></i>Entregar
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>Nenhum pedido pronto no momento</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Pedidos Pendentes de Ação -->
+        <div class="col-lg-6">
+            <div class="section-card">
+                <h6>
+                    <span><i class="bi bi-clock-fill text-warning me-2"></i>Pendentes de Ação</span>
+                    <span class="badge bg-warning text-dark">@pendingAction.Count</span>
+                </h6>
+                
+                @if (pendingAction.Any())
+                {
+                    foreach (var order in pendingAction)
+                    {
+                        var statusClass = order.Status?.ToLower() ?? "pending";
+                        var statusLabel = order.Status switch
+                        {
+                            "PENDING" => "Pendente",
+                            "CONFIRMED" => "Confirmado",
+                            "PREPARING" => "Preparando",
+                            _ => order.Status
+                        };
+                        
+                        <div class="pending-item">
+                            <div class="order-info">
+                                <div>
+                                    <a href="/OnlineOrders/@order.Id" class="order-number text-decoration-none">
+                                        #@order.OrderNumber
+                                    </a>
+                                    <span class="status-badge badge-@statusClass ms-2">@statusLabel</span>
+                                </div>
+                                <div class="customer-name">@order.Customer?.FullName</div>
+                                <div class="order-time">
+                                    <i class="bi bi-clock me-1"></i>
+                                    @order.CreatedAt.ToString("dd/MM HH:mm")
+                                </div>
+                            </div>
+                            <span class="order-total">R$ @order.Total.ToString("N2")</span>
+                            
+                            @if (order.Status == "PENDING")
+                            {
+                                <button class="quick-action-btn confirm" onclick="confirmOrder('@order.Id')">
+                                    <i class="bi bi-check"></i> Confirmar
+                                </button>
+                            }
+                            else if (order.Status == "CONFIRMED" || order.Status == "PREPARING")
+                            {
+                                <button class="quick-action-btn ready" onclick="markReady('@order.Id')">
+                                    <i class="bi bi-check-circle"></i> Pronto
+                                </button>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-check-circle"></i>
+                        <p>Tudo em dia! Nenhum pedido pendente.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Pedidos de Hoje -->
+    <div class="section-card">
+        <h6>
+            <span><i class="bi bi-calendar-day me-2"></i>Pedidos de Hoje</span>
+            <span class="badge bg-primary">@ordersToday.Count</span>
+        </h6>
+        
+        @if (ordersToday.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Horário</th>
+                            <th>Status</th>
+                            <th class="text-end">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in ordersToday.OrderByDescending(o => o.CreatedAt))
+                        {
+                            var statusClass = order.Status?.ToLower() ?? "pending";
+                            var statusLabel = order.Status switch
+                            {
+                                "PENDING" => "Pendente",
+                                "CONFIRMED" => "Confirmado",
+                                "PREPARING" => "Preparando",
+                                "READY" => "Pronto",
+                                "DELIVERED" => "Entregue",
+                                "CANCELLED" => "Cancelado",
+                                _ => order.Status
+                            };
+                            
+                            <tr>
+                                <td>
+                                    <a href="/OnlineOrders/@order.Id" class="fw-bold text-decoration-none">
+                                        #@order.OrderNumber
+                                    </a>
+                                </td>
+                                <td>@order.Customer?.FullName</td>
+                                <td>@order.CreatedAt.ToString("HH:mm")</td>
+                                <td><span class="status-badge badge-@statusClass">@statusLabel</span></td>
+                                <td class="text-end fw-bold text-success">R$ @order.Total.ToString("N2")</td>
+                                <td>
+                                    <a href="/OnlineOrders/@order.Id" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>Nenhum pedido hoje ainda</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    async function confirmOrder(orderId) {
+        if (!confirm('Confirmar este pedido?')) return;
+        
+        try {
+            const response = await fetch(`/api/online-orders/${orderId}/confirm`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Erro ao confirmar pedido');
+        }
+    }
+    
+    async function markReady(orderId) {
+        if (!confirm('Marcar como pronto? O cliente será notificado.')) return;
+        
+        try {
+            const response = await fetch(`/api/online-orders/${orderId}/ready`, {
+                method: 'PUT'
+            });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Erro ao atualizar pedido');
+        }
+    }
+    
+    async function markDelivered(orderId) {
+        if (!confirm('Confirmar entrega?')) return;
+        
+        try {
+            const response = await fetch(`/api/online-orders/${orderId}/deliver`, {
+                method: 'PUT'
+            });
+            const data = await response.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            alert('Erro ao confirmar entrega');
+        }
+    }
+    
+    // Auto-refresh a cada 30 segundos
+    setTimeout(() => location.reload(), 30000);
+</script>
+}

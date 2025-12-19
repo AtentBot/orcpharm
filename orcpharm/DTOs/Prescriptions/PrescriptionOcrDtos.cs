@@ -146,6 +146,17 @@ public class PrescriptionQuoteDto
     public DateTime? RejectedAt { get; set; }
     public string? RejectionReason { get; set; }
 
+    // ========== NOVO: Vínculo com Ordem de Manipulação ==========
+    /// <summary>
+    /// ID da Ordem de Manipulação criada após aprovação do orçamento
+    /// </summary>
+    public Guid? ManipulationOrderId { get; set; }
+
+    /// <summary>
+    /// Código da Ordem de Manipulação (ex: OM202512190001)
+    /// </summary>
+    public string? ManipulationOrderCode { get; set; }
+
     // Farmácia
     public string PharmacyName { get; set; } = string.Empty;
     public string PharmacyPhone { get; set; } = string.Empty;
@@ -199,6 +210,10 @@ public class QuickProcessResultDto
     public List<string> Warnings { get; set; } = new();
     public List<string> UnmatchedIngredients { get; set; } = new();
     public bool RequiresManualReview { get; set; }
+
+    // Armazenar imagem para processamento posterior
+    public string? ImageBase64 { get; set; }
+    public string? ImageType { get; set; }
 }
 
 // ===== APROVAÇÃO =====

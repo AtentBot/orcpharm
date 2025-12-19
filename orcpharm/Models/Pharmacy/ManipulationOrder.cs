@@ -28,6 +28,11 @@ public class ManipulationOrder
     public Guid? FormulaId { get; set; }
     public Formula? Formula { get; set; }
 
+    // ========== Vínculo com Orçamento ==========
+    [Column("PrescriptionQuoteId")]
+    public Guid? PrescriptionQuoteId { get; set; }
+    // Navegação removida para evitar PrescriptionQuoteId1
+
     // Prescrição
     [MaxLength(50)]
     public string? PrescriptionNumber { get; set; }
@@ -55,10 +60,16 @@ public class ManipulationOrder
     [MaxLength(2000)]
     public string? SpecialInstructions { get; set; }
 
+    // ========== NOVO: Prioridade ==========
+    [Column("Priority")]
+    [MaxLength(20)]
+    public string Priority { get; set; } = "NORMAL";
+    // BAIXA, NORMAL, ALTA, URGENTE
+
     // Status
     [Required, MaxLength(20)]
     public string Status { get; set; } = "PENDENTE";
-    // PENDENTE, EM_PRODUCAO, PESAGEM, MISTURA, ENVASE, ROTULAGEM, CONFERENCIA, FINALIZADO, CANCELADO
+    // PENDENTE, AGUARDANDO_PRODUCAO, EM_PRODUCAO, PESAGEM, MISTURA, ENVASE, ROTULAGEM, CONFERENCIA, FINALIZADO, CANCELADO
 
     // Datas importantes
     public DateTime OrderDate { get; set; }
@@ -99,4 +110,5 @@ public class ManipulationOrder
     // Navegação para Workflow de Manipulação
     public ICollection<ManipulationStep>? Steps { get; set; }
     public ICollection<ManipulationPhoto>? Photos { get; set; }
+    public ICollection<ManipulationOrderComponent>? Components { get; set; }
 }

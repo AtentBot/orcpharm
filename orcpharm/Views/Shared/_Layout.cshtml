@@ -406,6 +406,48 @@
                         </a>
                     </li>
 
+                    <!-- Pedidos Online -->
+                    <li class="nav-item">
+                        <a class="nav-link has-submenu @(currentController == "OnlineOrders" || currentController == "QRCodes" ? "active open" : "")"
+                           href="#"
+                           onclick="toggleSubmenu(event, 'pedidosOnlineSubmenu')">
+                            <i class="bi bi-bag-check"></i>
+                            Pedidos Online
+                        </a>
+                        <ul class="nav flex-column nav-submenu @(currentController == "OnlineOrders" || currentController == "QRCodes" ? "show" : "")" id="pedidosOnlineSubmenu">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/OnlineOrders/Dashboard">
+                                    <i class="bi bi-graph-up"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/OnlineOrders">
+                                    <i class="bi bi-list-ul"></i>
+                                    Todos os Pedidos
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/OnlineOrders?status=PENDING">
+                                    <i class="bi bi-clock"></i>
+                                    Pendentes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/OnlineOrders?status=READY">
+                                    <i class="bi bi-check-circle"></i>
+                                    Prontos
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/QRCodes">
+                                    <i class="bi bi-qr-code"></i>
+                                    QR Codes
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     <!-- Fornecedores -->
                     <li class="nav-item">
                         <a class="nav-link @(currentController == "SuppliersView" ? "active" : "")"
