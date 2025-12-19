@@ -347,11 +347,21 @@ public class CreateEmployeeDto
 /// </summary>
 public class UpdateEmployeeDto
 {
+    // Mudança de cargo
+    public Guid? JobPositionId { get; set; }
+
+    // Dados Pessoais
     public string? FullName { get; set; }
     public string? SocialName { get; set; }
+    public string? Gender { get; set; }
+    public string? MaritalStatus { get; set; }
+
+    // Contatos
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? WhatsApp { get; set; }
+
+    // Endereço
     public string? Street { get; set; }
     public string? Number { get; set; }
     public string? Complement { get; set; }
@@ -359,19 +369,33 @@ public class UpdateEmployeeDto
     public string? City { get; set; }
     public string? State { get; set; }
     public string? PostalCode { get; set; }
+
+    // Dados Bancários
     public string? BankCode { get; set; }
     public string? BankName { get; set; }
     public string? BankBranch { get; set; }
     public string? BankAccount { get; set; }
     public string? BankAccountType { get; set; }
     public string? BankAccountDigit { get; set; }
+
+    // Dados Trabalhistas
     public decimal? Salary { get; set; }
     public string? Department { get; set; }
     public string? Status { get; set; }
+    public string? StatusNotes { get; set; }
+    public DateOnly? TerminationDate { get; set; }
+
+    // Contato de Emergência
     public string? EmergencyContactName { get; set; }
     public string? EmergencyContactRelationship { get; set; }
     public string? EmergencyContactPhone { get; set; }
+
+    // Outros
     public int? DependentsCount { get; set; }
+
+    // Para mudança de cargo (histórico)
+    public string? ChangeReason { get; set; }
+    public string? Notes { get; set; }
 }
 
 /// <summary>
@@ -516,10 +540,29 @@ public record TerminateEmployeeRequest
     public bool RevokeAccessImmediately { get; init; } = true;
 }
 
+// ==================== DTOs AUXILIARES PARA CONTROLLER ====================
+
+/// <summary>
+/// DTO para alteração de senha de funcionário
+/// Use este DTO ou DTOs.Auth.ChangePasswordDto dependendo do contexto
+/// </summary>
+public class ChangeEmployeePasswordDto
+{
+    public string? CurrentPassword { get; set; }
+    public string NewPassword { get; set; } = null!;
+    public bool IsAdminReset { get; set; }
+}
+
+/// <summary>
+/// DTO para desativar funcionário
+/// </summary>
+public class DeactivateEmployeeDto
+{
+    public string? Reason { get; set; }
+    public DateOnly? TerminationDate { get; set; }
+}
+
 // =======================================================================
-// NOTA IMPORTANTE: ChangePasswordDto
-// =======================================================================
-// O DTO ChangePasswordDto está em DTOs/Auth/AuthDtos.cs
-// Não duplicá-lo aqui para evitar conflito no Swagger
-// O controller usa: using DTOs.Auth; para acessá-lo
+// NOTA IMPORTANTE: 
+// Se DTOs.Auth.ChangePasswordDto não tiver IsAdminReset, use ChangeEmployeePasswordDto
 // =======================================================================

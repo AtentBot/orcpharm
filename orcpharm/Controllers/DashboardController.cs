@@ -91,7 +91,20 @@ public class DashboardController : Controller
                     && mo.ExpectedDate.Date < today)
                 .CountAsync();
 
-            // ========== NOVAS ESTATÍSTICAS DE PRESCRIÇÕES ==========
+            // ========== ESTATÍSTICAS DE FUNCIONÁRIOS ==========
+            dashboardData.TotalEmployees = await _db.Employees
+                .Where(e => e.EstablishmentId == establishmentId)
+                .CountAsync();
+
+            dashboardData.TotalEmployeesActive = await _db.Employees
+                .Where(e => e.EstablishmentId == establishmentId)
+                .CountAsync();
+
+            dashboardData.TotalEmployeesInactive = await _db.Employees
+                .Where(e => e.EstablishmentId == establishmentId)
+                .CountAsync();
+
+            // ========== ESTATÍSTICAS DE PRESCRIÇÕES ==========
             dashboardData.PrescriptionsPendentes = await _db.Prescriptions
                 .Where(p => p.EstablishmentId == establishmentId && p.Status == "PENDENTE")
                 .CountAsync();
@@ -162,31 +175,31 @@ public class DashboardController : Controller
     // ==================== MÉTODOS AUXILIARES ====================
     private bool CanViewReports(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "PHARMACIST_RT", "SUPERVISOR" };
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
     private bool CanManageEmployees(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER" };
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
     private bool CanManageInventory(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER" };
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
     private bool CanManageFormulas(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "PHARMACIST_RT", "PHARMACIST" };
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 
     private bool CanManagePurchases(Employee employee)
     {
-        var allowedCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "PURCHASER" };
+        var allowedCodes = new[] { "OWNER", "GENERAL_MANAGER", "PHARMACIST_RT", "SUPERVISOR", "PURCHASER" };
         return allowedCodes.Contains(employee.JobPosition?.Code ?? "");
     }
 }

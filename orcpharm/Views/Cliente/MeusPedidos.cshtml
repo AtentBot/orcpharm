@@ -1,0 +1,399 @@
+@using Models
+@{
+    ViewData["Title"] = "Meus Pedidos";
+    ViewData["ActiveNav"] = "pedidos";
+    Layout = "_LayoutCliente";
+    
+    var orders = ViewBag.Orders as List<OnlineOrder> ?? new List<OnlineOrder>();
+    var selectedStatus = ViewBag.SelectedStatus as string;
+    var selectedFarmacia = ViewBag.SelectedFarmacia as Guid?;
+    var establishments = ViewBag.Establishments as IEnumerable<dynamic> ?? new List<dynamic>();
+}
+
+<style>
+    .status-tabs {
+        display: flex;
+        gap: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+    }
+    .status-tab {
+        flex: 1;
+        padding: 10px 8px;
+        text-align: center;
+        background: white;
+        color: #495057;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 13px;
+        border-right: 1px solid #dee2e6;
+        transition: all 0.2s;
+    }
+    .status-tab:last-child {
+        border-right: none;
+    }
+    .status-tab:hover {
+        background: #f8f9fa;
+        color: #212529;
+    }
+    .status-tab.active {
+        background: #4361ee;
+        color: white;
+    }
+    .order-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .order-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .order-number {
+        font-weight: 600;
+        font-size: 16px;
+        color: #212529;
+    }
+    .order-date {
+        font-size: 13px;
+        color: #6c757d;
+    }
+    .order-establishment {
+        font-size: 13px;
+        color: #6c757d;
+    }
+    .order-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .order-status.pending { background: #fff3cd; color: #856404; }
+    .order-status.confirmed { background: #cce5ff; color: #004085; }
+    .order-status.preparing { background: #d4edda; color: #155724; }
+    .order-status.ready { background: #d1ecf1; color: #0c5460; }
+    .order-status.delivered { background: #e2e3e5; color: #383d41; }
+    .order-status.cancelled { background: #f8d7da; color: #721c24; }
+    .order-total {
+        font-weight: 700;
+        font-size: 18px;
+        color: #198754;
+    }
+    .filter-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        background: #e9ecef;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+    .filter-badge a {
+        color: #6c757d;
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a href="/Cliente/Inicio" class="btn btn-link text-dark p-0 me-3">
+            <i class="bi bi-arrow-left fs-4"></i>
+        </a>
+        <h5 class="mb-0 flex-grow-1">Meus Pedidos</h5>
+    </div>
+
+    <!-- Filtro por Farmácia -->
+    @if (establishments.Any())
+    {
+        <div class="mb-3">
+            <select class="form-select form-select-sm" id="farmaciaFilter" onchange="filterByFarmacia()">
+                <option value="">Todas as farmácias</option>
+                @foreach (var e in establishments)
+                {
+                    var isSelected = selectedFarmacia?.ToString() == e.EstablishmentId?.ToString();
+                    if (isSelected)
+                    {
+                        <option value="@e.EstablishmentId" selected>@e.NomeFantasia</option>
+                    }
+                    else
+                    {
+                        <option value="@e.EstablishmentId">@e.NomeFantasia</option>
+                    }
+                }
+            </select>
+        </div>
+    }
+
+    <!-- Filtros de Status -->
+    <div class="status-tabs mb-4">
+        <a href="/Cliente/MeusPedidos@(selectedFarmacia.HasValue ? $"?farmacia={selectedFarmacia}" : "")" 
+           class="status-tab @(string.IsNullOrEmpty(selectedStatus) ? "active" : "")">
+            Todos
+        </a>
+        <a href="/Cliente/MeusPedidos?status=pendentes@(selectedFarmacia.HasValue ? $"&farmacia={selectedFarmacia}" : "")" 
+           class="status-tab @(selectedStatus == "pendentes" ? "active" : "")">
+            Pendentes
+        </a>
+        <a href="/Cliente/MeusPedidos?status=producao@(selectedFarmacia.HasValue ? $"&farmacia={selectedFarmacia}" : "")" 
+           class="status-tab @(selectedStatus == "producao" ? "active" : "")">
+            Produção
+        </a>
+        <a href="/Cliente/MeusPedidos?status=prontos@(selectedFarmacia.HasValue ? $"&farmacia={selectedFarmacia}" : "")" 
+           class="status-tab @(selectedStatus == "prontos" ? "active" : "")">
+            Prontos
+        </a>
+    </div>
+
+    <!-- Filtros Ativos -->
+    @if (selectedFarmacia.HasValue || !string.IsNullOrEmpty(selectedStatus))
+    {
+        <div class="mb-3 d-flex flex-wrap gap-2">
+            @if (selectedFarmacia.HasValue)
+            {
+                var farmaciaName = establishments.FirstOrDefault(e => e.EstablishmentId?.ToString() == selectedFarmacia?.ToString())?.NomeFantasia ?? "Farmácia";
+                <span class="filter-badge">
+                    <i class="bi bi-shop"></i>@farmaciaName
+                    <a href="/Cliente/MeusPedidos@(!string.IsNullOrEmpty(selectedStatus) ? $"?status={selectedStatus}" : "")"><i class="bi bi-x"></i></a>
+                </span>
+            }
+        </div>
+    }
+
+    <!-- Lista de Pedidos -->
+    @if (orders.Any())
+    {
+        @foreach (var order in orders)
+        {
+            var statusClass = order.Status switch
+            {
+                "PENDING" => "pending",
+                "CONFIRMED" => "confirmed",
+                "PREPARING" => "preparing",
+                "READY" => "ready",
+                "DELIVERED" => "delivered",
+                "CANCELLED" => "cancelled",
+                _ => "pending"
+            };
+            
+            var statusText = order.Status switch
+            {
+                "PENDING" => "Aguardando",
+                "CONFIRMED" => "Confirmado",
+                "PREPARING" => "Em Produção",
+                "READY" => "Pronto",
+                "DELIVERED" => "Entregue",
+                "CANCELLED" => "Cancelado",
+                _ => order.Status
+            };
+            
+            <div class="order-card" onclick="viewOrder('@order.Id')">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="order-number">#@order.OrderNumber</div>
+                        <div class="order-date">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    <span class="order-status @statusClass">@statusText</span>
+                </div>
+                
+                <div class="order-establishment mb-2">
+                    <i class="bi bi-shop me-1"></i>@order.Establishment?.NomeFantasia
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">
+                        @order.Items?.Count item(s)
+                    </span>
+                    <span class="order-total">R$ @order.Total.ToString("N2")</span>
+                </div>
+                
+                @if (order.Status == "READY")
+                {
+                    <div class="alert alert-success mt-3 mb-0 py-2">
+                        <i class="bi bi-check-circle me-2"></i>Pronto para retirada!
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Sem Pedidos -->
+        <div class="text-center py-5">
+            <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                <i class="bi bi-inbox fs-1 text-secondary"></i>
+            </div>
+            <h5>Nenhum pedido encontrado</h5>
+            <p class="text-muted mb-4">
+                @if (!string.IsNullOrEmpty(selectedStatus) || selectedFarmacia.HasValue)
+                {
+                    <span>Não há pedidos com estes filtros</span>
+                    <br>
+                    <a href="/Cliente/MeusPedidos" class="btn btn-link btn-sm">Limpar filtros</a>
+                }
+                else
+                {
+                    <span>Você ainda não fez nenhum pedido</span>
+                }
+            </p>
+            <div class="d-flex flex-column gap-2 align-items-center">
+                <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/Catalogo" class="btn btn-primary">
+                    <i class="bi bi-grid me-2"></i>Ver Catálogo
+                </a>
+                <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/EnviarReceita" class="btn btn-outline-primary">
+                    <i class="bi bi-camera me-2"></i>Enviar Receita
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal Detalhe do Pedido -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetails">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function filterByFarmacia() {
+        const farmaciaId = document.getElementById('farmaciaFilter').value;
+        const status = '@selectedStatus';
+        
+        let url = '/Cliente/MeusPedidos';
+        const params = [];
+        
+        if (status) params.push('status=' + status);
+        if (farmaciaId) params.push('farmacia=' + farmaciaId);
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+        
+        window.location.href = url;
+    }
+    
+    async function viewOrder(orderId) {
+        const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+        modal.show();
+        
+        try {
+            const response = await fetch('/api/cliente/orders/' + orderId);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderOrderDetails(data.order);
+            } else {
+                document.getElementById('orderDetails').innerHTML = 
+                    '<div class="alert alert-danger">Erro ao carregar pedido</div>';
+            }
+        } catch (error) {
+            document.getElementById('orderDetails').innerHTML = 
+                '<div class="alert alert-danger">Erro ao carregar pedido</div>';
+        }
+    }
+    
+    function renderOrderDetails(order) {
+        const statusClass = {
+            'PENDING': 'warning',
+            'CONFIRMED': 'info',
+            'PREPARING': 'primary',
+            'READY': 'success',
+            'DELIVERED': 'secondary',
+            'CANCELLED': 'danger'
+        }[order.status] || 'secondary';
+        
+        const statusText = {
+            'PENDING': 'Aguardando Confirmação',
+            'CONFIRMED': 'Confirmado',
+            'PREPARING': 'Em Produção',
+            'READY': 'Pronto para Retirada',
+            'DELIVERED': 'Entregue',
+            'CANCELLED': 'Cancelado'
+        }[order.status] || order.status;
+        
+        let html = `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">#${order.orderNumber}</h6>
+                    <span class="badge bg-${statusClass}">${statusText}</span>
+                </div>
+                <small class="text-muted d-block">
+                    <i class="bi bi-shop me-1"></i>${order.establishmentName}
+                </small>
+                <small class="text-muted">
+                    ${new Date(order.createdAt).toLocaleString('pt-BR')}
+                </small>
+            </div>
+            
+            <hr>
+            
+            <h6 class="mb-3">Itens do Pedido</h6>
+        `;
+        
+        if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+                html += `
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <span class="badge bg-secondary me-2">${item.quantity}x</span>
+                            ${item.productName}
+                        </div>
+                        <span>R$ ${item.totalPrice.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `
+            <hr>
+            
+            <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal</span>
+                <span>R$ ${order.subtotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+        `;
+        
+        if (order.discount > 0) {
+            html += `
+                <div class="d-flex justify-content-between mb-2 text-success">
+                    <span>Desconto</span>
+                    <span>- R$ ${order.discount.toFixed(2).replace('.', ',')}</span>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="d-flex justify-content-between fw-bold fs-5">
+                <span>Total</span>
+                <span class="text-success">R$ ${order.total.toFixed(2).replace('.', ',')}</span>
+            </div>
+        `;
+        
+        if (order.customerNotes) {
+            html += `
+                <hr>
+                <h6>Observações</h6>
+                <p class="text-muted mb-0">${order.customerNotes}</p>
+            `;
+        }
+        
+        document.getElementById('orderDetails').innerHTML = html;
+    }
+</script>
+}

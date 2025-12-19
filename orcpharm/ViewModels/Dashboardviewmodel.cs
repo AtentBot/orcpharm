@@ -20,6 +20,11 @@ public class DashboardViewModel
     public int PendingPurchases { get; set; }
     public int TotalAtrasados { get; set; }
     
+    // ========== FUNCIONÁRIOS ==========
+    public int TotalEmployees { get; set; }
+    public int TotalEmployeesActive { get; set; }
+    public int TotalEmployeesInactive { get; set; }
+    
     // ========== PRESCRIÇÕES ==========
     public int PrescriptionsPendentes { get; set; }
     public int PrescriptionsValidadas { get; set; }

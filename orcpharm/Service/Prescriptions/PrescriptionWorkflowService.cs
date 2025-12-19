@@ -5,6 +5,7 @@ using Models.Pharmacy;
 using Models.Employees;
 using Data;
 using DTOs.Prescriptions;
+using DTOs;
 
 namespace Service.Prescriptions;
 
@@ -16,28 +17,228 @@ public class PrescriptionWorkflowService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<PrescriptionWorkflowService> _logger;
+    private readonly OpenAIPrescriptionParserService _ocrService;
+    private readonly IngredientMatcherService _matcherService;
 
-    public PrescriptionWorkflowService(AppDbContext context, ILogger<PrescriptionWorkflowService> logger)
+    public PrescriptionWorkflowService(
+        AppDbContext context,
+        ILogger<PrescriptionWorkflowService> logger,
+        OpenAIPrescriptionParserService ocrService,
+        IngredientMatcherService matcherService)
     {
         _context = context;
         _logger = logger;
+        _ocrService = ocrService;
+        _matcherService = matcherService;
     }
 
     /// <summary>
-    /// Processamento rápido de prescrição: Upload → OCR → Match → Orçamento
-    /// Este método é chamado pelo endpoint quick-process
+    /// Processamento rápido de prescrição: Upload → OCR → Match → Retorna para revisão
     /// </summary>
     public async Task<QuickProcessResultDto> ProcessPrescriptionAsync(
         QuickProcessPrescriptionDto dto,
         Guid establishmentId,
         Guid employeeId)
     {
-        // TODO: Implementar lógica de processamento rápido
-        // Por enquanto retorna erro indicando que não está implementado
-        return new QuickProcessResultDto
+        var result = new QuickProcessResultDto
         {
             Success = false,
-            Message = "Processamento rápido não implementado. Use a tela de processamento manual."
+            Warnings = new List<string>(),
+            UnmatchedIngredients = new List<string>()
+        };
+
+        try
+        {
+            _logger.LogInformation("Iniciando processamento rápido de receita para establishment {EstablishmentId}", establishmentId);
+
+            // Validar entrada
+            if (string.IsNullOrEmpty(dto.ImageBase64))
+            {
+                result.Message = "Imagem não fornecida";
+                return result;
+            }
+
+            // ===== ETAPA 1: OCR com OpenAI Vision =====
+            _logger.LogInformation("Etapa 1: Processando OCR...");
+            OcrPrescriptionResultDto ocrResult;
+
+            try
+            {
+                // Chama o serviço de OCR existente (OpenAIPrescriptionParserService)
+                ocrResult = await _ocrService.ParsePrescriptionAsync(dto.ImageBase64, dto.ImageType);
+                result.OcrResult = ocrResult;
+
+                _logger.LogInformation("OCR concluído. Itens extraídos: {Count}", ocrResult?.Items?.Count ?? 0);
+
+                if (ocrResult == null)
+                {
+                    result.Message = "Não foi possível processar a imagem.";
+                    result.RequiresManualReview = true;
+                    result.Success = true;
+                    return result;
+                }
+
+                if (ocrResult.Items == null || ocrResult.Items.Count == 0)
+                {
+                    result.Message = "Não foi possível extrair ingredientes da receita. Verifique a qualidade da imagem.";
+                    result.RequiresManualReview = true;
+                    result.Success = true; // Sucesso parcial - permite revisão manual
+                    return result;
+                }
+            }
+            catch (Exception ocrEx)
+            {
+                _logger.LogError(ocrEx, "Erro no OCR");
+                result.Message = $"Erro ao processar imagem: {ocrEx.Message}";
+                return result;
+            }
+
+            // ===== ETAPA 2: Matching de Ingredientes =====
+            _logger.LogInformation("Etapa 2: Matching de ingredientes ({Count} itens)...", ocrResult.Items.Count);
+
+            try
+            {
+                // Converter OcrIngredientDto (do OCR) para OcrItemDto (do matcher)
+                // OcrIngredientDto vem do OpenAIPrescriptionParserService (namespace DTOs.Prescriptions)
+                // OcrItemDto é esperado pelo IngredientMatcherService (namespace DTOs)
+                var ocrItems = ocrResult.Items.Select(i => new OcrItemDto
+                {
+                    Name = i.Name,           // Usa o setter que define Component
+                    Quantity = i.Quantity,
+                    Unit = i.Unit,
+                    RawText = i.RawText,
+                    Confidence = (decimal)i.Confidence
+                }).ToList();
+
+                // Chama o serviço de matching existente (IngredientMatcherService)
+                // Retorna IngredientMatchResponseDto com List<IngredientMatchDto>
+                var matchResponse = await _matcherService.FindMatchesAsync(ocrItems);
+
+                // Converter IngredientMatchDto → IngredientMatchResultDto
+                // IngredientMatchDto (namespace DTOs) → IngredientMatchResultDto (namespace DTOs.Prescriptions)
+                if (matchResponse?.Matches != null)
+                {
+                    result.IngredientMatches = matchResponse.Matches.Select(m => new IngredientMatchResultDto
+                    {
+                        OcrText = m.OcrText,
+                        OcrQuantity = m.Quantity ?? "",
+                        OcrUnit = m.Unit ?? "",
+                        // Converter RawMaterialSuggestionDto → OcrRawMaterialMatchDto
+                        Suggestions = m.Suggestions?.Select(s => new OcrRawMaterialMatchDto
+                        {
+                            RawMaterialId = s.RawMaterialId,
+                            Name = s.Name,
+                            DcbCode = s.DciName,
+                            Confidence = (double)s.Confidence,
+                            InStock = s.InStock,
+                            AvailableQuantity = s.AvailableQuantity,
+                            Unit = s.Unit ?? ""
+                        }).ToList() ?? new List<OcrRawMaterialMatchDto>(),
+                        // BestMatch = primeira sugestão com maior confiança
+                        BestMatch = m.Suggestions?.OrderByDescending(s => s.Confidence)
+                            .Select(s => new OcrRawMaterialMatchDto
+                            {
+                                RawMaterialId = s.RawMaterialId,
+                                Name = s.Name,
+                                DcbCode = s.DciName,
+                                Confidence = (double)s.Confidence,
+                                InStock = s.InStock,
+                                AvailableQuantity = s.AvailableQuantity,
+                                Unit = s.Unit ?? ""
+                            }).FirstOrDefault()
+                    }).ToList();
+
+                    // Identificar ingredientes não encontrados
+                    foreach (var match in result.IngredientMatches)
+                    {
+                        if (match.BestMatch == null)
+                        {
+                            result.UnmatchedIngredients.Add(match.OcrText ?? "Desconhecido");
+                            result.Warnings.Add($"Ingrediente '{match.OcrText}' não encontrado no estoque");
+                        }
+                        else if (match.BestMatch.Confidence < 0.7) // 70%
+                        {
+                            result.Warnings.Add($"Ingrediente '{match.OcrText}' com baixa confiança ({match.BestMatch.Confidence * 100:F0}%)");
+                        }
+                    }
+
+                    if (result.UnmatchedIngredients.Count > 0)
+                    {
+                        result.RequiresManualReview = true;
+                    }
+
+                    _logger.LogInformation("Matching concluído. Encontrados: {Matched}, Não encontrados: {Unmatched}",
+                        result.IngredientMatches.Count - result.UnmatchedIngredients.Count,
+                        result.UnmatchedIngredients.Count);
+                }
+            }
+            catch (Exception matchEx)
+            {
+                _logger.LogError(matchEx, "Erro no matching de ingredientes");
+                result.Warnings.Add($"Erro ao buscar ingredientes no estoque: {matchEx.Message}");
+                result.RequiresManualReview = true;
+                // Não falha - permite continuar com revisão manual
+            }
+
+            // ===== ETAPA 3: Salvar arquivo da prescrição =====
+            try
+            {
+                var prescriptionFile = new PrescriptionFile
+                {
+                    Id = Guid.NewGuid(),
+                    FileName = $"receita_{DateTime.UtcNow:yyyyMMdd_HHmmss}.{GetExtensionFromMimeType(dto.ImageType)}",
+                    FileType = dto.ImageType,
+                    FileBase64 = dto.ImageBase64,
+                    FileSizeBytes = Convert.FromBase64String(dto.ImageBase64).Length,
+                    UploadedAt = DateTime.UtcNow,
+                    UploadedByEmployeeId = employeeId,
+                    OcrStatus = "COMPLETED",
+                    OcrProcessedAt = DateTime.UtcNow,
+                    OcrResult = System.Text.Json.JsonSerializer.Serialize(ocrResult),
+                    OcrConfidence = (decimal)ocrResult.OverallConfidence,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Set<PrescriptionFile>().Add(prescriptionFile);
+                await _context.SaveChangesAsync();
+
+                result.PrescriptionFileId = prescriptionFile.Id;
+                _logger.LogInformation("Arquivo da prescrição salvo: {FileId}", prescriptionFile.Id);
+            }
+            catch (Exception fileEx)
+            {
+                _logger.LogWarning(fileEx, "Erro ao salvar arquivo da prescrição (não crítico)");
+                // Não falha o processo por erro ao salvar arquivo
+            }
+
+            result.Success = true;
+            result.Message = result.RequiresManualReview
+                ? "Receita processada. Alguns itens requerem revisão manual."
+                : "Receita processada com sucesso!";
+
+            _logger.LogInformation("Processamento concluído. Success: {Success}, RequiresManualReview: {ManualReview}",
+                result.Success, result.RequiresManualReview);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro no processamento rápido de receita");
+            result.Message = $"Erro ao processar receita: {ex.Message}";
+            return result;
+        }
+    }
+
+    private string GetExtensionFromMimeType(string mimeType)
+    {
+        return mimeType?.ToLower() switch
+        {
+            "image/jpeg" => "jpg",
+            "image/jpg" => "jpg",
+            "image/png" => "png",
+            "application/pdf" => "pdf",
+            _ => "jpg"
         };
     }
 
@@ -220,7 +421,7 @@ public class PrescriptionWorkflowService
         };
 
         _context.ManipulationOrders.Add(order);
-        // NÃO fazer SaveChangesAsync aqui - será feito no método principal após toda a transação
+        // NÃO fazer SaveChangesAsync aqui - será feito no método principal
 
         // Criar componentes da ordem a partir dos componentes do orçamento
         if (!string.IsNullOrEmpty(quote.ComponentsJson))

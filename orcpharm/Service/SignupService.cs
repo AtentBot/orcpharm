@@ -71,7 +71,7 @@ public class SignupService
                     .AnyAsync(e => e.WhatsApp == whatsappLimpo);
 
                 if (whatsappExists)
-                    return (false, "WhatsApp já cadastrado", null);
+                    return (false, "WhatsApp já cadastrado", null); 
             }
 
             // Validar plano (opcional - usa plano gratuito/trial se não informado)

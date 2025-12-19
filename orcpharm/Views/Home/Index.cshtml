@@ -36,6 +36,12 @@
         width: 100%;
     }
     
+    .access-cards .access-card:last-child {
+        grid-column: 1 / -1;
+        max-width: 420px;
+        justify-self: center;
+    }
+    
     .access-card {
         background: white;
         border-radius: 15px;
@@ -58,6 +64,7 @@
     .access-card.signup { border-top: 4px solid #6f42c1; }
     .access-card.admin { border-top: 4px solid #fd7e14; }
     .access-card.api { border-top: 4px solid #17a2b8; }
+    .access-card.portal { border-top: 4px solid #e91e63; }
     
     .card-icon {
         width: 80px;
@@ -74,6 +81,7 @@
     .card-icon.signup { background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%); color: white; }
     .card-icon.admin { background: linear-gradient(135deg, #fd7e14 0%, #e67e22 100%); color: white; }
     .card-icon.api { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; }
+    .card-icon.portal { background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%); color: white; }
     
     .card-title {
         font-size: 1.5rem;
@@ -111,6 +119,7 @@
     .access-card.signup .card-button { background: #6f42c1; }
     .access-card.admin .card-button { background: #fd7e14; }
     .access-card.api .card-button { background: #17a2b8; }
+    .access-card.portal .card-button { background: #e91e63; }
     
     .card-badge {
         font-size: 0.7rem;
@@ -125,12 +134,16 @@
     .badge-new { background: #f3e5f5; color: #7b1fa2; }
     .badge-owner { background: #fff3e0; color: #e65100; }
     .badge-dev { background: #e0f7fa; color: #00838f; }
+    .badge-consumer { background: #fce4ec; color: #c2185b; }
 
     @@media (max-width: 768px) {
         .welcome-title { font-size: 2rem; }
         .access-cards {
             grid-template-columns: 1fr;
             gap: 1rem;
+        }
+        .access-cards .access-card:last-child {
+            max-width: 100%;
         }
     }
 </style>
@@ -199,6 +212,21 @@
             </p>
             <a href="/swagger" class="card-button">
                 <i class="bi bi-journal-code me-1"></i> Ver Documentação
+            </a>
+        </div>
+        
+        <!-- Card Portal - Consumidor Final -->
+        <div class="access-card portal">
+            <span class="card-badge badge-consumer">Consumidor</span>
+            <div class="card-icon portal">
+                <i class="bi bi-phone"></i>
+            </div>
+            <h2 class="card-title">Portal do Cliente</h2>
+            <p class="card-description">
+                Área do consumidor final: catálogo, pedidos online e acompanhamento
+            </p>
+            <a href="/Cliente/Login" class="card-button">
+                <i class="bi bi-bag-check me-1"></i> Acessar Portal
             </a>
         </div>
     </div>

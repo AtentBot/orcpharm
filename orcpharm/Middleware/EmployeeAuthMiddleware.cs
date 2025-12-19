@@ -74,6 +74,9 @@ public class EmployeeAuthMiddleware
         {
             "/admin",           // AdminAuthMiddleware cuida
             "/api/admin",       // AdminAuthMiddleware cuida
+            "/cliente",         // CustomerAuthMiddleware cuida
+            "/api/cliente",     // CustomerAuthMiddleware cuida
+            "/c/",              // QR Code redirect (Portal Cliente)
             "/signup",          // Cadastro (todas as rotas)
             "/orcamento/",      // Orçamentos públicos
             "/swagger",         // Documentação API

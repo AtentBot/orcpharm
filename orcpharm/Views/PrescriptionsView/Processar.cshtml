@@ -1203,9 +1203,12 @@ function displayOcrResults(result) {
     document.getElementById('reviewImage').src = document.getElementById('previewImage').src;
     
     if (result.ocrResult) {
-        document.getElementById('doctorName').value = result.ocrResult.doctorName || '';
-        document.getElementById('doctorCrm').value = result.ocrResult.doctorCrm || '';
-        document.getElementById('doctorCrmState').value = result.ocrResult.doctorCrmState || '';
+        // Backend retorna doctor como objeto com name, crm, crmState
+        // Mas também pode retornar diretamente doctorName, doctorCrm (para compatibilidade)
+        const doctor = result.ocrResult.doctor || {};
+        document.getElementById('doctorName').value = doctor.name || result.ocrResult.doctorName || '';
+        document.getElementById('doctorCrm').value = doctor.crm || result.ocrResult.doctorCrm || '';
+        document.getElementById('doctorCrmState').value = doctor.crmState || result.ocrResult.doctorCrmState || '';
         
         if (result.ocrResult.pharmaceuticalForm) {
             document.getElementById('pharmaceuticalForm').value = result.ocrResult.pharmaceuticalForm;
@@ -1218,7 +1221,12 @@ function displayOcrResults(result) {
         }
     }
     
-    if (result.matchedIngredients) {
+    // Backend retorna ingredientMatches (não matchedIngredients)
+    if (result.ingredientMatches) {
+        ingredientMatches = result.ingredientMatches;
+        renderIngredients();
+    } else if (result.matchedIngredients) {
+        // Fallback para compatibilidade
         ingredientMatches = result.matchedIngredients;
         renderIngredients();
     }
@@ -1246,10 +1254,22 @@ function renderIngredients() {
     container.innerHTML = '';
     
     ingredientMatches.forEach((ingredient, index) => {
-        const hasMatch = ingredient.matchedRawMaterial != null;
-        const confidence = ingredient.confidence || (hasMatch ? 100 : 0);
+        // Backend usa bestMatch, não matchedRawMaterial
+        const hasMatch = ingredient.bestMatch != null || ingredient.matchedRawMaterial != null;
+        const bestMatch = ingredient.bestMatch || ingredient.matchedRawMaterial;
+        
+        // Confidence do match
+        const confidence = bestMatch?.confidence 
+            ? Math.round(bestMatch.confidence * 100) 
+            : (ingredient.confidence || 0);
         const confidenceClass = confidence >= 80 ? 'success' : confidence >= 50 ? 'warning' : 'danger';
-        const name = ingredient.matchedRawMaterial?.name || ingredient.originalName || ingredient.name || 'Ingrediente';
+        
+        // Backend usa ocrText, não originalName/name
+        const name = bestMatch?.name || ingredient.ocrText || ingredient.originalName || ingredient.name || 'Ingrediente';
+        
+        // Backend usa ocrQuantity/ocrUnit
+        const quantity = ingredient.ocrQuantity || ingredient.quantity || '';
+        const unit = ingredient.ocrUnit || ingredient.unit || '';
         
         container.innerHTML += `
             <div class="card mb-2 ingredient-card ${hasMatch ? 'matched' : 'unmatched'}">
@@ -1260,7 +1280,7 @@ function renderIngredients() {
                                 <strong class="me-2">${escapeHtml(name)}</strong>
                                 ${hasMatch ? '<span class="badge bg-success confidence-badge"><i class="bi bi-check"></i></span>' : `<span class="badge bg-${confidenceClass} confidence-badge">${confidence}%</span>`}
                             </div>
-                            <small class="text-muted">${ingredient.quantity || ''} ${ingredient.unit || ''}</small>
+                            <small class="text-muted">${quantity} ${unit}</small>
                         </div>
                         <button class="btn btn-sm btn-outline-danger" onclick="removeIngredient(${index})">
                             <i class="bi bi-x"></i>
@@ -1271,7 +1291,7 @@ function renderIngredients() {
                         <select class="form-select form-select-sm match-select" onchange="updateMatch(${index}, this.value)">
                             <option value="">Selecione a matéria-prima...</option>
                             ${ingredient.suggestions.map(s => 
-                                `<option value="${s.id}" ${ingredient.matchedRawMaterial?.id === s.id ? 'selected' : ''}>
+                                `<option value="${s.rawMaterialId || s.id}" ${bestMatch?.rawMaterialId === (s.rawMaterialId || s.id) ? 'selected' : ''}>
                                     ${escapeHtml(s.name)} ${s.dcbCode ? '(' + s.dcbCode + ')' : ''}
                                 </option>`
                             ).join('')}
@@ -1286,8 +1306,14 @@ function renderIngredients() {
 
 function updateMatch(index, rawMaterialId) {
     if (rawMaterialId && ingredientMatches[index].suggestions) {
-        ingredientMatches[index].matchedRawMaterial = ingredientMatches[index].suggestions.find(s => s.id === rawMaterialId);
+        // Backend usa rawMaterialId, não id
+        ingredientMatches[index].bestMatch = ingredientMatches[index].suggestions.find(
+            s => (s.rawMaterialId || s.id) === rawMaterialId
+        );
+        // Manter compatibilidade
+        ingredientMatches[index].matchedRawMaterial = ingredientMatches[index].bestMatch;
     } else {
+        ingredientMatches[index].bestMatch = null;
         ingredientMatches[index].matchedRawMaterial = null;
     }
     renderIngredients();
@@ -1399,21 +1425,35 @@ function addIngredientManual() {
         return;
     }
     
-    // Verificar se já existe
-    const exists = ingredientMatches.some(i => i.matchedRawMaterial?.id === rawMaterialId);
+    // Verificar se já existe (checar bestMatch e matchedRawMaterial)
+    const exists = ingredientMatches.some(i => {
+        const match = i.bestMatch || i.matchedRawMaterial;
+        return (match?.rawMaterialId || match?.id) === rawMaterialId;
+    });
     if (exists) {
         showToast('Esta matéria-prima já foi adicionada', 'warning');
         return;
     }
     
-    // Adicionar ao array
+    // Adicionar ao array usando estrutura compatível com ambos os formatos
     ingredientMatches.push({
+        ocrText: rawMaterialName,
         originalName: rawMaterialName,
         name: rawMaterialName,
+        ocrQuantity: quantity,
         quantity: quantity,
+        ocrUnit: unit,
         unit: unit,
         confidence: 100,
+        bestMatch: {
+            rawMaterialId: rawMaterialId,
+            id: rawMaterialId,
+            name: rawMaterialName,
+            unitCost: unitCost,
+            confidence: 1.0
+        },
         matchedRawMaterial: {
+            rawMaterialId: rawMaterialId,
             id: rawMaterialId,
             name: rawMaterialName,
             unitCost: unitCost
@@ -1496,7 +1536,8 @@ function toggleNewCustomer() {
 // ========== GENERATE QUOTE ==========
 
 async function generateQuote() {
-    const validIngredients = ingredientMatches.filter(i => i.matchedRawMaterial);
+    // Aceitar bestMatch (do backend) ou matchedRawMaterial (manual)
+    const validIngredients = ingredientMatches.filter(i => i.bestMatch || i.matchedRawMaterial);
     
     if (validIngredients.length === 0) {
         showToast('Selecione pelo menos um ingrediente', 'warning');
@@ -1526,12 +1567,16 @@ async function generateQuote() {
             quantityUnit: document.getElementById('quantityUnit').value,
             usageType: document.getElementById('usageType').value,
             instructions: document.getElementById('instructions').value,
-            confirmedIngredients: validIngredients.map(i => ({
-                rawMaterialId: i.matchedRawMaterial.id,
-                name: i.matchedRawMaterial.name,
-                quantity: parseFloat(i.quantity) || 1,
-                unit: i.unit || 'mg'
-            }))
+            confirmedIngredients: validIngredients.map(i => {
+                // Usar bestMatch (backend) ou matchedRawMaterial (manual)
+                const match = i.bestMatch || i.matchedRawMaterial;
+                return {
+                    rawMaterialId: match.rawMaterialId || match.id,
+                    name: match.name,
+                    quantity: parseFloat(i.ocrQuantity || i.quantity) || 1,
+                    unit: i.ocrUnit || i.unit || 'mg'
+                };
+            })
         };
         
         const response = await fetch('/api/PrescriptionQuotes', {

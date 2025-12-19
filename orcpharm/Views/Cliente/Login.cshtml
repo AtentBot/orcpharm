@@ -1,0 +1,213 @@
+@{
+    ViewData["Title"] = "Entrar";
+    ViewData["HideNav"] = true;
+    Layout = "_LayoutCliente";
+    
+    var returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .auth-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px 30px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .auth-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .auth-header h1 {
+        color: #4361ee;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .auth-header p {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    .form-floating label {
+        color: #6c757d;
+    }
+    .form-control:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+    .btn-primary {
+        background: #4361ee;
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    .btn-primary:hover {
+        background: #3651d4;
+    }
+    .btn-outline-primary {
+        border-color: #4361ee;
+        color: #4361ee;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    .btn-outline-primary:hover {
+        background: #4361ee;
+        color: white;
+    }
+    .password-toggle {
+        cursor: pointer;
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+</style>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1><i class="bi bi-capsule me-2"></i>OrcPharm</h1>
+            <p>Portal do Cliente</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label">Telefone (WhatsApp)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-whatsapp text-success"></i></span>
+                    <input type="tel" class="form-control" id="phone" 
+                           placeholder="(00) 00000-0000" oninput="formatPhone(this)" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <div class="input-group position-relative">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control" id="password" 
+                           placeholder="Digite sua senha" required>
+                    <i class="bi bi-eye password-toggle" onclick="togglePassword()"></i>
+                </div>
+            </div>
+
+            <div id="alertArea" class="mb-3"></div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3" id="btnSubmit">
+                <span class="spinner-border spinner-border-sm d-none me-2" id="spinner"></span>
+                <span id="btnText">Entrar</span>
+            </button>
+
+            <div class="text-center mb-3">
+                <a href="/Cliente/EsqueciSenha" class="text-decoration-none small text-muted">
+                    <i class="bi bi-key me-1"></i>Esqueci minha senha
+                </a>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <div class="text-center">
+            <p class="text-muted mb-3">Ainda não tem conta?</p>
+            <a href="/Cliente/Cadastro" class="btn btn-outline-primary w-100">
+                <i class="bi bi-person-plus me-2"></i>Criar minha conta
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const returnUrl = '@Html.Raw(returnUrl ?? "/Cliente/Inicio")';
+    
+    function formatPhone(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        if (value.length > 6) {
+            input.value = `(${value.slice(0,2)}) ${value.slice(2,7)}-${value.slice(7)}`;
+        } else if (value.length > 2) {
+            input.value = `(${value.slice(0,2)}) ${value.slice(2)}`;
+        } else if (value.length > 0) {
+            input.value = `(${value}`;
+        }
+    }
+    
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const icon = document.querySelector('.password-toggle');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+    const form = document.getElementById('loginForm');
+    const alertArea = document.getElementById('alertArea');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+        
+        if (!phone || !password) {
+            showAlert('Preencha todos os campos', 'danger');
+            return;
+        }
+        
+        setLoading(true);
+        alertArea.innerHTML = '';
+        
+        try {
+            const response = await fetch('/api/cliente/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    phone: phone.replace(/\D/g, ''), 
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert('Login realizado! Redirecionando...', 'success');
+                setTimeout(() => {
+                    window.location.href = returnUrl;
+                }, 1000);
+            } else {
+                showAlert(data.message || 'Telefone ou senha inválidos', 'danger');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            showAlert('Erro de conexão. Tente novamente.', 'danger');
+            setLoading(false);
+        }
+    });
+    
+    function setLoading(loading) {
+        document.getElementById('spinner').classList.toggle('d-none', !loading);
+        document.getElementById('btnSubmit').disabled = loading;
+    }
+    
+    function showAlert(message, type) {
+        alertArea.innerHTML = `<div class="alert alert-${type} small py-2 mb-0">${message}</div>`;
+    }
+</script>
+}

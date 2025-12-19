@@ -175,6 +175,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SaasAdminPasswordReset> SaasAdminPasswordResets { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
+    // PORTAL DO CLIENTE
+    // ════════════════════════════════════════════════════════════════════════
+
+    public DbSet<CustomerAuth> CustomerAuths { get; set; } = null!;
+    public DbSet<CustomerSession> CustomerSessions { get; set; } = null!;
+    public DbSet<EstablishmentQRCode> EstablishmentQRCodes { get; set; } = null!;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // CATÁLOGO & E-COMMERCE
+    // ════════════════════════════════════════════════════════════════════════
+
+    public DbSet<CatalogCategory> CatalogCategories { get; set; } = null!;
+    public DbSet<CatalogProduct> CatalogProducts { get; set; } = null!;
+    public DbSet<CustomerCart> CustomerCarts { get; set; } = null!;
+    public DbSet<CustomerCartItem> CustomerCartItems { get; set; } = null!;
+    public DbSet<OnlineOrder> OnlineOrders { get; set; } = null!;
+    public DbSet<OnlineOrderItem> OnlineOrderItems { get; set; } = null!;
+
+
+    // ════════════════════════════════════════════════════════════════════════
     // CONFIGURAÇÃO DO MODELO
     // ════════════════════════════════════════════════════════════════════════
 
@@ -198,6 +218,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureSubscriptionInvoices(modelBuilder);
         ConfigureFiscalInvoices(modelBuilder);
         ConfigureSaasAdminEntities(modelBuilder);
+        ConfigurePortalClienteEntities(modelBuilder);
+        ConfigureCatalogoEntities(modelBuilder);
 
         // ──────────────────────────────────────────────────────────────────
         // SEED DE DADOS INICIAIS
@@ -235,6 +257,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     private void ConfigureManipulationEntities(ModelBuilder modelBuilder)
     {
+
+
         // ──────────────────────────────────────────────────────────────────
         // MANIPULATION LOSS
         // ──────────────────────────────────────────────────────────────────
@@ -357,6 +381,258 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(sm => sm.AuthorizedByEmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private void ConfigurePortalClienteEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // CUSTOMER AUTH
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CustomerAuth>(entity =>
+        {
+            entity.ToTable("CustomerAuths");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.Phone).IsUnique();
+            entity.HasIndex(e => e.Cpf).IsUnique();
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.IsVerified);
+
+            entity.HasOne(e => e.Customer)
+                  .WithMany()
+                  .HasForeignKey(e => e.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CUSTOMER SESSION
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CustomerSession>(entity =>
+        {
+            entity.ToTable("CustomerSessions");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.SessionToken).IsUnique();
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.ExpiresAt);
+
+            entity.HasOne(e => e.CustomerAuth)
+                  .WithMany(a => a.Sessions)
+                  .HasForeignKey(e => e.CustomerAuthId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Customer)
+                  .WithMany()
+                  .HasForeignKey(e => e.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CurrentEstablishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.CurrentEstablishmentId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.LastActivityAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // ESTABLISHMENT QR CODE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<EstablishmentQRCode>(entity =>
+        {
+            entity.ToTable("EstablishmentQRCodes");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.IsActive);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<Models.Employees.Employee>()
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.ScanCount)
+                .HasDefaultValue(0);
+        });
+    }
+
+    /// <summary>
+    /// Configura entidades do Catálogo e E-commerce
+    /// </summary>
+    private void ConfigureCatalogoEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // CATALOG CATEGORY
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CatalogCategory>(entity =>
+        {
+            entity.ToTable("CatalogCategories");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.IsActive);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CATALOG PRODUCT
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CatalogProduct>(entity =>
+        {
+            entity.ToTable("CatalogProducts");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.CategoryId);
+            entity.HasIndex(e => e.IsActive);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Category)
+                  .WithMany(c => c.Products)
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CUSTOMER CART
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CustomerCart>(entity =>
+        {
+            entity.ToTable("CustomerCarts");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.CustomerId, e.EstablishmentId }).IsUnique();
+
+            entity.HasOne(e => e.Customer)
+                  .WithMany()
+                  .HasForeignKey(e => e.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CUSTOMER CART ITEM
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CustomerCartItem>(entity =>
+        {
+            entity.ToTable("CustomerCartItems");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.CartId);
+
+            entity.HasOne(e => e.Cart)
+                  .WithMany(c => c.Items)
+                  .HasForeignKey(e => e.CartId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Product)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // ONLINE ORDER
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<OnlineOrder>(entity =>
+        {
+            entity.ToTable("OnlineOrders");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.OrderNumber).IsUnique();
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(e => e.Customer)
+                  .WithMany()
+                  .HasForeignKey(e => e.CustomerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // ONLINE ORDER ITEM
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<OnlineOrderItem>(entity =>
+        {
+            entity.ToTable("OnlineOrderItems");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.OrderId);
+
+            entity.HasOne(e => e.Order)
+                  .WithMany(o => o.Items)
+                  .HasForeignKey(e => e.OrderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Product)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
     }
 

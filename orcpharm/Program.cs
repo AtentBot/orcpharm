@@ -36,6 +36,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<QuoteEmailService>();
 builder.Services.AddScoped<PrescriptionWorkflowService>();
 builder.Services.AddScoped<CashRegisterService>();
+builder.Services.AddScoped<CustomerAuthService>();
 
 builder.Services.Configure<Configuration.EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
@@ -273,13 +274,13 @@ app.UseRouting();
 app.UseSession();
 
 app.UseAuthentication();
-app.UseAdminAuth();           
+app.UseAdminAuth();
 app.UseEmployeeAuth();
-app.UseSubscriptionLimits();  
+app.UseCustomerAuth();        
+app.UseSubscriptionLimits();
 app.UseAuthorization();
 
 app.MapStaticAssets();
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
