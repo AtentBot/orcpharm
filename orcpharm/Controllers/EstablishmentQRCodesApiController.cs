@@ -25,15 +25,35 @@ public class EstablishmentQRCodesApiController : ControllerBase
         _configuration = configuration;
     }
 
+    // ============================================================
+    // MÉTODOS AUXILIARES - Usando nomes corretos do middleware
+    // ============================================================
+
+    private Guid GetEmployeeId()
+    {
+        if (HttpContext.Items["EmployeeId"] is Guid employeeId)
+            return employeeId;
+        return Guid.Empty;
+    }
+
+    private Guid GetEstablishmentId()
+    {
+        if (HttpContext.Items["EstablishmentId"] is Guid establishmentId)
+            return establishmentId;
+        return Guid.Empty;
+    }
+
+    // ============================================================
+    // ENDPOINTS
+    // ============================================================
+
     // GET: api/establishment-qrcodes
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcodes = await _context.Set<EstablishmentQRCode>()
             .Where(q => q.EstablishmentId == establishmentId)
@@ -58,11 +78,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .Where(q => q.Id == id && q.EstablishmentId == establishmentId)
@@ -78,11 +96,11 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateQRCodeDto dto)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
-            return Unauthorized(new { success = false, message = "Não autenticado" });
+        var establishmentId = GetEstablishmentId();
+        var employeeId = GetEmployeeId();
 
-        var establishmentId = session.Employee.EstablishmentId;
+        if (establishmentId == Guid.Empty)
+            return Unauthorized(new { success = false, message = "Não autenticado" });
 
         // Gerar código único
         var code = await GenerateUniqueCode();
@@ -97,17 +115,18 @@ public class EstablishmentQRCodesApiController : ControllerBase
             IsActive = true,
             ScanCount = 0,
             CreatedAt = DateTime.UtcNow,
-            CreatedByEmployeeId = session.EmployeeId
+            CreatedByEmployeeId = employeeId != Guid.Empty ? employeeId : null
         };
 
         _context.Set<EstablishmentQRCode>().Add(qrcode);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("QR Code {Code} criado para estabelecimento {EstablishmentId}", 
+        _logger.LogInformation("QR Code {Code} criado para estabelecimento {EstablishmentId}",
             code, establishmentId);
 
-        return Ok(new { 
-            success = true, 
+        return Ok(new
+        {
+            success = true,
             message = "QR Code criado com sucesso",
             qrcode = new
             {
@@ -123,11 +142,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateQRCodeDto dto)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .FirstOrDefaultAsync(q => q.Id == id && q.EstablishmentId == establishmentId);
@@ -137,10 +154,10 @@ public class EstablishmentQRCodesApiController : ControllerBase
 
         if (!string.IsNullOrEmpty(dto.Name))
             qrcode.Name = dto.Name;
-        
+
         if (dto.Description != null)
             qrcode.Description = dto.Description;
-        
+
         if (dto.IsActive.HasValue)
             qrcode.IsActive = dto.IsActive.Value;
 
@@ -153,11 +170,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .FirstOrDefaultAsync(q => q.Id == id && q.EstablishmentId == establishmentId);
@@ -177,11 +192,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpGet("{id:guid}/image")]
     public async Task<IActionResult> GetQRCodeImage(Guid id, [FromQuery] int size = 300)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .Include(q => q.Establishment)
@@ -192,13 +205,13 @@ public class EstablishmentQRCodesApiController : ControllerBase
 
         // Gerar URL do portal
         var baseUrl = _configuration["AppSettings:PortalUrl"] ?? "https://app.orcpharm.com.br";
-        var qrUrl = $"{baseUrl}/Cliente/LerQRCode?code={qrcode.Code}";
+        var qrUrl = $"{baseUrl}/c/{qrcode.Code}";
 
         // Gerar imagem QR Code
         var qrGenerator = new QRCodeGenerator();
         var qrCodeData = qrGenerator.CreateQrCode(qrUrl, QRCodeGenerator.ECCLevel.Q);
         var qrCodeImage = new PngByteQRCode(qrCodeData);
-        var qrCodeBytes = qrCodeImage.GetGraphic(size / 25); // pixels per module
+        var qrCodeBytes = qrCodeImage.GetGraphic(size / 25);
 
         return File(qrCodeBytes, "image/png", $"qrcode-{qrcode.Code}.png");
     }
@@ -207,11 +220,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpGet("{id:guid}/image-base64")]
     public async Task<IActionResult> GetQRCodeImageBase64(Guid id, [FromQuery] int size = 300)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .FirstOrDefaultAsync(q => q.Id == id && q.EstablishmentId == establishmentId);
@@ -220,7 +231,7 @@ public class EstablishmentQRCodesApiController : ControllerBase
             return NotFound(new { success = false, message = "QR Code não encontrado" });
 
         var baseUrl = _configuration["AppSettings:PortalUrl"] ?? "https://app.orcpharm.com.br";
-        var qrUrl = $"{baseUrl}/Cliente/LerQRCode?code={qrcode.Code}";
+        var qrUrl = $"{baseUrl}/c/{qrcode.Code}";
 
         var qrGenerator = new QRCodeGenerator();
         var qrCodeData = qrGenerator.CreateQrCode(qrUrl, QRCodeGenerator.ECCLevel.Q);
@@ -229,8 +240,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
 
         var base64 = Convert.ToBase64String(qrCodeBytes);
 
-        return Ok(new { 
-            success = true, 
+        return Ok(new
+        {
+            success = true,
             imageBase64 = $"data:image/png;base64,{base64}",
             code = qrcode.Code,
             url = qrUrl
@@ -253,8 +265,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
         qrcode.LastScannedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        return Ok(new { 
-            success = true, 
+        return Ok(new
+        {
+            success = true,
             establishment = new
             {
                 qrcode.Establishment!.Id,
@@ -271,11 +284,9 @@ public class EstablishmentQRCodesApiController : ControllerBase
     [HttpGet("{id:guid}/print")]
     public async Task<IActionResult> GetPrintableQRCode(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var establishmentId = GetEstablishmentId();
+        if (establishmentId == Guid.Empty)
             return Unauthorized(new { success = false, message = "Não autenticado" });
-
-        var establishmentId = session.Employee.EstablishmentId;
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .Include(q => q.Establishment)
@@ -285,16 +296,17 @@ public class EstablishmentQRCodesApiController : ControllerBase
             return NotFound(new { success = false, message = "QR Code não encontrado" });
 
         var baseUrl = _configuration["AppSettings:PortalUrl"] ?? "https://app.orcpharm.com.br";
-        var qrUrl = $"{baseUrl}/Cliente/LerQRCode?code={qrcode.Code}";
+        var qrUrl = $"{baseUrl}/c/{qrcode.Code}";
 
         var qrGenerator = new QRCodeGenerator();
         var qrCodeData = qrGenerator.CreateQrCode(qrUrl, QRCodeGenerator.ECCLevel.Q);
         var qrCodeImage = new PngByteQRCode(qrCodeData);
-        var qrCodeBytes = qrCodeImage.GetGraphic(20); // Alta resolução para impressão
+        var qrCodeBytes = qrCodeImage.GetGraphic(20);
 
         var base64 = Convert.ToBase64String(qrCodeBytes);
 
-        return Ok(new { 
+        return Ok(new
+        {
             success = true,
             qrcode = new
             {
@@ -318,7 +330,7 @@ public class EstablishmentQRCodesApiController : ControllerBase
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         var random = new Random();
         string code;
-        
+
         do
         {
             code = new string(Enumerable.Repeat(chars, 8)

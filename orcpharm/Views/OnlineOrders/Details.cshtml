@@ -170,6 +170,16 @@
     .customer-contact a:hover {
         text-decoration: underline;
     }
+    
+    .btn-pdv {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: none;
+        color: white;
+    }
+    .btn-pdv:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -278,15 +288,33 @@
                         <button class="btn btn-success btn-lg" onclick="markReady()">
                             <i class="bi bi-check-circle me-2"></i>Marcar como Pronto
                         </button>
+                        @if (Model.PaymentStatus != "PAID")
+                        {
+                            <button class="btn btn-pdv btn-lg" onclick="goToPDV()">
+                                <i class="bi bi-cash-register me-2"></i>Cobrar no PDV
+                            </button>
+                        }
                     }
                     else if (Model.Status == "PREPARING")
                     {
                         <button class="btn btn-success btn-lg" onclick="markReady()">
                             <i class="bi bi-check-circle me-2"></i>Marcar como Pronto
                         </button>
+                        @if (Model.PaymentStatus != "PAID")
+                        {
+                            <button class="btn btn-pdv btn-lg" onclick="goToPDV()">
+                                <i class="bi bi-cash-register me-2"></i>Cobrar no PDV
+                            </button>
+                        }
                     }
                     else if (Model.Status == "READY")
                     {
+                        @if (Model.PaymentStatus != "PAID")
+                        {
+                            <button class="btn btn-pdv btn-lg" onclick="goToPDV()">
+                                <i class="bi bi-cash-register me-2"></i>Cobrar no PDV
+                            </button>
+                        }
                         <button class="btn btn-success btn-lg" onclick="markDelivered()">
                             <i class="bi bi-bag-check me-2"></i>Confirmar Entrega
                         </button>
@@ -315,7 +343,7 @@
                 
                 <div class="customer-info">
                     <div class="customer-avatar">
-                        @Model.Customer?.FullName?.Substring(0, 1).ToUpper()
+                        @(Model.Customer?.FullName?.Substring(0, 1).ToUpper() ?? "?")
                     </div>
                     <div class="customer-details">
                         <h5 class="mb-0">@Model.Customer?.FullName</h5>
@@ -429,6 +457,17 @@
                     <div class="d-flex justify-content-between">
                         <span>Forma</span>
                         <span>@Model.PaymentMethod</span>
+                    </div>
+                }
+                
+                @if (Model.SaleId.HasValue)
+                {
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Venda vinculada</span>
+                        <a href="/Vendas/Detalhes/@Model.SaleId" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-receipt me-1"></i>Ver Venda
+                        </a>
                     </div>
                 }
             </div>
@@ -546,6 +585,12 @@
         } catch (error) {
             alert('Erro ao confirmar entrega');
         }
+    }
+    
+    // NOVA FUNÇÃO: Ir para PDV para cobrar
+    function goToPDV() {
+        if (!confirm('Abrir PDV para processar pagamento deste pedido?')) return;
+        window.location.href = `/PDV?orderId=${orderId}`;
     }
     
     function showCancelModal() {

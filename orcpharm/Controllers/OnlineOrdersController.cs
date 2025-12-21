@@ -22,11 +22,11 @@ public class OnlineOrdersController : Controller
     [HttpGet("")]
     public async Task<IActionResult> Index(string? status = null, string? search = null, int page = 1)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
-            return RedirectToAction("Login", "Auth");
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Redirect("/Account/Login");
 
-        var establishmentId = session.Employee.EstablishmentId;
+        var establishmentId = employee.EstablishmentId;
 
         var query = _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
@@ -42,8 +42,8 @@ public class OnlineOrdersController : Controller
         // Busca por número do pedido ou nome do cliente
         if (!string.IsNullOrEmpty(search))
         {
-            query = query.Where(o => 
-                o.OrderNumber.Contains(search) || 
+            query = query.Where(o =>
+                o.OrderNumber.Contains(search) ||
                 o.Customer!.FullName.Contains(search) ||
                 o.Customer.Phone!.Contains(search));
         }
@@ -77,7 +77,7 @@ public class OnlineOrdersController : Controller
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.TotalItems = totalItems;
-        ViewBag.Establishment = session.Employee?.Establishment;
+        ViewBag.Establishment = employee.Establishment;
 
         return View();
     }
@@ -86,11 +86,11 @@ public class OnlineOrdersController : Controller
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> Details(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
-            return RedirectToAction("Login", "Auth");
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Redirect("/Account/Login");
 
-        var establishmentId = session.Employee.EstablishmentId;
+        var establishmentId = employee.EstablishmentId;
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
@@ -101,10 +101,7 @@ public class OnlineOrdersController : Controller
         if (order == null)
             return NotFound();
 
-        // Histórico de status (se implementado)
-        // ViewBag.StatusHistory = await _context.Set<OnlineOrderStatusHistory>()...
-
-        ViewBag.Establishment = session.Employee?.Establishment;
+        ViewBag.Establishment = employee.Establishment;
 
         return View(order);
     }
@@ -113,11 +110,11 @@ public class OnlineOrdersController : Controller
     [HttpGet("Dashboard")]
     public async Task<IActionResult> Dashboard()
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
-            return RedirectToAction("Login", "Auth");
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Redirect("/Account/Login");
 
-        var establishmentId = session.Employee.EstablishmentId;
+        var establishmentId = employee.EstablishmentId;
         var today = DateTime.UtcNow.Date;
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
@@ -140,7 +137,7 @@ public class OnlineOrdersController : Controller
         // Pedidos pendentes de ação
         var pendingAction = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
-            .Where(o => o.EstablishmentId == establishmentId && 
+            .Where(o => o.EstablishmentId == establishmentId &&
                        (o.Status == "PENDING" || o.Status == "CONFIRMED" || o.Status == "PREPARING"))
             .OrderBy(o => o.CreatedAt)
             .Take(10)
@@ -167,7 +164,7 @@ public class OnlineOrdersController : Controller
         ViewBag.MonthCount = ordersMonth.Count;
         ViewBag.MonthTotal = ordersMonth.Sum(o => o.Total);
 
-        ViewBag.Establishment = session.Employee?.Establishment;
+        ViewBag.Establishment = employee.Establishment;
 
         return View();
     }

@@ -21,6 +21,17 @@ public class EmployeesController : Controller
         _logger = logger;
     }
 
+    // ==================== INDEX (REDIRECIONA PARA LIST) ====================
+    /// <summary>
+    /// GET: /Employees
+    /// Redireciona para a listagem
+    /// </summary>
+    [HttpGet]
+    public IActionResult Index()
+    {
+        return RedirectToAction("List");
+    }
+
     // ==================== LISTAGEM ====================
     /// <summary>
     /// GET: /Employees/List

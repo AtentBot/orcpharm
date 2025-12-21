@@ -34,9 +34,9 @@
     <!-- Entrada manual -->
     <div class="text-center">
         <p class="text-muted small mb-2">Ou digite o código manualmente:</p>
-        <div class="input-group" style="max-width: 250px; margin: 0 auto;">
+        <div class="input-group" style="max-width: 280px; margin: 0 auto;">
             <input type="text" class="form-control text-center text-uppercase" id="manualCode" 
-                   maxlength="6" placeholder="ABC123" style="letter-spacing: 3px; font-weight: bold;">
+                   maxlength="8" placeholder="ABC12345" style="letter-spacing: 2px; font-weight: bold;">
             <button class="btn btn-primary" type="button" onclick="submitManualCode()">
                 <i class="bi bi-arrow-right"></i>
             </button>
@@ -94,10 +94,10 @@
         
         // Verificar se é URL do sistema
         if (decodedText.includes('/c/')) {
-            const code = decodedText.split('/c/')[1];
+            const code = decodedText.split('/c/')[1].split('?')[0]; // Remove query params se houver
             processCode(code);
-        } else if (decodedText.match(/^[A-Z0-9]{6}$/i)) {
-            // Código direto
+        } else if (decodedText.match(/^[A-Z0-9]{8}$/i)) {
+            // Código direto de 8 caracteres
             processCode(decodedText);
         } else {
             showAlert('QR Code inválido', 'danger');
@@ -106,8 +106,8 @@
 
     function submitManualCode() {
         const code = document.getElementById('manualCode').value.trim().toUpperCase();
-        if (code.length !== 6) {
-            showAlert('Digite um código de 6 caracteres', 'warning');
+        if (code.length !== 8) {
+            showAlert('Digite um código de 8 caracteres', 'warning');
             return;
         }
         processCode(code);

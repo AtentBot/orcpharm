@@ -167,6 +167,76 @@ public class DashboardController : Controller
             dashboardData.TaxaConversaoOrcamentos = totalOrcamentos30Dias > 0
                 ? Math.Round((decimal)aprovados30Dias / totalOrcamentos30Dias * 100, 1)
                 : 0;
+
+            // ========== ESTATÍSTICAS DE PEDIDOS ONLINE ==========
+            dashboardData.PedidosPendentes = await _db.OnlineOrders
+                .Where(o => o.EstablishmentId == establishmentId 
+                    && (o.Status == "PENDING" || o.Status == "CONFIRMED"))
+                .CountAsync();
+
+            dashboardData.PedidosProntos = await _db.OnlineOrders
+                .Where(o => o.EstablishmentId == establishmentId && o.Status == "READY")
+                .CountAsync();
+
+            // ========== ESTATÍSTICAS FISCAIS (NF-e/NFC-e) ==========
+            
+            // Notas fiscais pendentes na fila de contingência
+            dashboardData.NotasFiscaisPendentes = await _db.FiscalQueues
+                .Where(q => q.EstablishmentId == establishmentId && q.Status == "PENDENTE")
+                .CountAsync();
+
+            // NF-e emitidas hoje
+            dashboardData.NFesHoje = await _db.FiscalInvoices
+                .Where(f => f.EstablishmentId == establishmentId 
+                    && f.IssueDate.Date == today
+                    && f.InvoiceType == "NFE"
+                    && f.Status == "AUTORIZADO")
+                .CountAsync();
+
+            // NFC-e emitidas hoje
+            dashboardData.NFCesHoje = await _db.FiscalInvoices
+                .Where(f => f.EstablishmentId == establishmentId 
+                    && f.IssueDate.Date == today
+                    && f.InvoiceType == "NFCE"
+                    && f.Status == "AUTORIZADO")
+                .CountAsync();
+
+            // Faturamento fiscal do dia
+            dashboardData.FaturamentoFiscalHoje = await _db.FiscalInvoices
+                .Where(f => f.EstablishmentId == establishmentId 
+                    && f.IssueDate.Date == today
+                    && f.Status == "AUTORIZADO")
+                .SumAsync(f => (decimal?)f.TotalAmount) ?? 0;
+
+            // Notas com erro (rejeitadas)
+            dashboardData.NotasFiscaisComErro = await _db.FiscalInvoices
+                .Where(f => f.EstablishmentId == establishmentId 
+                    && f.Status == "REJEITADO"
+                    && f.IssueDate.Date >= today.AddDays(-7))
+                .CountAsync();
+
+            // Faturamento fiscal do mês
+            var primeiroDiaMes = new DateTime(today.Year, today.Month, 1);
+            dashboardData.FaturamentoFiscalMes = await _db.FiscalInvoices
+                .Where(f => f.EstablishmentId == establishmentId 
+                    && f.IssueDate >= primeiroDiaMes
+                    && f.Status == "AUTORIZADO")
+                .SumAsync(f => (decimal?)f.TotalAmount) ?? 0;
+
+            // Total de notas no mês
+            dashboardData.TotalNotasMes = await _db.FiscalInvoices
+                .Where(f => f.EstablishmentId == establishmentId 
+                    && f.IssueDate >= primeiroDiaMes
+                    && f.Status == "AUTORIZADO")
+                .CountAsync();
+
+            // Passar para ViewBag também (para compatibilidade com cards do Dashboard)
+            ViewBag.PedidosPendentes = dashboardData.PedidosPendentes;
+            ViewBag.PedidosProntos = dashboardData.PedidosProntos;
+            ViewBag.NotasPendentes = dashboardData.NotasFiscaisPendentes;
+            ViewBag.NFesHoje = dashboardData.NFesHoje;
+            ViewBag.NFCesHoje = dashboardData.NFCesHoje;
+            ViewBag.FaturamentoFiscalHoje = dashboardData.FaturamentoFiscalHoje;
         }
 
         return View(dashboardData);

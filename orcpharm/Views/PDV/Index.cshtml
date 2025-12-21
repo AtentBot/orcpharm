@@ -1,290 +1,532 @@
 @{
-    ViewData["Title"] = "PDV - Ponto de Venda";
-    Layout = "_Layout"; // Layout simplificado para PDV
+    ViewData["Title"] = "Ponto de Venda";
+    Layout = "_Layout";
 }
 
-<div class="container-fluid vh-100 d-flex flex-column p-0">
-    <!-- Cabeçalho -->
-    <div class="bg-primary text-white p-3 shadow-sm">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-0">
-                    <i class="bi bi-shop me-2"></i>
-                    Ponto de Venda
-                </h4>
-                <small id="cashRegisterInfo">Caixa: Carregando...</small>
-            </div>
-            <div class="d-flex gap-2">
-                <span class="badge bg-light text-dark fs-6" id="currentTime"></span>
-                <button class="btn btn-light btn-sm" onclick="openCashRegister()">
-                    <i class="bi bi-cash-stack"></i> Abrir Caixa
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="closePDV()">
-                    <i class="bi bi-x-circle"></i> Fechar PDV
-                </button>
+<style>
+    .pdv-container { height: calc(100vh - 120px); overflow: hidden; }
+    .items-lista { max-height: calc(100vh - 320px); overflow-y: auto; }
+    .carrinho-lista { max-height: calc(100vh - 450px); overflow-y: auto; }
+    .item-card { cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; }
+    .item-card:hover { background-color: #f8f9fa; border-left-color: #0d6efd; }
+    .btn-pagamento { height: 70px; font-size: 1rem; border-width: 2px; }
+    .btn-pagamento.selected { box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5); transform: scale(1.02); }
+    .btn-pagamento i { font-size: 1.3rem; }
+    .total-display { font-size: 1.8rem; font-weight: bold; }
+    .caixa-fechado-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .item-carrinho { border-bottom: 1px solid #eee; padding: 0.5rem 0; }
+    .nav-tabs .nav-link { font-weight: 500; color: rgba(255,255,255,0.85) !important; border: none; padding: 0.75rem 1rem; }
+    .nav-tabs .nav-link:hover { color: #fff !important; background: rgba(255,255,255,0.1); }
+    .nav-tabs .nav-link.active { color: #fff !important; background: rgba(255,255,255,0.2); border-bottom: 3px solid #fff; }
+    .produto-card { cursor: pointer; transition: all 0.2s; }
+    .produto-card:hover { background-color: #e7f1ff; }
+    .badge-count { min-width: 22px; }
+    .promo-badge { background: #e74c3c; font-size: 10px; }
+    .tipo-badge { font-size: 9px; }
+    
+    /* Header Pagamento - Amarelo com texto escuro para contraste */
+    .card-header-payment {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: #1f2937 !important;
+    }
+    .card-header-payment .badge {
+        background: #1f2937 !important;
+        color: #fff !important;
+    }
+    
+    /* Botão PIX - Corrigido para ter bom contraste */
+    .btn-pix {
+        background: #fff;
+        border: 2px solid #00b894;
+        color: #00b894 !important;
+    }
+    .btn-pix:hover {
+        background: #00b894;
+        color: #fff !important;
+    }
+    .btn-pix.selected {
+        background: #00b894;
+        color: #fff !important;
+    }
+    
+    /* Card headers melhorados */
+    .card-header-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: #fff;
+    }
+    .card-header-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #fff;
+    }
+    
+    /* Botões de pagamento mais visíveis */
+    .btn-dinheiro {
+        border-color: #10b981;
+        color: #10b981;
+    }
+    .btn-dinheiro:hover, .btn-dinheiro.selected {
+        background: #10b981;
+        color: #fff;
+        border-color: #10b981;
+    }
+    .btn-debito {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+    .btn-debito:hover, .btn-debito.selected {
+        background: #3b82f6;
+        color: #fff;
+        border-color: #3b82f6;
+    }
+    .btn-credito {
+        border-color: #8b5cf6;
+        color: #8b5cf6;
+    }
+    .btn-credito:hover, .btn-credito.selected {
+        background: #8b5cf6;
+        color: #fff;
+        border-color: #8b5cf6;
+    }
+    
+    /* Tabs melhoradas */
+    .pdv-tabs {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+    .pdv-tabs .nav-link {
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    /* Scrollbar personalizada */
+    .items-lista::-webkit-scrollbar,
+    .carrinho-lista::-webkit-scrollbar {
+        width: 6px;
+    }
+    .items-lista::-webkit-scrollbar-track,
+    .carrinho-lista::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .items-lista::-webkit-scrollbar-thumb,
+    .carrinho-lista::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+    .items-lista::-webkit-scrollbar-thumb:hover,
+    .carrinho-lista::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+</style>
+
+<div class="container-fluid py-3 pdv-container position-relative">
+    <div id="caixaFechadoOverlay" class="caixa-fechado-overlay d-none">
+        <div class="text-center">
+            <i class="bi bi-lock-fill text-warning" style="font-size: 4rem;"></i>
+            <h3 class="mt-3">Caixa Fechado</h3>
+            <p class="text-muted">Abra o caixa para começar a registrar vendas</p>
+            <a href="/Caixa/Abrir" class="btn btn-success btn-lg"><i class="bi bi-unlock me-2"></i>Abrir Caixa</a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <h4 class="mb-0"><i class="bi bi-shop me-2"></i>Ponto de Venda</h4>
+                    <span id="caixaInfo" class="badge bg-success"><i class="bi bi-unlock me-1"></i>Carregando...</span>
+                    <span id="horaAtual" class="badge bg-dark"></span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="refreshData()" title="Atualizar"><i class="bi bi-arrow-clockwise"></i></button>
+                    <a href="/Caixa" class="btn btn-outline-primary"><i class="bi bi-cash-stack me-1"></i>Gestão de Caixa</a>
+                    <a href="/Dashboard" class="btn btn-outline-secondary"><i class="bi bi-house me-1"></i>Dashboard</a>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-0 flex-grow-1">
-        <!-- Coluna Esquerda: Carrinho e Produtos -->
-        <div class="col-lg-8 d-flex flex-column p-3">
-            
-            <!-- Busca de Produtos -->
-            <div class="mb-3">
-                <div class="input-group input-group-lg">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="productSearch" 
-                           placeholder="Buscar produto, código de barras ou pedido de manipulação..."
-                           autofocus>
-                    <button class="btn btn-outline-secondary" onclick="showProductsModal()">
-                        <i class="bi bi-grid-3x3-gap"></i>
-                    </button>
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header p-0 pdv-tabs">
+                    <ul class="nav nav-tabs nav-fill" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabOnline">
+                                <i class="bi bi-globe me-1"></i>Online
+                                <span id="badgeOnline" class="badge bg-warning text-dark badge-count ms-1">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabManipulacoes">
+                                <i class="bi bi-prescription2 me-1"></i>Manipulações
+                                <span id="badgeManipulacoes" class="badge bg-info badge-count ms-1">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBalcao">
+                                <i class="bi bi-shop-window me-1"></i>Balcão
+                            </button>
+                        </li>
+                    </ul>
                 </div>
-            </div>
-
-            <!-- Carrinho -->
-            <div class="card flex-grow-1 shadow-sm">
-                <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Itens do Carrinho</h5>
-                        <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">
-                            <i class="bi bi-trash"></i> Limpar
-                        </button>
+                <div class="card-body p-0 tab-content">
+                    <div class="tab-pane fade show active" id="tabOnline">
+                        <div class="p-2 border-bottom bg-light">
+                            <input type="text" class="form-control form-control-sm" placeholder="Buscar pedido..." id="buscaOnline" onkeyup="filtrarLista('online')">
+                        </div>
+                        <div id="listaOnline" class="items-lista">
+                            <div class="text-center py-4 text-muted">
+                                <div class="spinner-border text-primary mb-2"></div>
+                                <p class="mb-0">Carregando...</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body overflow-auto">
-                    <div id="cartItems">
-                        <div class="text-center text-muted py-5">
-                            <i class="bi bi-cart-x fs-1 d-block mb-3"></i>
-                            <p>Carrinho vazio</p>
-                            <p class="small">Busque produtos ou escaneie código de barras</p>
+                    <div class="tab-pane fade" id="tabManipulacoes">
+                        <div class="p-2 border-bottom bg-light">
+                            <input type="text" class="form-control form-control-sm" placeholder="Buscar manipulação..." id="buscaManipulacao" onkeyup="filtrarLista('manipulacao')">
+                        </div>
+                        <div id="listaManipulacoes" class="items-lista">
+                            <div class="text-center py-4 text-muted">
+                                <div class="spinner-border text-primary mb-2"></div>
+                                <p class="mb-0">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="tabBalcao">
+                        <div class="p-2 border-bottom bg-light">
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" placeholder="Buscar produto..." id="buscaProduto" onkeypress="if(event.key==='Enter') buscarProdutos()">
+                                <button class="btn btn-primary" onclick="buscarProdutos()"><i class="bi bi-search"></i></button>
+                            </div>
+                        </div>
+                        <div id="listaProdutos" class="items-lista">
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-upc-scan fs-1"></i>
+                                <p class="mt-2 mb-0">Digite o nome ou código</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Coluna Direita: Totais e Pagamento -->
-        <div class="col-lg-4 bg-light p-3 d-flex flex-column">
-            
-            <!-- Cliente -->
-            <div class="card mb-3 shadow-sm">
-                <div class="card-body">
-                    <label class="form-label fw-bold">Cliente</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="customerSearch" 
-                               placeholder="CPF, Nome ou Telefone" readonly>
-                        <button class="btn btn-outline-primary" onclick="searchCustomer()">
-                            <i class="bi bi-search"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="clearCustomer()">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    </div>
-                    <input type="hidden" id="selectedCustomerId">
+        <div class="col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header card-header-success d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-cart3 me-2"></i>Carrinho <span id="carrinhoCount" class="badge bg-white text-success ms-1">0</span></span>
+                    <button class="btn btn-sm btn-outline-light" onclick="limparCarrinho()" id="btnLimparCarrinho" disabled><i class="bi bi-trash"></i></button>
                 </div>
-            </div>
-
-            <!-- Totais -->
-            <div class="card mb-3 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Subtotal:</span>
-                        <strong id="subtotal">R$ 0,00</strong>
+                <div class="card-body d-flex flex-column p-2">
+                    <div class="mb-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="clienteNome" placeholder="Cliente (opcional)" readonly>
+                            <button class="btn btn-outline-secondary" onclick="buscarCliente()"><i class="bi bi-search"></i></button>
+                            <button class="btn btn-outline-danger" onclick="limparCliente()"><i class="bi bi-x"></i></button>
+                        </div>
+                        <input type="hidden" id="clienteId" value="">
                     </div>
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">Desconto</span>
-                        <input type="number" class="form-control" id="discountInput" 
-                               value="0" min="0" step="0.01" onchange="calculateTotal()">
-                        <span class="input-group-text">%</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Desconto:</span>
-                        <strong class="text-danger" id="discountAmount">- R$ 0,00</strong>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between">
-                        <h4 class="mb-0">TOTAL:</h4>
-                        <h4 class="mb-0 text-success" id="totalAmount">R$ 0,00</h4>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Formas de Pagamento -->
-            <div class="card mb-3 shadow-sm flex-grow-1">
-                <div class="card-header bg-white">
-                    <h6 class="mb-0">Formas de Pagamento</h6>
-                </div>
-                <div class="card-body">
-                    <div id="paymentsContainer">
-                        <p class="text-muted small">Nenhum pagamento adicionado</p>
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mb-2 mt-3">
-                        <span>Total Pago:</span>
-                        <strong class="text-info" id="totalPaid">R$ 0,00</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Restante:</span>
-                        <strong class="text-warning" id="remaining">R$ 0,00</strong>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-success btn-lg" onclick="showPaymentModal('DINHEIRO')">
-                            <i class="bi bi-cash-coin me-2"></i>Dinheiro
-                        </button>
-                        <button class="btn btn-primary btn-lg" onclick="showPaymentModal('CARTAO_DEBITO')">
-                            <i class="bi bi-credit-card me-2"></i>Débito
-                        </button>
-                        <button class="btn btn-info btn-lg" onclick="showPaymentModal('CARTAO_CREDITO')">
-                            <i class="bi bi-credit-card-2-front me-2"></i>Crédito
-                        </button>
-                        <button class="btn btn-warning btn-lg" onclick="showPaymentModal('PIX')">
-                            <i class="bi bi-qr-code me-2"></i>PIX
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Finalizar Venda -->
-            <button class="btn btn-lg btn-success w-100 py-3" id="finishSaleBtn" 
-                    onclick="finishSale()" disabled>
-                <i class="bi bi-check-circle me-2"></i>
-                <strong>FINALIZAR VENDA</strong>
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Adicionar Pagamento -->
-<div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="paymentModalTitle">Adicionar Pagamento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="paymentMethod">
-                
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Valor</label>
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text">R$</span>
-                        <input type="number" class="form-control" id="paymentAmount" 
-                               step="0.01" min="0.01" required autofocus>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="setRemainingAmount()">
-                        Usar valor restante
-                    </button>
-                </div>
-
-                <!-- Campos específicos por método -->
-                <div id="cashFields" class="d-none">
-                    <div class="mb-3">
-                        <label class="form-label">Valor Recebido</label>
-                        <div class="input-group">
-                            <span class="input-group-text">R$</span>
-                            <input type="number" class="form-control" id="cashReceived" 
-                                   step="0.01" min="0">
+                    <div id="carrinhoItens" class="carrinho-lista flex-grow-1">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-cart-x fs-1"></i>
+                            <p class="mt-2 mb-0">Carrinho vazio</p>
                         </div>
                     </div>
-                    <div class="alert alert-info" id="changeDisplay" style="display:none;">
-                        <strong>Troco:</strong> <span id="changeAmount">R$ 0,00</span>
+                    <div class="border-top pt-2 mt-auto">
+                        <div class="d-flex justify-content-between small"><span>Subtotal:</span><span id="subtotalDisplay">R$ 0,00</span></div>
+                        <div class="d-flex justify-content-between small align-items-center">
+                            <span>Desconto:</span>
+                            <input type="number" class="form-control form-control-sm d-inline" style="width: 80px;" id="descontoInput" value="0" min="0" step="0.01" onchange="calcularTotais()">
+                        </div>
+                        <hr class="my-1">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>TOTAL:</strong>
+                            <span class="total-display text-success" id="totalDisplay">R$ 0,00</span>
+                        </div>
                     </div>
-                </div>
-
-                <div id="cardFields" class="d-none">
-                    <div class="mb-3">
-                        <label class="form-label">Bandeira</label>
-                        <select class="form-select" id="cardBrand">
-                            <option value="">Selecione...</option>
-                            <option value="VISA">Visa</option>
-                            <option value="MASTERCARD">Mastercard</option>
-                            <option value="ELO">Elo</option>
-                            <option value="AMEX">American Express</option>
-                            <option value="HIPERCARD">Hipercard</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Últimos 4 Dígitos</label>
-                        <input type="text" class="form-control" id="cardLastDigits" 
-                               maxlength="4" placeholder="1234">
-                    </div>
-                    <div class="mb-3" id="installmentsField">
-                        <label class="form-label">Parcelas</label>
-                        <select class="form-select" id="installments">
-                            <option value="1">1x à vista</option>
-                            <option value="2">2x sem juros</option>
-                            <option value="3">3x sem juros</option>
-                            <option value="4">4x sem juros</option>
-                            <option value="5">5x sem juros</option>
-                            <option value="6">6x sem juros</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">NSU/DOC</label>
-                        <input type="text" class="form-control" id="nsu" 
-                               placeholder="Número do comprovante">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Código de Autorização</label>
-                        <input type="text" class="form-control" id="authCode" 
-                               placeholder="Código de autorização">
-                    </div>
-                </div>
-
-                <div id="pixFields" class="d-none">
-                    <div class="mb-3">
-                        <label class="form-label">Chave PIX</label>
-                        <input type="text" class="form-control" id="pixKey" 
-                               placeholder="CPF, Email, Telefone ou Chave Aleatória">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ID da Transação</label>
-                        <input type="text" class="form-control" id="pixTransactionId" 
-                               placeholder="E12345678202411251030...">
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Observações</label>
-                    <textarea class="form-control" id="paymentObs" rows="2" 
-                              placeholder="Observações opcionais"></textarea>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="addPayment()">
-                    <i class="bi bi-plus-circle"></i> Adicionar
-                </button>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header card-header-payment d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-credit-card me-2"></i>Pagamento</span>
+                    <span id="statusPagamento" class="badge">Aguardando</span>
+                </div>
+                <div class="card-body d-flex flex-column p-2">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <button class="btn btn-dinheiro btn-pagamento w-100" onclick="selecionarPagamento('DINHEIRO')" id="btnDinheiro" disabled>
+                                <i class="bi bi-cash-stack d-block mb-1"></i>
+                                <small>Dinheiro</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-debito btn-pagamento w-100" onclick="selecionarPagamento('CARTAO_DEBITO')" id="btnDebito" disabled>
+                                <i class="bi bi-credit-card d-block mb-1"></i>
+                                <small>Débito</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-credito btn-pagamento w-100" onclick="selecionarPagamento('CARTAO_CREDITO')" id="btnCredito" disabled>
+                                <i class="bi bi-credit-card-2-front d-block mb-1"></i>
+                                <small>Crédito</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-pix btn-pagamento w-100" onclick="selecionarPagamento('PIX')" id="btnPix" disabled>
+                                <i class="bi bi-qr-code d-block mb-1"></i>
+                                <small>PIX</small>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="camposPagamento" class="d-none flex-grow-1">
+                        <div id="camposDinheiro" class="d-none">
+                            <label class="form-label small mb-1 fw-semibold">Valor Recebido</label>
+                            <div class="input-group mb-1">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" class="form-control" id="valorRecebido" step="0.01" min="0" onkeyup="calcularTroco()" onchange="calcularTroco()">
+                            </div>
+                            <div class="d-flex gap-1 mb-2">
+                                <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setValorRecebido(10)">10</button>
+                                <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setValorRecebido(20)">20</button>
+                                <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setValorRecebido(50)">50</button>
+                                <button class="btn btn-outline-secondary btn-sm flex-fill" onclick="setValorRecebido(100)">100</button>
+                                <button class="btn btn-success btn-sm flex-fill" onclick="setValorExato()">Exato</button>
+                            </div>
+                            <div id="trocoContainer" class="alert alert-info py-2 mb-0">
+                                <div class="d-flex justify-content-between">
+                                    <span>Troco:</span>
+                                    <strong id="trocoDisplay">R$ 0,00</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="camposCartao" class="d-none">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small mb-1 fw-semibold">Bandeira</label>
+                                    <select class="form-select form-select-sm" id="bandeira">
+                                        <option value="VISA">Visa</option>
+                                        <option value="MASTERCARD">Master</option>
+                                        <option value="ELO">Elo</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1 fw-semibold">4 últimos</label>
+                                    <input type="text" class="form-control form-control-sm" id="ultimosDigitos" maxlength="4">
+                                </div>
+                                <div class="col-6" id="parcelasGroup">
+                                    <label class="form-label small mb-1 fw-semibold">Parcelas</label>
+                                    <select class="form-select form-select-sm" id="parcelas">
+                                        <option value="1">1x</option>
+                                        <option value="2">2x</option>
+                                        <option value="3">3x</option>
+                                        <option value="6">6x</option>
+                                        <option value="12">12x</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1 fw-semibold">NSU</label>
+                                    <input type="text" class="form-control form-control-sm" id="nsu">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="camposPix" class="d-none">
+                            <label class="form-label small mb-1 fw-semibold">ID Transação PIX</label>
+                            <input type="text" class="form-control form-control-sm" id="pixTransactionId" placeholder="Opcional">
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-2">
+                        <button class="btn btn-lg btn-success w-100" id="btnFinalizar" onclick="finalizarVenda()" disabled>
+                            <i class="bi bi-check-circle me-2"></i>FINALIZAR
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal: Buscar Cliente -->
-<div class="modal fade" id="customerModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<input type="hidden" id="selectedPaymentMethod" value="">
+<input type="hidden" id="currentTotal" value="0">
+
+<div class="modal fade" id="modalBuscarCliente" tabindex="-1">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Buscar Cliente</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <input type="text" class="form-control mb-3" id="customerModalSearch" 
-                       placeholder="Buscar por CPF, Nome ou Telefone...">
-                <div id="customersList" style="max-height: 400px; overflow-y: auto;">
-                    <!-- Lista de clientes -->
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="buscaClienteInput" placeholder="Nome, CPF ou telefone..." onkeypress="if(event.key==='Enter') executarBuscaCliente()">
+                    <button class="btn btn-primary" onclick="executarBuscaCliente()"><i class="bi bi-search"></i></button>
                 </div>
+                <div id="resultadosCliente"><p class="text-muted text-center">Digite para buscar</p></div>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <!-- SweetAlert2 para modais -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/pdv.js"></script>
+<script>
+let pedidosOnline = [], manipulacoes = [], produtosBusca = [], carrinhoItens = [], caixaAberto = false, totalCarrinho = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    verificarCaixa(); carregarDados(); atualizarHora();
+    setInterval(atualizarHora, 1000); setInterval(carregarDados, 60000);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('orderId')) setTimeout(() => selecionarPedidoOnline(urlParams.get('orderId')), 500);
+    if (urlParams.get('manipulationId')) setTimeout(() => selecionarManipulacao(urlParams.get('manipulationId')), 500);
+});
+
+function atualizarHora() { document.getElementById('horaAtual').textContent = new Date().toLocaleTimeString('pt-BR'); }
+
+async function verificarCaixa() {
+    try {
+        const data = (await (await fetch('/api/PDV/cash-register/status')).json());
+        if (data.success && data.data?.isOpen) {
+            caixaAberto = true;
+            document.getElementById('caixaFechadoOverlay').classList.add('d-none');
+            document.getElementById('caixaInfo').innerHTML = `<i class="bi bi-unlock me-1"></i>${data.data.code}`;
+            document.getElementById('caixaInfo').className = 'badge bg-success';
+        } else {
+            caixaAberto = false;
+            document.getElementById('caixaFechadoOverlay').classList.remove('d-none');
+            document.getElementById('caixaInfo').innerHTML = '<i class="bi bi-lock me-1"></i>Fechado';
+            document.getElementById('caixaInfo').className = 'badge bg-danger';
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function carregarDados() { await Promise.all([carregarPedidosOnline(), carregarManipulacoes()]); }
+
+async function carregarPedidosOnline() {
+    try {
+        const data = (await (await fetch('/api/PDV/online-orders-ready')).json());
+        if (data.success) { pedidosOnline = data.data || []; document.getElementById('badgeOnline').textContent = pedidosOnline.length; renderizarPedidosOnline(); }
+    } catch (e) { console.error(e); }
+}
+
+function renderizarPedidosOnline() {
+    const c = document.getElementById('listaOnline');
+    if (!pedidosOnline.length) { c.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-check-circle text-success fs-1"></i><p class="mt-2 mb-0">Nenhum pedido aguardando</p></div>'; return; }
+    c.innerHTML = pedidosOnline.map(p => `<div class="item-card p-2 border-bottom" onclick="selecionarPedidoOnline('${p.id}')" data-search="${p.orderNumber} ${p.customerName}"><div class="d-flex justify-content-between"><div><strong class="text-primary">#${p.orderNumber}</strong><span class="badge bg-success ms-1">Pronto</span><br><small class="text-muted">${p.customerName}</small><br><small class="text-muted">${p.itemsCount} item(s)</small></div><div class="text-end"><strong class="text-success">R$ ${p.total.toFixed(2).replace('.',',')}</strong><br><button class="btn btn-sm btn-warning mt-1"><i class="bi bi-cart-plus"></i></button></div></div></div>`).join('');
+}
+
+async function selecionarPedidoOnline(id) {
+    try {
+        const data = (await (await fetch(`/api/PDV/online-order/${id}`)).json());
+        if (data.success && data.data) {
+            carrinhoItens = data.data.items.map(i => ({tipo:'ONLINE_ORDER',referenciaId:id,descricao:i.productName,quantidade:i.quantity,precoUnitario:i.unitPrice,total:i.totalPrice}));
+            document.getElementById('clienteId').value = data.data.customerId || '';
+            document.getElementById('clienteNome').value = data.data.customerName || '';
+            atualizarCarrinho(); habilitarPagamento(true);
+        }
+    } catch (e) { alert('Erro ao carregar pedido'); }
+}
+
+async function carregarManipulacoes() {
+    try {
+        const data = (await (await fetch('/api/PDV/pending-orders')).json());
+        if (data.success) { manipulacoes = data.data || []; document.getElementById('badgeManipulacoes').textContent = manipulacoes.length; renderizarManipulacoes(); }
+    } catch (e) { document.getElementById('listaManipulacoes').innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-exclamation-triangle text-warning fs-1"></i><p>Erro</p></div>'; }
+}
+
+function renderizarManipulacoes() {
+    const c = document.getElementById('listaManipulacoes');
+    if (!manipulacoes.length) { c.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-check-circle text-success fs-1"></i><p class="mt-2 mb-0">Nenhuma manipulação aguardando</p></div>'; return; }
+    c.innerHTML = manipulacoes.map(m => `<div class="item-card p-2 border-bottom" onclick="selecionarManipulacao('${m.id}')" data-search="${m.orderNumber} ${m.customerName} ${m.formulaName}"><div class="d-flex justify-content-between"><div><strong class="text-info">#${m.orderNumber}</strong><span class="badge bg-success ms-1">Finalizado</span><br><small>${m.formulaName}</small><br><small class="text-muted">${m.customerName}</small><br><small class="text-muted">${m.quantityToProduce} ${m.unit}</small></div><div class="text-end"><strong class="text-success">R$ ${(m.suggestedPrice||0).toFixed(2).replace('.',',')}</strong><br><button class="btn btn-sm btn-warning mt-1"><i class="bi bi-cart-plus"></i></button></div></div></div>`).join('');
+}
+
+function selecionarManipulacao(id) {
+    const m = manipulacoes.find(x => x.id === id); if (!m) return;
+    let preco = m.suggestedPrice || 0;
+    if (preco <= 0) { const s = prompt('Valor da manipulação:', '0.00'); if (!s) return; preco = parseFloat(s) || 0; if (preco <= 0) { alert('Valor inválido!'); return; } }
+    carrinhoItens.push({tipo:'MANIPULATION',referenciaId:id,descricao:`${m.formulaName} (${m.orderNumber})`,quantidade:1,precoUnitario:preco,total:preco});
+    atualizarCarrinho(); habilitarPagamento(true);
+}
+
+async function buscarProdutos() {
+    const t = document.getElementById('buscaProduto').value.trim(); if (t.length < 2) { alert('Digite pelo menos 2 caracteres'); return; }
+    const c = document.getElementById('listaProdutos'); c.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+    try {
+        const data = (await (await fetch(`/api/PDV/products/search?q=${encodeURIComponent(t)}`)).json());
+        if (data.success && data.data?.length) { produtosBusca = data.data; renderizarProdutos(); }
+        else c.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-search fs-1"></i><p>Nenhum produto</p></div>';
+    } catch (e) { c.innerHTML = '<div class="text-center py-4 text-danger"><i class="bi bi-exclamation-triangle fs-1"></i><p>Erro</p></div>'; }
+}
+
+function renderizarProdutos() {
+    document.getElementById('listaProdutos').innerHTML = produtosBusca.map(p => `<div class="produto-card p-2 border-bottom d-flex justify-content-between" onclick="adicionarProduto('${p.id}')"><div><strong>${p.name}</strong>${p.isOnPromotion?'<span class="badge promo-badge ms-1">PROMO</span>':''}${p.code?`<br><small class="text-muted"><i class="bi bi-upc me-1"></i>${p.code}</small>`:''}<br><small class="text-muted">Estoque: ${p.stockQuantity} ${p.unit||'UN'}</small></div><div class="text-end">${p.isOnPromotion?`<small class="text-muted text-decoration-line-through">R$ ${p.originalPrice.toFixed(2).replace('.',',')}</small><br>`:''}<strong class="text-success">R$ ${p.price.toFixed(2).replace('.',',')}</strong><br><button class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button></div></div>`).join('');
+}
+
+function adicionarProduto(id) {
+    const p = produtosBusca.find(x => x.id === id); if (!p) return;
+    if (p.stockQuantity <= 0) { alert('Sem estoque!'); return; }
+    const e = carrinhoItens.find(i => i.tipo === 'PRODUCT' && i.referenciaId === id);
+    if (e) { if (e.quantidade >= p.stockQuantity) { alert('Máximo atingido!'); return; } e.quantidade++; e.total = e.quantidade * e.precoUnitario; }
+    else carrinhoItens.push({tipo:'PRODUCT',referenciaId:id,descricao:p.name,quantidade:1,precoUnitario:p.price,total:p.price});
+    atualizarCarrinho(); habilitarPagamento(true);
+}
+
+function atualizarCarrinho() {
+    const c = document.getElementById('carrinhoItens'), btn = document.getElementById('btnLimparCarrinho');
+    document.getElementById('carrinhoCount').textContent = carrinhoItens.length;
+    if (!carrinhoItens.length) { c.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-cart-x fs-1"></i><p>Carrinho vazio</p></div>'; btn.disabled = true; totalCarrinho = 0; }
+    else {
+        const badge = t => t==='PRODUCT'?'<span class="badge bg-primary tipo-badge ms-1">PROD</span>':t==='MANIPULATION'?'<span class="badge bg-info tipo-badge ms-1">MANIP</span>':'<span class="badge bg-warning text-dark tipo-badge ms-1">ONLINE</span>';
+        c.innerHTML = carrinhoItens.map((i,idx) => `<div class="item-carrinho"><div class="d-flex justify-content-between"><div><small class="fw-bold">${i.descricao}</small>${badge(i.tipo)}<br><small class="text-muted">${i.quantidade}x R$ ${i.precoUnitario.toFixed(2).replace('.',',')}</small></div><div class="text-end"><strong class="text-success">R$ ${i.total.toFixed(2).replace('.',',')}</strong><button class="btn btn-sm btn-link text-danger p-0 ms-1" onclick="removerItem(${idx})"><i class="bi bi-x"></i></button></div></div></div>`).join('');
+        btn.disabled = false; totalCarrinho = carrinhoItens.reduce((s,i) => s + i.total, 0);
+    }
+    calcularTotais();
+}
+
+function calcularTotais() { const d = parseFloat(document.getElementById('descontoInput').value)||0, t = Math.max(0,totalCarrinho-d); document.getElementById('subtotalDisplay').textContent = formatarMoeda(totalCarrinho); document.getElementById('totalDisplay').textContent = formatarMoeda(t); document.getElementById('currentTotal').value = t; }
+function removerItem(i) { carrinhoItens.splice(i,1); atualizarCarrinho(); if (!carrinhoItens.length) { habilitarPagamento(false); limparFormPagamento(); } }
+function limparCarrinho() { if (!confirm('Limpar carrinho?')) return; carrinhoItens = []; document.getElementById('clienteId').value = ''; document.getElementById('clienteNome').value = ''; document.getElementById('descontoInput').value = '0'; atualizarCarrinho(); habilitarPagamento(false); limparFormPagamento(); }
+function habilitarPagamento(e) { ['btnDinheiro','btnDebito','btnCredito','btnPix'].forEach(id => document.getElementById(id).disabled = !e); document.getElementById('statusPagamento').textContent = e ? 'Selecione' : 'Aguardando'; }
+
+function selecionarPagamento(m) {
+    document.getElementById('selectedPaymentMethod').value = m;
+    ['btnDinheiro','btnDebito','btnCredito','btnPix'].forEach(id => document.getElementById(id).classList.remove('selected'));
+    document.getElementById({DINHEIRO:'btnDinheiro',CARTAO_DEBITO:'btnDebito',CARTAO_CREDITO:'btnCredito',PIX:'btnPix'}[m]).classList.add('selected');
+    document.getElementById('camposPagamento').classList.remove('d-none');
+    ['camposDinheiro','camposCartao','camposPix'].forEach(id => document.getElementById(id).classList.add('d-none'));
+    if (m==='DINHEIRO') document.getElementById('camposDinheiro').classList.remove('d-none');
+    else if (m.includes('CARTAO')) { document.getElementById('camposCartao').classList.remove('d-none'); document.getElementById('parcelasGroup').style.display = m==='CARTAO_CREDITO'?'block':'none'; }
+    else if (m==='PIX') document.getElementById('camposPix').classList.remove('d-none');
+    document.getElementById('btnFinalizar').disabled = false;
+    document.getElementById('statusPagamento').textContent = m.replace('CARTAO_','').replace('_',' ');
+}
+
+function setValorRecebido(v) { document.getElementById('valorRecebido').value = v.toFixed(2); calcularTroco(); }
+function setValorExato() { document.getElementById('valorRecebido').value = (parseFloat(document.getElementById('currentTotal').value)||0).toFixed(2); calcularTroco(); }
+function calcularTroco() { const t = parseFloat(document.getElementById('currentTotal').value)||0, r = parseFloat(document.getElementById('valorRecebido').value)||0, tr = r-t; document.getElementById('trocoDisplay').textContent = formatarMoeda(Math.max(0,tr)); document.getElementById('trocoContainer').className = tr<0?'alert alert-danger py-2 mb-0':'alert alert-info py-2 mb-0'; }
+function limparFormPagamento() { document.getElementById('selectedPaymentMethod').value = ''; document.getElementById('camposPagamento').classList.add('d-none'); document.getElementById('valorRecebido').value = ''; document.getElementById('btnFinalizar').disabled = true; ['btnDinheiro','btnDebito','btnCredito','btnPix'].forEach(id => document.getElementById(id).classList.remove('selected')); }
+
+async function finalizarVenda() {
+    if (!caixaAberto) { alert('Abra o caixa!'); return; }
+    if (!carrinhoItens.length) { alert('Carrinho vazio!'); return; }
+    const m = document.getElementById('selectedPaymentMethod').value; if (!m) { alert('Selecione pagamento!'); return; }
+    const t = parseFloat(document.getElementById('currentTotal').value)||0; let vr = t, tr = 0;
+    if (m==='DINHEIRO') { vr = parseFloat(document.getElementById('valorRecebido').value)||0; if (vr<t) { alert('Valor insuficiente!'); return; } tr = vr-t; }
+    if (!confirm(`Finalizar R$ ${t.toFixed(2).replace('.',',')}?`)) return;
+    const btn = document.getElementById('btnFinalizar'); btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>...';
+    try {
+        const data = (await (await fetch('/api/PDV/unified-sale', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerId:document.getElementById('clienteId').value||null,items:carrinhoItens.map(i=>({tipo:i.tipo,referenciaId:i.referenciaId,descricao:i.descricao,quantidade:i.quantidade,precoUnitario:i.precoUnitario,total:i.total})),discount:parseFloat(document.getElementById('descontoInput').value)||0,payment:{method:m,amount:t,cashReceived:m==='DINHEIRO'?vr:null,changeAmount:tr,cardBrand:m.includes('CARTAO')?document.getElementById('bandeira').value:null,cardLastDigits:m.includes('CARTAO')?document.getElementById('ultimosDigitos').value:null,installments:m==='CARTAO_CREDITO'?parseInt(document.getElementById('parcelas').value):1,nsu:m.includes('CARTAO')?document.getElementById('nsu').value:null,pixTransactionId:m==='PIX'?document.getElementById('pixTransactionId').value:null}})})).json());
+        if (data.success) { alert(`✅ Venda: ${data.data.saleCode}\nTotal: ${formatarMoeda(data.data.total)}${data.data.changeAmount>0?'\nTroco: '+formatarMoeda(data.data.changeAmount):''}`); limparCarrinho(); carregarDados(); }
+        else alert('❌ ' + data.message);
+    } catch (e) { alert('❌ Erro'); } finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>FINALIZAR'; }
+}
+
+function buscarCliente() { new bootstrap.Modal(document.getElementById('modalBuscarCliente')).show(); }
+async function executarBuscaCliente() { const t = document.getElementById('buscaClienteInput').value.trim(); if (!t) return; const c = document.getElementById('resultadosCliente'); c.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div></div>'; try { const data = (await (await fetch(`/api/Customers/search?q=${encodeURIComponent(t)}`)).json()); if (data.success && data.data?.length) c.innerHTML = data.data.map(x=>`<div class="p-2 border-bottom" style="cursor:pointer" onclick="selecionarCliente('${x.id}','${x.fullName}')"><strong>${x.fullName}</strong><br><small class="text-muted">${x.phone||''} ${x.cpf||''}</small></div>`).join(''); else c.innerHTML = '<p class="text-muted text-center">Nenhum cliente</p>'; } catch (e) { c.innerHTML = '<p class="text-danger text-center">Erro</p>'; } }
+function selecionarCliente(id, nome) { document.getElementById('clienteId').value = id; document.getElementById('clienteNome').value = nome; bootstrap.Modal.getInstance(document.getElementById('modalBuscarCliente')).hide(); }
+function limparCliente() { document.getElementById('clienteId').value = ''; document.getElementById('clienteNome').value = ''; }
+function formatarMoeda(v) { return 'R$ ' + (v||0).toFixed(2).replace('.',','); }
+function filtrarLista(tipo) { const i = tipo==='online'?'buscaOnline':'buscaManipulacao', t = document.getElementById(i).value.toLowerCase(), c = tipo==='online'?'listaOnline':'listaManipulacoes'; document.querySelectorAll(`#${c} .item-card`).forEach(card => card.style.display = (card.getAttribute('data-search')||'').toLowerCase().includes(t)?'':'none'); }
+function refreshData() { carregarDados(); verificarCaixa(); }
+</script>
 }

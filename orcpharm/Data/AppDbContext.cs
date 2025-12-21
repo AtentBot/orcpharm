@@ -1,4 +1,4 @@
-﻿using Data.Configurations;
+using Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Models.Core;
@@ -150,6 +150,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<FiscalInvoice> FiscalInvoices { get; set; } = null!;
 
+    /// <summary>
+    /// Itens das Notas Fiscais com detalhes de tributação
+    /// </summary>
+    public DbSet<FiscalInvoiceItem> FiscalInvoiceItems { get; set; } = null!;
+
+    /// <summary>
+    /// Configurações fiscais por estabelecimento (certificado, séries, CSC)
+    /// </summary>
+    public DbSet<FiscalConfig> FiscalConfigs { get; set; } = null!;
+
+    /// <summary>
+    /// Fila de contingência para notas não transmitidas
+    /// </summary>
+    public DbSet<FiscalQueue> FiscalQueues { get; set; } = null!;
+
+    /// <summary>
+    /// Log de eventos fiscais (emissão, cancelamento, erros)
+    /// </summary>
+    public DbSet<FiscalLog> FiscalLogs { get; set; } = null!;
+
+    /// <summary>
+    /// Inutilização de numeração fiscal
+    /// </summary>
+    public DbSet<FiscalNumberGap> FiscalNumberGaps { get; set; } = null!;
+
     // ════════════════════════════════════════════════════════════════════════
     // CAIXA & FINANCEIRO
     // ════════════════════════════════════════════════════════════════════════
@@ -217,6 +242,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureLabelEntities(modelBuilder);
         ConfigureSubscriptionInvoices(modelBuilder);
         ConfigureFiscalInvoices(modelBuilder);
+        ConfigureFiscalEntities(modelBuilder); // NOVO - Entidades fiscais complementares
         ConfigureSaasAdminEntities(modelBuilder);
         ConfigurePortalClienteEntities(modelBuilder);
         ConfigureCatalogoEntities(modelBuilder);
@@ -257,7 +283,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     private void ConfigureManipulationEntities(ModelBuilder modelBuilder)
     {
-
 
         // ──────────────────────────────────────────────────────────────────
         // MANIPULATION LOSS
@@ -466,7 +491,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .HasForeignKey(e => e.EstablishmentId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne<Models.Employees.Employee>()
+            entity.HasOne(e => e.CreatedByEmployee)
                   .WithMany()
                   .HasForeignKey(e => e.CreatedByEmployeeId)
                   .OnDelete(DeleteBehavior.SetNull);
@@ -785,6 +810,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(e => e.EstablishmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Relacionamento com itens
+            entity.HasMany(e => e.Items)
+                .WithOne(i => i.FiscalInvoice)
+                .HasForeignKey(i => i.FiscalInvoiceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // ──────────────────────────────────────────────────────────────
             // ÍNDICES PARA PERFORMANCE
             // ──────────────────────────────────────────────────────────────
@@ -831,6 +862,160 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(e => e.InvoiceType)
                 .HasDefaultValue("NFCE");
+        });
+    }
+
+    /// <summary>
+    /// Configura entidades fiscais complementares (Config, Items, Queue, Logs, Gaps)
+    /// NOVO - Adicionado para módulo fiscal completo
+    /// </summary>
+    private void ConfigureFiscalEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // FISCAL INVOICE ITEM
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<FiscalInvoiceItem>(entity =>
+        {
+            entity.ToTable("fiscal_invoice_items");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.FiscalInvoiceId)
+                .HasDatabaseName("idx_fiscal_invoice_items_invoice");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // FISCAL CONFIG
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<FiscalConfig>(entity =>
+        {
+            entity.ToTable("fiscal_configs");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId)
+                .IsUnique()
+                .HasDatabaseName("idx_fiscal_configs_establishment");
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.Environment)
+                .HasDefaultValue("HOMOLOGACAO");
+
+            entity.Property(e => e.TaxRegime)
+                .HasDefaultValue("SIMPLES_NACIONAL");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // FISCAL QUEUE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<FiscalQueue>(entity =>
+        {
+            entity.ToTable("fiscal_queue");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId)
+                .HasDatabaseName("idx_fiscal_queue_establishment");
+
+            entity.HasIndex(e => e.Status)
+                .HasDatabaseName("idx_fiscal_queue_status");
+
+            entity.HasIndex(e => e.NextAttempt)
+                .HasDatabaseName("idx_fiscal_queue_next");
+
+            entity.HasOne(e => e.Sale)
+                .WithMany()
+                .HasForeignKey(e => e.SaleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.FiscalInvoice)
+                .WithMany()
+                .HasForeignKey(e => e.FiscalInvoiceId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.Status)
+                .HasDefaultValue("PENDENTE");
+
+            entity.Property(e => e.Attempts)
+                .HasDefaultValue(0);
+
+            entity.Property(e => e.MaxAttempts)
+                .HasDefaultValue(3);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // FISCAL LOG
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<FiscalLog>(entity =>
+        {
+            entity.ToTable("fiscal_logs");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId)
+                .HasDatabaseName("idx_fiscal_logs_establishment");
+
+            entity.HasIndex(e => e.FiscalInvoiceId)
+                .HasDatabaseName("idx_fiscal_logs_invoice");
+
+            entity.HasIndex(e => e.CreatedAt)
+                .HasDatabaseName("idx_fiscal_logs_date");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // FISCAL NUMBER GAP (Inutilização)
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<FiscalNumberGap>(entity =>
+        {
+            entity.ToTable("fiscal_number_gaps");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId)
+                .HasDatabaseName("idx_fiscal_gaps_establishment");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.Status)
+                .HasDefaultValue("PENDENTE");
         });
     }
 
@@ -1038,6 +1223,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Permission>().HasData(permissions);
     }
+
     private void ConfigureSaasAdminEntities(ModelBuilder modelBuilder)
     {
         // ──────────────────────────────────────────────────────────────────
@@ -1087,6 +1273,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true);
         });
+
         modelBuilder.Entity<SaasAdminPasswordReset>(entity =>
         {
             entity.ToTable("saas_admin_password_resets");
@@ -1139,6 +1326,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(e => e.SaasAdminId);
             entity.HasIndex(e => e.ExpiresAt);
         });
-
     }
 }

@@ -25,6 +25,9 @@ public class Establishment
     [Required, MaxLength(200)]
     public string NomeFantasia { get; set; } = default!;
 
+    [MaxLength(20)]
+    public string? InscricaoEstadual { get; set; }    
+
     // CNPJ apenas dígitos (formatação fica para o front/DTO)
     [MaxLength(14)]
     public string? Cnpj { get; set; }  // Nullable para permitir cadastro sem CNPJ inicialmente

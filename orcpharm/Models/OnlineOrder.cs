@@ -17,6 +17,13 @@ public class OnlineOrder
     
     public Guid EstablishmentId { get; set; }
     
+    // ========== VÍNCULO COM PDV ==========
+    public Guid? SaleId { get; set; }
+    
+    [ForeignKey("SaleId")]
+    public virtual Sale? Sale { get; set; }
+    // =====================================
+    
     [StringLength(30)]
     public string Status { get; set; } = "PENDING";
     // PENDING, CONFIRMED, PREPARING, READY, DELIVERED, CANCELLED
@@ -93,6 +100,15 @@ public class OnlineOrder
         "DELIVERED" => "secondary",
         "CANCELLED" => "danger",
         _ => "secondary"
+    };
+    
+    [NotMapped]
+    public string PaymentStatusDisplay => PaymentStatus switch
+    {
+        "PENDING" => "Pendente",
+        "PAID" => "Pago",
+        "REFUNDED" => "Estornado",
+        _ => PaymentStatus
     };
 }
 

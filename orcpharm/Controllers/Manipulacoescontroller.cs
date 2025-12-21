@@ -7,6 +7,7 @@ namespace Controllers;
 /// <summary>
 /// MVC Controller para Views de Manipulações
 /// Serve páginas HTML para o gerenciamento visual do workflow
+/// Rota: /Manipulacoes
 /// </summary>
 [Route("[controller]")]
 public class ManipulacoesController : Controller
@@ -23,6 +24,18 @@ public class ManipulacoesController : Controller
     /// </summary>
     [HttpGet("")]
     public IActionResult Index()
+    {
+        if (!IsAuthenticated())
+            return RedirectToAction("Login", "Account");
+
+        return View();
+    }
+
+    /// <summary>
+    /// Dashboard de produção
+    /// </summary>
+    [HttpGet("Dashboard")]
+    public IActionResult Dashboard()
     {
         if (!IsAuthenticated())
             return RedirectToAction("Login", "Account");

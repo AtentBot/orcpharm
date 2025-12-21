@@ -16,23 +16,57 @@ public class QRCodesController : Controller
         _context = context;
     }
 
+    // ============================================================
+    // MÉTODOS AUXILIARES - Usando nomes corretos do middleware
+    // ============================================================
+
+    private Guid GetEmployeeId()
+    {
+        // O middleware adiciona como: context.Items["EmployeeId"]
+        if (HttpContext.Items["EmployeeId"] is Guid employeeId)
+            return employeeId;
+
+        return Guid.Empty;
+    }
+
+    private Guid GetEstablishmentId()
+    {
+        // O middleware adiciona como: context.Items["EstablishmentId"]
+        if (HttpContext.Items["EstablishmentId"] is Guid establishmentId)
+            return establishmentId;
+
+        return Guid.Empty;
+    }
+
+    private Employee? GetEmployee()
+    {
+        // O middleware adiciona como: context.Items["Employee"]
+        return HttpContext.Items["Employee"] as Employee;
+    }
+
+    // ============================================================
+    // VIEWS
+    // ============================================================
+
     // GET: /QRCodes
     [HttpGet("")]
     public async Task<IActionResult> Index()
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
-            return RedirectToAction("Login", "Auth");
+        var establishmentId = GetEstablishmentId();
 
-        var establishmentId = session.Employee.EstablishmentId;
+        if (establishmentId == Guid.Empty)
+            return RedirectToAction("Login", "Account");
 
         var qrcodes = await _context.Set<EstablishmentQRCode>()
             .Where(q => q.EstablishmentId == establishmentId)
             .OrderByDescending(q => q.CreatedAt)
             .ToListAsync();
 
+        var establishment = await _context.Establishments
+            .FirstOrDefaultAsync(e => e.Id == establishmentId);
+
         ViewBag.QRCodes = qrcodes;
-        ViewBag.Establishment = session.Employee?.Establishment;
+        ViewBag.Establishment = establishment;
 
         return View();
     }
@@ -41,11 +75,10 @@ public class QRCodesController : Controller
     [HttpGet("Print/{id:guid}")]
     public async Task<IActionResult> Print(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
-            return RedirectToAction("Login", "Auth");
+        var establishmentId = GetEstablishmentId();
 
-        var establishmentId = session.Employee.EstablishmentId;
+        if (establishmentId == Guid.Empty)
+            return RedirectToAction("Login", "Account");
 
         var qrcode = await _context.Set<EstablishmentQRCode>()
             .Include(q => q.Establishment)

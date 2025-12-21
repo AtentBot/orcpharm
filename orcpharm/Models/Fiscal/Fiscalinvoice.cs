@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models.Fiscal;
@@ -89,4 +89,9 @@ public class FiscalInvoice
 
     [ForeignKey("EstablishmentId")]
     public Establishment? Establishment { get; set; }
+
+    /// <summary>
+    /// Itens da nota fiscal com detalhes de tributação
+    /// </summary>
+    public ICollection<FiscalInvoiceItem> Items { get; set; } = new List<FiscalInvoiceItem>();
 }

@@ -238,6 +238,85 @@
         </div>
     </div>
 
+    <!-- Cards de Pedidos Online -->
+    <div class="row mb-4">
+        <div class="col-12 mb-2">
+            <h5 class="text-muted">
+                <i class="bi bi-bag-check me-2"></i>Pedidos Online
+            </h5>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/OnlineOrders?status=PENDING" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Pedidos Pendentes</p>
+                                <h3 class="mb-0 text-warning" id="onlinePendentes">-</h3>
+                            </div>
+                            <div class="bg-warning bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-clock text-warning fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/OnlineOrders?status=READY" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Prontos p/ Retirada</p>
+                                <h3 class="mb-0 text-success" id="onlineProntos">-</h3>
+                            </div>
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-check-circle text-success fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/OnlineOrders" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Pedidos Hoje</p>
+                                <h3 class="mb-0 text-primary" id="onlineHoje">-</h3>
+                            </div>
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-calendar-day text-primary fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/OnlineOrders/Dashboard" class="text-decoration-none">
+                <div class="card border-0 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Dashboard Online</p>
+                                <h3 class="mb-0 text-info">
+                                    <i class="bi bi-arrow-right-circle"></i>
+                                </h3>
+                            </div>
+                            <div class="bg-info bg-opacity-10 p-3 rounded">
+                                <i class="bi bi-graph-up text-info fs-3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
     <!-- Cards de Pagamentos/Financeiro -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
@@ -666,6 +745,19 @@
                         </a>
                     </div>
 
+                    <!-- QR Code da Farmácia -->
+                    <div class="col-md-3 mb-3">
+                        <a href="/QRCodes" class="text-decoration-none">
+                            <div class="card h-100 border-0 hover-card" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                                <div class="card-body text-center text-white">
+                                    <i class="bi bi-qr-code fs-1 mb-3"></i>
+                                    <h6 class="card-title">QR Code</h6>
+                                    <p class="card-text small opacity-75">Portal do Cliente</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
                     @if (Model.CanViewReports)
                     {
                         <div class="col-md-3 mb-3">
@@ -795,6 +887,7 @@
             loadLabelStats();
             loadPaymentStats();
             loadPrescriptionStats();
+            loadOnlineOrderStats();
         });
 
             async function loadManipulationStats() {
@@ -1011,6 +1104,29 @@
                 console.error('Erro ao carregar estatísticas de pagamentos:', error);
                 document.getElementById('totalRecebidoHoje').textContent = 'R$ 0,00';
                 document.getElementById('pagamentosPendentes').textContent = '0';
+            }
+        }
+
+        async function loadOnlineOrderStats() {
+            try {
+                const response = await fetch('/api/online-orders/stats', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.success && result.stats) {
+                        document.getElementById('onlinePendentes').textContent = result.stats.pending || 0;
+                        document.getElementById('onlineProntos').textContent = result.stats.ready || 0;
+                        document.getElementById('onlineHoje').textContent = result.stats.todayCount || 0;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas de pedidos online:', error);
+                document.getElementById('onlinePendentes').textContent = '0';
+                document.getElementById('onlineProntos').textContent = '0';
+                document.getElementById('onlineHoje').textContent = '0';
             }
         }
     </script>

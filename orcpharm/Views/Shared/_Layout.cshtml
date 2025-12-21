@@ -317,13 +317,13 @@
                     @if (canManageFormulas)
                     {
                         <li class="nav-item">
-                            <a class="nav-link has-submenu @(currentController == "Formulas" || currentController == "Workflow" || currentController == "Manipulacoes" ? "active open" : "")"
+                            <a class="nav-link has-submenu @(currentController == "Formulas" || currentController == "Manipulacoes" ? "active open" : "")"
                                href="#"
                                onclick="toggleSubmenu(event, 'producaoSubmenu')">
                                 <i class="bi bi-clipboard2-pulse"></i>
                                 Produção
                             </a>
-                            <ul class="nav flex-column nav-submenu @(currentController == "Formulas" || currentController == "Workflow" || currentController == "Manipulacoes" ? "show" : "")" id="producaoSubmenu">
+                            <ul class="nav flex-column nav-submenu @(currentController == "Formulas" || currentController == "Manipulacoes" ? "show" : "")" id="producaoSubmenu">
                                 <li class="nav-item">
                                     <a class="nav-link" href="/Formulas">
                                         <i class="bi bi-journal-medical"></i>
@@ -331,19 +331,19 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Workflow">
+                                    <a class="nav-link" href="/Manipulacoes">
                                         <i class="bi bi-list-task"></i>
                                         Ordens de Manipulação
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Workflow/Kanban">
+                                    <a class="nav-link" href="/Manipulacoes/Kanban">
                                         <i class="bi bi-columns-gap"></i>
                                         Kanban
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Workflow/Dashboard">
+                                    <a class="nav-link" href="/Manipulacoes/Dashboard">
                                         <i class="bi bi-graph-up"></i>
                                         Dashboard Produção
                                     </a>
@@ -459,17 +459,23 @@
 
                     <!-- Financeiro -->
                     <li class="nav-item">
-                        <a class="nav-link has-submenu @(currentController == "PDV" || currentController == "PaymentManagement" ? "active open" : "")"
+                        <a class="nav-link has-submenu @(currentController == "PDV" || currentController == "PaymentManagement" || currentController == "Fiscal" ? "active open" : "")"
                            href="#"
                            onclick="toggleSubmenu(event, 'financeiroSubmenu')">
                             <i class="bi bi-credit-card"></i>
                             Financeiro
                         </a>
-                        <ul class="nav flex-column nav-submenu @(currentController == "PDV" || currentController == "PaymentManagement" ? "show" : "")" id="financeiroSubmenu">
+                        <ul class="nav flex-column nav-submenu @(currentController == "PDV" || currentController == "PaymentManagement" || currentController == "Fiscal" ? "show" : "")" id="financeiroSubmenu">
                             <li class="nav-item">
                                 <a class="nav-link" href="/PDV">
                                     <i class="bi bi-shop"></i>
                                     PDV
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Fiscal">
+                                    <i class="bi bi-receipt"></i>
+                                    Notas Fiscais
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -515,8 +521,8 @@
                     @if (canManageEmployees)
                     {
                         <li class="nav-item">
-                            <a class="nav-link @(currentController == "Employees" ? "active" : "")" 
-                               href="/Employees">
+                            <a class="nav-link @(currentController == "Employees" ? "active" : "")"
+                               href="/Employees/List">
                                 <i class="bi bi-person-badge"></i>
                                 Funcionários
                             </a>

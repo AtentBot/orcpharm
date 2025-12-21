@@ -16,7 +16,7 @@ public class OnlineOrdersApiController : ControllerBase
     private readonly ILogger<OnlineOrdersApiController> _logger;
 
     public OnlineOrdersApiController(
-        AppDbContext context, 
+        AppDbContext context,
         WhatsAppService whatsAppService,
         ILogger<OnlineOrdersApiController> logger)
     {
@@ -24,6 +24,104 @@ public class OnlineOrdersApiController : ControllerBase
         _whatsAppService = whatsAppService;
         _logger = logger;
     }
+
+    private Employee? GetEmployee() => HttpContext.Items["Employee"] as Employee;
+
+    // PUT: api/online-orders/{id}/create-sale
+    [HttpPut("{id:guid}/create-sale")]
+    public async Task<IActionResult> CreateSaleFromOrder(Guid id)
+    {
+        var employee = GetEmployee();
+        if (employee == null)
+            return Unauthorized(new { success = false, message = "Não autenticado" });
+
+        var order = await _context.Set<OnlineOrder>()
+            .Include(o => o.Customer)
+            .Include(o => o.Items!)
+            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId);
+
+        if (order == null)
+            return NotFound(new { success = false, message = "Pedido não encontrado" });
+
+        // Se já tem venda vinculada, retorna ela
+        if (order.SaleId.HasValue)
+        {
+            var existingSale = await _context.Sales.FindAsync(order.SaleId.Value);
+            return Ok(new
+            {
+                success = true,
+                saleId = order.SaleId,
+                saleCode = existingSale?.Code,
+                message = "Venda já existe para este pedido"
+            });
+        }
+
+        if (order.Status != "READY" && order.Status != "CONFIRMED")
+            return BadRequest(new { success = false, message = "Pedido precisa estar confirmado ou pronto" });
+
+        // Gerar código da venda
+        var today = DateTime.UtcNow;
+        var countToday = await _context.Sales
+            .Where(s => s.EstablishmentId == employee.EstablishmentId && s.SaleDate.Date == today.Date)
+            .CountAsync();
+        var saleCode = $"V{today:yyyyMMdd}-{(countToday + 1):D4}";
+
+        // Criar a venda com status PENDENTE (aguardando pagamento)
+        var sale = new Sale
+        {
+            Id = Guid.NewGuid(),
+            EstablishmentId = employee.EstablishmentId,
+            Code = saleCode,
+            CustomerId = order.CustomerId,
+            SaleDate = DateTime.UtcNow,
+            Subtotal = order.Subtotal,
+            DiscountAmount = order.Discount,
+            TotalAmount = order.Total,
+            PaymentMethod = "PENDENTE",
+            PaymentStatus = "PENDENTE",
+            PaidAmount = 0,
+            Status = "PENDENTE",
+            Observations = $"Pedido Online: {order.OrderNumber}",
+            CreatedAt = DateTime.UtcNow,
+            CreatedByEmployeeId = employee.Id
+        };
+
+        _context.Sales.Add(sale);
+
+        // Criar itens da venda
+        foreach (var item in order.Items!)
+        {
+            var saleItem = new SaleItem
+            {
+                Id = Guid.NewGuid(),
+                SaleId = sale.Id,
+                Description = item.ProductName,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                TotalPrice = item.TotalPrice,
+                Observations = item.Notes
+            };
+            _context.SaleItems.Add(saleItem);
+        }
+
+        // Vincular pedido à venda
+        order.SaleId = sale.Id;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Venda {SaleCode} criada do pedido {OrderNumber}", saleCode, order.OrderNumber);
+
+        return Ok(new
+        {
+            success = true,
+            saleId = sale.Id,
+            saleCode = sale.Code,
+            total = sale.TotalAmount,
+            message = "Venda criada! Redirecionando para pagamento..."
+        });
+    }
+
 
     // GET: api/online-orders
     [HttpGet]
@@ -33,20 +131,20 @@ public class OnlineOrdersApiController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var query = _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
-            .Where(o => o.EstablishmentId == session.Employee!.EstablishmentId);
+            .Where(o => o.EstablishmentId == employee.EstablishmentId);
 
         if (!string.IsNullOrEmpty(status) && status != "todos")
             query = query.Where(o => o.Status == status);
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(o => 
-                o.OrderNumber.Contains(search) || 
+            query = query.Where(o =>
+                o.OrderNumber.Contains(search) ||
                 o.Customer!.FullName.Contains(search));
 
         var total = await query.CountAsync();
@@ -77,15 +175,15 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetOrder(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
             .Include(o => o.Items!)
                 .ThenInclude(i => i.Product)
-            .Where(o => o.Id == id && o.EstablishmentId == session.Employee!.EstablishmentId)
+            .Where(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId)
             .Select(o => new
             {
                 o.Id,
@@ -135,14 +233,14 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpPut("{id:guid}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusDto dto)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
             .Include(o => o.Establishment)
-            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == session.Employee!.EstablishmentId);
+            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId);
 
         if (order == null)
             return NotFound(new { success = false, message = "Pedido não encontrado" });
@@ -151,7 +249,6 @@ public class OnlineOrdersApiController : ControllerBase
         order.Status = dto.Status;
         order.UpdatedAt = DateTime.UtcNow;
 
-        // Atualizar timestamps específicos
         switch (dto.Status)
         {
             case "CONFIRMED":
@@ -170,14 +267,13 @@ public class OnlineOrdersApiController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Enviar notificação WhatsApp
         if (dto.NotifyCustomer && order.Customer?.Phone != null)
         {
             var message = GetStatusMessage(order, dto.Status, dto.Notes);
             try
             {
                 await _whatsAppService.SendMessageAsync(order.Customer.Phone, message);
-                _logger.LogInformation("Notificação enviada para {Phone} - Pedido {OrderNumber}", 
+                _logger.LogInformation("Notificação enviada para {Phone} - Pedido {OrderNumber}",
                     order.Customer.Phone, order.OrderNumber);
             }
             catch (Exception ex)
@@ -187,11 +283,12 @@ public class OnlineOrdersApiController : ControllerBase
         }
 
         _logger.LogInformation("Pedido {OrderNumber} atualizado: {OldStatus} -> {NewStatus} por {Employee}",
-            order.OrderNumber, oldStatus, dto.Status, session.Employee?.FullName);
+            order.OrderNumber, oldStatus, dto.Status, employee.FullName);
 
-        return Ok(new { 
-            success = true, 
-            message = $"Status atualizado para {GetStatusDisplayName(dto.Status)}" 
+        return Ok(new
+        {
+            success = true,
+            message = $"Status atualizado para {GetStatusDisplayName(dto.Status)}"
         });
     }
 
@@ -199,14 +296,14 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpPut("{id:guid}/confirm")]
     public async Task<IActionResult> ConfirmOrder(Guid id, [FromBody] ConfirmOrderDto dto)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
             .Include(o => o.Establishment)
-            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == session.Employee!.EstablishmentId);
+            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId);
 
         if (order == null)
             return NotFound(new { success = false, message = "Pedido não encontrado" });
@@ -220,15 +317,12 @@ public class OnlineOrdersApiController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Notificar cliente
         if (order.Customer?.Phone != null)
         {
-            var eta = order.EstimatedReadyAt?.ToString("HH:mm") ?? "em breve";
             var message = $"✅ *Pedido Confirmado!*\n\n" +
                          $"Olá {order.Customer.FullName.Split(' ')[0]}!\n\n" +
-                         $"Seu pedido *{order.OrderNumber}* foi confirmado.\n" +
-                         $"📍 *{order.Establishment?.NomeFantasia}*\n\n" +
-                         $"⏰ Previsão: *{eta}*\n\n" +
+                         $"Seu pedido *{order.OrderNumber}* foi confirmado pela *{order.Establishment?.NomeFantasia}*.\n\n" +
+                         $"⏰ Previsão: {order.EstimatedReadyAt:HH:mm}\n\n" +
                          $"Avisaremos quando estiver pronto! 😊";
 
             try
@@ -241,6 +335,8 @@ public class OnlineOrdersApiController : ControllerBase
             }
         }
 
+        _logger.LogInformation("Pedido {OrderNumber} confirmado por {Employee}", order.OrderNumber, employee.FullName);
+
         return Ok(new { success = true, message = "Pedido confirmado!" });
     }
 
@@ -248,14 +344,14 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpPut("{id:guid}/ready")]
     public async Task<IActionResult> MarkAsReady(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
             .Include(o => o.Establishment)
-            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == session.Employee!.EstablishmentId);
+            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId);
 
         if (order == null)
             return NotFound(new { success = false, message = "Pedido não encontrado" });
@@ -269,7 +365,6 @@ public class OnlineOrdersApiController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Notificar cliente
         if (order.Customer?.Phone != null)
         {
             var message = $"🎉 *Pedido Pronto!*\n\n" +
@@ -296,13 +391,13 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpPut("{id:guid}/deliver")]
     public async Task<IActionResult> MarkAsDelivered(Guid id)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
-            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == session.Employee!.EstablishmentId);
+            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId);
 
         if (order == null)
             return NotFound(new { success = false, message = "Pedido não encontrado" });
@@ -312,7 +407,7 @@ public class OnlineOrdersApiController : ControllerBase
 
         order.Status = "DELIVERED";
         order.DeliveredAt = DateTime.UtcNow;
-        order.PaymentStatus = "PAID"; // Assumindo pagamento na retirada
+        order.PaymentStatus = "PAID";
         order.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -326,14 +421,14 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpPut("{id:guid}/cancel")]
     public async Task<IActionResult> CancelOrder(Guid id, [FromBody] CancelOnlineOrderDto dto)
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
             .Include(o => o.Establishment)
-            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == session.Employee!.EstablishmentId);
+            .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == employee.EstablishmentId);
 
         if (order == null)
             return NotFound(new { success = false, message = "Pedido não encontrado" });
@@ -348,7 +443,6 @@ public class OnlineOrdersApiController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Notificar cliente
         if (dto.NotifyCustomer && order.Customer?.Phone != null)
         {
             var message = $"❌ *Pedido Cancelado*\n\n" +
@@ -377,11 +471,11 @@ public class OnlineOrdersApiController : ControllerBase
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats()
     {
-        var session = HttpContext.Items["Session"] as EmployeeSession;
-        if (session?.Employee?.EstablishmentId == null)
+        var employee = GetEmployee();
+        if (employee == null)
             return Unauthorized(new { success = false, message = "Não autenticado" });
 
-        var establishmentId = session.Employee!.EstablishmentId;
+        var establishmentId = employee.EstablishmentId;
         var today = DateTime.UtcNow.Date;
 
         var stats = new
@@ -404,7 +498,6 @@ public class OnlineOrdersApiController : ControllerBase
         return Ok(new { success = true, stats });
     }
 
-    // Helpers
     private string GetStatusMessage(OnlineOrder order, string status, string? notes)
     {
         var customerName = order.Customer?.FullName.Split(' ')[0] ?? "Cliente";
@@ -433,7 +526,6 @@ public class OnlineOrdersApiController : ControllerBase
     };
 }
 
-// DTOs
 public class UpdateOrderStatusDto
 {
     public string Status { get; set; } = string.Empty;
