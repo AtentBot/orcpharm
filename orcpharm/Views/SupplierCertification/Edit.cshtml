@@ -1,0 +1,92 @@
+@model Models.Pharmacy.SupplierCertificate
+@{
+    ViewData["Title"] = "Editar Certificado";
+    var suppliers = ViewBag.Suppliers as List<Models.Pharmacy.Supplier>;
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="/SupplierCertification/Details/@Model.Id" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="mb-1">
+                        <i class="bi bi-pencil text-primary me-2"></i>Editar Certificado
+                    </h4>
+                    <p class="text-muted mb-0">@Model.Supplier?.CompanyName</p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="EditSubmit" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Fornecedor</label>
+                            <input type="text" class="form-control" value="@Model.Supplier?.CompanyName" disabled>
+                            <div class="form-text">O fornecedor não pode ser alterado</div>
+                        </div>
+
+                        <hr class="my-4">
+                        <h6 class="text-uppercase text-muted mb-3">Dados do Certificado</h6>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de Certificado</label>
+                                <select name="CertificateType" class="form-select">
+                                    <option value="AFE" selected="@(Model.CertificateType == "AFE")">AFE - Autorização de Funcionamento</option>
+                                    <option value="AE" selected="@(Model.CertificateType == "AE")">AE - Autorização Especial</option>
+                                    <option value="CBPF" selected="@(Model.CertificateType == "CBPF")">CBPF - Certificado de Boas Práticas</option>
+                                    <option value="ISO" selected="@(Model.CertificateType == "ISO")">ISO - Certificação ISO</option>
+                                    <option value="GMP" selected="@(Model.CertificateType == "GMP")">GMP - Boas Práticas de Fabricação</option>
+                                    <option value="OUTRO" selected="@(Model.CertificateType == "OUTRO")">Outro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nome do Certificado</label>
+                                <input type="text" name="Name" class="form-control" value="@Model.Name">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label">Número</label>
+                                <input type="text" name="Number" class="form-control" value="@Model.Number">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Órgão Emissor</label>
+                                <input type="text" name="IssuingAuthority" class="form-control" value="@Model.IssuingAuthority">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label">Data de Emissão</label>
+                                <input type="date" name="IssueDate" class="form-control" value="@Model.IssueDate?.ToString("yyyy-MM-dd")">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Data de Validade</label>
+                                <input type="date" name="ExpiryDate" class="form-control" value="@Model.ExpiryDate?.ToString("yyyy-MM-dd")">
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">Observações</label>
+                            <textarea name="Notes" class="form-control" rows="3">@Model.Notes</textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="/SupplierCertification/Details/@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

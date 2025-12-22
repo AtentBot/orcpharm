@@ -1,0 +1,150 @@
+@using Models
+@model List<ControlledSubstanceMovement>
+@{
+    ViewData["Title"] = "Movimentações de Controlados";
+    var selectedList = ViewBag.SelectedList as string ?? "";
+    var selectedStatus = ViewBag.SelectedStatus as string ?? "";
+    var startDate = ViewBag.StartDate as DateTime?;
+    var endDate = ViewBag.EndDate as DateTime?;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-arrow-left-right text-primary me-2"></i>Movimentações de Controlados</h4>
+        <p class="text-muted mb-0">Histórico de entradas e saídas de substâncias controladas</p>
+    </div>
+    <a href="/Controlled" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Lista</label>
+                <select name="list" class="form-select">
+                    <option value="">Todas</option>
+                    @{
+                        var lists = new[] { 
+                            ("A1", "A1 - Entorpecentes"), 
+                            ("A2", "A2 - Entorpecentes Especiais"),
+                            ("B1", "B1 - Psicotrópicos"),
+                            ("B2", "B2 - Anorexígenos"),
+                            ("C1", "C1 - Controlados"),
+                            ("C2", "C2 - Retinóides")
+                        };
+                        foreach (var (value, text) in lists)
+                        {
+                            if (selectedList == value)
+                            {
+                                <option value="@value" selected>@text</option>
+                            }
+                            else
+                            {
+                                <option value="@value">@text</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status SNGPC</label>
+                <select name="status" class="form-select">
+                    <option value="">Todos</option>
+                    @if (selectedStatus == "pending")
+                    {
+                        <option value="pending" selected>Pendente</option>
+                        <option value="sent">Enviado</option>
+                    }
+                    else if (selectedStatus == "sent")
+                    {
+                        <option value="pending">Pendente</option>
+                        <option value="sent" selected>Enviado</option>
+                    }
+                    else
+                    {
+                        <option value="pending">Pendente</option>
+                        <option value="sent">Enviado</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="startDate" class="form-control" value="@(startDate?.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="endDate" class="form-control" value="@(endDate?.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>Filtrar</button>
+                <a href="/Controlled/Movements" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Substância</th>
+                        <th>Lista</th>
+                        <th>Tipo</th>
+                        <th class="text-end">Quantidade</th>
+                        <th>Documento</th>
+                        <th>SNGPC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        foreach (var mov in Model)
+                        {
+                            var typeClass = mov.MovementType == "ENTRADA" ? "text-success" : "text-danger";
+                            var typeIcon = mov.MovementType == "ENTRADA" ? "bi-arrow-down-circle" : "bi-arrow-up-circle";
+                            var listClass = "bg-secondary";
+                            if (!string.IsNullOrEmpty(mov.ControlledList))
+                            {
+                                if (mov.ControlledList.StartsWith("A")) listClass = "bg-danger";
+                                else if (mov.ControlledList.StartsWith("B")) listClass = "bg-primary";
+                            }
+                            
+                            var docRef = !string.IsNullOrEmpty(mov.InvoiceNumber) ? mov.InvoiceNumber : mov.PrescriptionNumber;
+                            
+                            <tr>
+                                <td>@mov.MovementDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td><strong>@mov.SubstanceName</strong></td>
+                                <td><span class="badge @listClass">@mov.ControlledList</span></td>
+                                <td class="@typeClass"><i class="bi @typeIcon me-1"></i>@mov.MovementType</td>
+                                <td class="text-end">@mov.Quantity.ToString("N3") @mov.Unit</td>
+                                <td><small>@(docRef ?? "-")</small></td>
+                                <td>
+                                    @if (mov.SngpcSent)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check me-1"></i>Enviado</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendente</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                Nenhuma movimentação encontrada.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

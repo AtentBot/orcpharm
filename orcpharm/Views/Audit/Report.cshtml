@@ -1,0 +1,163 @@
+@model List<Models.ControlledSubstanceMovement>
+@{
+    var reportType = ViewBag.ReportType as string;
+    var reportTitle = ViewBag.ReportTitle as string;
+    ViewData["Title"] = reportTitle ?? "Relatório";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4">
+        <a href="/Audit" class="btn btn-outline-secondary me-3">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="flex-grow-1">
+            <h4 class="mb-1">
+                <i class="bi bi-file-earmark-bar-graph text-primary me-2"></i>@reportTitle
+            </h4>
+            <p class="text-muted mb-0">
+                @if (reportType == "BMPO")
+                {
+                    <span>Mês: @ViewBag.Month/@ViewBag.Year - Listas B1/B2</span>
+                }
+                else if (reportType == "BSPO")
+                {
+                    <span>@ViewBag.Quarter°Trimestre/@ViewBag.Year - Listas A1/A2/A3</span>
+                }
+                else
+                {
+                    <span>@(((DateTime?)ViewBag.StartDate)?.ToString("dd/MM/yyyy")) a @(((DateTime?)ViewBag.EndDate)?.ToString("dd/MM/yyyy"))</span>
+                }
+            </p>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline-primary">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+
+    <!-- Filtros para Movements -->
+    @if (reportType == "Movements")
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Data Inicial</label>
+                        <input type="date" name="startDate" class="form-control" value="@(((DateTime?)ViewBag.StartDate)?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Final</label>
+                        <input type="date" name="endDate" class="form-control" value="@(((DateTime?)ViewBag.EndDate)?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Lista</label>
+                        <select name="list" class="form-select">
+                            <option value="">Todas</option>
+                            <option value="A1">A1 - Entorpecentes</option>
+                            <option value="A2">A2 - Entorpecentes uso permitido</option>
+                            <option value="A3">A3 - Psicotrópicos</option>
+                            <option value="B1">B1 - Psicotrópicos</option>
+                            <option value="B2">B2 - Psicotrópicos anorexígenos</option>
+                            <option value="C1">C1 - Outras substâncias</option>
+                            <option value="C2">C2 - Retinóides</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    <!-- Tabela de Movimentações -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Substância</th>
+                            <th>Lista</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Quantidade</th>
+                            <th>Lote</th>
+                            <th>NF/Receita</th>
+                            <th>SNGPC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var mov in Model)
+                            {
+                                <tr>
+                                    <td>@mov.MovementDate.ToString("dd/MM/yyyy")</td>
+                                    <td><strong>@mov.SubstanceName</strong></td>
+                                    <td><span class="badge bg-secondary">@mov.ControlledList</span></td>
+                                    <td>
+                                        @if (mov.MovementType == "ENTRADA")
+                                        {
+                                            <span class="text-success"><i class="bi bi-arrow-down-circle me-1"></i>Entrada</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-danger"><i class="bi bi-arrow-up-circle me-1"></i>Saída</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">@mov.Quantity @mov.Unit</td>
+                                    <td><code>@(mov.BatchId?.ToString().Substring(0, 8) ?? "-")</code></td>
+                                    <td>@(mov.InvoiceNumber ?? mov.PrescriptionNumber ?? "-")</td>
+                                    <td>
+                                        @if (mov.SngpcSent)
+                                        {
+                                            <span class="badge bg-success"><i class="bi bi-check"></i></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Pendente</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    Nenhuma movimentação encontrada no período
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if (Model != null && Model.Any())
+        {
+            <div class="card-footer bg-white">
+                <div class="row text-center">
+                    <div class="col">
+                        <strong>Total Registros:</strong> @Model.Count
+                    </div>
+                    <div class="col">
+                        <strong>Entradas:</strong> @Model.Count(m => m.MovementType == "ENTRADA")
+                    </div>
+                    <div class="col">
+                        <strong>Saídas:</strong> @Model.Count(m => m.MovementType == "SAIDA")
+                    </div>
+                    <div class="col">
+                        <strong>Pendentes SNGPC:</strong> @Model.Count(m => !m.SngpcSent)
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style media="print">
+    .btn, .card-header, form { display: none !important; }
+    .card { border: 1px solid #000 !important; }
+</style>

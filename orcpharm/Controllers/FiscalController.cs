@@ -2,364 +2,341 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs.Common;
-using DTOs.Fiscal;
-using Service;
+using Models;
+using Models.Employees;
 using Models.Fiscal;
+using ViewModels.Fiscal;
 
-namespace Controllers.Api;
+namespace Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+/// <summary>
+/// Controller MVC para Views do módulo Fiscal
+/// Rota: /Fiscal
+/// </summary>
 [Authorize]
-public class FiscalController : ControllerBase
+public class FiscalController : Controller
 {
-    private readonly AppDbContext _context;
-    private readonly FiscalService _fiscalService;
+    private readonly AppDbContext _db;
+    private readonly ILogger<FiscalController> _logger;
 
-    public FiscalController(AppDbContext context)
+    public FiscalController(AppDbContext db, ILogger<FiscalController> logger)
     {
-        _context = context;
-        _fiscalService = new FiscalService(context);
+        _db = db;
+        _logger = logger;
     }
 
-    private Guid GetEstablishmentId()
-    {
-        var claim = User.FindFirst("EstablishmentId");
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-    }
-
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirst("EmployeeId") ?? User.FindFirst("UserId");
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-    }
-
-    // ============================================================
-    // CONFIGURAÇÃO
-    // ============================================================
+    // ================================================================
+    // DASHBOARD E PÁGINAS PRINCIPAIS
+    // ================================================================
 
     /// <summary>
-    /// Retorna status da configuração fiscal
+    /// Página principal de Notas Fiscais
+    /// GET /Fiscal
     /// </summary>
-    [HttpGet("config/status")]
-    public async Task<ActionResult<ApiResponse<FiscalConfigStatusDto>>> GetConfigStatus()
+    [HttpGet]
+    public async Task<IActionResult> Index()
     {
-        var establishmentId = GetEstablishmentId();
-        var status = await _fiscalService.GetConfigStatusAsync(establishmentId);
-        return Ok(ApiResponse<FiscalConfigStatusDto>.SuccessResponse(status));
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
+
+        var establishmentId = employee.EstablishmentId;
+        var today = DateTime.UtcNow.Date;
+        var primeiroDiaMes = new DateTime(today.Year, today.Month, 1);
+
+        ViewBag.NFesHoje = await _db.FiscalInvoices
+            .Where(f => f.EstablishmentId == establishmentId 
+                && f.IssueDate.Date == today
+                && f.InvoiceType == "NFE"
+                && f.Status == "AUTORIZADO")
+            .CountAsync();
+
+        ViewBag.NFCesHoje = await _db.FiscalInvoices
+            .Where(f => f.EstablishmentId == establishmentId 
+                && f.IssueDate.Date == today
+                && f.InvoiceType == "NFCE"
+                && f.Status == "AUTORIZADO")
+            .CountAsync();
+
+        ViewBag.FaturamentoHoje = await _db.FiscalInvoices
+            .Where(f => f.EstablishmentId == establishmentId 
+                && f.IssueDate.Date == today
+                && f.Status == "AUTORIZADO")
+            .SumAsync(f => (decimal?)f.TotalAmount) ?? 0;
+
+        ViewBag.TotalNotasMes = await _db.FiscalInvoices
+            .Where(f => f.EstablishmentId == establishmentId 
+                && f.IssueDate >= primeiroDiaMes
+                && f.Status == "AUTORIZADO")
+            .CountAsync();
+
+        ViewBag.FaturamentoMes = await _db.FiscalInvoices
+            .Where(f => f.EstablishmentId == establishmentId 
+                && f.IssueDate >= primeiroDiaMes
+                && f.Status == "AUTORIZADO")
+            .SumAsync(f => (decimal?)f.TotalAmount) ?? 0;
+
+        ViewBag.NotasPendentes = await _db.FiscalQueues
+            .Where(q => q.EstablishmentId == establishmentId && q.Status == "PENDENTE")
+            .CountAsync();
+
+        ViewBag.NotasComErro = await _db.FiscalInvoices
+            .Where(f => f.EstablishmentId == establishmentId 
+                && f.Status == "REJEITADO"
+                && f.IssueDate >= today.AddDays(-7))
+            .CountAsync();
+
+        var config = await _db.FiscalConfigs
+            .FirstOrDefaultAsync(c => c.EstablishmentId == establishmentId && c.IsActive);
+
+        ViewBag.ConfiguracaoOk = config != null;
+        ViewBag.Ambiente = config?.Environment ?? "NÃO CONFIGURADO";
+        ViewBag.CertificadoValido = config?.CertificateExpiry > DateTime.UtcNow;
+        ViewBag.CertificadoExpira = config?.CertificateExpiry;
+
+        return View();
     }
 
     /// <summary>
-    /// Retorna configuração fiscal atual
+    /// Página de configurações fiscais
+    /// GET /Fiscal/Config
     /// </summary>
-    [HttpGet("config")]
-    public async Task<ActionResult<ApiResponse<FiscalConfigDto>>> GetConfig()
+    [HttpGet]
+    public IActionResult Config()
     {
-        var establishmentId = GetEstablishmentId();
-        var config = await _fiscalService.GetConfigAsync(establishmentId);
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
 
-        if (config == null)
-            return Ok(ApiResponse<FiscalConfigDto>.SuccessResponse(new FiscalConfigDto(), "Configuração não encontrada"));
+        return View();
+    }
 
-        var dto = new FiscalConfigDto
+    /// <summary>
+    /// Página de detalhes de uma nota fiscal
+    /// GET /Fiscal/Details/{id}
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> Details(Guid id)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
+
+        var invoice = await _db.FiscalInvoices
+            .Include(f => f.Items)
+            .Include(f => f.Sale)
+            .FirstOrDefaultAsync(f => f.Id == id && f.EstablishmentId == employee.EstablishmentId);
+
+        if (invoice == null)
+            return NotFound();
+
+        return View(invoice);
+    }
+
+    // ================================================================
+    // NFC-e VISUALIZAÇÃO
+    // ================================================================
+
+    /// <summary>
+    /// Visualizar NFC-e MOCK (demonstração)
+    /// GET /Fiscal/NFCe/Mock
+    /// </summary>
+    [HttpGet("Fiscal/NFCe/Mock")]
+    [AllowAnonymous]
+    public async Task<IActionResult> NFCeMock()
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        
+        NFCeViewModel vm;
+        
+        if (employee != null)
         {
-            Environment = config.Environment,
-            Uf = config.Uf,
-            NfeSeries = config.NfeSeries,
-            NfceSeries = config.NfceSeries,
-            CscId = config.CscId,
-            CscToken = config.CscToken != null ? "****" : null,
-            TaxRegime = config.TaxRegime,
-            DefaultCfopVenda = config.DefaultCfopVenda,
-            DefaultCfopManipulacao = config.DefaultCfopManipulacao,
-            DefaultNcmManipulacao = config.DefaultNcmManipulacao,
-            Provider = config.Provider,
-            ProviderApiKey = config.ProviderApiKey != null ? "****" : null,
-            PrintDanfeAuto = config.PrintDanfeAuto,
-            ContingencyEnabled = config.ContingencyEnabled,
-            DefaultNature = config.DefaultNature,
-            DefaultAdditionalInfo = config.DefaultAdditionalInfo
-        };
-
-        return Ok(ApiResponse<FiscalConfigDto>.SuccessResponse(dto));
-    }
-
-    /// <summary>
-    /// Salva configuração fiscal
-    /// </summary>
-    [HttpPost("config")]
-    public async Task<ActionResult<ApiResponse<bool>>> SaveConfig([FromBody] FiscalConfigDto dto)
-    {
-        var establishmentId = GetEstablishmentId();
-        var result = await _fiscalService.SaveConfigAsync(establishmentId, dto);
-
-        if (result.Success)
-            return Ok(ApiResponse<bool>.SuccessResponse(true, result.Message));
-
-        return BadRequest(ApiResponse<bool>.ErrorResponse(result.Message));
-    }
-
-    /// <summary>
-    /// Upload de certificado digital A1
-    /// </summary>
-    [HttpPost("config/certificate")]
-    public async Task<ActionResult<ApiResponse<string>>> UploadCertificate([FromBody] UploadCertificateDto dto)
-    {
-        var establishmentId = GetEstablishmentId();
-
-        try
-        {
-            var certificateData = Convert.FromBase64String(dto.CertificateBase64);
-            var result = await _fiscalService.UploadCertificateAsync(establishmentId, certificateData, dto.Password);
-
-            if (result.Success)
-                return Ok(ApiResponse<string>.SuccessResponse(result.Message));
-
-            return BadRequest(ApiResponse<string>.ErrorResponse(result.Message));
+            var establishment = await _db.Establishments
+                .FirstOrDefaultAsync(e => e.Id == employee.EstablishmentId);
+            
+            if (establishment != null)
+            {
+                vm = NFCeViewModelFactory.CreateMock(
+                    establishment.RazaoSocial,
+                    establishment.NomeFantasia,
+                    establishment.Cnpj
+                );
+                
+                vm.Emitente.IE = establishment.InscricaoEstadual;
+                vm.Emitente.Endereco = BuildEndereco(establishment.Street, establishment.Number);
+                vm.Emitente.Bairro = establishment.Neighborhood ?? "Centro";
+                vm.Emitente.Cidade = establishment.City ?? "São Paulo";
+                vm.Emitente.UF = establishment.State ?? "SP";
+                vm.Emitente.CEP = FormatCEP(establishment.PostalCode ?? "01000000");
+                vm.Emitente.Fone = establishment.Phone;
+                
+                vm.UrlConsulta = GetUrlConsultaByUF(establishment.State ?? "SP");
+            }
+            else
+            {
+                vm = NFCeViewModelFactory.CreateMock();
+            }
         }
-        catch (Exception ex)
+        else
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Erro no upload: {ex.Message}"));
+            vm = NFCeViewModelFactory.CreateMock();
         }
+        
+        return View("NFCe", vm);
     }
 
     /// <summary>
-    /// Testa conexão com SEFAZ
+    /// Visualizar NFC-e de uma venda específica
+    /// GET /Fiscal/NFCe/Venda/{saleId}
     /// </summary>
-    [HttpPost("config/test-connection")]
-    public async Task<ActionResult<ApiResponse<bool>>> TestConnection()
+    [HttpGet("Fiscal/NFCe/Venda/{saleId}")]
+    public async Task<IActionResult> NFCeFromSale(Guid saleId)
     {
-        var establishmentId = GetEstablishmentId();
-        var config = await _fiscalService.GetConfigAsync(establishmentId);
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
 
-        if (config == null)
-            return BadRequest(ApiResponse<bool>.ErrorResponse("Configuração não encontrada"));
+        var sale = await _db.Sales
+            .Include(s => s.Items)
+            .FirstOrDefaultAsync(s => s.Id == saleId && s.EstablishmentId == employee.EstablishmentId);
 
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Conexão com SEFAZ OK"));
-    }
+        if (sale == null)
+            return NotFound("Venda não encontrada");
 
-    // ============================================================
-    // EMISSÃO
-    // ============================================================
+        var establishment = await _db.Establishments
+            .FirstOrDefaultAsync(e => e.Id == sale.EstablishmentId);
 
-    /// <summary>
-    /// Emite NF-e ou NFC-e para uma venda
-    /// </summary>
-    [HttpPost("emitir")]
-    public async Task<ActionResult<ApiResponse<NFeResultDto>>> Emitir([FromBody] EmitirNFeDto dto)
-    {
-        var establishmentId = GetEstablishmentId();
-        var userId = GetUserId();
+        if (establishment == null)
+            return NotFound("Estabelecimento não encontrado");
 
-        var result = await _fiscalService.EmitirNFeAsync(establishmentId, dto, userId);
+        var customer = sale.CustomerId.HasValue
+            ? await _db.Customers.FirstOrDefaultAsync(c => c.Id == sale.CustomerId)
+            : null;
 
-        if (result.Success)
-            return Ok(ApiResponse<NFeResultDto>.SuccessResponse(result, 
-                $"{dto.InvoiceType} #{result.InvoiceNumber} emitida com sucesso!"));
+        var fiscalDoc = await _db.FiscalInvoices
+            .FirstOrDefaultAsync(fd => fd.SaleId == saleId);
 
-        if (result.InContingency)
-            return Ok(ApiResponse<NFeResultDto>.SuccessResponse(result, 
-                "Nota adicionada à fila de contingência"));
+        var vm = NFCeViewModelFactory.FromSale(sale, establishment, customer, fiscalDoc);
 
-        return BadRequest(ApiResponse<NFeResultDto>.ErrorResponse(result.ErrorMessage ?? "Erro na emissão"));
+        return View("NFCe", vm);
     }
 
     /// <summary>
-    /// Emite NFC-e diretamente do PDV
+    /// Visualizar NFC-e por ID do documento fiscal
+    /// GET /Fiscal/NFCe/{docId}
     /// </summary>
-    [HttpPost("emitir-pdv/{saleId}")]
-    public async Task<ActionResult<ApiResponse<NFeResultDto>>> EmitirDoPdv(Guid saleId)
+    [HttpGet("Fiscal/NFCe/{docId}")]
+    public async Task<IActionResult> NFCeFromDocument(Guid docId)
     {
-        var establishmentId = GetEstablishmentId();
-        var userId = GetUserId();
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
 
-        var dto = new EmitirNFeDto
+        var fiscalDoc = await _db.FiscalInvoices
+            .Include(f => f.Items)
+            .FirstOrDefaultAsync(fd => fd.Id == docId && fd.EstablishmentId == employee.EstablishmentId);
+
+        if (fiscalDoc == null)
+            return NotFound("Documento fiscal não encontrado");
+
+        var establishment = await _db.Establishments
+            .FirstOrDefaultAsync(e => e.Id == fiscalDoc.EstablishmentId);
+
+        if (establishment == null)
+            return NotFound("Estabelecimento não encontrado");
+
+        Customer? customer = null;
+        Sale? sale = null;
+        
+        if (fiscalDoc.SaleId.HasValue)
         {
-            SaleId = saleId,
-            InvoiceType = "NFCE",
-            PrintDanfe = true
+            sale = await _db.Sales
+                .Include(s => s.Items)
+                .FirstOrDefaultAsync(s => s.Id == fiscalDoc.SaleId);
+            
+            if (sale?.CustomerId.HasValue == true)
+            {
+                customer = await _db.Customers.FirstOrDefaultAsync(c => c.Id == sale.CustomerId);
+            }
+        }
+
+        NFCeViewModel vm;
+        if (sale != null)
+        {
+            vm = NFCeViewModelFactory.FromSale(sale, establishment, customer, fiscalDoc);
+        }
+        else
+        {
+            vm = NFCeViewModelFactory.FromFiscalInvoice(fiscalDoc, establishment);
+        }
+
+        return View("NFCe", vm);
+    }
+
+    /// <summary>
+    /// Visualizar NFC-e por chave de acesso (público)
+    /// GET /Fiscal/NFCe/Chave/{chave}
+    /// IMPORTANTE: FiscalInvoice usa InvoiceKey, NÃO AccessKey
+    /// </summary>
+    [HttpGet("Fiscal/NFCe/Chave/{chave}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> NFCeByChave(string chave)
+    {
+        chave = new string(chave.Where(char.IsDigit).ToArray());
+        
+        // CORRIGIDO: FiscalInvoice usa InvoiceKey, não AccessKey
+        var fiscalDoc = await _db.FiscalInvoices
+            .Include(f => f.Items)
+            .FirstOrDefaultAsync(fd => fd.InvoiceKey == chave);
+
+        if (fiscalDoc == null)
+            return NotFound("Documento não encontrado para esta chave de acesso");
+
+        var establishment = await _db.Establishments
+            .FirstOrDefaultAsync(e => e.Id == fiscalDoc.EstablishmentId);
+
+        if (establishment == null)
+            return NotFound("Estabelecimento não encontrado");
+
+        var vm = NFCeViewModelFactory.FromFiscalInvoice(fiscalDoc, establishment);
+
+        return View("NFCe", vm);
+    }
+
+    // ================================================================
+    // HELPER METHODS
+    // ================================================================
+
+    private static string BuildEndereco(string? street, string? number)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(street)) parts.Add(street);
+        if (!string.IsNullOrWhiteSpace(number)) parts.Add(number);
+        return string.Join(", ", parts);
+    }
+
+    private static string FormatCEP(string cep)
+    {
+        cep = new string(cep.Where(char.IsDigit).ToArray());
+        if (cep.Length != 8) return cep;
+        return $"{cep.Substring(0, 5)}-{cep.Substring(5, 3)}";
+    }
+
+    private static string GetUrlConsultaByUF(string uf)
+    {
+        return uf.ToUpper() switch
+        {
+            "SP" => "www.nfce.fazenda.sp.gov.br",
+            "RJ" => "www.fazenda.rj.gov.br/nfce/consulta",
+            "MG" => "nfce.fazenda.mg.gov.br/portalnfce",
+            "RS" => "www.sefaz.rs.gov.br/NFE/NFE-NFC.aspx",
+            "PR" => "www.fazenda.pr.gov.br/nfce",
+            "SC" => "www.sef.sc.gov.br/nfce/consulta",
+            "BA" => "nfe.sefaz.ba.gov.br/servicos/nfce/default.aspx",
+            "PE" => "nfce.sefaz.pe.gov.br/nfce/consulta",
+            "CE" => "nfce.sefaz.ce.gov.br/pages/consultaNota.jsf",
+            "GO" => "nfce.sefaz.go.gov.br/nfeweb/sites/nfce/consulta",
+            _ => "www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx"
         };
-
-        var result = await _fiscalService.EmitirNFeAsync(establishmentId, dto, userId);
-
-        if (result.Success)
-            return Ok(ApiResponse<NFeResultDto>.SuccessResponse(result, "NFC-e emitida!"));
-
-        return BadRequest(ApiResponse<NFeResultDto>.ErrorResponse(result.ErrorMessage ?? "Erro na emissão"));
-    }
-
-    /// <summary>
-    /// Cancela uma nota fiscal
-    /// </summary>
-    [HttpPost("cancelar")]
-    public async Task<ActionResult<ApiResponse<CancelamentoResultDto>>> Cancelar([FromBody] CancelarNFeDto dto)
-    {
-        var establishmentId = GetEstablishmentId();
-        var userId = GetUserId();
-
-        var result = await _fiscalService.CancelarNFeAsync(establishmentId, dto, userId);
-
-        if (result.Success)
-            return Ok(ApiResponse<CancelamentoResultDto>.SuccessResponse(result, "Nota cancelada com sucesso"));
-
-        return BadRequest(ApiResponse<CancelamentoResultDto>.ErrorResponse(result.ErrorMessage ?? "Erro no cancelamento"));
-    }
-
-    /// <summary>
-    /// Inutiliza numeração
-    /// </summary>
-    [HttpPost("inutilizar")]
-    public async Task<ActionResult<ApiResponse<InutilizacaoResultDto>>> Inutilizar([FromBody] InutilizarNumeracaoDto dto)
-    {
-        var establishmentId = GetEstablishmentId();
-        var userId = GetUserId();
-
-        var result = await _fiscalService.InutilizarNumeracaoAsync(establishmentId, dto, userId);
-
-        if (result.Success)
-            return Ok(ApiResponse<InutilizacaoResultDto>.SuccessResponse(result, "Numeração inutilizada"));
-
-        return BadRequest(ApiResponse<InutilizacaoResultDto>.ErrorResponse(result.ErrorMessage ?? "Erro na inutilização"));
-    }
-
-    // ============================================================
-    // CONSULTAS
-    // ============================================================
-
-    /// <summary>
-    /// Lista notas fiscais
-    /// </summary>
-    [HttpGet("invoices")]
-    public async Task<ActionResult<ApiResponse<List<FiscalInvoiceListDto>>>> GetInvoices(
-        [FromQuery] string? status = null,
-        [FromQuery] string? type = null,
-        [FromQuery] DateTime? startDate = null,
-        [FromQuery] DateTime? endDate = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
-    {
-        var establishmentId = GetEstablishmentId();
-        var invoices = await _fiscalService.GetInvoicesAsync(
-            establishmentId, status, type, startDate, endDate, page, pageSize);
-
-        return Ok(ApiResponse<List<FiscalInvoiceListDto>>.SuccessResponse(invoices, 
-            $"{invoices.Count} nota(s) encontrada(s)"));
-    }
-
-    /// <summary>
-    /// Detalhes de uma nota fiscal
-    /// </summary>
-    [HttpGet("invoices/{id}")]
-    public async Task<ActionResult<ApiResponse<FiscalInvoiceDetailDto>>> GetInvoiceDetail(Guid id)
-    {
-        var establishmentId = GetEstablishmentId();
-        var invoice = await _fiscalService.GetInvoiceDetailAsync(id, establishmentId);
-
-        if (invoice == null)
-            return NotFound(ApiResponse<FiscalInvoiceDetailDto>.ErrorResponse("Nota não encontrada"));
-
-        return Ok(ApiResponse<FiscalInvoiceDetailDto>.SuccessResponse(invoice));
-    }
-
-    /// <summary>
-    /// Estatísticas fiscais
-    /// </summary>
-    [HttpGet("stats")]
-    public async Task<ActionResult<ApiResponse<FiscalStatsDto>>> GetStats()
-    {
-        var establishmentId = GetEstablishmentId();
-        var stats = await _fiscalService.GetStatsAsync(establishmentId);
-        return Ok(ApiResponse<FiscalStatsDto>.SuccessResponse(stats));
-    }
-
-    // ============================================================
-    // DOWNLOADS
-    // ============================================================
-
-    /// <summary>
-    /// Download do XML da nota
-    /// </summary>
-    [HttpGet("xml/{id}")]
-    public async Task<IActionResult> DownloadXml(Guid id)
-    {
-        var establishmentId = GetEstablishmentId();
-        var invoice = await _fiscalService.GetInvoiceDetailAsync(id, establishmentId);
-
-        if (invoice == null)
-            return NotFound("Nota não encontrada");
-
-        if (string.IsNullOrEmpty(invoice.XmlUrl))
-            return NotFound("XML não disponível");
-
-        var xmlContent = $"<nfeProc><NFe><chave>{invoice.InvoiceKey}</chave></NFe></nfeProc>";
-        var bytes = System.Text.Encoding.UTF8.GetBytes(xmlContent);
-
-        return File(bytes, "application/xml", $"NFe_{invoice.InvoiceNumber}.xml");
-    }
-
-    /// <summary>
-    /// Download do DANFE
-    /// </summary>
-    [HttpGet("danfe/{id}")]
-    public async Task<IActionResult> DownloadDanfe(Guid id)
-    {
-        var establishmentId = GetEstablishmentId();
-        var invoice = await _fiscalService.GetInvoiceDetailAsync(id, establishmentId);
-
-        if (invoice == null)
-            return NotFound("Nota não encontrada");
-
-        return NotFound("DANFE ainda não implementado");
-    }
-
-    // ============================================================
-    // FILA DE CONTINGÊNCIA
-    // ============================================================
-
-    /// <summary>
-    /// Lista itens na fila de contingência
-    /// </summary>
-    [HttpGet("queue")]
-    public async Task<ActionResult<ApiResponse<List<FiscalQueueItemDto>>>> GetQueue()
-    {
-        var establishmentId = GetEstablishmentId();
-        var queue = await _fiscalService.GetQueueAsync(establishmentId);
-        return Ok(ApiResponse<List<FiscalQueueItemDto>>.SuccessResponse(queue, 
-            $"{queue.Count} item(s) na fila"));
-    }
-
-    /// <summary>
-    /// Processa fila de contingência
-    /// </summary>
-    [HttpPost("queue/process")]
-    public async Task<ActionResult<ApiResponse<bool>>> ProcessQueue()
-    {
-        var establishmentId = GetEstablishmentId();
-        var userId = GetUserId();
-
-        await _fiscalService.ProcessQueueAsync(establishmentId, userId);
-
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Fila processada"));
-    }
-
-    /// <summary>
-    /// Remove item da fila (desistir da emissão)
-    /// </summary>
-    [HttpDelete("queue/{id}")]
-    public async Task<ActionResult<ApiResponse<bool>>> RemoveFromQueue(Guid id)
-    {
-        var establishmentId = GetEstablishmentId();
-
-        var item = await _context.FiscalQueues
-            .FirstOrDefaultAsync(q => q.Id == id && q.EstablishmentId == establishmentId);
-
-        if (item == null)
-            return NotFound(ApiResponse<bool>.ErrorResponse("Item não encontrado"));
-
-        _context.FiscalQueues.Remove(item);
-        await _context.SaveChangesAsync();
-
-        return Ok(ApiResponse<bool>.SuccessResponse(true, "Item removido da fila"));
     }
 }

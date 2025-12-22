@@ -230,12 +230,20 @@
     @{
         var employee = Context.Items["Employee"] as Models.Employees.Employee;
         var isAuthenticated = employee != null;
-        var jobCode = employee?.JobPosition?.Code ?? "USER";
-        var canViewReports = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR" }.Contains(jobCode);
-        var canManageEmployees = new[] { "OWNER", "MANAGER" }.Contains(jobCode);
-        var canManageInventory = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER" }.Contains(jobCode);
-        var canManageFormulas = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST" }.Contains(jobCode);
-        var canManagePurchases = new[] { "OWNER", "MANAGER", "SUPERVISOR", "BUYER" }.Contains(jobCode);
+        var jobCode = (employee?.JobPosition?.Code ?? "USER").ToUpper();
+        
+        // Códigos aceitos (comparação case-insensitive via ToUpper)
+        var reportCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "ADMIN", "GENERAL_MANAGER" };
+        var employeeCodes = new[] { "OWNER", "MANAGER", "ADMIN", "GENERAL_MANAGER" };
+        var inventoryCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER", "ADMIN", "GENERAL_MANAGER" };
+        var formulaCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "ADMIN", "GENERAL_MANAGER" };
+        var purchaseCodes = new[] { "OWNER", "MANAGER", "SUPERVISOR", "BUYER", "PURCHASER", "ADMIN", "GENERAL_MANAGER" };
+        
+        var canViewReports = reportCodes.Contains(jobCode);
+        var canManageEmployees = employeeCodes.Contains(jobCode);
+        var canManageInventory = inventoryCodes.Contains(jobCode);
+        var canManageFormulas = formulaCodes.Contains(jobCode);
+        var canManagePurchases = purchaseCodes.Contains(jobCode);
         
         var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     }
@@ -295,6 +303,67 @@
                                     <a class="nav-link" href="/Stock/LowStock">
                                         <i class="bi bi-exclamation-triangle"></i>
                                         Estoque Baixo
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+
+                    <!-- Controlados / SNGPC -->
+                    @{
+                        var controlledCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "ADMIN", "GENERAL_MANAGER" };
+                        var canManageControlled = controlledCodes.Contains(jobCode);
+                    }
+                    @if (canManageControlled)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link has-submenu @(currentController == "Controlled" || currentController == "Sngpc" || currentController == "SupplierCertification" || currentController == "Audit" ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'controladosSubmenu')">
+                                <i class="bi bi-shield-exclamation"></i>
+                                Controlados
+                            </a>
+                            <ul class="nav flex-column nav-submenu @(currentController == "Controlled" || currentController == "Sngpc" ? "show" : "")" id="controladosSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Controlled">
+                                        <i class="bi bi-speedometer2"></i>
+                                        Dashboard SNGPC
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Controlled/PendingApprovals">
+                                        <i class="bi bi-clipboard-check"></i>
+                                        Aprovações Pendentes
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Controlled/Movements">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                        Movimentações
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Controlled/Inventory">
+                                        <i class="bi bi-clipboard-data"></i>
+                                        Inventário Mensal
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Controlled/Prescriptions">
+                                        <i class="bi bi-file-medical"></i>
+                                        Receituários
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/SupplierCertification">
+                                        <i class="bi bi-award"></i>
+                                        Certificações AFE
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/Audit">
+                                        <i class="bi bi-shield-check"></i>
+                                        Portal Auditoria
                                     </a>
                                 </li>
                             </ul>

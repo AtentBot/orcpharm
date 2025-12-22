@@ -9,6 +9,7 @@ using Models.Purchasing;
 using Models.Auth;
 using Models.Fiscal;
 using Models.Billing;
+using Models.Controlled;
 
 namespace Data;
 
@@ -218,6 +219,45 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<OnlineOrder> OnlineOrders { get; set; } = null!;
     public DbSet<OnlineOrderItem> OnlineOrderItems { get; set; } = null!;
 
+    // ════════════════════════════════════════════════════════════════════════
+    // CONTROLADOS - SNGPC & COMPLIANCE
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Aprovações farmacêuticas de manipulações com substâncias controladas
+    /// </summary>
+    public DbSet<PharmacistApproval> PharmacistApprovals { get; set; } = null!;
+
+    /// <summary>
+    /// Inventários físicos mensais de substâncias controladas
+    /// </summary>
+    public DbSet<ControlledInventoryCheck> ControlledInventoryChecks { get; set; } = null!;
+
+    /// <summary>
+    /// Itens conferidos em cada inventário de controlados
+    /// </summary>
+    public DbSet<ControlledInventoryItem> ControlledInventoryItems { get; set; } = null!;
+
+    /// <summary>
+    /// Certificações de fornecedores (AFE, AE, BPF, Alvará)
+    /// </summary>
+    public DbSet<SupplierCertification> SupplierCertifications { get; set; } = null!;
+
+    /// <summary>
+    /// Scores de qualidade de fornecedores
+    /// </summary>
+    public DbSet<SupplierQualityScore> SupplierQualityScores { get; set; } = null!;
+
+    /// <summary>
+    /// Solicitações de acesso de auditores externos (VISA, CRF, ANVISA)
+    /// </summary>
+    public DbSet<AuditorAccessRequest> AuditorAccessRequests { get; set; } = null!;
+
+    /// <summary>
+    /// Log de ações de auditores externos
+    /// </summary>
+    public DbSet<AuditorAccessLog> AuditorAccessLogs { get; set; } = null!;
+
 
     // ════════════════════════════════════════════════════════════════════════
     // CONFIGURAÇÃO DO MODELO
@@ -246,6 +286,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigureSaasAdminEntities(modelBuilder);
         ConfigurePortalClienteEntities(modelBuilder);
         ConfigureCatalogoEntities(modelBuilder);
+        ConfigureControladosEntities(modelBuilder);
 
         // ──────────────────────────────────────────────────────────────────
         // SEED DE DADOS INICIAIS
@@ -1325,6 +1366,147 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(e => e.Token).IsUnique();
             entity.HasIndex(e => e.SaasAdminId);
             entity.HasIndex(e => e.ExpiresAt);
+        });
+    }
+
+    private void ConfigureControladosEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // PHARMACIST APPROVALS
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<PharmacistApproval>(entity =>
+        {
+            entity.ToTable("pharmacist_approvals");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.ManipulationOrderId);
+            entity.HasIndex(e => e.PharmacistEmployeeId);
+            entity.HasIndex(e => e.ApprovalStatus);
+            entity.HasIndex(e => e.CreatedAt);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CONTROLLED INVENTORY CHECK
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<ControlledInventoryCheck>(entity =>
+        {
+            entity.ToTable("controlled_inventory_checks");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => new { e.ReferenceYear, e.ReferenceMonth });
+
+            entity.HasMany(e => e.Items)
+                .WithOne(i => i.InventoryCheck)
+                .HasForeignKey(i => i.InventoryCheckId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CONTROLLED INVENTORY ITEM
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<ControlledInventoryItem>(entity =>
+        {
+            entity.ToTable("controlled_inventory_items");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.InventoryCheckId);
+            entity.HasIndex(e => e.RawMaterialId);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // SUPPLIER CERTIFICATION
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<SupplierCertification>(entity =>
+        {
+            entity.ToTable("supplier_certifications");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.SupplierId);
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.CertificationType);
+            entity.HasIndex(e => e.ExpirationDate);
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(e => e.Supplier)
+                .WithMany()
+                .HasForeignKey(e => e.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // SUPPLIER QUALITY SCORE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<SupplierQualityScore>(entity =>
+        {
+            entity.ToTable("supplier_quality_scores");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.SupplierId);
+            entity.HasIndex(e => e.EstablishmentId);
+
+            entity.HasOne(e => e.Supplier)
+                .WithMany()
+                .HasForeignKey(e => e.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CalculatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // AUDITOR ACCESS REQUEST
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<AuditorAccessRequest>(entity =>
+        {
+            entity.ToTable("auditor_access_requests");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.AccessToken);
+
+            entity.Property(e => e.RequestedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // AUDITOR ACCESS LOG
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<AuditorAccessLog>(entity =>
+        {
+            entity.ToTable("auditor_access_logs");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.AuditorAccessId);
+            entity.HasIndex(e => e.CreatedAt);
+
+            entity.HasOne(e => e.AuditorAccess)
+                .WithMany()
+                .HasForeignKey(e => e.AuditorAccessId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
     }
 }

@@ -1,0 +1,134 @@
+@using Models
+@model List<SpecialPrescriptionControl>
+@{
+    ViewData["Title"] = "Receituários - Controlados";
+    var selectedType = ViewBag.SelectedType as string ?? "";
+    var startDate = ViewBag.StartDate as DateTime?;
+    var endDate = ViewBag.EndDate as DateTime?;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-file-medical text-primary me-2"></i>Receituários de Controlados</h4>
+        <p class="text-muted mb-0">Controle de receitas especiais conforme Portaria 344/98</p>
+    </div>
+    <a href="/Controlled" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Tipo de Receita</label>
+                <select name="type" class="form-select">
+                    <option value="">Todas</option>
+                    @if (selectedType == "AMARELA")
+                    {
+                        <option value="AMARELA" selected>Amarela (A1/A2/A3)</option>
+                        <option value="AZUL">Azul (B1/B2)</option>
+                        <option value="BRANCA_2_VIAS">Branca 2 vias (C1/C2/C5)</option>
+                    }
+                    else if (selectedType == "AZUL")
+                    {
+                        <option value="AMARELA">Amarela (A1/A2/A3)</option>
+                        <option value="AZUL" selected>Azul (B1/B2)</option>
+                        <option value="BRANCA_2_VIAS">Branca 2 vias (C1/C2/C5)</option>
+                    }
+                    else if (selectedType == "BRANCA_2_VIAS")
+                    {
+                        <option value="AMARELA">Amarela (A1/A2/A3)</option>
+                        <option value="AZUL">Azul (B1/B2)</option>
+                        <option value="BRANCA_2_VIAS" selected>Branca 2 vias (C1/C2/C5)</option>
+                    }
+                    else
+                    {
+                        <option value="AMARELA">Amarela (A1/A2/A3)</option>
+                        <option value="AZUL">Azul (B1/B2)</option>
+                        <option value="BRANCA_2_VIAS">Branca 2 vias (C1/C2/C5)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="startDate" class="form-control" value="@(startDate?.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="endDate" class="form-control" value="@(endDate?.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search me-1"></i>Filtrar</button>
+                <a href="/Controlled/Prescriptions" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data Emissão</th>
+                        <th>Tipo</th>
+                        <th>Nº Receita</th>
+                        <th>Paciente</th>
+                        <th>Prescritor</th>
+                        <th>Validade</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        foreach (var rx in Model)
+                        {
+                            var typeClass = "bg-secondary";
+                            if (rx.PrescriptionType == "AMARELA") typeClass = "bg-warning text-dark";
+                            else if (rx.PrescriptionType == "AZUL") typeClass = "bg-info";
+                            else if (rx.PrescriptionType == "BRANCA_2_VIAS") typeClass = "bg-light text-dark";
+                            
+                            var statusClass = "bg-secondary";
+                            var statusText = rx.Status;
+                            if (rx.Status == "ATIVA") { statusClass = "bg-success"; }
+                            else if (rx.Status == "UTILIZADA") { statusClass = "bg-primary"; }
+                            else if (rx.Status == "VENCIDA") { statusClass = "bg-danger"; }
+                            else if (rx.Status == "CANCELADA") { statusClass = "bg-dark"; }
+                            
+                            var isExpiring = rx.Status == "ATIVA" && rx.ValidityDate <= DateTime.Today.AddDays(7);
+                            
+                            <tr>
+                                <td>@rx.IssueDate.ToString("dd/MM/yyyy")</td>
+                                <td><span class="badge @typeClass">@rx.PrescriptionType</span></td>
+                                <td><code>@rx.PrescriptionNumber</code></td>
+                                <td>@rx.PatientName</td>
+                                <td>
+                                    @rx.DoctorName
+                                    <br><small class="text-muted">CRM @rx.DoctorCrm/@rx.DoctorCrmState</small>
+                                </td>
+                                <td>
+                                    @rx.ValidityDate.ToString("dd/MM/yyyy")
+                                    @if (isExpiring)
+                                    {
+                                        <br><small class="text-danger"><i class="bi bi-exclamation-triangle"></i> Vencendo</small>
+                                    }
+                                </td>
+                                <td><span class="badge @statusClass">@statusText</span></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                Nenhuma receita encontrada.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

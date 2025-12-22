@@ -704,7 +704,8 @@ async function loadJobPositions() {
             throw new Error('Erro ao carregar cargos');
         }
         
-        const positions = await response.json();
+        const data = await response.json();
+        const positions = data.items || data; // Suporta {items: [...]} ou array direto
         const select = document.getElementById('jobPositionSelect');
         
         select.innerHTML = '<option value="">Selecione o cargo</option>' +

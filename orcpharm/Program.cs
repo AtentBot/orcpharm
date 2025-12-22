@@ -18,12 +18,19 @@ using Service.BatchQuality;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Extensions;
 using Isopoh.Cryptography.Argon2;
+using Filters; // ← ADICIONADO
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<CurrentEmployeeFilter>(); // ← ADICIONADO
+
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.AddService<CurrentEmployeeFilter>(); // ← ADICIONADO
+});
+
 builder.Services.AddControllers();
 builder.Services.AddScoped<FormulaService>();
 builder.Services.AddScoped<CustomerService>();
@@ -81,7 +88,7 @@ builder.Services.AddScoped<Service.Prescriptions.PrescriptionQuoteService>();
 builder.Services.AddScoped<Service.Prescriptions.QuoteWhatsAppService>();
 builder.Services.AddScoped<Service.Prescriptions.OpenAIPrescriptionParserService>();
 builder.Services.AddScoped<Service.Prescriptions.PrescriptionWorkflowService>();
-builder.Services.AddScoped<StripeService>();       
+builder.Services.AddScoped<StripeService>();
 builder.Services.AddScoped<SubscriptionService>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<Service.IngredientMatcherService>();
@@ -187,9 +194,9 @@ try
 
         if (await db.Database.CanConnectAsync())
         {
-            // ══════════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════
             // SEED ACCESS LEVEL (para Establishments)
-            // ══════════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════
             if (!await db.AccessLevels.AnyAsync())
             {
                 db.AccessLevels.Add(new AccessLevel
@@ -206,9 +213,9 @@ try
                 Console.WriteLine("✅ AccessLevel 'FARM' criado");
             }
 
-            // ══════════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════
             // SEED SAAS ADMIN (Primeiro Administrador)
-            // ══════════════════════════════════════════════════════════
+            // ═══════════════════════════════════════════════════════
             if (!await db.SaasAdmins.AnyAsync())
             {
                 var senhaAdmin = "OrcPharm@2024"; // ⚠️ TROQUE EM PRODUÇÃO!
@@ -228,15 +235,15 @@ try
                 });
                 await db.SaveChangesAsync();
 
-                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("═══════════════════════════════════════════════════════");
                 Console.WriteLine("✅ SAAS ADMIN CRIADO!");
-                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("═══════════════════════════════════════════════════════");
                 Console.WriteLine($"   Email: admin@orcpharm.com.br");
                 Console.WriteLine($"   Senha: {senhaAdmin}");
                 Console.WriteLine($"   URL:   /admin/login");
-                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("═══════════════════════════════════════════════════════");
                 Console.WriteLine("   ⚠️  TROQUE A SENHA APÓS O PRIMEIRO LOGIN!");
-                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("═══════════════════════════════════════════════════════");
             }
         }
         else
@@ -276,7 +283,7 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAdminAuth();
 app.UseEmployeeAuth();
-app.UseCustomerAuth();        
+app.UseCustomerAuth();
 app.UseSubscriptionLimits();
 app.UseAuthorization();
 

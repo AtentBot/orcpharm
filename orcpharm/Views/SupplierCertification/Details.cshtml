@@ -1,0 +1,235 @@
+@model Models.Pharmacy.SupplierCertificate
+@{
+    ViewData["Title"] = "Detalhes do Certificado";
+    var isExpired = Model.ExpiryDate.HasValue && Model.ExpiryDate.Value < DateTime.UtcNow;
+    var isExpiring = Model.ExpiryDate.HasValue && Model.ExpiryDate.Value <= DateTime.UtcNow.AddDays(30) && !isExpired;
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="/SupplierCertification" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div class="flex-grow-1">
+                    <h4 class="mb-1">
+                        <i class="bi bi-award text-primary me-2"></i>Detalhes do Certificado
+                    </h4>
+                    <p class="text-muted mb-0">@Model.CertificateType - @Model.Number</p>
+                </div>
+                <div class="btn-group">
+                    <a href="/SupplierCertification/Edit/@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Editar
+                    </a>
+                    @if (isExpired || isExpiring)
+                    {
+                        <a href="/SupplierCertification/Renew/@Model.Id" class="btn btn-success">
+                            <i class="bi bi-arrow-repeat me-1"></i>Renovar
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (isExpired)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-octagon me-2"></i>
+                    <strong>Certificado Vencido!</strong> Este certificado venceu em @Model.ExpiryDate?.ToString("dd/MM/yyyy"). 
+                    É necessário renovar para continuar operando com este fornecedor.
+                </div>
+            }
+            else if (isExpiring)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Este certificado vence em @Model.DaysUntilExpiry dias (@Model.ExpiryDate?.ToString("dd/MM/yyyy")).
+                    Providencie a renovação.
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-building me-2"></i>Fornecedor</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Razão Social:</strong><br>
+                            @Model.Supplier?.CompanyName
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Nome Fantasia:</strong><br>
+                            @(Model.Supplier?.TradeName ?? "-")
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <strong>CNPJ:</strong><br>
+                            @Model.Supplier?.Cnpj
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status Fornecedor:</strong><br>
+                            @if (Model.Supplier?.IsActive == true)
+                            {
+                                <span class="badge bg-success">Ativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inativo</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Dados do Certificado</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Tipo:</strong><br>
+                            @Model.CertificateType
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Nome:</strong><br>
+                            @Model.Name
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <strong>Número:</strong><br>
+                            <code class="fs-5">@Model.Number</code>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Órgão Emissor:</strong><br>
+                            @(Model.IssuingAuthority ?? "ANVISA")
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <strong>Data de Emissão:</strong><br>
+                            @(Model.IssueDate?.ToString("dd/MM/yyyy") ?? "-")
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data de Validade:</strong><br>
+                            @if (Model.ExpiryDate.HasValue)
+                            {
+                                <span class="@(isExpired ? "text-danger fw-bold" : isExpiring ? "text-warning fw-bold" : "")">
+                                    @Model.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                </span>
+                            }
+                            else
+                            {
+                                <span>Sem validade definida</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <strong>Status:</strong><br>
+                            @if (Model.Status == "Válido" && !isExpired)
+                            {
+                                <span class="badge bg-success fs-6">Válido</span>
+                            }
+                            else if (isExpired)
+                            {
+                                <span class="badge bg-danger fs-6">Vencido</span>
+                            }
+                            else if (Model.Status == "Revogado")
+                            {
+                                <span class="badge bg-secondary fs-6">Revogado</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark fs-6">@Model.Status</span>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Ativo:</strong><br>
+                            @(Model.IsActive ? "Sim" : "Não")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-sticky me-2"></i>Observações</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0" style="white-space: pre-wrap;">@Model.Notes</p>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Auditoria</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Cadastrado em:</strong><br>
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Última atualização:</strong><br>
+                            @Model.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Status != "Revogado" && Model.IsActive)
+            {
+                <div class="mt-4 text-end">
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#revokeModal">
+                        <i class="bi bi-x-octagon me-1"></i>Revogar Certificado
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Revogar -->
+<div class="modal fade" id="revokeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Revoke" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Revogar Certificado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Esta ação irá revogar o certificado. O fornecedor não poderá mais ser utilizado para compras de controlados até que um novo certificado seja cadastrado.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo da Revogação <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control" rows="3" required placeholder="Informe o motivo da revogação..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Revogação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

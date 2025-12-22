@@ -1,0 +1,200 @@
+@using Models.Pharmacy
+@model ManipulationOrder
+@{
+    ViewData["Title"] = "Aprovar Ordem - Controlados";
+    var controlledComponents = ViewBag.ControlledComponents as List<FormulaComponent>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-clipboard-check text-danger me-2"></i>Aprovação Farmacêutica</h4>
+        <p class="text-muted mb-0">Ordem #@Model.OrderNumber - Contém Substâncias Controladas</p>
+    </div>
+    <a href="/Controlled/PendingApprovals" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</div>
+
+<form method="post" asp-action="ApproveConfirm" asp-route-id="@Model.Id">
+    @Html.AntiForgeryToken()
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-danger text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Dados da Ordem</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Número da Ordem</label>
+                            <p class="fw-bold mb-0">#@Model.OrderNumber</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Data do Pedido</label>
+                            <p class="mb-0">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Fórmula</label>
+                            <p class="fw-bold mb-0">@(Model.Formula?.Name ?? "N/A")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small">Status Atual</label>
+                            <p class="mb-0"><span class="badge bg-warning text-dark">@Model.Status</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (controlledComponents != null && controlledComponents.Count > 0)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-capsule me-2 text-danger"></i>Substâncias Controladas na Fórmula</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Substância</th>
+                                    <th>Lista</th>
+                                    <th class="text-end">Quantidade</th>
+                                    <th>Unidade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var comp in controlledComponents)
+                                {
+                                    var listClass = "bg-secondary";
+                                    var controlType = comp.RawMaterial?.ControlType ?? "";
+                                    if (controlType.StartsWith("A")) listClass = "bg-danger";
+                                    else if (controlType.StartsWith("B")) listClass = "bg-primary";
+                                    
+                                    <tr>
+                                        <td><strong>@(comp.RawMaterial?.Name ?? "N/A")</strong></td>
+                                        <td><span class="badge @listClass">@controlType</span></td>
+                                        <td class="text-end">@comp.Quantity.ToString("N3")</td>
+                                        <td>@comp.Unit</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-check2-square me-2 text-success"></i>Checklist de Aprovação (Obrigatório)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="PrescriptionValid" value="true" id="chk1" required>
+                        <label class="form-check-label" for="chk1">
+                            <strong>Receita válida e legível</strong>
+                            <small class="d-block text-muted">Verificar carimbo, assinatura e dados do prescritor</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="PrescriptionWithinValidity" value="true" id="chk2" required>
+                        <label class="form-check-label" for="chk2">
+                            <strong>Receita dentro da validade</strong>
+                            <small class="d-block text-muted">Máximo 30 dias para listas A e B</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="DoseWithinLimits" value="true" id="chk3" required>
+                        <label class="form-check-label" for="chk3">
+                            <strong>Dosagem dentro dos limites terapêuticos</strong>
+                            <small class="d-block text-muted">Verificar doses máximas por substância</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="NoInteractionsDetected" value="true" id="chk4">
+                        <label class="form-check-label" for="chk4">
+                            <strong>Sem interações medicamentosas relevantes</strong>
+                            <small class="d-block text-muted">Opcional - verificar interações conhecidas</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="PatientDataComplete" value="true" id="chk5" required>
+                        <label class="form-check-label" for="chk5">
+                            <strong>Dados do paciente completos</strong>
+                            <small class="d-block text-muted">Nome completo, endereço e documento de identificação</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-chat-text me-2"></i>Observações</h5>
+                </div>
+                <div class="card-body">
+                    <textarea name="Observations" class="form-control" rows="3" placeholder="Observações técnicas (opcional)..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Decisão Final</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" name="Approved" value="true" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Aprovar Manipulação
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-lg" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="bi bi-x-circle me-2"></i>Rejeitar
+                        </button>
+                        <hr>
+                        <a href="/Controlled/PendingApprovals" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Legislação</h5>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        Esta aprovação segue os requisitos da <strong>Portaria 344/98</strong> e <strong>RDC 67/2007</strong>. 
+                        O Farmacêutico Responsável Técnico é responsável pela validação técnica da manipulação de substâncias controladas.
+                        Todos os registros são mantidos para fins de auditoria e transmissão ao SNGPC.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="ApproveConfirm" asp-route-id="@Model.Id">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Approved" value="false">
+                <input type="hidden" name="PrescriptionValid" value="false">
+                <input type="hidden" name="PrescriptionWithinValidity" value="false">
+                <input type="hidden" name="DoseWithinLimits" value="false">
+                <input type="hidden" name="PatientDataComplete" value="false">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Rejeitar Ordem</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Motivo da Rejeição <span class="text-danger">*</span></label>
+                        <textarea name="RejectionReason" class="form-control" rows="4" required placeholder="Descreva detalhadamente o motivo da rejeição..."></textarea>
+                        <small class="text-muted">Este motivo será registrado para auditoria.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle me-1"></i>Confirmar Rejeição</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

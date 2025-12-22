@@ -159,13 +159,24 @@
                         ("CONFERENCIA", "Conferência", "bi-check2-square"),
                         ("APROVACAO", "Aprovação", "bi-patch-check")
                     };
-                    var currentIdx = Array.FindIndex(steps, s => s.Item1 == Model.Status);
-                    if (currentIdx < 0) currentIdx = -1; // PENDENTE
+                    
+                    // Mapear status para índice da etapa
+                    int currentIdx = Model.Status switch {
+                        "PENDENTE" or "AGUARDANDO_PRODUCAO" or "EM_PRODUCAO" => -1,
+                        "SEPARACAO" => 0,
+                        "PESAGEM" => 1,
+                        "MISTURA" => 2,
+                        "ENVASE" => 3,
+                        "ROTULAGEM" => 4,
+                        "CONFERENCIA" => 5,
+                        "APROVADO" or "FINALIZADO" => 7, // Todas completas
+                        _ => -1
+                    };
                     
                     for (int i = 0; i < steps.Length; i++)
                     {
                         var stepClass = i < currentIdx ? "completed" : (i == currentIdx ? "current" : "pending");
-                        <div class="step-item" onclick="showStepDetails('@steps[i].Item1')">
+                        <div class="step-item" onclick="showStepInfo('@steps[i].Item1')">
                             <div class="step-circle @stepClass">
                                 @if (i < currentIdx)
                                 {
@@ -192,7 +203,7 @@
             <div class="card action-card mb-4">
                 <div class="card-header bg-primary text-white">
                     <i class="bi bi-lightning-charge me-2"></i>
-                    Próxima Ação: <span id="currentStepName">@GetNextStepName(Model.Status)</span>
+                    <span id="currentStepName">@GetNextStepName(Model.Status)</span>
                 </div>
                 <div class="card-body" id="actionArea">
                     @await Html.PartialAsync("_StepAction", Model)
@@ -274,11 +285,11 @@
                        class="btn btn-outline-secondary touch-friendly">
                         <i class="bi bi-clock-history me-2"></i>Ver Histórico
                     </a>
-                    <button class="btn btn-outline-warning touch-friendly" onclick="pauseProduction()">
-                        <i class="bi bi-pause-circle me-2"></i>Pausar Produção
-                    </button>
-                    @if (Model.Status != "FINALIZADO" && Model.Status != "CANCELADO")
+                    @if (Model.Status != "FINALIZADO" && Model.Status != "CANCELADO" && Model.Status != "APROVADO")
                     {
+                        <button class="btn btn-outline-warning touch-friendly" onclick="pauseProduction()">
+                            <i class="bi bi-pause-circle me-2"></i>Pausar Produção
+                        </button>
                         <button class="btn btn-outline-danger touch-friendly" onclick="cancelOrder()">
                             <i class="bi bi-x-circle me-2"></i>Cancelar Ordem
                         </button>
@@ -289,7 +300,7 @@
             <!-- Histórico Recente -->
             <div class="card action-card">
                 <div class="card-header bg-light">
-                    <i class="bi bi-clock-history me-2"></i>Histórico Recente
+                    <i class="bi bi-clock-history me-2"></i>Etapas Concluídas
                 </div>
                 <div class="card-body p-0" id="recentHistory">
                     <div class="text-center py-3 text-muted">
@@ -321,6 +332,7 @@
 
 @section Scripts {
 <script>
+// ===== VARIÁVEIS GLOBAIS (usadas pela partial _StepAction) =====
 const orderId = '@Model.Id';
 const currentStatus = '@Model.Status';
 
@@ -328,13 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRecentHistory();
 });
 
+// ===== CARREGAR HISTÓRICO DE ETAPAS =====
 async function loadRecentHistory() {
     try {
         const response = await fetch(`/api/ManipulationOrders/${orderId}/steps`);
         const result = await response.json();
         
-        if (result.success && result.data.length > 0) {
-            const html = result.data.slice(-5).reverse().map(step => `
+        if (result.success && result.data && result.data.length > 0) {
+            const html = result.data.map(step => `
                 <div class="p-2 border-bottom">
                     <div class="d-flex justify-content-between">
                         <strong class="small">${step.stepType}</strong>
@@ -343,22 +356,28 @@ async function loadRecentHistory() {
                     <small class="text-muted">${step.performedByEmployeeName || 'N/A'} - ${formatDate(step.completedAt)}</small>
                 </div>
             `).join('');
-            document.getElementById('recentHistory').innerHTML = html;
+            document.getElementById('recentHistory').innerHTML = html || '<div class="text-center py-3 text-muted small">Nenhuma etapa concluída</div>';
         } else {
             document.getElementById('recentHistory').innerHTML = `
-                <div class="text-center py-3 text-muted small">Nenhuma etapa executada</div>
+                <div class="text-center py-3 text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>Nenhuma etapa concluída ainda
+                </div>
             `;
         }
     } catch (e) {
+        console.error('Erro ao carregar histórico:', e);
         document.getElementById('recentHistory').innerHTML = `
-            <div class="text-center py-3 text-danger small">Erro ao carregar</div>
+            <div class="text-center py-3 text-danger small">Erro ao carregar histórico</div>
         `;
     }
 }
 
+// ===== EXECUTAR ETAPA (FUNÇÃO PRINCIPAL) =====
 async function executeStep(stepType, additionalData = {}) {
+    const observations = document.getElementById('stepObservations')?.value || '';
+    
     const baseData = {
-        observations: document.getElementById('stepObservations')?.value || '',
+        observations: observations,
         startTime: new Date().toISOString(),
         ...additionalData
     };
@@ -375,42 +394,57 @@ async function executeStep(stepType, additionalData = {}) {
         const result = await response.json();
         
         if (result.success || response.ok) {
-            showSuccess(result.message || 'Etapa concluída!');
+            showSuccess(result.message || 'Etapa concluída com sucesso!');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showError(result.message || 'Erro ao executar etapa');
+            showError(result.message || 'Erro ao executar etapa. Verifique os dados e tente novamente.');
         }
     } catch (error) {
+        console.error('Erro:', error);
         showError('Erro de conexão: ' + error.message);
     }
 }
 
-function showStepDetails(stepType) {
-    // Carregar detalhes da etapa específica
-    console.log('Mostrar detalhes de:', stepType);
+// ===== FUNÇÕES AUXILIARES =====
+function showStepInfo(stepType) {
+    console.log('Info da etapa:', stepType);
+    // Futuro: mostrar modal com informações detalhadas da etapa
 }
 
 function pauseProduction() {
-    if (confirm('Deseja pausar a produção desta ordem?')) {
-        alert('Funcionalidade em desenvolvimento');
+    if (confirm('Deseja pausar a produção desta ordem?\n\nA ordem ficará com status atual e poderá ser retomada depois.')) {
+        alert('Produção pausada. A ordem permanece no status atual.');
     }
 }
 
-function cancelOrder() {
-    const reason = prompt('Motivo do cancelamento:');
-    if (reason && reason.length >= 5) {
-        fetch(`/api/ManipulationOrders/${orderId}/cancel`, {
+async function cancelOrder() {
+    const reason = prompt('Informe o motivo do cancelamento (mínimo 10 caracteres):');
+    if (!reason || reason.length < 10) {
+        alert('Motivo inválido. Informe pelo menos 10 caracteres.');
+        return;
+    }
+    
+    if (!confirm('ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nDeseja realmente CANCELAR esta ordem de manipulação?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/ManipulationOrders/${orderId}/cancel`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason })
-        }).then(r => r.json()).then(data => {
-            if (data.success) {
-                alert('Ordem cancelada');
-                location.href = '/Manipulacoes';
-            } else {
-                alert('Erro: ' + data.message);
-            }
+            body: JSON.stringify({ reason: reason })
         });
+        
+        const result = await response.json();
+        
+        if (result.success || response.ok) {
+            alert('Ordem cancelada com sucesso.');
+            location.href = '/Manipulacoes';
+        } else {
+            alert('Erro ao cancelar: ' + (result.message || 'Falha na operação'));
+        }
+    } catch (e) {
+        alert('Erro: ' + e.message);
     }
 }
 
@@ -418,7 +452,7 @@ function showLoading() {
     document.getElementById('actionArea').innerHTML = `
         <div class="text-center py-5">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-            <p class="mt-3">Processando...</p>
+            <p class="mt-3 text-muted">Processando etapa...</p>
         </div>
     `;
 }
@@ -427,7 +461,8 @@ function showSuccess(msg) {
     document.getElementById('actionArea').innerHTML = `
         <div class="text-center py-5">
             <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-            <p class="mt-3 fs-5">${msg}</p>
+            <h5 class="mt-3 text-success">${msg}</h5>
+            <p class="text-muted">Aguarde, a página será atualizada...</p>
         </div>
     `;
 }
@@ -436,8 +471,11 @@ function showError(msg) {
     document.getElementById('actionArea').innerHTML = `
         <div class="text-center py-5">
             <i class="bi bi-x-circle text-danger" style="font-size: 4rem;"></i>
-            <p class="mt-3 fs-5">${msg}</p>
-            <button class="btn btn-outline-primary mt-2" onclick="location.reload()">Tentar Novamente</button>
+            <h5 class="mt-3 text-danger">Erro</h5>
+            <p class="text-muted">${msg}</p>
+            <button class="btn btn-outline-primary mt-2" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise me-2"></i>Tentar Novamente
+            </button>
         </div>
     `;
 }
@@ -451,22 +489,24 @@ function formatDate(d) {
 
 @functions {
     string GetNextStepName(string status) => status switch {
-        "PENDENTE" => "Iniciar Separação",
-        "SEPARACAO" => "Realizar Pesagem",
-        "PESAGEM" => "Executar Mistura",
-        "MISTURA" => "Realizar Envase",
-        "ENVASE" => "Aplicar Rotulagem",
-        "ROTULAGEM" => "Conferência Final",
-        "CONFERENCIA" => "Aprovação Farmacêutico",
-        "APROVACAO" or "FINALIZADO" => "✓ Ordem Finalizada",
-        _ => "Próxima Etapa"
+        "PENDENTE" or "AGUARDANDO_PRODUCAO" or "EM_PRODUCAO" => "Próxima Ação: Separação de Materiais",
+        "SEPARACAO" => "Próxima Ação: Pesagem dos Componentes",
+        "PESAGEM" => "Próxima Ação: Mistura / Manipulação",
+        "MISTURA" => "Próxima Ação: Envase do Produto",
+        "ENVASE" => "Próxima Ação: Rotulagem",
+        "ROTULAGEM" => "Próxima Ação: Conferência Final",
+        "CONFERENCIA" => "Próxima Ação: Aprovação do Farmacêutico",
+        "APROVADO" or "FINALIZADO" => "✓ Manipulação Concluída",
+        "CANCELADO" => "✗ Ordem Cancelada",
+        "REJEITADO" => "⚠ Manipulação Rejeitada",
+        _ => $"Status Atual: {status}"
     };
     
     string GetStatusColor(string status) => status switch {
-        "PENDENTE" => "secondary",
-        "SEPARACAO" or "PESAGEM" or "MISTURA" or "ENVASE" or "ROTULAGEM" => "primary",
+        "PENDENTE" or "AGUARDANDO_PRODUCAO" => "secondary",
+        "EM_PRODUCAO" or "SEPARACAO" or "PESAGEM" or "MISTURA" or "ENVASE" or "ROTULAGEM" => "primary",
         "CONFERENCIA" => "info",
-        "APROVACAO" or "FINALIZADO" => "success",
+        "APROVADO" or "FINALIZADO" => "success",
         "CANCELADO" or "REJEITADO" => "danger",
         _ => "light"
     };

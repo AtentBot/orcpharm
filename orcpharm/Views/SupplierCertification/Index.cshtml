@@ -1,0 +1,256 @@
+@model List<Models.Pharmacy.SupplierCertificate>
+@{
+    ViewData["Title"] = "Certificações AFE";
+    var stats = ViewBag.Stats as CertificationStats;
+    var selectedStatus = ViewBag.SelectedStatus as string;
+    var search = ViewBag.Search as string;
+}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-award text-primary me-2"></i>Certificações AFE
+            </h4>
+            <p class="text-muted mb-0">Gestão de Autorizações de Funcionamento de Fornecedores</p>
+        </div>
+        <div>
+            <a href="/SupplierCertification/Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Nova Certificação
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-check-circle text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">@(stats?.TotalActive ?? 0)</h3>
+                            <small class="text-muted">Certificados Ativos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">@(stats?.ExpiringIn30Days ?? 0)</h3>
+                            <small class="text-muted">Vencendo em 30 dias</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-x-circle text-danger fs-4"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">@(stats?.Expired ?? 0)</h3>
+                            <small class="text-muted">Vencidos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-hourglass-split text-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">@(stats?.PendingVerification ?? 0)</h3>
+                            <small class="text-muted">Pendentes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" name="search" class="form-control" placeholder="Fornecedor, número AFE..." value="@search">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Válido" selected="@(selectedStatus == "Válido")">Válido</option>
+                        <option value="Vencido" selected="@(selectedStatus == "Vencido")">Vencido</option>
+                        <option value="Revogado" selected="@(selectedStatus == "Revogado")">Revogado</option>
+                        <option value="Pendente" selected="@(selectedStatus == "Pendente")">Pendente</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-search me-1"></i>Filtrar
+                    </button>
+                    <a href="/SupplierCertification" class="btn btn-outline-secondary">Limpar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Warning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Warning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-x-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Tabela -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fornecedor</th>
+                            <th>Tipo</th>
+                            <th>Número</th>
+                            <th>Emissão</th>
+                            <th>Validade</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var cert in Model)
+                            {
+                                var isExpired = cert.ExpiryDate.HasValue && cert.ExpiryDate.Value < DateTime.UtcNow;
+                                var isExpiring = cert.ExpiryDate.HasValue && cert.ExpiryDate.Value <= DateTime.UtcNow.AddDays(30) && !isExpired;
+                                
+                                <tr>
+                                    <td>
+                                        <strong>@cert.Supplier?.CompanyName</strong>
+                                        @if (!string.IsNullOrEmpty(cert.Supplier?.TradeName))
+                                        {
+                                            <br><small class="text-muted">@cert.Supplier.TradeName</small>
+                                        }
+                                    </td>
+                                    <td>@cert.CertificateType</td>
+                                    <td><code>@cert.Number</code></td>
+                                    <td>@cert.IssueDate?.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (cert.ExpiryDate.HasValue)
+                                        {
+                                            <span class="@(isExpired ? "text-danger fw-bold" : isExpiring ? "text-warning fw-bold" : "")">
+                                                @cert.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                            </span>
+                                            @if (isExpired)
+                                            {
+                                                <br><small class="text-danger">Vencido</small>
+                                            }
+                                            else if (isExpiring)
+                                            {
+                                                <br><small class="text-warning">@cert.DaysUntilExpiry dias restantes</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Sem validade</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (cert.Status == "Válido" && !isExpired)
+                                        {
+                                            <span class="badge bg-success">Válido</span>
+                                        }
+                                        else if (isExpired || cert.Status == "Vencido")
+                                        {
+                                            <span class="badge bg-danger">Vencido</span>
+                                        }
+                                        else if (cert.Status == "Revogado")
+                                        {
+                                            <span class="badge bg-secondary">Revogado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">@cert.Status</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/SupplierCertification/Details/@cert.Id" class="btn btn-outline-primary" title="Detalhes">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="/SupplierCertification/Edit/@cert.Id" class="btn btn-outline-secondary" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            @if (isExpired || isExpiring)
+                                            {
+                                                <a href="/SupplierCertification/Renew/@cert.Id" class="btn btn-outline-success" title="Renovar">
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Nenhuma certificação encontrada
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link para vencendo -->
+    @if ((stats?.ExpiringIn30Days ?? 0) > 0)
+    {
+        <div class="mt-3">
+            <a href="/SupplierCertification/Expiring" class="btn btn-warning">
+                <i class="bi bi-exclamation-triangle me-1"></i>Ver @stats?.ExpiringIn30Days certificados vencendo
+            </a>
+        </div>
+    }
+</div>

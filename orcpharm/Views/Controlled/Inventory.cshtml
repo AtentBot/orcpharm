@@ -1,0 +1,145 @@
+@using Models.Pharmacy
+@model List<RawMaterial>
+@{
+    ViewData["Title"] = "Inventário de Substâncias Controladas";
+    var existingCheck = ViewBag.ExistingCheck;
+    var currentMonth = (int)(ViewBag.CurrentMonth ?? DateTime.Now.Month);
+    var currentYear = (int)(ViewBag.CurrentYear ?? DateTime.Now.Year);
+    var monthNames = new[] { "", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro" };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-clipboard-data text-primary me-2"></i>Inventário de Controlados</h4>
+        <p class="text-muted mb-0">Conferência física obrigatória mensal (Portaria 344/98 e RDC 67/2007)</p>
+    </div>
+    <a href="/Controlled" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid @(existingCheck != null ? "#10b981" : "#f59e0b") !important;">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="mb-1">@monthNames[currentMonth] de @currentYear</h5>
+                @if (existingCheck != null)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-check-circle text-success me-1"></i>Inventário em andamento</p>
+                }
+                else
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-exclamation-circle text-warning me-1"></i>Inventário não iniciado</p>
+                }
+            </div>
+            <div class="col-md-4 text-md-end">
+                @if (existingCheck == null)
+                {
+                    <form method="post" asp-action="StartInventory" asp-controller="Controlled" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success"><i class="bi bi-play-circle me-1"></i>Iniciar Inventário</button>
+                    </form>
+                }
+                else
+                {
+                    <a href="/Controlled/Inventory/@existingCheck.Id" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Continuar</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0"><i class="bi bi-boxes me-2"></i>Substâncias Controladas em Estoque</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Substância</th>
+                        <th>DCB</th>
+                        <th>Lista</th>
+                        <th class="text-end">Saldo Sistema</th>
+                        <th>Lotes</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Count > 0)
+                    {
+                        foreach (var material in Model)
+                        {
+                            decimal totalStock = 0;
+                            int activeBatches = 0;
+                            
+                            if (material.Batches != null)
+                            {
+                                foreach (var batch in material.Batches)
+                                {
+                                    if (batch.CurrentQuantity > 0)
+                                    {
+                                        totalStock += batch.CurrentQuantity;
+                                        activeBatches++;
+                                    }
+                                }
+                            }
+                            
+                            var listClass = "bg-secondary";
+                            if (!string.IsNullOrEmpty(material.ControlType))
+                            {
+                                if (material.ControlType.StartsWith("A"))
+                                {
+                                    listClass = "bg-danger";
+                                }
+                                else if (material.ControlType.StartsWith("B"))
+                                {
+                                    listClass = "bg-primary";
+                                }
+                            }
+                            
+                            <tr>
+                                <td>
+                                    <strong>@material.Name</strong>
+                                    @if (!string.IsNullOrEmpty(material.Description))
+                                    {
+                                        <br /><small class="text-muted">@material.Description</small>
+                                    }
+                                </td>
+                                <td><code>@material.DcbCode</code></td>
+                                <td><span class="badge @listClass">@material.ControlType</span></td>
+                                <td class="text-end"><strong>@totalStock.ToString("N3")</strong> @material.Unit</td>
+                                <td>@activeBatches lote(s)</td>
+                                <td>
+                                    <a href="/RawMaterials/Details/@material.Id" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                Nenhuma substância controlada cadastrada.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-body">
+        <h6 class="text-muted mb-2"><i class="bi bi-info-circle me-1"></i>Informações Importantes</h6>
+        <small class="text-muted">
+            De acordo com a Portaria 344/98 e RDC 67/2007, o inventário físico de substâncias controladas deve ser realizado:
+            mensalmente para listas A1, A2, A3, B1 e B2; e trimestralmente para listas C1 a C5.
+            Todas as divergências devem ser justificadas e registradas.
+        </small>
+    </div>
+</div>

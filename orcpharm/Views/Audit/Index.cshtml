@@ -1,0 +1,208 @@
+@{
+    ViewData["Title"] = "Portal de Auditoria";
+    var stats = ViewBag.Stats as AuditDashboardStats;
+    var establishment = ViewBag.Establishment as Models.Establishment;
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-shield-check text-primary me-2"></i>Portal de Auditoria
+            </h4>
+            <p class="text-muted mb-0">Controle e rastreabilidade de substâncias controladas - ANVISA/SNGPC</p>
+        </div>
+        <div>
+            <span class="badge bg-primary fs-6">
+                <i class="bi bi-building me-1"></i>@establishment?.NomeFantasia
+            </span>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-x-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Cards de Estatísticas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100 bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-left-right fs-2 mb-2"></i>
+                    <h3 class="mb-0">@(stats?.TotalControlledMovements ?? 0)</h3>
+                    <small>Movimentações</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100 @(stats?.PendingSngpcTransmissions > 0 ? "bg-warning text-dark" : "bg-success text-white")">
+                <div class="card-body text-center">
+                    <i class="bi bi-cloud-upload fs-2 mb-2"></i>
+                    <h3 class="mb-0">@(stats?.PendingSngpcTransmissions ?? 0)</h3>
+                    <small>Pendentes SNGPC</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-file-medical fs-2 mb-2 text-info"></i>
+                    <h3 class="mb-0">@(stats?.TotalPrescriptionsThisMonth ?? 0)</h3>
+                    <small class="text-muted">Receitas (mês)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-check2-square fs-2 mb-2 text-success"></i>
+                    <h3 class="mb-0">@(stats?.TotalApprovals ?? 0)</h3>
+                    <small class="text-muted">Aprovações</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-award fs-2 mb-2 text-primary"></i>
+                    <h3 class="mb-0">@(stats?.ActiveSupplierCertificates ?? 0)</h3>
+                    <small class="text-muted">Certificados AFE</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card border-0 shadow-sm h-100 @(stats?.ExpiringCertificates > 0 ? "border-warning" : "")">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle fs-2 mb-2 @(stats?.ExpiringCertificates > 0 ? "text-warning" : "text-muted")"></i>
+                    <h3 class="mb-0">@(stats?.ExpiringCertificates ?? 0)</h3>
+                    <small class="text-muted">Cert. Vencendo</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Relatórios Obrigatórios -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-file-earmark-bar-graph me-2"></i>Relatórios Obrigatórios ANVISA</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="/Audit/Reports/BMPO" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>BMPO</strong>
+                                <br><small class="text-muted">Balanço Mensal de Psicotrópicos</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">Mensal</span>
+                        </a>
+                        <a href="/Audit/Reports/BSPO" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>BSPO</strong>
+                                <br><small class="text-muted">Balanço de Substâncias Psicoativas</small>
+                            </div>
+                            <span class="badge bg-info rounded-pill">Trimestral</span>
+                        </a>
+                        <a href="/Audit/Reports/Movements" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Movimentações</strong>
+                                <br><small class="text-muted">Relatório de movimentações por período</small>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="/Audit/Reports/Prescriptions" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Receituários</strong>
+                                <br><small class="text-muted">Controle de receitas especiais</small>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="/Audit/Reports/Approvals" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Aprovações RT</strong>
+                                <br><small class="text-muted">Histórico de aprovações farmacêuticas</small>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acesso Rápido -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Acesso Rápido</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="/Controlled" class="btn btn-outline-danger w-100 py-3">
+                                <i class="bi bi-shield-exclamation d-block fs-3 mb-1"></i>
+                                Dashboard SNGPC
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/Controlled/Movements" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-arrow-left-right d-block fs-3 mb-1"></i>
+                                Movimentações
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/Controlled/Inventory" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-clipboard-check d-block fs-3 mb-1"></i>
+                                Inventário Mensal
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="/SupplierCertification" class="btn btn-outline-warning w-100 py-3">
+                                <i class="bi bi-award d-block fs-3 mb-1"></i>
+                                Certificações AFE
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acesso de Auditores -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-person-badge me-2"></i>Acesso de Auditores Externos</h6>
+                    <a href="/Audit/PendingAccessRequests" class="btn btn-sm btn-outline-primary">
+                        Ver Solicitações Pendentes
+                    </a>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Auditores da ANVISA, Vigilância Sanitária ou outros órgãos podem solicitar acesso temporário 
+                        aos relatórios de controlados através do link abaixo:
+                    </p>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                        <input type="text" class="form-control" value="@Context.Request.Scheme://@Context.Request.Host/Audit/AccessRequest" readonly id="accessLink">
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                            <i class="bi bi-clipboard"></i> Copiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyLink() {
+    var input = document.getElementById('accessLink');
+    input.select();
+    document.execCommand('copy');
+    alert('Link copiado!');
+}
+</script>

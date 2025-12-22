@@ -29,12 +29,18 @@ public class PDVController : ControllerBase
 
     private Guid GetEstablishmentId()
     {
+        var employee = HttpContext.Items["Employee"] as Models.Employees.Employee;
+        if (employee != null) return employee.EstablishmentId;
+        
         var claim = User.FindFirst("EstablishmentId");
         return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
     }
 
     private Guid GetEmployeeId()
     {
+        var employee = HttpContext.Items["Employee"] as Models.Employees.Employee;
+        if (employee != null) return employee.Id;
+        
         var claim = User.FindFirst("EmployeeId");
         return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
     }
@@ -353,43 +359,26 @@ public class PDVController : ControllerBase
             Id = Guid.NewGuid(),
             SaleId = sale.Id,
             ManipulationOrderId = manipulation.Id,
-            FormulaId = manipulation.FormulaId,
-            Description = $"{formulaName} - {manipulation.QuantityToProduce}{manipulation.Unit}",
+            Description = $"{formulaName} - {manipulation.QuantityToProduce} {manipulation.Unit}",
             Quantity = 1,
             UnitPrice = totalPrice,
-            TotalPrice = totalPrice
+            TotalPrice = totalPrice,
+            DiscountAmount = 0
         };
+
         _context.SaleItems.Add(saleItem);
 
-        var payment = new SalePayment
+        // Atualizar status do orçamento
+        if (quote != null)
         {
-            Id = Guid.NewGuid(),
-            SaleId = sale.Id,
-            PaymentMethod = dto.PaymentMethod,
-            Amount = dto.PaidAmount,
-            PaymentStatus = "APPROVED",
-            PaymentDate = DateTime.UtcNow,
-            ProcessedByEmployeeId = employeeId,
-            CashReceived = dto.CashReceived,
-            ChangeAmount = dto.ChangeAmount,
-            CardBrand = dto.CardBrand,
-            CardLastDigits = dto.CardLastDigits,
-            Installments = dto.Installments,
-            Nsu = dto.Nsu,
-            AuthorizationCode = dto.AuthorizationCode,
-            PixTransactionId = dto.PixTransactionId,
-            Observations = $"Pagamento da manipulação {manipulation.OrderNumber}"
-        };
-        _context.SalePayments.Add(payment);
-
-        // Atualizar status da manipulação para ENTREGUE
-        manipulation.Status = "ENTREGUE";
-        manipulation.CompletionDate = DateTime.UtcNow;
+            quote.Status = "CONVERTIDO";
+            quote.UpdatedAt = DateTime.UtcNow;
+        }
 
         await _context.SaveChangesAsync();
 
         await _cashService.RegisterSaleInCashRegisterAsync(
-            openCashRegister.Id, sale.Id, sale.TotalAmount, dto.PaymentMethod, employeeId);
+            openCashRegister.Id, sale.Id, sale.TotalAmount, sale.PaymentMethod ?? dto.PaymentMethod, employeeId);
 
         return Ok(ApiResponse<ProcessOnlineOrderResultDto>.SuccessResponse(
             new ProcessOnlineOrderResultDto
@@ -400,26 +389,45 @@ public class PDVController : ControllerBase
                 Total = sale.TotalAmount,
                 PaidAmount = dto.PaidAmount,
                 ChangeAmount = dto.ChangeAmount
-            }, "Manipulação paga e entregue!"));
+            }, "Pagamento processado com sucesso!"));
     }
 
     // ================================================================
     // PEDIDOS ONLINE
     // ================================================================
 
+    /// <summary>
+    /// Retorna pedidos online prontos para pagamento (alias para compatibilidade com View)
+    /// </summary>
     [HttpGet("online-orders-ready")]
     public async Task<ActionResult<ApiResponse<List<OnlineOrderPdvDto>>>> GetOnlineOrdersReady()
     {
+        return await GetOnlineOrders("READY");
+    }
+
+    [HttpGet("online-orders")]
+    public async Task<ActionResult<ApiResponse<List<OnlineOrderPdvDto>>>> GetOnlineOrders([FromQuery] string? status = null)
+    {
         var establishmentId = GetEstablishmentId();
 
-        var orders = await _context.Set<OnlineOrder>()
+        var query = _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
             .Include(o => o.Items)
-            .Where(o => o.EstablishmentId == establishmentId &&
-                       (o.Status == "READY" || o.Status == "CONFIRMED") &&
-                       o.PaymentStatus != "PAID" &&
-                       o.SaleId == null)
-            .OrderBy(o => o.CreatedAt)
+            .Where(o => o.EstablishmentId == establishmentId);
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            query = query.Where(o => o.Status == status);
+        }
+        else
+        {
+            // Por padrão, mostrar apenas pedidos prontos para pagamento
+            query = query.Where(o => o.Status == "READY" || o.Status == "CONFIRMED");
+        }
+
+        var orders = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .Take(50)
             .Select(o => new OnlineOrderPdvDto
             {
                 Id = o.Id,
@@ -431,7 +439,11 @@ public class PDVController : ControllerBase
                 Subtotal = o.Subtotal,
                 Discount = o.Discount,
                 Status = o.Status,
-                StatusDisplay = o.Status == "READY" ? "Pronto" : "Confirmado",
+                StatusDisplay = o.Status == "READY" ? "Pronto" : 
+                               o.Status == "CONFIRMED" ? "Confirmado" :
+                               o.Status == "PREPARING" ? "Preparando" :
+                               o.Status == "DELIVERED" ? "Entregue" : o.Status,
+                PaymentStatus = o.PaymentStatus,
                 CreatedAt = o.CreatedAt,
                 ItemsCount = o.Items!.Count,
                 Items = o.Items!.Select(i => new OnlineOrderItemPdvDto
@@ -444,8 +456,7 @@ public class PDVController : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(ApiResponse<List<OnlineOrderPdvDto>>.SuccessResponse(orders,
-            $"{orders.Count} pedido(s) online aguardando pagamento"));
+        return Ok(ApiResponse<List<OnlineOrderPdvDto>>.SuccessResponse(orders, $"{orders.Count} pedido(s) encontrado(s)"));
     }
 
     [HttpPost("process-online-order/{orderId}")]
@@ -458,8 +469,7 @@ public class PDVController : ControllerBase
 
         var openCashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId);
         if (openCashRegister == null)
-            return BadRequest(ApiResponse<ProcessOnlineOrderResultDto>.ErrorResponse(
-                "Nenhum caixa aberto. Abra o caixa antes de processar pagamentos."));
+            return BadRequest(ApiResponse<ProcessOnlineOrderResultDto>.ErrorResponse("Nenhum caixa aberto"));
 
         var order = await _context.Set<OnlineOrder>()
             .Include(o => o.Customer)
@@ -472,18 +482,7 @@ public class PDVController : ControllerBase
         if (order.PaymentStatus == "PAID")
             return BadRequest(ApiResponse<ProcessOnlineOrderResultDto>.ErrorResponse("Pedido já foi pago"));
 
-        if (order.SaleId.HasValue)
-        {
-            var existingSale = await _context.Sales.FindAsync(order.SaleId.Value);
-            return Ok(ApiResponse<ProcessOnlineOrderResultDto>.SuccessResponse(
-                new ProcessOnlineOrderResultDto
-                {
-                    SaleId = order.SaleId.Value,
-                    SaleCode = existingSale?.Code ?? "",
-                    OrderNumber = order.OrderNumber
-                }, "Venda já existe para este pedido"));
-        }
-
+        // Gerar código da venda
         var today = DateTime.UtcNow;
         var countToday = await _context.Sales
             .Where(s => s.EstablishmentId == establishmentId && s.SaleDate.Date == today.Date)
@@ -494,8 +493,8 @@ public class PDVController : ControllerBase
         {
             Id = Guid.NewGuid(),
             EstablishmentId = establishmentId,
-            Code = saleCode,
             CustomerId = order.CustomerId,
+            Code = saleCode,
             SaleDate = DateTime.UtcNow,
             Subtotal = order.Subtotal,
             DiscountAmount = order.Discount,
@@ -514,6 +513,7 @@ public class PDVController : ControllerBase
 
         _context.Sales.Add(sale);
 
+        // Criar itens da venda
         foreach (var item in order.Items!)
         {
             var saleItem = new SaleItem
@@ -524,29 +524,30 @@ public class PDVController : ControllerBase
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
                 TotalPrice = item.TotalPrice,
-                Observations = item.Notes
+                DiscountAmount = 0
             };
             _context.SaleItems.Add(saleItem);
         }
 
+        // Criar registro de pagamento
         var payment = new SalePayment
         {
             Id = Guid.NewGuid(),
             SaleId = sale.Id,
             PaymentMethod = dto.PaymentMethod,
             Amount = dto.PaidAmount,
-            PaymentStatus = "APPROVED",
-            PaymentDate = DateTime.UtcNow,
-            ProcessedByEmployeeId = employeeId,
             CashReceived = dto.CashReceived,
             ChangeAmount = dto.ChangeAmount,
             CardBrand = dto.CardBrand,
             CardLastDigits = dto.CardLastDigits,
-            Installments = dto.Installments,
+            Installments = dto.Installments ?? 1,
             Nsu = dto.Nsu,
             AuthorizationCode = dto.AuthorizationCode,
             PixTransactionId = dto.PixTransactionId,
-            Observations = $"Pagamento do pedido online {order.OrderNumber}"
+            PaymentStatus = "APPROVED",
+            PaymentDate = DateTime.UtcNow,
+            ProcessedByEmployeeId = employeeId,
+            CreatedAt = DateTime.UtcNow
         };
         _context.SalePayments.Add(payment);
 
@@ -617,9 +618,13 @@ public class PDVController : ControllerBase
     }
 
     // ================================================================
-    // PRODUTOS DO CATÁLOGO (VENDA BALCÃO) - NOVO!
+    // PRODUTOS DO CATÁLOGO + MATÉRIAS-PRIMAS (VENDA BALCÃO) - ATUALIZADO!
     // ================================================================
 
+    /// <summary>
+    /// Busca produtos no catálogo E matérias-primas para venda no balcão
+    /// Retorna resultados combinados de CatalogProducts e RawMaterials
+    /// </summary>
     [HttpGet("products/search")]
     public async Task<ActionResult<ApiResponse<List<ProductSearchDto>>>> SearchProducts([FromQuery] string q)
     {
@@ -629,14 +634,16 @@ public class PDVController : ControllerBase
             return BadRequest(ApiResponse<List<ProductSearchDto>>.ErrorResponse("Digite pelo menos 2 caracteres"));
 
         var searchTerm = q.ToLower();
+        var results = new List<ProductSearchDto>();
 
-        var products = await _context.CatalogProducts
+        // 1. Buscar em CatalogProducts (produtos de prateleira)
+        var catalogProducts = await _context.CatalogProducts
             .Include(p => p.Category)
             .Where(p => p.EstablishmentId == establishmentId && p.IsActive)
             .Where(p => p.Name.ToLower().Contains(searchTerm) ||
                         (p.Code != null && p.Code.ToLower().Contains(searchTerm)))
             .OrderBy(p => p.Name)
-            .Take(20)
+            .Take(10)
             .Select(p => new ProductSearchDto
             {
                 Id = p.Id,
@@ -647,11 +654,59 @@ public class PDVController : ControllerBase
                 IsOnPromotion = p.IsOnPromotion,
                 StockQuantity = p.StockQuantity,
                 Unit = p.Unit,
-                CategoryName = p.Category != null ? p.Category.Name : null
+                CategoryName = p.Category != null ? p.Category.Name : null,
+                Source = "CATALOGO",
+                ControlType = null,
+                IsControlled = false
             })
             .ToListAsync();
 
-        return Ok(ApiResponse<List<ProductSearchDto>>.SuccessResponse(products, $"{products.Count} produtos encontrados"));
+        results.AddRange(catalogProducts);
+
+        // 2. Buscar em RawMaterials (matérias-primas vendáveis)
+        var rawMaterialsQuery = await _context.RawMaterials
+            .Where(r => r.EstablishmentId == establishmentId && r.IsActive)
+            .Where(r => r.Name.ToLower().Contains(searchTerm) ||
+                        (r.DcbCode != null && r.DcbCode.ToLower().Contains(searchTerm)) ||
+                        (r.CasNumber != null && r.CasNumber.ToLower().Contains(searchTerm)))
+            .OrderBy(r => r.Name)
+            .Take(10)
+            .ToListAsync();
+
+        foreach (var r in rawMaterialsQuery)
+        {
+            // Calcular preço médio dos lotes aprovados
+            var batchCosts = await _context.Batches
+                .Where(b => b.RawMaterialId == r.Id && b.Status.ToUpper() == "APROVADO")
+                .Select(b => b.UnitCost)
+                .ToListAsync();
+
+            var avgCost = batchCosts.Any() ? batchCosts.Average() : 0m;
+
+            // Markup de 100% para venda no balcão (ajustar conforme necessário)
+            var salePrice = avgCost > 0 ? avgCost * 2m : 0;
+
+            results.Add(new ProductSearchDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Code = r.DcbCode ?? r.CasNumber,
+                Price = salePrice,
+                OriginalPrice = salePrice,
+                IsOnPromotion = false,
+                StockQuantity = (int)r.CurrentStock,
+                Unit = r.Unit,
+                CategoryName = r.ControlType != "COMUM" ? $"Controlado - {r.ControlType}" : "Matéria-Prima",
+                Source = "MATERIA_PRIMA",
+                ControlType = r.ControlType,
+                IsControlled = r.ControlType != null && r.ControlType != "COMUM"
+            });
+        }
+
+        // Ordenar por nome e limitar a 20 resultados
+        results = results.OrderBy(r => r.Name).Take(20).ToList();
+
+        return Ok(ApiResponse<List<ProductSearchDto>>.SuccessResponse(results, $"{results.Count} item(ns) encontrado(s)"));
     }
 
     [HttpGet("products/code/{code}")]
@@ -659,6 +714,7 @@ public class PDVController : ControllerBase
     {
         var establishmentId = GetEstablishmentId();
 
+        // Primeiro buscar em CatalogProducts
         var product = await _context.CatalogProducts
             .Include(p => p.Category)
             .Where(p => p.EstablishmentId == establishmentId && p.IsActive && p.Code == code)
@@ -672,18 +728,55 @@ public class PDVController : ControllerBase
                 IsOnPromotion = p.IsOnPromotion,
                 StockQuantity = p.StockQuantity,
                 Unit = p.Unit,
-                CategoryName = p.Category != null ? p.Category.Name : null
+                CategoryName = p.Category != null ? p.Category.Name : null,
+                Source = "CATALOGO",
+                ControlType = null,
+                IsControlled = false
             })
             .FirstOrDefaultAsync();
 
-        if (product == null)
+        if (product != null)
+            return Ok(ApiResponse<ProductSearchDto>.SuccessResponse(product));
+
+        // Se não encontrar, buscar em RawMaterials
+        var rawMaterial = await _context.RawMaterials
+            .Where(r => r.EstablishmentId == establishmentId && r.IsActive)
+            .Where(r => r.DcbCode == code || r.CasNumber == code)
+            .FirstOrDefaultAsync();
+
+        if (rawMaterial == null)
             return NotFound(ApiResponse<ProductSearchDto>.ErrorResponse("Produto não encontrado"));
 
-        return Ok(ApiResponse<ProductSearchDto>.SuccessResponse(product));
+        // Calcular preço médio dos lotes aprovados
+        var batchCosts = await _context.Batches
+            .Where(b => b.RawMaterialId == rawMaterial.Id && b.Status.ToUpper() == "APROVADO")
+            .Select(b => b.UnitCost)
+            .ToListAsync();
+
+        var avgCost = batchCosts.Any() ? batchCosts.Average() : 0m;
+        var salePrice = avgCost > 0 ? avgCost * 2m : 0;
+
+        var result = new ProductSearchDto
+        {
+            Id = rawMaterial.Id,
+            Name = rawMaterial.Name,
+            Code = rawMaterial.DcbCode ?? rawMaterial.CasNumber,
+            Price = salePrice,
+            OriginalPrice = salePrice,
+            IsOnPromotion = false,
+            StockQuantity = (int)rawMaterial.CurrentStock,
+            Unit = rawMaterial.Unit,
+            CategoryName = rawMaterial.ControlType != "COMUM" ? $"Controlado - {rawMaterial.ControlType}" : "Matéria-Prima",
+            Source = "MATERIA_PRIMA",
+            ControlType = rawMaterial.ControlType,
+            IsControlled = rawMaterial.ControlType != null && rawMaterial.ControlType != "COMUM"
+        };
+
+        return Ok(ApiResponse<ProductSearchDto>.SuccessResponse(result));
     }
 
     // ================================================================
-    // VENDA UNIFICADA (PRODUTOS + MANIPULAÇÕES + ONLINE) - NOVO!
+    // VENDA UNIFICADA (PRODUTOS + MANIPULAÇÕES + ONLINE + MATÉRIAS-PRIMAS)
     // ================================================================
 
     [HttpPost("unified-sale")]
@@ -700,18 +793,34 @@ public class PDVController : ControllerBase
             return BadRequest(ApiResponse<UnifiedSaleResultDto>.ErrorResponse("Nenhum item na venda"));
 
         using var transaction = await _context.Database.BeginTransactionAsync();
-
         try
         {
-            var subtotal = dto.Items.Sum(i => i.Total);
-            var discount = dto.Discount ?? 0;
-            var total = subtotal - discount;
+            // Validar itens controlados
+            foreach (var item in dto.Items.Where(i => i.Tipo == "MATERIA_PRIMA"))
+            {
+                if (item.ReferenciaId.HasValue)
+                {
+                    var rawMaterial = await _context.RawMaterials.FindAsync(item.ReferenciaId.Value);
+                    if (rawMaterial != null && rawMaterial.ControlType != null && rawMaterial.ControlType != "COMUM")
+                    {
+                        // É um controlado - validar se tem receita (implementação futura)
+                        // Por enquanto, apenas alertar
+                        Console.WriteLine($"ATENÇÃO: Venda de controlado {rawMaterial.Name} ({rawMaterial.ControlType})");
+                    }
+                }
+            }
 
+            // Gerar código da venda
             var today = DateTime.UtcNow;
             var countToday = await _context.Sales
                 .Where(s => s.EstablishmentId == establishmentId && s.SaleDate.Date == today.Date)
                 .CountAsync();
             var saleCode = $"V{today:yyyyMMdd}-{(countToday + 1):D4}";
+
+            // Calcular totais
+            var subtotal = dto.Items.Sum(i => i.Total);
+            var discount = dto.Discount ?? 0;
+            var total = subtotal - discount;
 
             var sale = new Sale
             {
@@ -719,6 +828,7 @@ public class PDVController : ControllerBase
                 EstablishmentId = establishmentId,
                 CustomerId = dto.CustomerId,
                 Code = saleCode,
+                SaleDate = DateTime.UtcNow,
                 Subtotal = subtotal,
                 DiscountAmount = discount,
                 TotalAmount = total,
@@ -728,8 +838,6 @@ public class PDVController : ControllerBase
                 ChangeAmount = dto.Payment.ChangeAmount,
                 PaymentDate = DateTime.UtcNow,
                 Status = "FINALIZADA",
-                SaleDate = DateTime.UtcNow,
-                HasMultiplePayments = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 CreatedByEmployeeId = employeeId
@@ -737,10 +845,7 @@ public class PDVController : ControllerBase
 
             _context.Sales.Add(sale);
 
-            Guid? onlineOrderId = null;
-            var manipulationIds = new List<Guid>();
-            var productUpdates = new List<(Guid id, int qty)>();
-
+            // Criar itens da venda
             foreach (var item in dto.Items)
             {
                 var saleItem = new SaleItem
@@ -750,42 +855,47 @@ public class PDVController : ControllerBase
                     Description = item.Descricao,
                     Quantity = (int)item.Quantidade,
                     UnitPrice = item.PrecoUnitario,
-                    TotalPrice = item.Total
+                    TotalPrice = item.Total,
+                    DiscountAmount = 0
                 };
 
-                switch (item.Tipo.ToUpper())
+                // Vincular referências
+                if (item.ReferenciaId.HasValue)
                 {
-                    case "ONLINE_ORDER":
-                        if (item.ReferenciaId.HasValue)
-                            onlineOrderId = item.ReferenciaId.Value;
-                        break;
-
-                    case "MANIPULATION":
-                        if (item.ReferenciaId.HasValue)
-                        {
-                            manipulationIds.Add(item.ReferenciaId.Value);
-                            saleItem.ManipulationOrderId = item.ReferenciaId.Value;
-                        }
-                        break;
-
-                    case "PRODUCT":
-                        if (item.ReferenciaId.HasValue)
-                            productUpdates.Add((item.ReferenciaId.Value, (int)item.Quantidade));
-                        break;
+                    switch (item.Tipo.ToUpper())
+                    {
+                        case "MANIPULACAO":
+                            saleItem.ManipulationOrderId = item.ReferenciaId;
+                            break;
+                        case "PRODUTO":
+                        case "CATALOGO":
+                            saleItem.CatalogProductId = item.ReferenciaId;
+                            break;
+                        case "MATERIA_PRIMA":
+                            saleItem.RawMaterialId = item.ReferenciaId;
+                            // Buscar info do controlado se necessário
+                            if (item.ReferenciaId.HasValue)
+                            {
+                                var rm = await _context.RawMaterials.FindAsync(item.ReferenciaId.Value);
+                                if (rm != null && rm.ControlType != null && rm.ControlType != "COMUM")
+                                {
+                                    saleItem.ControlType = rm.ControlType;
+                                }
+                            }
+                            break;
+                    }
                 }
 
                 _context.SaleItems.Add(saleItem);
             }
 
-            // Criar pagamento
+            // Criar registro de pagamento
             var payment = new SalePayment
             {
                 Id = Guid.NewGuid(),
                 SaleId = sale.Id,
                 PaymentMethod = dto.Payment.Method,
                 Amount = dto.Payment.Amount,
-                PaymentStatus = "APPROVED",
-                PaymentDate = DateTime.UtcNow,
                 CashReceived = dto.Payment.CashReceived,
                 ChangeAmount = dto.Payment.ChangeAmount,
                 CardBrand = dto.Payment.CardBrand,
@@ -793,45 +903,91 @@ public class PDVController : ControllerBase
                 Installments = dto.Payment.Installments ?? 1,
                 Nsu = dto.Payment.Nsu,
                 PixTransactionId = dto.Payment.PixTransactionId,
-                ProcessedByEmployeeId = employeeId
+                PaymentStatus = "APPROVED",
+                PaymentDate = DateTime.UtcNow,
+                ProcessedByEmployeeId = employeeId,
+                CreatedAt = DateTime.UtcNow
             };
             _context.SalePayments.Add(payment);
 
-            // Atualizar pedido online
-            if (onlineOrderId.HasValue)
-            {
-                var order = await _context.Set<OnlineOrder>().FindAsync(onlineOrderId.Value);
-                if (order != null)
-                {
-                    order.Status = "DELIVERED";
-                    order.PaymentStatus = "PAID";
-                    order.PaymentMethod = dto.Payment.Method;
-                    order.SaleId = sale.Id;
-                    order.DeliveredAt = DateTime.UtcNow;
-                    order.UpdatedAt = DateTime.UtcNow;
-                }
-            }
+            await _context.SaveChangesAsync();
 
-            // Atualizar manipulações
-            foreach (var manipId in manipulationIds)
+            // Baixar estoque
+            foreach (var item in dto.Items)
             {
-                var manip = await _context.ManipulationOrders.FindAsync(manipId);
-                if (manip != null)
-                {
-                    manip.Status = "ENTREGUE";
-                    manip.CompletionDate = DateTime.UtcNow;
-                }
-            }
+                var qty = (int)item.Quantidade;
 
-            // Deduzir estoque de produtos
-            foreach (var (productId, qty) in productUpdates)
-            {
-                var product = await _context.CatalogProducts.FindAsync(productId);
-                if (product != null)
+                if (item.Tipo.ToUpper() == "PRODUTO" || item.Tipo.ToUpper() == "CATALOGO")
                 {
-                    product.StockQuantity -= qty;
-                    if (product.StockQuantity < 0) product.StockQuantity = 0;
-                    product.UpdatedAt = DateTime.UtcNow;
+                    // Baixar estoque de CatalogProduct
+                    if (item.ReferenciaId.HasValue)
+                    {
+                        var product = await _context.CatalogProducts.FindAsync(item.ReferenciaId.Value);
+                        if (product != null)
+                        {
+                            product.StockQuantity -= qty;
+                            if (product.StockQuantity < 0) product.StockQuantity = 0;
+                            product.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+                }
+                else if (item.Tipo.ToUpper() == "MATERIA_PRIMA")
+                {
+                    // Baixar estoque de RawMaterial
+                    if (item.ReferenciaId.HasValue)
+                    {
+                        var rawMaterial = await _context.RawMaterials.FindAsync(item.ReferenciaId.Value);
+                        if (rawMaterial != null)
+                        {
+                            rawMaterial.CurrentStock -= item.Quantidade;
+                            if (rawMaterial.CurrentStock < 0) rawMaterial.CurrentStock = 0;
+                            rawMaterial.UpdatedAt = DateTime.UtcNow;
+
+                            // Criar movimento de estoque
+                            var stockMovement = new StockMovement
+                            {
+                                Id = Guid.NewGuid(),
+                                EstablishmentId = establishmentId,
+                                RawMaterialId = rawMaterial.Id,
+                                MovementType = "VENDA",
+                                Quantity = item.Quantidade,
+                                StockBefore = rawMaterial.CurrentStock + item.Quantidade,
+                                StockAfter = rawMaterial.CurrentStock,
+                                MovementDate = DateTime.UtcNow,
+                                PerformedByEmployeeId = employeeId,
+                                DocumentNumber = sale.Code,
+                                Reason = $"Venda PDV - {sale.Code}",
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            _context.StockMovements.Add(stockMovement);
+
+                            // Se for controlado, registrar movimentação SNGPC
+                            if (rawMaterial.ControlType != null && rawMaterial.ControlType != "COMUM")
+                            {
+                                var controlledMovement = new ControlledSubstanceMovement
+                                {
+                                    Id = Guid.NewGuid(),
+                                    EstablishmentId = establishmentId,
+                                    RawMaterialId = rawMaterial.Id,
+                                    MovementDate = DateTime.UtcNow,
+                                    MovementType = "SAIDA",
+                                    ControlledList = rawMaterial.ControlType,
+                                    SubstanceDcbCode = rawMaterial.DcbCode ?? "",
+                                    SubstanceName = rawMaterial.Name,
+                                    Quantity = item.Quantidade,
+                                    Unit = rawMaterial.Unit,
+                                    BalanceBefore = rawMaterial.CurrentStock + item.Quantidade,
+                                    BalanceAfter = rawMaterial.CurrentStock,
+                                    SaleId = sale.Id,
+                                    SngpcSent = false,
+                                    SngpcStatus = "PENDENTE",
+                                    CreatedAt = DateTime.UtcNow,
+                                    CreatedByEmployeeId = employeeId
+                                };
+                                _context.ControlledSubstanceMovements.Add(controlledMovement);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -997,6 +1153,11 @@ public class ProductSearchDto
     public int StockQuantity { get; set; }
     public string Unit { get; set; } = "UN";
     public string? CategoryName { get; set; }
+    
+    // Novos campos para diferenciar fonte
+    public string Source { get; set; } = "CATALOGO"; // CATALOGO ou MATERIA_PRIMA
+    public string? ControlType { get; set; } // COMUM, LISTA_A, LISTA_B, etc.
+    public bool IsControlled { get; set; }
 }
 
 public class CreateUnifiedSaleDto
@@ -1009,7 +1170,7 @@ public class CreateUnifiedSaleDto
 
 public class UnifiedSaleItemDto
 {
-    public string Tipo { get; set; } = "";
+    public string Tipo { get; set; } = ""; // PRODUTO, MANIPULACAO, MATERIA_PRIMA
     public Guid? ReferenciaId { get; set; }
     public string Descricao { get; set; } = "";
     public decimal Quantidade { get; set; }

@@ -1,0 +1,72 @@
+@model Models.Pharmacy.SupplierCertificate
+@{
+    ViewData["Title"] = "Renovar Certificado";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="/SupplierCertification" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h4 class="mb-1">
+                        <i class="bi bi-arrow-repeat text-success me-2"></i>Renovar Certificado
+                    </h4>
+                    <p class="text-muted mb-0">@Model.Supplier?.CompanyName</p>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Certificado Atual:</strong> @Model.CertificateType - @Model.Number
+                @if (Model.ExpiryDate.HasValue)
+                {
+                    <span class="ms-2">(Validade: @Model.ExpiryDate.Value.ToString("dd/MM/yyyy"))</span>
+                }
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="RenewSubmit" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <h6 class="text-uppercase text-muted mb-3">Dados da Renovação</h6>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Novo Número (se alterado)</label>
+                                <input type="text" name="NewNumber" class="form-control" value="@Model.Number" placeholder="Manter o mesmo ou informar novo número">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nova Data de Emissão</label>
+                                <input type="date" name="NewIssueDate" class="form-control" value="@DateTime.UtcNow.ToString("yyyy-MM-dd")">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label">Nova Data de Validade <span class="text-danger">*</span></label>
+                                <input type="date" name="NewExpiryDate" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Verifique os dados no portal da ANVISA antes de confirmar a renovação:
+                            <a href="https://consultas.anvisa.gov.br/" target="_blank" class="alert-link">consultas.anvisa.gov.br</a>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="/SupplierCertification" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-1"></i>Confirmar Renovação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
