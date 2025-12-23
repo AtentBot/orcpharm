@@ -1,7 +1,6 @@
 @* 
-    ACESSO RÁPIDO - Seção para adicionar no Dashboard
-    Substitua a seção atual de "Acesso Rápido" por esta versão atualizada
-    ATUALIZAÇÃO: Adicionado card de Notas Fiscais
+    DASHBOARD - Acesso Rápido
+    TODOS OS LINKS CORRIGIDOS
 *@
 
 <!-- Acesso Rápido -->
@@ -33,7 +32,7 @@
             </a>
         </div>
 
-        @* Notas Fiscais - NOVO! *@
+        @* Notas Fiscais *@
         <div class="col-6 col-md-4 col-lg-3">
             <a href="/Fiscal" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
                style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
@@ -91,7 +90,7 @@
 
         @* Produção *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/Production" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
+            <a href="/Manipulacoes/Workflow" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
                style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
                 <div class="card-body text-center text-white py-4">
                     <div class="mb-2">
@@ -111,7 +110,7 @@
 
         @* Prescrições *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/Prescriptions" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
+            <a href="/PrescriptionsView" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
                style="background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">
                 <div class="card-body text-center text-white py-4">
                     <div class="mb-2">
@@ -131,7 +130,7 @@
 
         @* Processar Receita *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/Prescriptions/Upload" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
+            <a href="/PrescriptionsView/Processar" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
                style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);">
                 <div class="card-body text-center text-white py-4">
                     <div class="mb-2">
@@ -145,7 +144,7 @@
 
         @* Orçamentos *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/Quotes" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
+            <a href="/PrescriptionQuotes" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
                 <div class="card-body text-center py-4">
                     <div class="mb-2">
                         <i class="bi bi-currency-dollar text-success fs-2"></i>
@@ -166,7 +165,7 @@
 
         @* Estoque *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/RawMaterials" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
+            <a href="/Stock" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
                 <div class="card-body text-center py-4">
                     <div class="mb-2">
                         <i class="bi bi-boxes text-info fs-2"></i>
@@ -185,7 +184,7 @@
 
         @* Nova Compra *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/Purchases/Create" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
+            <a href="/compras/criar" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
                 <div class="card-body text-center py-4">
                     <div class="mb-2">
                         <i class="bi bi-cart-plus text-primary fs-2"></i>
@@ -198,7 +197,7 @@
 
         @* Manipulações *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/ManipulationOrders" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
+            <a href="/Manipulacoes" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
                 <div class="card-body text-center py-4">
                     <div class="mb-2">
                         <i class="bi bi-list-check text-info fs-2"></i>
@@ -241,7 +240,7 @@
         {
             @* Funcionários *@
             <div class="col-6 col-md-4 col-lg-3">
-                <a href="/Employees" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
+                <a href="/Employees/List" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card">
                     <div class="card-body text-center py-4">
                         <div class="mb-2">
                             <i class="bi bi-person-badge text-danger fs-2"></i>
@@ -283,7 +282,7 @@
 
         @* QR Code *@
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="/OnlineOrders/QRCodes" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
+            <a href="/QRCodes" class="card h-100 text-decoration-none border-0 shadow-sm quick-access-card"
                style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);">
                 <div class="card-body text-center text-white py-4">
                     <div class="mb-2">
