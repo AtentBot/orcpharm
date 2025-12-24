@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using Models.Pharmacy;
 using DTOs.Formulas;
@@ -29,18 +29,18 @@ public class FormulaService
                               f.IsActive);
 
             if (exists)
-                return (false, "J√° existe uma f√≥rmula ativa com este nome", null);
+                return (false, "J· existe uma fÛrmula ativa com este nome", null);
 
-            // Validar mat√©rias-primas
+            // Validar matÈrias-primas
             var rawMaterialIds = dto.Components.Select(c => c.RawMaterialId).Distinct().ToList();
             var rawMaterials = await _context.RawMaterials
                 .Where(r => rawMaterialIds.Contains(r.Id) && r.EstablishmentId == establishmentId)
                 .ToListAsync();
 
             if (rawMaterials.Count != rawMaterialIds.Count)
-                return (false, "Uma ou mais mat√©rias-primas n√£o encontradas", null);
+                return (false, "Uma ou mais matÈrias-primas n„o encontradas", null);
 
-            // Gerar c√≥digo √∫nico
+            // Gerar cÛdigo ˙nico
             var code = await GenerateFormulaCodeAsync(establishmentId);
 
             var formula = new Formula
@@ -90,12 +90,12 @@ public class FormulaService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, "F√≥rmula criada com sucesso", formula);
+            return (true, "FÛrmula criada com sucesso", formula);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Erro ao criar f√≥rmula: {ex.Message}", null);
+            return (false, $"Erro ao criar fÛrmula: {ex.Message}", null);
         }
     }
 
@@ -113,7 +113,7 @@ public class FormulaService
                 .FirstOrDefaultAsync(f => f.Id == formulaId && f.EstablishmentId == establishmentId);
 
             if (formula == null)
-                return (false, "F√≥rmula n√£o encontrada");
+                return (false, "FÛrmula n„o encontrada");
 
             // Verificar duplicidade de nome (exceto ela mesma)
             var exists = await _context.Formulas
@@ -123,18 +123,18 @@ public class FormulaService
                               f.IsActive);
 
             if (exists)
-                return (false, "J√° existe outra f√≥rmula ativa com este nome");
+                return (false, "J· existe outra fÛrmula ativa com este nome");
 
-            // Validar mat√©rias-primas
+            // Validar matÈrias-primas
             var rawMaterialIds = dto.Components.Select(c => c.RawMaterialId).Distinct().ToList();
             var rawMaterials = await _context.RawMaterials
                 .Where(r => rawMaterialIds.Contains(r.Id) && r.EstablishmentId == establishmentId)
                 .ToListAsync();
 
             if (rawMaterials.Count != rawMaterialIds.Count)
-                return (false, "Uma ou mais mat√©rias-primas n√£o encontradas");
+                return (false, "Uma ou mais matÈrias-primas n„o encontradas");
 
-            // Atualizar f√≥rmula
+            // Atualizar fÛrmula
             formula.Name = dto.Name;
             formula.Description = dto.Description;
             formula.Category = dto.Category.ToUpper();
@@ -176,12 +176,12 @@ public class FormulaService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, "F√≥rmula atualizada com sucesso");
+            return (true, "FÛrmula atualizada com sucesso");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Erro ao atualizar f√≥rmula: {ex.Message}");
+            return (false, $"Erro ao atualizar fÛrmula: {ex.Message}");
         }
     }
 
@@ -193,14 +193,14 @@ public class FormulaService
             .FirstOrDefaultAsync(f => f.Id == formulaId && f.EstablishmentId == establishmentId);
 
         if (formula == null)
-            return (false, "F√≥rmula n√£o encontrada");
+            return (false, "FÛrmula n„o encontrada");
 
         // Soft delete
         formula.IsActive = false;
         formula.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-        return (true, "F√≥rmula desativada com sucesso");
+        return (true, "FÛrmula desativada com sucesso");
     }
 
     public async Task<(bool Success, string Message, Formula? Formula)> DuplicateFormulaAsync(
@@ -216,7 +216,7 @@ public class FormulaService
                 .FirstOrDefaultAsync(f => f.Id == formulaId && f.EstablishmentId == establishmentId);
 
             if (original == null)
-                return (false, "F√≥rmula original n√£o encontrada", null);
+                return (false, "FÛrmula original n„o encontrada", null);
 
             var code = await GenerateFormulaCodeAsync(establishmentId);
 
@@ -224,7 +224,7 @@ public class FormulaService
             {
                 EstablishmentId = establishmentId,
                 Code = code,
-                Name = $"{original.Name} (C√≥pia)",
+                Name = $"{original.Name} (CÛpia)",
                 Description = original.Description,
                 Category = original.Category,
                 PharmaceuticalForm = original.PharmaceuticalForm,
@@ -266,12 +266,12 @@ public class FormulaService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, "F√≥rmula duplicada com sucesso", newFormula);
+            return (true, "FÛrmula duplicada com sucesso", newFormula);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Erro ao duplicar f√≥rmula: {ex.Message}", null);
+            return (false, $"Erro ao duplicar fÛrmula: {ex.Message}", null);
         }
     }
 
@@ -285,7 +285,7 @@ public class FormulaService
             .FirstOrDefaultAsync(f => f.Id == formulaId && f.EstablishmentId == establishmentId);
 
         if (formula == null)
-            throw new Exception("F√≥rmula n√£o encontrada");
+            throw new Exception("FÛrmula n„o encontrada");
 
         var componentsCost = new List<ComponentCostDto>();
         decimal totalCost = 0;

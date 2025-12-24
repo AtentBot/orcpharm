@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
 using DTOs.Labels;
@@ -24,7 +24,7 @@ public class LabelService
     {
         try
         {
-            // Se for template padr√£o, desativar outros padr√µes do mesmo tipo
+            // Se for template padr„o, desativar outros padrıes do mesmo tipo
             if (dto.IsDefault)
             {
                 var existingDefaults = await _context.Set<LabelTemplate>()
@@ -86,17 +86,17 @@ public class LabelService
     {
         try
         {
-            // Buscar ordem de manipula√ß√£o
+            // Buscar ordem de manipulaÁ„o
             var order = await _context.ManipulationOrders
                 .Include(o => o.Formula)
                 .FirstOrDefaultAsync(o => o.Id == dto.ManipulationOrderId &&
                                          o.EstablishmentId == establishmentId);
 
             if (order == null)
-                return (false, "Ordem de manipula√ß√£o n√£o encontrada", null);
+                return (false, "Ordem de manipulaÁ„o n„o encontrada", null);
 
             if (order.Status != "FINALIZADO")
-                return (false, "Ordem ainda n√£o foi finalizada", null);
+                return (false, "Ordem ainda n„o foi finalizada", null);
 
             // Buscar template
             LabelTemplate? template;
@@ -108,7 +108,7 @@ public class LabelService
             }
             else
             {
-                // Buscar template padr√£o
+                // Buscar template padr„o
                 template = await _context.Set<LabelTemplate>()
                     .FirstOrDefaultAsync(t => t.EstablishmentId == establishmentId &&
                                              t.IsDefault &&
@@ -116,9 +116,9 @@ public class LabelService
             }
 
             if (template == null)
-                return (false, "Template n√£o encontrado", null);
+                return (false, "Template n„o encontrado", null);
 
-            // Buscar farmac√™utico aprovador
+            // Buscar farmacÍutico aprovador
             var pharmacist = await _context.Employees
                 .Include(e => e.JobPosition)
                 .FirstOrDefaultAsync(e => e.Id == order.ApprovedByPharmacistId);
@@ -127,13 +127,13 @@ public class LabelService
             var establishment = await _context.Set<Establishment>()
                 .FirstOrDefaultAsync(e => e.Id == establishmentId);
 
-            // Gerar c√≥digo do r√≥tulo
+            // Gerar cÛdigo do rÛtulo
             var labelCode = await GenerateLabelCodeAsync(establishmentId);
 
             // Gerar dados do QR Code
             var qrCodeData = GenerateQrCodeData(order, labelCode);
 
-            // Buscar componentes da f√≥rmula
+            // Buscar componentes da fÛrmula
             var components = await _context.Set<FormulaComponent>()
                 .Where(c => c.FormulaId == order.FormulaId)
                 .OrderBy(c => c.OrderIndex)
@@ -141,7 +141,7 @@ public class LabelService
 
             var composition = BuildComposition(components);
 
-            // Gerar HTML do r√≥tulo
+            // Gerar HTML do rÛtulo
             var html = GenerateLabelHtml(
                 template,
                 establishment,
@@ -158,7 +158,7 @@ public class LabelService
                 ManipulationOrderId = order.Id,
                 TemplateId = template.Id,
                 LabelCode = labelCode,
-                PatientName = order.CustomerName ?? "PACIENTE N√ÉO IDENTIFICADO",
+                PatientName = order.CustomerName ?? "PACIENTE N√O IDENTIFICADO",
                 FormulaName = order.Formula?.Name ?? "",
                 Composition = composition,
                 Posology = order.SpecialInstructions ?? "",
@@ -179,11 +179,11 @@ public class LabelService
             _context.Set<GeneratedLabel>().Add(label);
             await _context.SaveChangesAsync();
 
-            return (true, "R√≥tulo gerado com sucesso", label);
+            return (true, "RÛtulo gerado com sucesso", label);
         }
         catch (Exception ex)
         {
-            return (false, $"Erro ao gerar r√≥tulo: {ex.Message}", null);
+            return (false, $"Erro ao gerar rÛtulo: {ex.Message}", null);
         }
     }
 
@@ -198,10 +198,10 @@ public class LabelService
                                      l.EstablishmentId == establishmentId);
 
         if (label == null)
-            return (false, "R√≥tulo n√£o encontrado");
+            return (false, "RÛtulo n„o encontrado");
 
-        // TODO: Implementar integra√ß√£o com impressora
-        // Por enquanto, apenas registrar a impress√£o
+        // TODO: Implementar integraÁ„o com impressora
+        // Por enquanto, apenas registrar a impress„o
 
         label.PrintCount += dto.Copies;
         label.LastPrintedAt = DateTime.UtcNow;
@@ -210,7 +210,7 @@ public class LabelService
 
         await _context.SaveChangesAsync();
 
-        return (true, $"R√≥tulo impresso com sucesso ({dto.Copies} c√≥pia(s))");
+        return (true, $"RÛtulo impresso com sucesso ({dto.Copies} cÛpia(s))");
     }
 
     private string GenerateLabelHtml(
@@ -228,7 +228,7 @@ public class LabelService
         // Substituir placeholders com dados do estabelecimento
         html.Replace("{{ESTABLISHMENT_NAME}}", establishment?.NomeFantasia ?? "");
 
-        // Montar endere√ßo completo
+        // Montar endereÁo completo
         var address = establishment != null
             ? $"{establishment.Street}, {establishment.Number}{(string.IsNullOrWhiteSpace(establishment.Complement) ? "" : " - " + establishment.Complement)} - {establishment.Neighborhood}"
             : "";
@@ -237,7 +237,7 @@ public class LabelService
         html.Replace("{{ESTABLISHMENT_PHONE}}", establishment?.Phone ?? "");
         html.Replace("{{ESTABLISHMENT_CNPJ}}", establishment?.Cnpj ?? "");
 
-        // Dados do produto e manipula√ß√£o
+        // Dados do produto e manipulaÁ„o
         html.Replace("{{PATIENT_NAME}}", order.CustomerName ?? "");
         html.Replace("{{FORMULA_NAME}}", order.Formula?.Name ?? "");
         html.Replace("{{COMPOSITION}}", composition);

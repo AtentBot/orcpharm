@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs.Common;
 using DTOs.Reports;
+using DTOs;
 using Models.Employees;
 
 namespace Controllers;

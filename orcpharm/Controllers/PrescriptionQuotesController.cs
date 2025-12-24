@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Service;
-using DTOs.Common;
 using DTOs.Prescriptions;
 using Service.Prescriptions;
 

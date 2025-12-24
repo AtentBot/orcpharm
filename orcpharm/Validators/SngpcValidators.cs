@@ -1,4 +1,4 @@
-Ôªøusing FluentValidation;
+using FluentValidation;
 using DTOs;
 
 namespace Validators;
@@ -8,39 +8,39 @@ public class RegisterControlledMovementValidator : AbstractValidator<RegisterCon
     public RegisterControlledMovementValidator()
     {
         RuleFor(x => x.RawMaterialId)
-            .NotEmpty().WithMessage("Mat√©ria-prima √© obrigat√≥ria");
+            .NotEmpty().WithMessage("MatÈria-prima È obrigatÛria");
 
         RuleFor(x => x.MovementDate)
-            .NotEmpty().WithMessage("Data da movimenta√ß√£o √© obrigat√≥ria")
-            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n√£o pode ser futura");
+            .NotEmpty().WithMessage("Data da movimentaÁ„o È obrigatÛria")
+            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n„o pode ser futura");
 
         RuleFor(x => x.MovementType)
             .Must(x => x == "ENTRADA" || x == "SAIDA" || x == "TRANSFERENCIA" ||
                       x == "PERDA" || x == "DEVOLUCAO" || x == "AJUSTE")
-            .WithMessage("Tipo de movimenta√ß√£o inv√°lido");
+            .WithMessage("Tipo de movimentaÁ„o inv·lido");
 
         RuleFor(x => x.Quantity)
             .GreaterThan(0).WithMessage("Quantidade deve ser maior que zero");
 
         RuleFor(x => x.PrescriptionNumber)
             .NotEmpty().When(x => x.MovementType == "SAIDA")
-            .WithMessage("N√∫mero da receita √© obrigat√≥rio para sa√≠das");
+            .WithMessage("N˙mero da receita È obrigatÛrio para saÌdas");
 
         RuleFor(x => x.DoctorName)
             .NotEmpty().When(x => x.MovementType == "SAIDA")
-            .WithMessage("Nome do m√©dico √© obrigat√≥rio para sa√≠das");
+            .WithMessage("Nome do mÈdico È obrigatÛrio para saÌdas");
 
         RuleFor(x => x.DoctorCrm)
             .NotEmpty().When(x => x.MovementType == "SAIDA")
-            .WithMessage("CRM √© obrigat√≥rio para sa√≠das");
+            .WithMessage("CRM È obrigatÛrio para saÌdas");
 
         RuleFor(x => x.PatientName)
             .NotEmpty().When(x => x.MovementType == "SAIDA")
-            .WithMessage("Nome do paciente √© obrigat√≥rio para sa√≠das");
+            .WithMessage("Nome do paciente È obrigatÛrio para saÌdas");
 
         RuleFor(x => x.Reason)
             .NotEmpty().When(x => x.MovementType == "PERDA" || x.MovementType == "AJUSTE")
-            .WithMessage("Motivo √© obrigat√≥rio para perdas e ajustes");
+            .WithMessage("Motivo È obrigatÛrio para perdas e ajustes");
     }
 }
 
@@ -50,39 +50,39 @@ public class RegisterSpecialPrescriptionValidator : AbstractValidator<RegisterSp
     {
         RuleFor(x => x.PrescriptionType)
             .Must(x => x == "AMARELA" || x == "AZUL" || x == "BRANCA_2_VIAS")
-            .WithMessage("Tipo de receita inv√°lido");
+            .WithMessage("Tipo de receita inv·lido");
 
         RuleFor(x => x.PrescriptionNumber)
-            .NotEmpty().WithMessage("N√∫mero da receita √© obrigat√≥rio");
+            .NotEmpty().WithMessage("N˙mero da receita È obrigatÛrio");
 
         RuleFor(x => x.IssueDate)
-            .NotEmpty().WithMessage("Data de emiss√£o √© obrigat√≥ria")
-            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n√£o pode ser futura");
+            .NotEmpty().WithMessage("Data de emiss„o È obrigatÛria")
+            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n„o pode ser futura");
 
         RuleFor(x => x.DoctorName)
-            .NotEmpty().WithMessage("Nome do m√©dico √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Nome do mÈdico È obrigatÛrio");
 
         RuleFor(x => x.DoctorCrm)
-            .NotEmpty().WithMessage("CRM √© obrigat√≥rio");
+            .NotEmpty().WithMessage("CRM È obrigatÛrio");
 
         RuleFor(x => x.DoctorCrmState)
-            .NotEmpty().WithMessage("UF do CRM √© obrigat√≥ria")
+            .NotEmpty().WithMessage("UF do CRM È obrigatÛria")
             .Length(2).WithMessage("UF deve ter 2 caracteres");
 
         RuleFor(x => x.PatientName)
-            .NotEmpty().WithMessage("Nome do paciente √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Nome do paciente È obrigatÛrio");
 
         RuleFor(x => x.PatientDocument)
-            .NotEmpty().WithMessage("Documento do paciente √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Documento do paciente È obrigatÛrio");
 
         RuleFor(x => x.Medication)
-            .NotEmpty().WithMessage("Medicamento √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Medicamento È obrigatÛrio");
 
         RuleFor(x => x.Quantity)
-            .NotEmpty().WithMessage("Quantidade √© obrigat√≥ria");
+            .NotEmpty().WithMessage("Quantidade È obrigatÛria");
 
         RuleFor(x => x.Posology)
-            .NotEmpty().WithMessage("Posologia √© obrigat√≥ria");
+            .NotEmpty().WithMessage("Posologia È obrigatÛria");
     }
 }
 
@@ -91,15 +91,15 @@ public class GenerateBalanceValidator : AbstractValidator<GenerateBalanceDto>
     public GenerateBalanceValidator()
     {
         RuleFor(x => x.StartDate)
-            .NotEmpty().WithMessage("Data inicial √© obrigat√≥ria");
+            .NotEmpty().WithMessage("Data inicial È obrigatÛria");
 
         RuleFor(x => x.EndDate)
-            .NotEmpty().WithMessage("Data final √© obrigat√≥ria")
+            .NotEmpty().WithMessage("Data final È obrigatÛria")
             .GreaterThanOrEqualTo(x => x.StartDate)
-            .WithMessage("Data final deve ser maior ou igual √† data inicial");
+            .WithMessage("Data final deve ser maior ou igual ‡ data inicial");
 
         RuleFor(x => x.BalanceType)
             .Must(x => x == "MENSAL" || x == "TRIMESTRAL" || x == "ANUAL")
-            .WithMessage("Tipo de balan√ßo inv√°lido");
+            .WithMessage("Tipo de balanÁo inv·lido");
     }
 }

@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.BatchQuality;
 using Models.Pharmacy;
@@ -25,16 +25,16 @@ public class BatchQualityService
             .FirstOrDefaultAsync(b => b.Id == batchId);
 
         if (batch == null)
-            return (false, "Lote n√£o encontrado");
+            return (false, "Lote n„o encontrado");
 
         if (batch.RawMaterial?.EstablishmentId != establishmentId)
-            return (false, "Lote n√£o pertence a este estabelecimento");
+            return (false, "Lote n„o pertence a este estabelecimento");
 
         if (batch.Status?.ToUpper() != "QUARENTENA")
-            return (false, $"Lote n√£o pode ser aprovado no status {batch.Status}");
+            return (false, $"Lote n„o pode ser aprovado no status {batch.Status}");
 
         if (batch.ExpiryDate <= DateTime.UtcNow)
-            return (false, "Lote vencido n√£o pode ser aprovado");
+            return (false, "Lote vencido n„o pode ser aprovado");
 
         batch.Status = "APROVADO";
         batch.CertificateNumber = dto.CertificateNumber;
@@ -60,13 +60,13 @@ public class BatchQualityService
                 .FirstOrDefaultAsync(b => b.Id == batchId);
 
             if (batch == null)
-                return (false, "Lote n√£o encontrado");
+                return (false, "Lote n„o encontrado");
 
             if (batch.RawMaterial?.EstablishmentId != establishmentId)
-                return (false, "Lote n√£o pertence a este estabelecimento");
+                return (false, "Lote n„o pertence a este estabelecimento");
 
             if (batch.Status?.ToUpper() != "QUARENTENA")
-                return (false, $"Lote n√£o pode ser reprovado no status {batch.Status}");
+                return (false, $"Lote n„o pode ser reprovado no status {batch.Status}");
 
             batch.Status = "REPROVADO";
             batch.QualityNotes = $"REPROVADO: {dto.Reason}";
@@ -144,11 +144,11 @@ public class BatchQualityService
 
         return new QuarantineSummaryDto
         {
-            TotalBatches = batchesList.Count,  // ‚úÖ CORRIGIDO
+            TotalBatches = batchesList.Count,  // ? CORRIGIDO
             ExpiringIn30Days = expiringIn30Days,
             ExpiringIn60Days = expiringIn60Days,
             TotalValue = totalValue,
-            Batches = batchesList  // ‚úÖ CORRIGIDO
+            Batches = batchesList  // ? CORRIGIDO
         };
     }
 }

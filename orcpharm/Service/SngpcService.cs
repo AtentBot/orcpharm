@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
 using DTOs;
@@ -22,16 +22,16 @@ public class SngpcService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // Buscar mat√©ria-prima
+            // Buscar matÈria-prima
             var rawMaterial = await _context.RawMaterials
                 .FirstOrDefaultAsync(r => r.Id == dto.RawMaterialId &&
                                          r.EstablishmentId == establishmentId);
 
             if (rawMaterial == null)
-                return (false, "Mat√©ria-prima n√£o encontrada", null);
+                return (false, "MatÈria-prima n„o encontrada", null);
 
             if (rawMaterial.ControlType == "COMUM")
-                return (false, "Mat√©ria-prima n√£o √© controlada", null);
+                return (false, "MatÈria-prima n„o È controlada", null);
 
             // Calcular saldo atual
             var currentBalance = await GetCurrentBalanceAsync(
@@ -44,14 +44,14 @@ public class SngpcService
                 "ENTRADA" => currentBalance + dto.Quantity,
                 "SAIDA" => currentBalance - dto.Quantity,
                 "PERDA" => currentBalance - dto.Quantity,
-                "AJUSTE" => dto.Quantity, // O valor √© o saldo final
+                "AJUSTE" => dto.Quantity, // O valor È o saldo final
                 _ => currentBalance
             };
 
             if (newBalance < 0 && dto.MovementType != "AJUSTE")
                 return (false, "Saldo insuficiente", null);
 
-            // Criar movimenta√ß√£o
+            // Criar movimentaÁ„o
             var movement = new ControlledSubstanceMovement
             {
                 EstablishmentId = establishmentId,
@@ -92,12 +92,12 @@ public class SngpcService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return (true, "Movimenta√ß√£o registrada com sucesso", movement);
+            return (true, "MovimentaÁ„o registrada com sucesso", movement);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Erro ao registrar movimenta√ß√£o: {ex.Message}", null);
+            return (false, $"Erro ao registrar movimentaÁ„o: {ex.Message}", null);
         }
     }
 
@@ -110,7 +110,7 @@ public class SngpcService
         {
             var balances = new List<ControlledSubstanceBalance>();
 
-            // Buscar todas as mat√©rias-primas controladas
+            // Buscar todas as matÈrias-primas controladas
             var query = _context.RawMaterials
                 .Where(r => r.EstablishmentId == establishmentId &&
                            r.ControlType != "COMUM");
@@ -122,7 +122,7 @@ public class SngpcService
 
             foreach (var material in controlledMaterials)
             {
-                // Calcular movimenta√ß√µes do per√≠odo
+                // Calcular movimentaÁıes do perÌodo
                 var movements = await _context.Set<ControlledSubstanceMovement>()
                     .Where(m => m.EstablishmentId == establishmentId &&
                                m.RawMaterialId == material.Id &&
@@ -166,11 +166,11 @@ public class SngpcService
             }
 
             await _context.SaveChangesAsync();
-            return (true, $"{balances.Count} balan√ßo(s) gerado(s) com sucesso", balances);
+            return (true, $"{balances.Count} balanÁo(s) gerado(s) com sucesso", balances);
         }
         catch (Exception ex)
         {
-            return (false, $"Erro ao gerar balan√ßos: {ex.Message}", new List<ControlledSubstanceBalance>());
+            return (false, $"Erro ao gerar balanÁos: {ex.Message}", new List<ControlledSubstanceBalance>());
         }
     }
 
@@ -185,10 +185,10 @@ public class SngpcService
                                      b.EstablishmentId == establishmentId);
 
         if (balance == null)
-            return (false, "Balan√ßo n√£o encontrado");
+            return (false, "BalanÁo n„o encontrado");
 
         if (balance.Status == "FECHADO")
-            return (false, "Balan√ßo j√° est√° fechado");
+            return (false, "BalanÁo j· est· fechado");
 
         balance.PhysicalBalance = dto.PhysicalBalance;
         balance.Difference = dto.PhysicalBalance - balance.FinalBalance;
@@ -200,7 +200,7 @@ public class SngpcService
             balance.Observations = dto.Observations;
 
         await _context.SaveChangesAsync();
-        return (true, "Balan√ßo fechado com sucesso");
+        return (true, "BalanÁo fechado com sucesso");
     }
 
     public async Task<(bool Success, string Message, SpecialPrescriptionControl? Control)> RegisterSpecialPrescriptionAsync(
@@ -210,14 +210,14 @@ public class SngpcService
     {
         try
         {
-            // Verificar se n√∫mero j√° existe
+            // Verificar se n˙mero j· existe
             var exists = await _context.Set<SpecialPrescriptionControl>()
                 .AnyAsync(s => s.EstablishmentId == establishmentId &&
                               s.PrescriptionNumber == dto.PrescriptionNumber &&
                               s.PrescriptionType == dto.PrescriptionType.ToUpper());
 
             if (exists)
-                return (false, "Receita j√° cadastrada", null);
+                return (false, "Receita j· cadastrada", null);
 
             // Calcular validade
             var validityDate = dto.PrescriptionType.ToUpper() switch
@@ -283,8 +283,8 @@ public class SngpcService
         if (!string.IsNullOrWhiteSpace(controlledList))
             movements = movements.Where(m => m.ControlledList == controlledList).ToList();
 
-        // TODO: Implementar gera√ß√£o XML conforme padr√£o ANVISA
-        // Por enquanto, retornar XML b√°sico
+        // TODO: Implementar geraÁ„o XML conforme padr„o ANVISA
+        // Por enquanto, retornar XML b·sico
         var xml = $@"<?xml version=""1.0"" encoding=""UTF-8""?>
 <SNGPC>
     <Periodo>

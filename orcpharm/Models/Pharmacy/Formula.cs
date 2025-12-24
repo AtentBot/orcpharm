@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -35,11 +35,11 @@ public class Formula
 
     // Rendimento e validade
     [Column(TypeName = "decimal(10,2)")]
-    public decimal StandardYield { get; set; } // Quantidade padrÃ£o produzida
+    public decimal StandardYield { get; set; } // Quantidade padrão produzida
 
     public int ShelfLifeDays { get; set; } // Prazo de validade em dias
 
-    // InstruÃ§Ãµes
+    // Instruções
     [MaxLength(2000)]
     public string? PreparationInstructions { get; set; }
 
@@ -66,7 +66,7 @@ public class Formula
     public Guid? ApprovedByPharmacistId { get; set; }
     public DateTime? ApprovedAt { get; set; }
 
-    // NavegaÃ§Ã£o
+    // Navegação
     public ICollection<FormulaComponent>? Components { get; set; }
     public ICollection<ManipulationOrder>? ManipulationOrders { get; set; }
 }

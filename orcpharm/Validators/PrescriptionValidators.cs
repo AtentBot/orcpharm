@@ -1,4 +1,4 @@
-Ôªøusing FluentValidation;
+using FluentValidation;
 using DTOs;
 
 namespace Validators;
@@ -8,23 +8,23 @@ public class CreatePrescriptionValidator : AbstractValidator<CreatePrescriptionD
     public CreatePrescriptionValidator()
     {
         RuleFor(x => x.CustomerId)
-            .NotEmpty().WithMessage("Cliente √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Cliente È obrigatÛrio");
 
         RuleFor(x => x.PrescriptionDate)
-            .NotEmpty().WithMessage("Data da prescri√ß√£o √© obrigat√≥ria")
-            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n√£o pode ser futura");
+            .NotEmpty().WithMessage("Data da prescriÁ„o È obrigatÛria")
+            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n„o pode ser futura");
 
         RuleFor(x => x.DoctorName)
-            .NotEmpty().WithMessage("Nome do m√©dico √© obrigat√≥rio")
-            .MinimumLength(3).WithMessage("Nome deve ter no m√≠nimo 3 caracteres")
-            .MaximumLength(200).WithMessage("Nome deve ter no m√°ximo 200 caracteres");
+            .NotEmpty().WithMessage("Nome do mÈdico È obrigatÛrio")
+            .MinimumLength(3).WithMessage("Nome deve ter no mÌnimo 3 caracteres")
+            .MaximumLength(200).WithMessage("Nome deve ter no m·ximo 200 caracteres");
 
         RuleFor(x => x.DoctorCrm)
-            .NotEmpty().WithMessage("CRM √© obrigat√≥rio")
-            .Matches(@"^\d{4,7}$").WithMessage("CRM deve conter entre 4 e 7 d√≠gitos");
+            .NotEmpty().WithMessage("CRM È obrigatÛrio")
+            .Matches(@"^\d{4,7}$").WithMessage("CRM deve conter entre 4 e 7 dÌgitos");
 
         RuleFor(x => x.DoctorCrmState)
-            .NotEmpty().WithMessage("UF do CRM √© obrigat√≥ria")
+            .NotEmpty().WithMessage("UF do CRM È obrigatÛria")
             .Length(2).WithMessage("UF deve ter 2 caracteres");
 
         RuleFor(x => x.PrescriptionType)
@@ -37,18 +37,18 @@ public class CreatePrescriptionValidator : AbstractValidator<CreatePrescriptionD
                       x == "B1" || x == "B2" ||
                       x == "C1" || x == "C2" || x == "C3" || x == "C4" || x == "C5")
             .When(x => x.PrescriptionType == "CONTROLE_ESPECIAL")
-            .WithMessage("Lista de controle inv√°lida");
+            .WithMessage("Lista de controle inv·lida");
 
         RuleFor(x => x.PrescriptionColor)
             .Must(x => x == null || x == "BRANCA" || x == "AMARELA" || x == "AZUL")
             .WithMessage("Cor deve ser BRANCA, AMARELA ou AZUL");
 
         RuleFor(x => x.Medications)
-            .NotEmpty().WithMessage("Medicamentos s√£o obrigat√≥rios")
-            .MinimumLength(10).WithMessage("Descri√ß√£o dos medicamentos muito curta");
+            .NotEmpty().WithMessage("Medicamentos s„o obrigatÛrios")
+            .MinimumLength(10).WithMessage("DescriÁ„o dos medicamentos muito curta");
 
         RuleFor(x => x.Posology)
-            .NotEmpty().WithMessage("Posologia √© obrigat√≥ria")
+            .NotEmpty().WithMessage("Posologia È obrigatÛria")
             .MinimumLength(10).WithMessage("Posologia muito curta");
     }
 }
@@ -58,20 +58,20 @@ public class UpdatePrescriptionValidator : AbstractValidator<UpdatePrescriptionD
     public UpdatePrescriptionValidator()
     {
         RuleFor(x => x.PrescriptionDate)
-            .NotEmpty().WithMessage("Data da prescri√ß√£o √© obrigat√≥ria")
-            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n√£o pode ser futura");
+            .NotEmpty().WithMessage("Data da prescriÁ„o È obrigatÛria")
+            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n„o pode ser futura");
 
         RuleFor(x => x.DoctorName)
-            .NotEmpty().WithMessage("Nome do m√©dico √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Nome do mÈdico È obrigatÛrio");
 
         RuleFor(x => x.DoctorCrm)
-            .NotEmpty().WithMessage("CRM √© obrigat√≥rio");
+            .NotEmpty().WithMessage("CRM È obrigatÛrio");
 
         RuleFor(x => x.Medications)
-            .NotEmpty().WithMessage("Medicamentos s√£o obrigat√≥rios");
+            .NotEmpty().WithMessage("Medicamentos s„o obrigatÛrios");
 
         RuleFor(x => x.Posology)
-            .NotEmpty().WithMessage("Posologia √© obrigat√≥ria");
+            .NotEmpty().WithMessage("Posologia È obrigatÛria");
     }
 }
 
@@ -81,7 +81,7 @@ public class ValidatePrescriptionValidator : AbstractValidator<ValidatePrescript
     {
         RuleFor(x => x.ValidationNotes)
             .NotEmpty().When(x => !x.IsValid)
-            .WithMessage("Motivo da rejei√ß√£o √© obrigat√≥rio");
+            .WithMessage("Motivo da rejeiÁ„o È obrigatÛrio");
     }
 }
 
@@ -90,8 +90,8 @@ public class CancelPrescriptionValidator : AbstractValidator<CancelPrescriptionD
     public CancelPrescriptionValidator()
     {
         RuleFor(x => x.Reason)
-            .NotEmpty().WithMessage("Motivo do cancelamento √© obrigat√≥rio")
-            .MinimumLength(10).WithMessage("Motivo deve ter no m√≠nimo 10 caracteres");
+            .NotEmpty().WithMessage("Motivo do cancelamento È obrigatÛrio")
+            .MinimumLength(10).WithMessage("Motivo deve ter no mÌnimo 10 caracteres");
     }
 }
 
@@ -100,12 +100,12 @@ public class GenerateManipulationValidator : AbstractValidator<GenerateManipulat
     public GenerateManipulationValidator()
     {
         RuleFor(x => x.FormulaId)
-            .NotEmpty().WithMessage("F√≥rmula √© obrigat√≥ria");
+            .NotEmpty().WithMessage("FÛrmula È obrigatÛria");
 
         RuleFor(x => x.Quantity)
             .GreaterThan(0).WithMessage("Quantidade deve ser maior que zero");
 
         RuleFor(x => x.ExpectedDate)
-            .GreaterThanOrEqualTo(DateTime.Today).WithMessage("Data n√£o pode ser no passado");
+            .GreaterThanOrEqualTo(DateTime.Today).WithMessage("Data n„o pode ser no passado");
     }
 }

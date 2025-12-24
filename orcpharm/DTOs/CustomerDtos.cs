@@ -1,4 +1,4 @@
-ï»¿namespace DTOs;
+namespace DTOs;
 
 public class CreateCustomerDto
 {
@@ -11,7 +11,7 @@ public class CreateCustomerDto
     public string? WhatsApp { get; set; }
     public string? Email { get; set; }
 
-    // EndereÃ§o
+    // Endereço
     public string? ZipCode { get; set; }
     public string? Street { get; set; }
     public string? Number { get; set; }
@@ -20,7 +20,7 @@ public class CreateCustomerDto
     public string? City { get; set; }
     public string? State { get; set; }
 
-    // InformaÃ§Ãµes mÃ©dicas
+    // Informações médicas
     public string? Allergies { get; set; }
     public string? MedicalConditions { get; set; }
     public string? Observations { get; set; }
@@ -40,7 +40,7 @@ public class UpdateCustomerDto
     public string? WhatsApp { get; set; }
     public string? Email { get; set; }
 
-    // EndereÃ§o
+    // Endereço
     public string? ZipCode { get; set; }
     public string? Street { get; set; }
     public string? Number { get; set; }
@@ -49,7 +49,7 @@ public class UpdateCustomerDto
     public string? City { get; set; }
     public string? State { get; set; }
 
-    // InformaÃ§Ãµes mÃ©dicas
+    // Informações médicas
     public string? Allergies { get; set; }
     public string? MedicalConditions { get; set; }
     public string? Observations { get; set; }
@@ -71,7 +71,7 @@ public class CustomerResponseDto
     public string? WhatsApp { get; set; }
     public string? Email { get; set; }
 
-    // EndereÃ§o
+    // Endereço
     public string? ZipCode { get; set; }
     public string? Street { get; set; }
     public string? Number { get; set; }
@@ -81,7 +81,7 @@ public class CustomerResponseDto
     public string? State { get; set; }
     public string? FullAddress { get; set; }
 
-    // InformaÃ§Ãµes mÃ©dicas
+    // Informações médicas
     public string? Allergies { get; set; }
     public string? MedicalConditions { get; set; }
     public string? Observations { get; set; }

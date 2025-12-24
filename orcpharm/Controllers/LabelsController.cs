@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.Labels;
@@ -45,11 +45,11 @@ public class LabelsController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var query = _context.Set<LabelTemplate>()
             .Where(t => t.EstablishmentId == establishmentId.Value);
@@ -83,17 +83,17 @@ public class LabelsController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var template = await _context.Set<LabelTemplate>()
             .FirstOrDefaultAsync(t => t.Id == id && t.EstablishmentId == establishmentId.Value);
 
         if (template == null)
-            return NotFound(new { message = "Template não encontrado" });
+            return NotFound(new { message = "Template n�o encontrado" });
 
         return Ok(template);
     }
@@ -109,11 +109,11 @@ public class LabelsController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var (success, message, template) = await _service.CreateTemplateAsync(
             dto, establishmentId.Value, employeeId.Value);
@@ -132,17 +132,17 @@ public class LabelsController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var template = await _context.Set<LabelTemplate>()
             .FirstOrDefaultAsync(t => t.Id == id && t.EstablishmentId == establishmentId.Value);
 
         if (template == null)
-            return NotFound(new { message = "Template não encontrado" });
+            return NotFound(new { message = "Template n�o encontrado" });
 
         template.Name = dto.Name;
         template.Description = dto.Description;
@@ -162,17 +162,17 @@ public class LabelsController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var template = await _context.Set<LabelTemplate>()
             .FirstOrDefaultAsync(t => t.Id == id && t.EstablishmentId == establishmentId.Value);
 
         if (template == null)
-            return NotFound(new { message = "Template não encontrado" });
+            return NotFound(new { message = "Template n�o encontrado" });
 
         template.IsActive = false;
         template.UpdatedAt = DateTime.UtcNow;
@@ -183,7 +183,7 @@ public class LabelsController : ControllerBase
     }
 
     // ============================================
-    // GERAÇÃO E IMPRESSÃO
+    // GERA��O E IMPRESS�O
     // ============================================
 
     [HttpPost("generate")]
@@ -197,11 +197,11 @@ public class LabelsController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var (success, message, label) = await _service.GenerateLabelAsync(
             dto, establishmentId.Value, employeeId.Value);
@@ -217,11 +217,11 @@ public class LabelsController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var label = await _context.Set<GeneratedLabel>()
             .Where(l => l.Id == id && l.EstablishmentId == establishmentId.Value)
@@ -267,7 +267,7 @@ public class LabelsController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (label == null)
-            return NotFound(new { message = "Rótulo não encontrado" });
+            return NotFound(new { message = "R�tulo n�o encontrado" });
 
         return Ok(label);
     }
@@ -283,11 +283,11 @@ public class LabelsController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var (success, message) = await _service.PrintLabelAsync(
             id, dto, establishmentId.Value, employeeId.Value);
@@ -303,11 +303,11 @@ public class LabelsController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var query = _context.Set<GeneratedLabel>()
             .Where(l => l.EstablishmentId == establishmentId.Value);

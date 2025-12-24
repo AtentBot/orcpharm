@@ -55,6 +55,63 @@ public class ClienteController : Controller
         return View();
     }
 
+    [HttpGet("CriarFormula")]
+    public IActionResult CriarFormula()
+    {
+        var customer = HttpContext.Items["Customer"] as Customer;
+        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
+
+        if (customer == null || session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Login", "Account");
+
+        // Buscar dados da farmácia
+        var farmacia = _context.Establishments
+            .Where(e => e.Id == session.CurrentEstablishmentId.Value)
+            .Select(e => new
+            {
+                e.NomeFantasia,
+                e.Cnpj,
+                e.Street
+            })
+            .FirstOrDefault();
+
+        ViewBag.Farmacia = farmacia;
+        ViewBag.CustomerName = customer.FullName;
+        ViewBag.CustomerPhone = customer.WhatsApp;
+        ViewBag.CustomerEmail = customer.Email;
+
+        return View();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     [HttpGet("EsqueciSenha")]
     public IActionResult EsqueciSenha()
     {

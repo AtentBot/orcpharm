@@ -1,11 +1,11 @@
-ï»¿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models.Employees;
 
 namespace Models.Pharmacy;
 
 /// <summary>
-/// Fotos capturadas durante as etapas de manipulaÃ§Ã£o
+/// Fotos capturadas durante as etapas de manipulação
 /// </summary>
 [Table("ManipulationPhotos")]
 public class ManipulationPhoto

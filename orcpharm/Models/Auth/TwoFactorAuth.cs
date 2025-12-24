@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models.Employees;
 
 namespace Models.Auth;
 
 /// <summary>
-/// Token de autenticação de dois fatores
-/// RENOMEADO DE: TwoFactorAuth → TwoFactorToken
+/// Token de autentica��o de dois fatores
+/// RENOMEADO DE: TwoFactorAuth ? TwoFactorToken
 /// </summary>
 public class TwoFactorToken
 {
@@ -26,12 +26,12 @@ public class TwoFactorToken
     [Required]
     public DateTime ExpiresAt { get; set; }
 
-    // ✅ CAMPOS COMBINADOS de ambas as classes
-    public bool IsUsed { get; set; }  // ← Usado pelo AuthService
-    public DateTime? UsedAt { get; set; }  // ← Usado pelo AuthService
+    // ? CAMPOS COMBINADOS de ambas as classes
+    public bool IsUsed { get; set; }  // ? Usado pelo AuthService
+    public DateTime? UsedAt { get; set; }  // ? Usado pelo AuthService
 
-    public bool IsVerified { get; set; }  // ← Mantido da versão antiga
-    public DateTime? VerifiedAt { get; set; }  // ← Mantido da versão antiga
+    public bool IsVerified { get; set; }  // ? Mantido da vers�o antiga
+    public DateTime? VerifiedAt { get; set; }  // ? Mantido da vers�o antiga
 
     [Required]
     [StringLength(50)]
@@ -43,7 +43,7 @@ public class TwoFactorToken
     [StringLength(200)]
     public string? UserAgent { get; set; }
 
-    public int Attempts { get; set; }  // ← Mantido da versão antiga
+    public int Attempts { get; set; }  // ? Mantido da vers�o antiga
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

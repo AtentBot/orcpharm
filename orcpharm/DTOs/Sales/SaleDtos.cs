@@ -1,9 +1,9 @@
-Ôªøusing System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace DTOs.Sales;
 
 // ===================================================================
-// DTOs - CRIA√á√ÉO DE VENDAS
+// DTOs - CRIA«√O DE VENDAS
 // ===================================================================
 
 public class CreateSaleDto
@@ -57,7 +57,7 @@ public class SaleItemDto
 }
 
 // ===================================================================
-// DTOs - VENDA R√ÅPIDA (PDV)
+// DTOs - VENDA R¡PIDA (PDV)
 // ===================================================================
 
 public class QuickSaleDto
@@ -123,7 +123,7 @@ public class SaleResponseDto
     public decimal? ChangeAmount { get; set; }
     public DateTime? PaymentDate { get; set; }
 
-    // M√∫ltiplos pagamentos
+    // M˙ltiplos pagamentos
     public bool HasMultiplePayments { get; set; }
 
     // Nota Fiscal
@@ -210,7 +210,7 @@ public class CancelSaleDto
 }
 
 // ===================================================================
-// DTOs - RELAT√ìRIOS
+// DTOs - RELAT”RIOS
 // ===================================================================
 
 public class DailySalesDto
@@ -242,7 +242,7 @@ public class DailySalesReportDto
 }
 
 // ===================================================================
-// DTOs - OR√áAMENTO
+// DTOs - OR«AMENTO
 // ===================================================================
 
 public class CreateQuotationDto

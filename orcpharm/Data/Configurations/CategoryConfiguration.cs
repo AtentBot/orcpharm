@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models.Core;
 
@@ -11,7 +11,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         // Tabela
         builder.ToTable("Categories");
 
-        // Chave prim√°ria
+        // Chave prim·ria
         builder.HasKey(c => c.Id);
 
         // Propriedades
@@ -34,7 +34,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        // √çndices
+        // Õndices
         builder.HasIndex(c => c.Name)
             .IsUnique()
             .HasDatabaseName("IX_Categories_Name");
@@ -51,8 +51,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000001"),
-                Name = "Farm√°cia de Manipula√ß√£o",
-                Description = "Estabelecimento autorizado pela ANVISA para manipula√ß√£o magistral e oficinal conforme RDC 67/2007",
+                Name = "Farm·cia de ManipulaÁ„o",
+                Description = "Estabelecimento autorizado pela ANVISA para manipulaÁ„o magistral e oficinal conforme RDC 67/2007",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -61,7 +61,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000002"),
                 Name = "Drogaria",
-                Description = "Estabelecimento comercial de dispensa√ß√£o e com√©rcio de medicamentos industrializados",
+                Description = "Estabelecimento comercial de dispensaÁ„o e comÈrcio de medicamentos industrializados",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -69,8 +69,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000003"),
-                Name = "Farm√°cia com Manipula√ß√£o",
-                Description = "Estabelecimento que combina dispensa√ß√£o de medicamentos industrializados e manipula√ß√£o magistral",
+                Name = "Farm·cia com ManipulaÁ„o",
+                Description = "Estabelecimento que combina dispensaÁ„o de medicamentos industrializados e manipulaÁ„o magistral",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -78,8 +78,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000004"),
-                Name = "Farm√°cia Hospitalar",
-                Description = "Unidade cl√≠nica, administrativa e t√©cnica respons√°vel pela assist√™ncia farmac√™utica em ambiente hospitalar",
+                Name = "Farm·cia Hospitalar",
+                Description = "Unidade clÌnica, administrativa e tÈcnica respons·vel pela assistÍncia farmacÍutica em ambiente hospitalar",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -88,7 +88,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000005"),
                 Name = "Distribuidora",
-                Description = "Empresa autorizada para armazenamento e distribui√ß√£o de medicamentos e insumos farmac√™uticos",
+                Description = "Empresa autorizada para armazenamento e distribuiÁ„o de medicamentos e insumos farmacÍuticos",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -96,8 +96,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000006"),
-                Name = "Farm√°cia Homeop√°tica",
-                Description = "Estabelecimento especializado em manipula√ß√£o e dispensa√ß√£o de medicamentos homeop√°ticos",
+                Name = "Farm·cia Homeop·tica",
+                Description = "Estabelecimento especializado em manipulaÁ„o e dispensaÁ„o de medicamentos homeop·ticos",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -105,8 +105,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000007"),
-                Name = "Laborat√≥rio de An√°lises",
-                Description = "Estabelecimento destinado √† realiza√ß√£o de an√°lises cl√≠nicas e controle de qualidade",
+                Name = "LaboratÛrio de An·lises",
+                Description = "Estabelecimento destinado ‡ realizaÁ„o de an·lises clÌnicas e controle de qualidade",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -115,7 +115,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000008"),
                 Name = "Posto de Medicamentos",
-                Description = "Unidade destinada exclusivamente √† dispensa√ß√£o de medicamentos industrializados",
+                Description = "Unidade destinada exclusivamente ‡ dispensaÁ„o de medicamentos industrializados",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -123,8 +123,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             new Category
             {
                 Id = Guid.Parse("c0000000-0000-0000-0000-000000000009"),
-                Name = "Ervan√°ria",
-                Description = "Estabelecimento de dispensa√ß√£o de plantas medicinais e fitoter√°picos",
+                Name = "Ervan·ria",
+                Description = "Estabelecimento de dispensaÁ„o de plantas medicinais e fitoter·picos",
                 IsActive = true,
                 CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)

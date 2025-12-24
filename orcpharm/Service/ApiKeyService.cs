@@ -1,4 +1,4 @@
-Ôªøusing System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using Models;
 using Microsoft.Extensions.Options;
@@ -20,7 +20,7 @@ namespace Service
 
         public async Task Invoke(HttpContext ctx)
         {
-            // --- WHITELIST (n√£o exige X-API-KEY) ---
+            // --- WHITELIST (n„o exige X-API-KEY) ---
             if (ctx.Request.Method == HttpMethods.Options ||
                 (ctx.Request.Method == HttpMethods.Post && ctx.Request.Path.StartsWithSegments("/api/stripe/webhook")) ||
                 (ctx.Request.Method == HttpMethods.Get && ctx.Request.Path.StartsWithSegments("/api/stripe/success")) ||
@@ -33,7 +33,7 @@ namespace Service
 
             var opts = _optionsMonitor.CurrentValue;
 
-            // Cabe√ßalho ausente
+            // CabeÁalho ausente
             if (!ctx.Request.Headers.TryGetValue(opts.HeaderName, out var providedKey) ||
                 StringValues.IsNullOrEmpty(providedKey))
             {

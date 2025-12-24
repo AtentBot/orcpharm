@@ -1,4 +1,4 @@
-ï»¿using FluentValidation;
+using FluentValidation;
 using DTOs;
 
 namespace Validators;
@@ -8,25 +8,25 @@ public class CreateCustomerValidator : AbstractValidator<CreateCustomerDto>
     public CreateCustomerValidator()
     {
         RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Nome completo Ã© obrigatÃ³rio")
-            .MinimumLength(3).WithMessage("Nome deve ter no mÃ­nimo 3 caracteres")
-            .MaximumLength(200).WithMessage("Nome deve ter no mÃ¡ximo 200 caracteres");
+            .NotEmpty().WithMessage("Nome completo é obrigatório")
+            .MinimumLength(3).WithMessage("Nome deve ter no mínimo 3 caracteres")
+            .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres");
 
         RuleFor(x => x.Cpf)
             .Must(BeValidCpf).When(x => !string.IsNullOrWhiteSpace(x.Cpf))
-            .WithMessage("CPF invÃ¡lido");
+            .WithMessage("CPF inválido");
 
         RuleFor(x => x.Email)
             .EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email))
-            .WithMessage("Email invÃ¡lido");
+            .WithMessage("Email inválido");
 
         RuleFor(x => x.Phone)
             .Matches(@"^\d{10,11}$").When(x => !string.IsNullOrWhiteSpace(x.Phone))
-            .WithMessage("Telefone deve conter 10 ou 11 dÃ­gitos");
+            .WithMessage("Telefone deve conter 10 ou 11 dígitos");
 
         RuleFor(x => x.WhatsApp)
             .Matches(@"^\d{10,11}$").When(x => !string.IsNullOrWhiteSpace(x.WhatsApp))
-            .WithMessage("WhatsApp deve conter 10 ou 11 dÃ­gitos");
+            .WithMessage("WhatsApp deve conter 10 ou 11 dígitos");
 
         RuleFor(x => x.BirthDate)
             .LessThan(DateTime.Today).When(x => x.BirthDate.HasValue)
@@ -34,18 +34,18 @@ public class CreateCustomerValidator : AbstractValidator<CreateCustomerDto>
 
         RuleFor(x => x.Gender)
             .Must(x => x == null || x == "M" || x == "F" || x == "O")
-            .WithMessage("GÃªnero deve ser M, F ou O");
+            .WithMessage("Gênero deve ser M, F ou O");
 
         RuleFor(x => x.ZipCode)
             .Matches(@"^\d{8}$").When(x => !string.IsNullOrWhiteSpace(x.ZipCode))
-            .WithMessage("CEP deve conter 8 dÃ­gitos");
+            .WithMessage("CEP deve conter 8 dígitos");
 
         RuleFor(x => x.State)
             .Length(2).When(x => !string.IsNullOrWhiteSpace(x.State))
             .WithMessage("Estado deve ter 2 caracteres (UF)");
 
         RuleFor(x => x.ConsentDataProcessing)
-            .Equal(true).WithMessage("Consentimento LGPD Ã© obrigatÃ³rio");
+            .Equal(true).WithMessage("Consentimento LGPD é obrigatório");
     }
 
     private bool BeValidCpf(string? cpf)
@@ -89,13 +89,13 @@ public class UpdateCustomerValidator : AbstractValidator<UpdateCustomerDto>
     public UpdateCustomerValidator()
     {
         RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Nome completo Ã© obrigatÃ³rio")
-            .MinimumLength(3).WithMessage("Nome deve ter no mÃ­nimo 3 caracteres")
-            .MaximumLength(200).WithMessage("Nome deve ter no mÃ¡ximo 200 caracteres");
+            .NotEmpty().WithMessage("Nome completo é obrigatório")
+            .MinimumLength(3).WithMessage("Nome deve ter no mínimo 3 caracteres")
+            .MaximumLength(200).WithMessage("Nome deve ter no máximo 200 caracteres");
 
         RuleFor(x => x.Email)
             .EmailAddress().When(x => !string.IsNullOrWhiteSpace(x.Email))
-            .WithMessage("Email invÃ¡lido");
+            .WithMessage("Email inválido");
 
         RuleFor(x => x.Status)
             .Must(x => x == "ATIVO" || x == "INATIVO" || x == "BLOQUEADO")
@@ -108,7 +108,7 @@ public class BlockCustomerValidator : AbstractValidator<BlockCustomerDto>
     public BlockCustomerValidator()
     {
         RuleFor(x => x.Reason)
-            .NotEmpty().WithMessage("Motivo do bloqueio Ã© obrigatÃ³rio")
-            .MinimumLength(10).WithMessage("Motivo deve ter no mÃ­nimo 10 caracteres");
+            .NotEmpty().WithMessage("Motivo do bloqueio é obrigatório")
+            .MinimumLength(10).WithMessage("Motivo deve ter no mínimo 10 caracteres");
     }
 }

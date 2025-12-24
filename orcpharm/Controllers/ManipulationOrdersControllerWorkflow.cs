@@ -1,17 +1,17 @@
-Ôªøusing Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs.Common;
 using DTOs.Pharmacy.ManipulationOrders;
 using Models.Pharmacy;
 using System.Text.Json;
 using Service;
+using DTOs;
 
 namespace Controllers;
 
 /// <summary>
-/// Extens√£o do ManipulationOrdersController com endpoints de workflow
-/// VERS√ÉO CORRIGIDA - Adaptada aos models existentes (Batch, ManipulationOrder, StockMovement)
+/// Extens„o do ManipulationOrdersController com endpoints de workflow
+/// VERS√O CORRIGIDA - Adaptada aos models existentes (Batch, ManipulationOrder, StockMovement)
 /// </summary>
 public partial class ManipulationOrdersController
 {
@@ -118,7 +118,7 @@ public partial class ManipulationOrdersController
     }
 
     // ===================================================================
-    // ETAPA 0: SEPARA√á√ÉO
+    // ETAPA 0: SEPARA«√O
     // ===================================================================
 
     [HttpPost("{id}/steps/separacao/start")]
@@ -134,10 +134,10 @@ public partial class ManipulationOrdersController
             .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == establishmentId);
 
         if (order == null)
-            return NotFound(ApiResponse.ErrorResponse("Ordem n√£o encontrada"));
+            return NotFound(ApiResponse.ErrorResponse("Ordem n„o encontrada"));
 
         if (order.Status != "PENDENTE")
-            return BadRequest(ApiResponse.ErrorResponse("Ordem deve estar PENDENTE para iniciar separa√ß√£o"));
+            return BadRequest(ApiResponse.ErrorResponse("Ordem deve estar PENDENTE para iniciar separaÁ„o"));
 
         // Validar disponibilidade no estoque usando CurrentQuantity
         foreach (var item in dto.Items)
@@ -146,11 +146,11 @@ public partial class ManipulationOrdersController
                 .FirstOrDefaultAsync(b => b.Id == item.BatchId && b.RawMaterialId == item.RawMaterialId);
 
             if (batch == null)
-                return BadRequest(ApiResponse.ErrorResponse($"Lote {item.BatchNumber} n√£o encontrado"));
+                return BadRequest(ApiResponse.ErrorResponse($"Lote {item.BatchNumber} n„o encontrado"));
 
             if (batch.CurrentQuantity < item.QuantitySeparated)
                 return BadRequest(ApiResponse.ErrorResponse(
-                    $"Quantidade insuficiente no lote {item.BatchNumber}. Dispon√≠vel: {batch.CurrentQuantity}"));
+                    $"Quantidade insuficiente no lote {item.BatchNumber}. DisponÌvel: {batch.CurrentQuantity}"));
         }
 
         var stepData = new SeparacaoStepData
@@ -195,7 +195,7 @@ public partial class ManipulationOrdersController
 
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse.SuccessResponse("Separa√ß√£o de materiais conclu√≠da com sucesso"));
+        return Ok(ApiResponse.SuccessResponse("SeparaÁ„o de materiais concluÌda com sucesso"));
     }
 
     // ===================================================================
@@ -214,7 +214,7 @@ public partial class ManipulationOrdersController
             .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == establishmentId);
 
         if (order == null)
-            return NotFound(ApiResponse<ManipulationStepDto>.ErrorResponse("Ordem n√£o encontrada"));
+            return NotFound(ApiResponse<ManipulationStepDto>.ErrorResponse("Ordem n„o encontrada"));
 
         if (order.Status != "PENDENTE" && order.Status != "EM_PRODUCAO" && order.Status != "SEPARACAO")
             return BadRequest(ApiResponse<ManipulationStepDto>.ErrorResponse(
@@ -260,7 +260,7 @@ public partial class ManipulationOrdersController
 
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse<ManipulationStepDto>.SuccessResponse(null!, "Pesagem conclu√≠da com sucesso"));
+        return Ok(ApiResponse<ManipulationStepDto>.SuccessResponse(null!, "Pesagem concluÌda com sucesso"));
     }
 
     [HttpPost("{id}/steps/pesagem/check")]
@@ -270,7 +270,7 @@ public partial class ManipulationOrdersController
             .FirstOrDefaultAsync(s => s.ManipulationOrderId == id && s.StepType == "PESAGEM");
 
         if (step == null)
-            return NotFound(ApiResponse.ErrorResponse("Etapa de pesagem n√£o encontrada"));
+            return NotFound(ApiResponse.ErrorResponse("Etapa de pesagem n„o encontrada"));
 
         step.PassedIntermediateCheck = dto.Passed;
         step.CheckedByEmployeeId = dto.CheckedByEmployeeId;
@@ -326,7 +326,7 @@ public partial class ManipulationOrdersController
 
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse.SuccessResponse("Mistura conclu√≠da com sucesso"));
+        return Ok(ApiResponse.SuccessResponse("Mistura concluÌda com sucesso"));
     }
 
     // ===================================================================
@@ -373,7 +373,7 @@ public partial class ManipulationOrdersController
 
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse.SuccessResponse("Envase conclu√≠do com sucesso"));
+        return Ok(ApiResponse.SuccessResponse("Envase concluÌdo com sucesso"));
     }
 
     // ===================================================================
@@ -419,11 +419,11 @@ public partial class ManipulationOrdersController
 
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse.SuccessResponse("Rotulagem conclu√≠da com sucesso"));
+        return Ok(ApiResponse.SuccessResponse("Rotulagem concluÌda com sucesso"));
     }
 
     // ===================================================================
-    // ETAPA 5: CONFER√äNCIA FINAL
+    // ETAPA 5: CONFER NCIA FINAL
     // ===================================================================
 
     [HttpPost("{id}/steps/conferencia/start")]
@@ -479,7 +479,7 @@ public partial class ManipulationOrdersController
         await _context.SaveChangesAsync();
 
         return Ok(ApiResponse.SuccessResponse(
-            dto.ApprovedByPharmacist ? "Confer√™ncia aprovada - Ordem finalizada" : "Confer√™ncia registrada"));
+            dto.ApprovedByPharmacist ? "ConferÍncia aprovada - Ordem finalizada" : "ConferÍncia registrada"));
     }
 
     // ===================================================================
@@ -515,7 +515,7 @@ public partial class ManipulationOrdersController
         var photo = await _context.ManipulationPhotos.FindAsync(photoId);
 
         if (photo == null)
-            return NotFound(ApiResponse.ErrorResponse("Foto n√£o encontrada"));
+            return NotFound(ApiResponse.ErrorResponse("Foto n„o encontrada"));
 
         _context.ManipulationPhotos.Remove(photo);
         await _context.SaveChangesAsync();
@@ -524,7 +524,7 @@ public partial class ManipulationOrdersController
     }
 
     // ===================================================================
-    // ETAPA 6: APROVA√á√ÉO FINAL DO FARMAC√äUTICO
+    // ETAPA 6: APROVA«√O FINAL DO FARMAC UTICO
     // ===================================================================
 
     [HttpPost("{id}/steps/aprovacao/start")]
@@ -537,23 +537,23 @@ public partial class ManipulationOrdersController
             .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == establishmentId);
 
         if (order == null)
-            return NotFound(ApiResponse.ErrorResponse("Ordem n√£o encontrada"));
+            return NotFound(ApiResponse.ErrorResponse("Ordem n„o encontrada"));
 
         var conferenciaStep = await _context.ManipulationSteps
             .FirstOrDefaultAsync(s => s.ManipulationOrderId == id && s.StepType == "CONFERENCIA");
 
         if (conferenciaStep == null || conferenciaStep.Status != "CONCLUIDA")
-            return BadRequest(ApiResponse.ErrorResponse("Confer√™ncia deve ser conclu√≠da antes"));
+            return BadRequest(ApiResponse.ErrorResponse("ConferÍncia deve ser concluÌda antes"));
 
         var pharmacist = await _context.Employees
             .Include(e => e.JobPosition)
             .FirstOrDefaultAsync(e => e.Id == dto.PharmacistEmployeeId);
 
         if (pharmacist == null)
-            return BadRequest(ApiResponse.ErrorResponse("Farmac√™utico n√£o encontrado"));
+            return BadRequest(ApiResponse.ErrorResponse("FarmacÍutico n„o encontrado"));
 
         if (string.IsNullOrEmpty(dto.PharmacistCRF))
-            return BadRequest(ApiResponse.ErrorResponse("CRF obrigat√≥rio"));
+            return BadRequest(ApiResponse.ErrorResponse("CRF obrigatÛrio"));
 
         var stepData = new AprovacaoStepData
         {
@@ -589,7 +589,7 @@ public partial class ManipulationOrdersController
 
         _context.ManipulationSteps.Add(step);
 
-        // Usar QualityNotes para motivo de rejei√ß√£o (ManipulationOrder n√£o tem RejectionReason)
+        // Usar QualityNotes para motivo de rejeiÁ„o (ManipulationOrder n„o tem RejectionReason)
         order.Status = dto.Approved ? "APROVADO" : "REJEITADO";
         order.PassedQualityControl = dto.Approved;
         order.ApprovedByPharmacistId = dto.PharmacistEmployeeId;
@@ -603,11 +603,11 @@ public partial class ManipulationOrdersController
         await _context.SaveChangesAsync();
 
         return Ok(ApiResponse.SuccessResponse(
-            dto.Approved ? "Aprovado pelo farmac√™utico" : $"Rejeitado: {dto.RejectionReason}"));
+            dto.Approved ? "Aprovado pelo farmacÍutico" : $"Rejeitado: {dto.RejectionReason}"));
     }
 
     // ===================================================================
-    // ETAPA 7: EXPEDI√á√ÉO
+    // ETAPA 7: EXPEDI«√O
     // ===================================================================
 
     [HttpPost("{id}/steps/expedicao/start")]
@@ -620,7 +620,7 @@ public partial class ManipulationOrdersController
             .FirstOrDefaultAsync(o => o.Id == id && o.EstablishmentId == establishmentId);
 
         if (order == null)
-            return NotFound(ApiResponse.ErrorResponse("Ordem n√£o encontrada"));
+            return NotFound(ApiResponse.ErrorResponse("Ordem n„o encontrada"));
 
         if (order.Status != "APROVADO" && order.Status != "FINALIZADO")
             return BadRequest(ApiResponse.ErrorResponse("Ordem deve estar APROVADA"));
@@ -690,7 +690,7 @@ public partial class ManipulationOrdersController
                             Quantity = -item.QuantidadeSeparada,
                             StockBefore = stockBefore,
                             StockAfter = batch.CurrentQuantity,
-                            Reason = $"Baixa expedi√ß√£o - OM {order.OrderNumber}",
+                            Reason = $"Baixa expediÁ„o - OM {order.OrderNumber}",
                             ManipulationOrderId = order.Id,
                             DocumentNumber = order.OrderNumber,
                             PerformedByEmployeeId = employeeId,
@@ -706,7 +706,7 @@ public partial class ManipulationOrdersController
 
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse.SuccessResponse("Expedi√ß√£o registrada. Ordem finalizada."));
+        return Ok(ApiResponse.SuccessResponse("ExpediÁ„o registrada. Ordem finalizada."));
     }
 
     [HttpPost("{id}/steps/expedicao/confirm-delivery")]
@@ -716,7 +716,7 @@ public partial class ManipulationOrdersController
             .FirstOrDefaultAsync(s => s.ManipulationOrderId == id && s.StepType == "EXPEDICAO");
 
         if (step == null)
-            return NotFound(ApiResponse.ErrorResponse("Expedi√ß√£o n√£o encontrada"));
+            return NotFound(ApiResponse.ErrorResponse("ExpediÁ„o n„o encontrada"));
 
         if (step.StepData != null)
         {
@@ -761,7 +761,7 @@ public partial class ManipulationOrdersController
             .Where(o => o.EstablishmentId == establishmentId)
             .ToListAsync();
 
-        // Usar ExpectedDate (ManipulationOrder n√£o tem EstimatedCompletionDate)
+        // Usar ExpectedDate (ManipulationOrder n„o tem EstimatedCompletionDate)
         var result = new WorkflowDashboardDto
         {
             TotalPendentes = orders.Count(o => o.Status == "PENDENTE"),

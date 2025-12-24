@@ -1,4 +1,4 @@
-Ôªøusing System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models;
@@ -16,7 +16,7 @@ public class SpecialPrescriptionControl
     [Column("prescription_id")]
     public Guid? PrescriptionId { get; set; }
 
-    // Numera√ß√£o do receitu√°rio
+    // NumeraÁ„o do receitu·rio
     [Column("prescription_type")]
     [MaxLength(20)]
     public string PrescriptionType { get; set; } = string.Empty;
@@ -93,7 +93,7 @@ public class SpecialPrescriptionControl
     [Column("sale_id")]
     public Guid? SaleId { get; set; }
 
-    // Reten√ß√£o
+    // RetenÁ„o
     [Column("retained")]
     public bool Retained { get; set; } = false;
 

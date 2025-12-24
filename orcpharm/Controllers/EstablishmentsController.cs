@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
@@ -46,11 +46,11 @@ public class EstablishmentsController : ControllerBase
     public async Task<ActionResult<Establishment>> Get(Guid id)
         => await _db.Establishments.FindAsync(id) is { } e ? Ok(e) : NotFound();
 
-    // 1) CADASTRO: cria establishment, gera 6 dÃ­gitos, salva client_onboarding e envia WhatsApp
+    // 1) CADASTRO: cria establishment, gera 6 dígitos, salva client_onboarding e envia WhatsApp
     [HttpPost]
     public async Task<ActionResult<Establishment>> Create([FromBody] Establishment input, CancellationToken ct)
     {
-        // âœ… 1. Verifica se jÃ¡ existe CNPJ igual
+        // ? 1. Verifica se já existe CNPJ igual
         if (!string.IsNullOrWhiteSpace(input.Cnpj))
         {
             var exists = await _db.Establishments
@@ -60,18 +60,18 @@ public class EstablishmentsController : ControllerBase
                 return Conflict(new
                 {
                     error = "duplicate_cnpj",
-                    message = "JÃ¡ temos um cliente cadastrado utilizando este CNPJ. Verifique seus dados ou entre em contato com o suporte."
+                    message = "Já temos um cliente cadastrado utilizando este CNPJ. Verifique seus dados ou entre em contato com o suporte."
                 });
         }
 
-        // âœ… 2. Metadados
-        input.Id = Guid.NewGuid(); // CORREÃ‡ÃƒO: Gerar um novo ID
+        // ? 2. Metadados
+        input.Id = Guid.NewGuid(); // CORREÇÃO: Gerar um novo ID
         input.CreatedAt = DateTime.UtcNow;
         input.UpdatedAt = input.CreatedAt;
         input.PasswordCreatedAt = DateTime.UtcNow;
         input.PasswordLastRehash = null;
 
-        // âœ… 3. Senha em texto puro â†’ gera hash antes de usar o EF
+        // ? 3. Senha em texto puro ? gera hash antes de usar o EF
         if (!string.IsNullOrWhiteSpace(input.PasswordHash) && !input.PasswordHash.StartsWith("$argon2id$"))
         {
             var plain = input.PasswordHash;
@@ -79,18 +79,18 @@ public class EstablishmentsController : ControllerBase
             input.PasswordAlgorithm = "argon2id-v1";
         }
 
-        // âœ… 4. Novos cadastros
+        // ? 4. Novos cadastros
         input.OnboardingCompleted = false;
         input.IsActive = true;
 
-        // âœ… 5. PersistÃªncia
+        // ? 5. Persistência
         _db.Establishments.Add(input);
         await _db.SaveChangesAsync(ct);
 
-        // Gera 6 dÃ­gitos (100000..999999)
+        // Gera 6 dígitos (100000..999999)
         var six = RandomNumberGenerator.GetInt32(100000, 1000000);
 
-        // CORREÃ‡ÃƒO: Usar o input que acabamos de salvar, nÃ£o buscar novamente
+        // CORREÇÃO: Usar o input que acabamos de salvar, não buscar novamente
         // Salva em client_onboarding
         var co = new ClientOnboarding
         {
@@ -106,15 +106,15 @@ public class EstablishmentsController : ControllerBase
         await _db.SaveChangesAsync(ct);
 
         // Envia WhatsApp via AtentBot
-        var msg = $"OlÃ¡ equipe do {input.NomeFantasia}, estamos felizes com sua chegada, " +
-                  $"seu numero de confirmaÃ§Ã£o Ã© {six}.";
+        var msg = $"Olá equipe do {input.NomeFantasia}, estamos felizes com sua chegada, " +
+                  $"seu numero de confirmação é {six}.";
 
         await SendWhatsAppAsync(co.WhatsApp, msg, ct);
 
         return CreatedAtAction(nameof(Get), new { id = input.Id }, input);
     }
 
-    // 2) CONFIRMAÃ‡ÃƒO: recebe cÃ³digo de 6 dÃ­gitos e finaliza onboarding
+    // 2) CONFIRMAÇÃO: recebe código de 6 dígitos e finaliza onboarding
     public record ConfirmRequest(int Numero);
 
     [HttpPost("confirm")]
@@ -123,7 +123,7 @@ public class EstablishmentsController : ControllerBase
         if (req.Numero < 100000 || req.Numero > 999999)
             return BadRequest(new { error = "invalid_code_format" });
 
-        // Busca o registro mais recente com esse nÃºmero
+        // Busca o registro mais recente com esse número
         var co = await _db.ClientOnboardings
             .OrderByDescending(x => x.CreatedAt)
             .FirstOrDefaultAsync(x => x.Numero == req.Numero, ct);

@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
 using DTOs;
@@ -27,14 +27,14 @@ public class PrescriptionService
                               c.EstablishmentId == establishmentId);
 
             if (!customerExists)
-                return (false, "Cliente n√£o encontrado", null);
+                return (false, "Cliente n„o encontrado", null);
 
             // Calcular validade
             var expirationDate = CalculateExpirationDate(
                 dto.PrescriptionDate,
                 dto.PrescriptionType);
 
-            // Gerar c√≥digo
+            // Gerar cÛdigo
             var code = await GeneratePrescriptionCodeAsync(establishmentId);
 
             var prescription = new Prescription
@@ -63,11 +63,11 @@ public class PrescriptionService
             _context.Set<Prescription>().Add(prescription);
             await _context.SaveChangesAsync();
 
-            return (true, "Prescri√ß√£o registrada com sucesso", prescription);
+            return (true, "PrescriÁ„o registrada com sucesso", prescription);
         }
         catch (Exception ex)
         {
-            return (false, $"Erro ao registrar prescri√ß√£o: {ex.Message}", null);
+            return (false, $"Erro ao registrar prescriÁ„o: {ex.Message}", null);
         }
     }
 
@@ -82,17 +82,17 @@ public class PrescriptionService
                                      p.EstablishmentId == establishmentId);
 
         if (prescription == null)
-            return (false, "Prescri√ß√£o n√£o encontrada");
+            return (false, "PrescriÁ„o n„o encontrada");
 
         if (prescription.Status != "PENDENTE")
-            return (false, "Prescri√ß√£o j√° foi validada");
+            return (false, "PrescriÁ„o j· foi validada");
 
-        // Verificar expira√ß√£o
+        // Verificar expiraÁ„o
         if (prescription.ExpirationDate < DateTime.Today)
         {
             prescription.Status = "EXPIRADA";
             await _context.SaveChangesAsync();
-            return (false, "Prescri√ß√£o vencida");
+            return (false, "PrescriÁ„o vencida");
         }
 
         prescription.Status = dto.IsValid ? "VALIDADA" : "CANCELADA";
@@ -112,8 +112,8 @@ public class PrescriptionService
         await _context.SaveChangesAsync();
 
         return (true, dto.IsValid ?
-            "Prescri√ß√£o validada com sucesso" :
-            "Prescri√ß√£o rejeitada");
+            "PrescriÁ„o validada com sucesso" :
+            "PrescriÁ„o rejeitada");
     }
 
     public async Task<(bool Success, string Message)> CancelPrescriptionAsync(
@@ -127,10 +127,10 @@ public class PrescriptionService
                                      p.EstablishmentId == establishmentId);
 
         if (prescription == null)
-            return (false, "Prescri√ß√£o n√£o encontrada");
+            return (false, "PrescriÁ„o n„o encontrada");
 
         if (prescription.Status == "MANIPULADA")
-            return (false, "N√£o √© poss√≠vel cancelar prescri√ß√£o j√° manipulada");
+            return (false, "N„o È possÌvel cancelar prescriÁ„o j· manipulada");
 
         prescription.Status = "CANCELADA";
         prescription.CancelledAt = DateTime.UtcNow;
@@ -140,7 +140,7 @@ public class PrescriptionService
         prescription.UpdatedByEmployeeId = employeeId;
 
         await _context.SaveChangesAsync();
-        return (true, "Prescri√ß√£o cancelada com sucesso");
+        return (true, "PrescriÁ„o cancelada com sucesso");
     }
 
     public async Task MarkExpiredPrescriptionsAsync(Guid establishmentId)

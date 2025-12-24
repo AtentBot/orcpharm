@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Isopoh.Cryptography.Argon2;
 using Data;
@@ -30,7 +30,7 @@ public class LoginController : ControllerBase
         if (user is null)
             return Unauthorized(new { error = "user_not_found" });
 
-        // ðŸ”’ NOVO: valida se o usuÃ¡rio estÃ¡ ativo e completou o onboarding
+        // ?? NOVO: valida se o usuário está ativo e completou o onboarding
         if (!user.IsActive)
             return Unauthorized(new { error = "account_inactive" });
 
@@ -42,7 +42,7 @@ public class LoginController : ControllerBase
         if (!valid)
             return Unauthorized(new { error = "invalid_password" });
 
-        // Gera token de sessÃ£o simples
+        // Gera token de sessão simples
         var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
         var session = new UserSession
         {

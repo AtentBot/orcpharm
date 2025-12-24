@@ -1,11 +1,11 @@
-Ôªøusing System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models.Billing;
 
 /// <summary>
-/// Representa uma fatura de cobran√ßa da assinatura SaaS
-/// (A farm√°cia PAGA ao OrcPharm para usar o sistema)
+/// Representa uma fatura de cobranÁa da assinatura SaaS
+/// (A farm·cia PAGA ao OrcPharm para usar o sistema)
 /// </summary>
 [Table("subscription_invoices")]
 public class SubscriptionInvoice

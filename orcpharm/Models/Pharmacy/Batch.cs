@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +65,6 @@ public class Batch
     [ForeignKey(nameof(CreatedByEmployeeId))]
     public Employee? CreatedByEmployee { get; set; }  
 
-    // NavegaÃ§Ã£o
+    // Navegação
     public ICollection<StockMovement>? StockMovements { get; set; }
 }

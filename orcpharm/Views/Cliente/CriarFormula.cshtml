@@ -1,0 +1,972 @@
+@{
+    ViewData["Title"] = "Criar Fórmulas Personalizadas";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="h3 mb-2">
+            <i class="bi bi-stars text-warning me-2"></i>Criar Fórmulas Personalizadas
+        </h1>
+        <p class="text-muted">Monte várias fórmulas e adicione todas ao carrinho de uma vez</p>
+    </div>
+
+    <div class="alert alert-info d-flex align-items-start mb-4">
+        <i class="bi bi-info-circle fs-4 me-3"></i>
+        <div>
+            <strong>Como funciona:</strong>
+            <ol class="mb-0 mt-2 ps-3">
+                <li>Escolha o tipo (Cápsula, Creme, etc.) e apresentação</li>
+                <li>Adicione os ingredientes da fórmula</li>
+                <li>Clique em <strong>"Salvar Fórmula"</strong></li>
+                <li>Repita para criar outras fórmulas se desejar</li>
+                <li>Quando terminar, <strong>"Adicionar Tudo ao Carrinho"</strong></li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Coluna Esquerda - Montar Fórmula -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        <span id="formulaHeaderText">Nova Fórmula</span>
+                    </h5>
+                    <span class="badge bg-light text-primary" id="formulaNumber">Fórmula #1</span>
+                </div>
+                <div class="card-body">
+                    <!-- Tipo de Produto -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de Produto *</label>
+                        <select class="form-select" id="productType">
+                            <option value="">Selecione o tipo...</option>
+                        </select>
+                    </div>
+
+                    <!-- Apresentação -->
+                    <div class="mb-3" id="subTypeContainer" style="display: none;">
+                        <label class="form-label fw-semibold">Apresentação *</label>
+                        <select class="form-select" id="productSubType">
+                            <option value="">Selecione a apresentação...</option>
+                        </select>
+                    </div>
+
+                    <!-- Formulário de Ingredientes -->
+                    <div id="ingredientForm" style="display: none;">
+                        <hr class="my-3">
+                        
+                        <!-- Resumo da fórmula atual -->
+                        <div class="alert alert-light border mb-3" id="currentFormulaInfo">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong id="currentTypeName"></strong>
+                                    <small class="text-muted d-block" id="currentSubTypeName"></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearCurrentFormula()" title="Limpar e escolher outro tipo">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-3 text-success d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-flask me-2"></i>Adicionar Ingredientes</span>
+                            <span class="badge bg-success rounded-pill" id="ingredientBadge" style="display: none;">
+                                <span id="badgeCount">0</span> ingrediente(s)
+                            </span>
+                        </h6>
+
+                        <div class="row g-3">
+                            <!-- Campo Autocomplete -->
+                            <div class="col-12">
+                                <label class="form-label">Nome do Ingrediente/Ativo *</label>
+                                <div class="position-relative">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="ingredientName"
+                                           autocomplete="off"
+                                           placeholder="Digite para buscar... Ex: Vitamina C, Colágeno...">
+                                    <input type="hidden" id="ingredientId">
+                                    <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+                                    <div id="autocompleteLoading" class="autocomplete-loading" style="display: none;">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </div>
+                                </div>
+                                <div id="ingredientInfo" class="ingredient-info mt-2" style="display: none;">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        <span id="ingredientCategory"></span>
+                                        <span id="ingredientIndications" class="ms-2"></span>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <label class="form-label">Quantidade *</label>
+                                <input type="number" class="form-control" id="ingredientQuantity"
+                                       min="0.001" step="0.01" placeholder="Ex: 500">
+                                <small id="dosageRange" class="text-muted" style="display: none;"></small>
+                            </div>
+
+                            <div class="col-6">
+                                <label class="form-label">Unidade *</label>
+                                <select class="form-select" id="ingredientUnit">
+                                    <option value="mg">mg</option>
+                                    <option value="g">g</option>
+                                    <option value="mcg">mcg</option>
+                                    <option value="ml">ml</option>
+                                    <option value="%">%</option>
+                                    <option value="UI">UI</option>
+                                    <option value="UFC">UFC</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Observações (opcional)</label>
+                                <input type="text" class="form-control" id="ingredientNotes"
+                                       placeholder="Ex: Forma líquida, concentração específica...">
+                            </div>
+
+                            <div class="col-12">
+                                <button type="button" class="btn btn-outline-success w-100" onclick="addIngredient()">
+                                    <i class="bi bi-plus-lg me-2"></i>Adicionar Ingrediente
+                                </button>
+                                <small class="text-muted d-block text-center mt-1">
+                                    <kbd>Enter</kbd> para adicionar rápido
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista de ingredientes da fórmula atual -->
+                        <div id="currentIngredientsList" class="mt-4">
+                            <!-- Ingredientes serão listados aqui -->
+                        </div>
+                        
+                        <!-- Botão Salvar Fórmula -->
+                        <div id="saveFormulaSection" class="mt-4" style="display: none;">
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Preço desta fórmula:</span>
+                                <strong class="text-primary fs-5" id="currentFormulaPrice">R$ 0,00</strong>
+                            </div>
+                            <button type="button" class="btn btn-success btn-lg w-100" onclick="saveFormula()">
+                                <i class="bi bi-check-lg me-2"></i>Salvar Fórmula e Criar Outra
+                            </button>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Ou adicione mais ingredientes acima</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Ingredientes populares -->
+                        <div class="mt-4">
+                            <small class="text-muted d-block mb-2">
+                                <i class="bi bi-lightning me-1"></i>Ingredientes populares:
+                            </small>
+                            <div id="popularIngredients" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita - Resumo do Pedido -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bag-check me-2"></i>Seu Pedido
+                    </h5>
+                    <span class="badge bg-warning text-dark fs-6" id="totalFormulasCount">0 fórmulas</span>
+                </div>
+                <div class="card-body">
+                    <!-- Lista de Fórmulas Salvas -->
+                    <div id="savedFormulasList">
+                        <div class="text-center text-muted py-4" id="emptyFormulasState">
+                            <i class="bi bi-clipboard-plus fs-1 d-block mb-3 opacity-50"></i>
+                            <p class="mb-1"><strong>Nenhuma fórmula ainda</strong></p>
+                            <small>Monte sua primeira fórmula ao lado</small>
+                        </div>
+                    </div>
+
+                    <!-- Totais e Checkout -->
+                    <div id="checkoutSection" style="display: none;">
+                        <hr class="my-3">
+                        
+                        <div class="card bg-light border-0 mb-3">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted">Fórmulas (<span id="formulasCountTotal">0</span>):</span>
+                                    <span id="formulasTotalPrice">R$ 0,00</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="fs-5">TOTAL:</strong>
+                                    <strong class="fs-4 text-primary" id="grandTotalPrice">R$ 0,00</strong>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle me-1"></i>Preço estimado. Sujeito a análise.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">
+                                <i class="bi bi-chat-left-text me-1"></i>Observações Gerais (opcional)
+                            </label>
+                            <textarea class="form-control form-control-sm" id="customerNotes" rows="2"
+                                      placeholder="Alergias, restrições, preferências..."></textarea>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-lg w-100" onclick="addAllToCart()">
+                            <i class="bi bi-cart-plus me-2"></i>Adicionar Tudo ao Carrinho
+                        </button>
+
+                        <div class="text-center mt-2">
+                            <small class="text-muted">Você poderá revisar antes de finalizar</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center;">
+        <div class="text-center">
+            <div class="spinner-border text-light mb-3" style="width: 3rem; height: 3rem;"></div>
+            <div class="text-white fs-5">Adicionando ao carrinho...</div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ==================== DADOS ====================
+        const customerData = {
+            name: '@(ViewBag.CustomerName ?? "")'.replace(/&quot;/g, '"'),
+            phone: '@(ViewBag.CustomerPhone ?? "")'.replace(/&quot;/g, '"'),
+            email: '@(ViewBag.CustomerEmail ?? "")'.replace(/&quot;/g, '"')
+        };
+
+        let productTypes = [];
+        let selectedProductType = null;
+        let selectedSubType = null;
+        let currentIngredients = [];        // Ingredientes da fórmula atual
+        let savedFormulas = [];              // Fórmulas já salvas
+        let autocompleteTimeout = null;
+        let selectedIngredientData = null;
+
+        const PRICING = {
+            basePrice: 25.00,
+            pricePerGram: 2.50,
+            pricePerMl: 2.00,
+            pricePerMg: 0.05,
+            pricePerMcg: 0.001,
+            pricePerUi: 0.10,
+            pricePerPercent: 15.00
+        };
+
+        // ==================== INIT ====================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProductTypes();
+            updateFormulaNumber();
+        });
+        
+        // Enter para adicionar ingrediente
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                const activeElement = document.activeElement;
+                const isInIngredientForm = activeElement.closest('#ingredientForm');
+                const isAutocompleteOpen = document.getElementById('autocompleteDropdown').style.display === 'block';
+                
+                if (isInIngredientForm && !isAutocompleteOpen && activeElement.tagName !== 'BUTTON') {
+                    e.preventDefault();
+                    addIngredient();
+                }
+            }
+        });
+
+        // ==================== AUTOCOMPLETE ====================
+        
+        const ingredientInput = document.getElementById('ingredientName');
+        const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+        const autocompleteLoading = document.getElementById('autocompleteLoading');
+        
+        ingredientInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            selectedIngredientData = null;
+            document.getElementById('ingredientId').value = '';
+            document.getElementById('ingredientInfo').style.display = 'none';
+            document.getElementById('dosageRange').style.display = 'none';
+            
+            if (autocompleteTimeout) clearTimeout(autocompleteTimeout);
+            
+            if (query.length < 2) {
+                hideAutocomplete();
+                return;
+            }
+            
+            autocompleteLoading.style.display = 'block';
+            autocompleteTimeout = setTimeout(() => searchIngredients(query), 300);
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.position-relative')) hideAutocomplete();
+        });
+        
+        ingredientInput.addEventListener('keydown', function(e) {
+            const items = autocompleteDropdown.querySelectorAll('.autocomplete-item:not(.autocomplete-no-results)');
+            const activeItem = autocompleteDropdown.querySelector('.autocomplete-item.active');
+            
+            if (autocompleteDropdown.style.display !== 'block') return;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!activeItem && items.length > 0) items[0].classList.add('active');
+                else if (activeItem?.nextElementSibling) {
+                    activeItem.classList.remove('active');
+                    activeItem.nextElementSibling.classList.add('active');
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (activeItem?.previousElementSibling) {
+                    activeItem.classList.remove('active');
+                    activeItem.previousElementSibling.classList.add('active');
+                }
+            } else if (e.key === 'Enter' && activeItem) {
+                e.preventDefault();
+                e.stopPropagation();
+                activeItem.click();
+            } else if (e.key === 'Escape') {
+                hideAutocomplete();
+            }
+        });
+        
+        async function searchIngredients(query) {
+            try {
+                const response = await fetch(`/api/ingredients/search?q=${encodeURIComponent(query)}&limit=10`);
+                const data = await response.json();
+                autocompleteLoading.style.display = 'none';
+                
+                if (data.success && data.data.length > 0) {
+                    showAutocompleteResults(data.data);
+                } else {
+                    showNoResults(query);
+                }
+            } catch (error) {
+                console.error('Erro na busca:', error);
+                autocompleteLoading.style.display = 'none';
+                hideAutocomplete();
+            }
+        }
+        
+        function showAutocompleteResults(results) {
+            autocompleteDropdown.innerHTML = results.map(item => `
+                <div class="autocomplete-item" 
+                     data-id="${item.id}" 
+                     data-name="${escapeHtml(item.name)}"
+                     data-category="${escapeHtml(item.category || '')}"
+                     data-unit="${item.defaultUnit}"
+                     data-min="${item.minDosage || ''}"
+                     data-max="${item.maxDosage || ''}"
+                     data-indications="${escapeHtml(item.indications || '')}"
+                     onclick="selectIngredient(this)">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <strong>${highlightMatch(item.name, ingredientInput.value)}</strong>
+                        <small class="text-muted">${item.defaultUnit}</small>
+                    </div>
+                    <small class="text-muted">
+                        ${item.category ? `<span class="badge bg-light text-dark me-1">${item.category}</span>` : ''}
+                        ${item.indications ? item.indications.substring(0, 40) + '...' : ''}
+                    </small>
+                </div>
+            `).join('');
+            autocompleteDropdown.style.display = 'block';
+        }
+        
+        function showNoResults(query) {
+            autocompleteDropdown.innerHTML = `
+                <div class="autocomplete-item autocomplete-no-results">
+                    <div class="text-muted">
+                        <i class="bi bi-search me-1"></i>Nenhum resultado para "${escapeHtml(query)}"
+                    </div>
+                    <small class="text-muted">Você pode digitar manualmente</small>
+                </div>
+            `;
+            autocompleteDropdown.style.display = 'block';
+        }
+        
+        function hideAutocomplete() {
+            autocompleteDropdown.style.display = 'none';
+            autocompleteLoading.style.display = 'none';
+        }
+        
+        function selectIngredient(element) {
+            const data = {
+                id: element.dataset.id,
+                name: element.dataset.name,
+                category: element.dataset.category,
+                defaultUnit: element.dataset.unit,
+                minDosage: element.dataset.min ? parseFloat(element.dataset.min) : null,
+                maxDosage: element.dataset.max ? parseFloat(element.dataset.max) : null,
+                indications: element.dataset.indications
+            };
+            
+            selectedIngredientData = data;
+            ingredientInput.value = data.name;
+            document.getElementById('ingredientId').value = data.id;
+            
+            // Unidade padrão
+            const unitSelect = document.getElementById('ingredientUnit');
+            const unitOption = Array.from(unitSelect.options).find(opt => 
+                opt.value.toLowerCase() === data.defaultUnit.toLowerCase()
+            );
+            if (unitOption) unitSelect.value = unitOption.value;
+            
+            // Info
+            document.getElementById('ingredientCategory').textContent = data.category ? `📁 ${data.category}` : '';
+            document.getElementById('ingredientIndications').textContent = data.indications ? `• ${data.indications}` : '';
+            document.getElementById('ingredientInfo').style.display = 'block';
+            
+            // Dosagem
+            if (data.minDosage || data.maxDosage) {
+                document.getElementById('dosageRange').textContent = 
+                    `Dosagem típica: ${data.minDosage || '?'} - ${data.maxDosage || '?'} ${data.defaultUnit}`;
+                document.getElementById('dosageRange').style.display = 'block';
+            }
+            
+            hideAutocomplete();
+            document.getElementById('ingredientQuantity').focus();
+        }
+        
+        function selectPopularIngredient(name, unit) {
+            ingredientInput.value = name;
+            document.getElementById('ingredientUnit').value = unit;
+            document.getElementById('ingredientQuantity').focus();
+        }
+        
+        async function loadPopularIngredients() {
+            try {
+                const response = await fetch('/api/ingredients/popular?limit=6');
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    document.getElementById('popularIngredients').innerHTML = data.data.map(item => `
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="selectPopularIngredient('${escapeHtml(item.name)}', '${item.defaultUnit}')">
+                            ${item.name}
+                        </button>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        // ==================== PRODUCT TYPES ====================
+
+        async function loadProductTypes() {
+            try {
+                const response = await fetch('/api/customer-portal/product-types');
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    productTypes = data.data;
+                    const select = document.getElementById('productType');
+                    productTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.id;
+                        option.textContent = type.name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao carregar tipos', 'danger');
+            }
+        }
+
+        document.getElementById('productType').addEventListener('change', async function() {
+            const typeId = this.value;
+            
+            if (!typeId) {
+                document.getElementById('subTypeContainer').style.display = 'none';
+                document.getElementById('ingredientForm').style.display = 'none';
+                return;
+            }
+
+            selectedProductType = productTypes.find(t => t.id === typeId);
+
+            try {
+                const response = await fetch(`/api/customer-portal/product-types/${typeId}/subtypes`);
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    const select = document.getElementById('productSubType');
+                    select.innerHTML = '<option value="">Selecione...</option>';
+                    data.data.forEach(subType => {
+                        const option = document.createElement('option');
+                        option.value = subType.id;
+                        option.textContent = subType.name;
+                        option.dataset.unit = subType.standardUnit;
+                        select.appendChild(option);
+                    });
+                    document.getElementById('subTypeContainer').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao carregar apresentações', 'danger');
+            }
+        });
+
+        document.getElementById('productSubType').addEventListener('change', function() {
+            const subTypeId = this.value;
+            if (!subTypeId) {
+                document.getElementById('ingredientForm').style.display = 'none';
+                return;
+            }
+
+            selectedSubType = {
+                id: subTypeId,
+                name: this.selectedOptions[0].textContent,
+                unit: this.selectedOptions[0].dataset.unit || 'g'
+            };
+
+            document.getElementById('currentTypeName').textContent = selectedProductType.name;
+            document.getElementById('currentSubTypeName').textContent = selectedSubType.name;
+            document.getElementById('ingredientForm').style.display = 'block';
+            document.getElementById('ingredientUnit').value = selectedSubType.unit;
+            
+            loadPopularIngredients();
+            setTimeout(() => document.getElementById('ingredientName').focus(), 100);
+        });
+
+        // ==================== INGREDIENTES ====================
+
+        function addIngredient() {
+            const name = document.getElementById('ingredientName').value.trim();
+            const quantity = parseFloat(document.getElementById('ingredientQuantity').value);
+            const unit = document.getElementById('ingredientUnit').value;
+            const notes = document.getElementById('ingredientNotes').value.trim();
+
+            if (!name) {
+                showToast('Digite o nome do ingrediente', 'warning');
+                document.getElementById('ingredientName').focus();
+                return;
+            }
+
+            if (!quantity || quantity <= 0) {
+                showToast('Digite uma quantidade válida', 'warning');
+                document.getElementById('ingredientQuantity').focus();
+                return;
+            }
+
+            if (currentIngredients.some(i => i.name.toLowerCase() === name.toLowerCase())) {
+                showToast('Este ingrediente já foi adicionado', 'warning');
+                return;
+            }
+
+            currentIngredients.push({
+                id: selectedIngredientData?.id || null,
+                name,
+                quantity,
+                unit,
+                notes
+            });
+
+            renderCurrentIngredients();
+            clearIngredientInputs();
+            updateCurrentFormulaPrice();
+            showToast(`✓ ${name} adicionado!`, 'success');
+        }
+
+        function removeCurrentIngredient(index) {
+            currentIngredients.splice(index, 1);
+            renderCurrentIngredients();
+            updateCurrentFormulaPrice();
+        }
+
+        function renderCurrentIngredients() {
+            const list = document.getElementById('currentIngredientsList');
+            const badge = document.getElementById('ingredientBadge');
+            const saveSection = document.getElementById('saveFormulaSection');
+            
+            if (currentIngredients.length === 0) {
+                list.innerHTML = '';
+                badge.style.display = 'none';
+                saveSection.style.display = 'none';
+                return;
+            }
+            
+            badge.style.display = 'inline-block';
+            document.getElementById('badgeCount').textContent = currentIngredients.length;
+            saveSection.style.display = 'block';
+            
+            list.innerHTML = `
+                <div class="border rounded p-2 bg-light">
+                    <small class="text-muted d-block mb-2">Ingredientes desta fórmula:</small>
+                    ${currentIngredients.map((ing, i) => `
+                        <div class="d-flex justify-content-between align-items-center py-1 ${i > 0 ? 'border-top' : ''}">
+                            <div>
+                                <strong class="small">${escapeHtml(ing.name)}</strong>
+                                <span class="text-muted small ms-1">${ing.quantity} ${ing.unit}</span>
+                            </div>
+                            <button class="btn btn-sm btn-link text-danger p-0" onclick="removeCurrentIngredient(${i})">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function clearIngredientInputs() {
+            document.getElementById('ingredientName').value = '';
+            document.getElementById('ingredientId').value = '';
+            document.getElementById('ingredientQuantity').value = '';
+            document.getElementById('ingredientNotes').value = '';
+            document.getElementById('ingredientInfo').style.display = 'none';
+            document.getElementById('dosageRange').style.display = 'none';
+            selectedIngredientData = null;
+            document.getElementById('ingredientName').focus();
+        }
+
+        function updateCurrentFormulaPrice() {
+            const price = calculateFormulaPrice(currentIngredients);
+            document.getElementById('currentFormulaPrice').textContent = formatCurrency(price);
+        }
+
+        // ==================== FÓRMULAS ====================
+
+        function saveFormula() {
+            if (currentIngredients.length === 0) {
+                showToast('Adicione pelo menos um ingrediente', 'warning');
+                return;
+            }
+
+            const formula = {
+                id: Date.now(),
+                productType: { ...selectedProductType },
+                subType: { ...selectedSubType },
+                ingredients: [...currentIngredients],
+                price: calculateFormulaPrice(currentIngredients)
+            };
+
+            savedFormulas.push(formula);
+            
+            // Limpar formulário atual
+            currentIngredients = [];
+            selectedProductType = null;
+            selectedSubType = null;
+            
+            document.getElementById('productType').value = '';
+            document.getElementById('subTypeContainer').style.display = 'none';
+            document.getElementById('ingredientForm').style.display = 'none';
+            
+            renderCurrentIngredients();
+            renderSavedFormulas();
+            updateFormulaNumber();
+            
+            showToast(`✓ Fórmula #${savedFormulas.length} salva! Adicione outra ou finalize.`, 'success');
+        }
+
+        function removeFormula(index) {
+            if (!confirm('Remover esta fórmula?')) return;
+            savedFormulas.splice(index, 1);
+            renderSavedFormulas();
+            updateFormulaNumber();
+            showToast('Fórmula removida', 'info');
+        }
+
+        function renderSavedFormulas() {
+            const list = document.getElementById('savedFormulasList');
+            const emptyState = document.getElementById('emptyFormulasState');
+            const checkout = document.getElementById('checkoutSection');
+            const countBadge = document.getElementById('totalFormulasCount');
+            
+            if (savedFormulas.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center text-muted py-4" id="emptyFormulasState">
+                        <i class="bi bi-clipboard-plus fs-1 d-block mb-3 opacity-50"></i>
+                        <p class="mb-1"><strong>Nenhuma fórmula ainda</strong></p>
+                        <small>Monte sua primeira fórmula ao lado</small>
+                    </div>
+                `;
+                checkout.style.display = 'none';
+                countBadge.textContent = '0 fórmulas';
+                return;
+            }
+            
+            let html = '';
+            savedFormulas.forEach((formula, index) => {
+                html += `
+                    <div class="card mb-3 border-success formula-card">
+                        <div class="card-header bg-success bg-opacity-10 py-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-success me-2">#${index + 1}</span>
+                                <strong>${escapeHtml(formula.productType.name)}</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFormula(${index})" title="Remover fórmula">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <div class="card-body py-2">
+                            <small class="text-muted d-block mb-2">${escapeHtml(formula.subType.name)}</small>
+                            ${formula.ingredients.map(ing => `
+                                <div class="d-flex justify-content-between small">
+                                    <span>• ${escapeHtml(ing.name)}</span>
+                                    <span class="text-muted">${ing.quantity} ${ing.unit}</span>
+                                </div>
+                            `).join('')}
+                            <div class="text-end mt-2 pt-2 border-top">
+                                <strong class="text-success">${formatCurrency(formula.price)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+            countBadge.textContent = `${savedFormulas.length} fórmula${savedFormulas.length > 1 ? 's' : ''}`;
+            
+            // Totais
+            const total = savedFormulas.reduce((sum, f) => sum + f.price, 0);
+            document.getElementById('formulasCountTotal').textContent = savedFormulas.length;
+            document.getElementById('formulasTotalPrice').textContent = formatCurrency(total);
+            document.getElementById('grandTotalPrice').textContent = formatCurrency(total);
+            
+            checkout.style.display = 'block';
+        }
+
+        function updateFormulaNumber() {
+            const num = savedFormulas.length + 1;
+            document.getElementById('formulaNumber').textContent = `Fórmula #${num}`;
+        }
+
+        function clearCurrentFormula() {
+            if (currentIngredients.length > 0 && !confirm('Descartar ingredientes atuais?')) return;
+            
+            currentIngredients = [];
+            selectedProductType = null;
+            selectedSubType = null;
+            
+            document.getElementById('productType').value = '';
+            document.getElementById('subTypeContainer').style.display = 'none';
+            document.getElementById('ingredientForm').style.display = 'none';
+            
+            renderCurrentIngredients();
+        }
+
+        // ==================== CÁLCULOS ====================
+
+        function calculateFormulaPrice(ingredients) {
+            let price = PRICING.basePrice;
+            ingredients.forEach(ing => {
+                const qty = ing.quantity;
+                const unit = ing.unit.toLowerCase();
+                switch(unit) {
+                    case 'g': price += qty * PRICING.pricePerGram; break;
+                    case 'ml': price += qty * PRICING.pricePerMl; break;
+                    case 'mg': price += qty * PRICING.pricePerMg; break;
+                    case 'mcg': price += qty * PRICING.pricePerMcg; break;
+                    case 'ui': case 'ufc': price += qty * PRICING.pricePerUi; break;
+                    case '%': price += qty * PRICING.pricePerPercent; break;
+                }
+            });
+            return price;
+        }
+
+        function formatCurrency(value) {
+            return `R$ ${value.toFixed(2).replace('.', ',')}`;
+        }
+
+        // ==================== CARRINHO ====================
+
+        async function addAllToCart() {
+            // Se tem fórmula em progresso, salvar primeiro
+            if (currentIngredients.length > 0) {
+                if (confirm('Você tem uma fórmula em progresso. Salvar antes de adicionar ao carrinho?')) {
+                    saveFormula();
+                }
+            }
+            
+            if (savedFormulas.length === 0) {
+                showToast('Nenhuma fórmula para adicionar', 'warning');
+                return;
+            }
+
+            if (!customerData.name || !customerData.phone) {
+                showToast('Erro: Dados do cliente não encontrados', 'danger');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            const customerNotes = document.getElementById('customerNotes').value.trim();
+            let successCount = 0;
+
+            try {
+                for (const formula of savedFormulas) {
+                    const formulaData = {
+                        productTypeId: formula.productType.id,
+                        productSubTypeId: formula.subType.id,
+                        productTypeName: formula.productType.name,
+                        productSubTypeName: formula.subType.name,
+                        quantity: formula.ingredients.reduce((sum, ing) => sum + parseFloat(ing.quantity), 0),
+                        unit: formula.subType.unit || 'g',
+                        customerName: customerData.name,
+                        customerPhone: customerData.phone,
+                        customerEmail: customerData.email || '',
+                        customerNotes: successCount === 0 ? customerNotes : '',
+                        ingredients: formula.ingredients.map(ing => ({
+                            id: ing.id || null,
+                            name: ing.name,
+                            quantity: ing.quantity,
+                            unit: ing.unit,
+                            notes: ing.notes || ''
+                        })),
+                        estimatedPrice: formula.price
+                    };
+
+                    const response = await fetch('/api/cliente/cart/add-formula', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formulaData)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) successCount++;
+                }
+
+                if (successCount === savedFormulas.length) {
+                    showToast(`✓ ${successCount} fórmula(s) adicionada(s) ao carrinho!`, 'success');
+                    setTimeout(() => window.location.href = '/Cliente/Carrinho', 1500);
+                } else {
+                    showToast(`${successCount}/${savedFormulas.length} fórmulas adicionadas`, 'warning');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao adicionar ao carrinho', 'danger');
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        // ==================== HELPERS ====================
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function highlightMatch(text, query) {
+            if (!query) return escapeHtml(text);
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+        }
+
+        function showToast(message, type) {
+            const icon = type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'x-circle-fill' : type === 'warning' ? 'exclamation-triangle-fill' : 'info-circle-fill';
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed d-flex align-items-center`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 99999; min-width: 300px; max-width: 450px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s;';
+            toast.innerHTML = `<i class="bi bi-${icon} me-2"></i><div>${message}</div>`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+
+    <style>
+        .autocomplete-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1050;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.15s;
+        }
+        
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background-color: #e7f1ff;
+        }
+        
+        .autocomplete-item mark {
+            background-color: #fff3cd;
+            padding: 0;
+            font-weight: 600;
+        }
+        
+        .autocomplete-no-results:hover {
+            background-color: transparent;
+            cursor: default;
+        }
+        
+        .autocomplete-loading {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .ingredient-info {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 0.375rem;
+            border-left: 3px solid #198754;
+        }
+        
+        #popularIngredients .btn:hover {
+            background-color: #198754;
+            color: white;
+            border-color: #198754;
+        }
+        
+        .formula-card {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @@keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @@keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+        
+        kbd {
+            background-color: #212529;
+            color: white;
+            padding: 0.1rem 0.4rem;
+            border-radius: 0.2rem;
+            font-size: 0.75rem;
+        }
+    </style>
+}

@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
@@ -93,7 +93,7 @@ public class AdminSubscriptionsController : ControllerBase
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (subscription == null)
-                return NotFound(new { message = "Assinatura n√£o encontrada" });
+                return NotFound(new { message = "Assinatura n„o encontrada" });
 
             // Buscar faturas
             var invoices = await _context.SubscriptionInvoices
@@ -152,10 +152,10 @@ public class AdminSubscriptionsController : ControllerBase
         {
             var subscription = await _context.Subscriptions.FindAsync(id);
             if (subscription == null)
-                return NotFound(new { message = "Assinatura n√£o encontrada" });
+                return NotFound(new { message = "Assinatura n„o encontrada" });
 
             if (subscription.Status == "CANCELED")
-                return BadRequest(new { message = "Assinatura j√° est√° cancelada" });
+                return BadRequest(new { message = "Assinatura j· est· cancelada" });
 
             subscription.Status = "CANCELED";
             subscription.CanceledAt = DateTime.UtcNow;
@@ -171,7 +171,7 @@ public class AdminSubscriptionsController : ControllerBase
 
             await _context.SaveChangesAsync();
 
-            _logger.LogWarning("Assinatura {Id} cancelada. Motivo: {Reason}", id, request?.Reason ?? "N√£o informado");
+            _logger.LogWarning("Assinatura {Id} cancelada. Motivo: {Reason}", id, request?.Reason ?? "N„o informado");
 
             return Ok(new { message = "Assinatura cancelada com sucesso" });
         }
@@ -192,10 +192,10 @@ public class AdminSubscriptionsController : ControllerBase
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (subscription == null)
-                return NotFound(new { message = "Assinatura n√£o encontrada" });
+                return NotFound(new { message = "Assinatura n„o encontrada" });
 
             if (subscription.Status == "ACTIVE")
-                return BadRequest(new { message = "Assinatura j√° est√° ativa" });
+                return BadRequest(new { message = "Assinatura j· est· ativa" });
 
             subscription.Status = "ACTIVE";
             subscription.CanceledAt = null;
@@ -235,11 +235,11 @@ public class AdminSubscriptionsController : ControllerBase
         {
             var subscription = await _context.Subscriptions.FindAsync(id);
             if (subscription == null)
-                return NotFound(new { message = "Assinatura n√£o encontrada" });
+                return NotFound(new { message = "Assinatura n„o encontrada" });
 
             var newPlan = await _context.SubscriptionPlans.FindAsync(request.NewPlanId);
             if (newPlan == null)
-                return BadRequest(new { message = "Plano n√£o encontrado" });
+                return BadRequest(new { message = "Plano n„o encontrado" });
 
             subscription.SubscriptionPlanId = newPlan.Id;
             subscription.UpdatedAt = DateTime.UtcNow;

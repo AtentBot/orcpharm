@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.BatchQuality;
@@ -25,11 +25,11 @@ public class BatchQualityController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sess√£o inv√°lida" });
+            return Unauthorized(new { message = "Sess„o inv·lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento n√£o encontrado" });
+            return NotFound(new { message = "Estabelecimento n„o encontrado" });
 
         var summary = await _service.GetQuarantineSummaryAsync(establishmentId.Value);
         return Ok(summary);
@@ -40,11 +40,11 @@ public class BatchQualityController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sess√£o inv√°lida" });
+            return Unauthorized(new { message = "Sess„o inv·lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento n√£o encontrado" });
+            return NotFound(new { message = "Estabelecimento n„o encontrado" });
 
         var batch = await _context.Batches
             .Include(b => b.RawMaterial)
@@ -79,7 +79,7 @@ public class BatchQualityController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (batch == null)
-            return NotFound(new { message = "Lote n√£o encontrado" });
+            return NotFound(new { message = "Lote n„o encontrado" });
 
         return Ok(batch);
     }
@@ -95,11 +95,11 @@ public class BatchQualityController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sess√£o inv√°lida" });
+            return Unauthorized(new { message = "Sess„o inv·lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento n√£o encontrado" });
+            return NotFound(new { message = "Estabelecimento n„o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT", "GERENTE" });
         if (!hasPermission)
@@ -125,11 +125,11 @@ public class BatchQualityController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sess√£o inv√°lida" });
+            return Unauthorized(new { message = "Sess„o inv·lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento n√£o encontrado" });
+            return NotFound(new { message = "Estabelecimento n„o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT", "GERENTE" });
         if (!hasPermission)

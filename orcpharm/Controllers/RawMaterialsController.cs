@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Models.Employees;
@@ -21,7 +21,7 @@ public class RawMaterialsController : ControllerBase
     }
 
     /// <summary>
-    /// Lista todas as mat√©rias-primas do estabelecimento
+    /// Lista todas as matÈrias-primas do estabelecimento
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> List(
@@ -34,13 +34,13 @@ public class RawMaterialsController : ControllerBase
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
         {
-            return Unauthorized(new { error = "Funcion√°rio n√£o autenticado" });
+            return Unauthorized(new { error = "Funcion·rio n„o autenticado" });
         }
 
-        // Validar status do funcion√°rio
+        // Validar status do funcion·rio
         if (!IsEmployeeActive(employee))
         {
-            return Unauthorized(new { error = "Funcion√°rio inativo ou em situa√ß√£o irregular" });
+            return Unauthorized(new { error = "Funcion·rio inativo ou em situaÁ„o irregular" });
         }
 
         try
@@ -70,10 +70,10 @@ public class RawMaterialsController : ControllerBase
                 query = query.Where(rm => rm.CurrentStock <= rm.MinimumStock);
             }
 
-            // Total de registros (antes da pagina√ß√£o)
+            // Total de registros (antes da paginaÁ„o)
             var totalRecords = await query.CountAsync();
 
-            // Aplicar pagina√ß√£o
+            // Aplicar paginaÁ„o
             var materials = await query
                 .OrderBy(rm => rm.Name)
                 .Skip((page - 1) * pageSize)
@@ -125,13 +125,13 @@ public class RawMaterialsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao listar mat√©rias-primas para Employee {EmployeeId}", employee.Id);
-            return StatusCode(500, new { error = "Erro ao buscar mat√©rias-primas" });
+            _logger.LogError(ex, "Erro ao listar matÈrias-primas para Employee {EmployeeId}", employee.Id);
+            return StatusCode(500, new { error = "Erro ao buscar matÈrias-primas" });
         }
     }
 
     /// <summary>
-    /// Cria uma nova mat√©ria-prima
+    /// Cria uma nova matÈria-prima
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateRawMaterialDto dto)
@@ -139,27 +139,27 @@ public class RawMaterialsController : ControllerBase
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
         {
-            return Unauthorized(new { error = "Funcion√°rio n√£o autenticado" });
+            return Unauthorized(new { error = "Funcion·rio n„o autenticado" });
         }
 
-        // Validar status e permiss√µes
+        // Validar status e permissıes
         if (!IsEmployeeActive(employee))
         {
-            return Unauthorized(new { error = "Funcion√°rio inativo ou em situa√ß√£o irregular" });
+            return Unauthorized(new { error = "Funcion·rio inativo ou em situaÁ„o irregular" });
         }
 
         if (!await HasStockManagementPermission(employee))
         {
-            return StatusCode(403, new { error = "Sem permiss√£o para gerenciar estoque" });
+            return StatusCode(403, new { error = "Sem permiss„o para gerenciar estoque" });
         }
 
-        // Valida√ß√£o adicional para subst√¢ncias controladas
+        // ValidaÁ„o adicional para subst‚ncias controladas
         if (dto.ControlType != "COMUM" && !await HasControlledSubstancePermission(employee))
         {
             return Forbid();
         }
 
-        // Validar se j√° existe mat√©ria-prima com mesmo CAS ou DCB
+        // Validar se j· existe matÈria-prima com mesmo CAS ou DCB
         var existingMaterial = await _db.RawMaterials
             .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
             .Where(rm => rm.CasNumber == dto.CasNumber ||
@@ -170,7 +170,7 @@ public class RawMaterialsController : ControllerBase
         {
             return BadRequest(new
             {
-                error = "J√° existe uma mat√©ria-prima cadastrada com este CAS ou DCB",
+                error = "J· existe uma matÈria-prima cadastrada com este CAS ou DCB",
                 existingMaterial = new { existingMaterial.Id, existingMaterial.Name }
             });
         }
@@ -208,7 +208,7 @@ public class RawMaterialsController : ControllerBase
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Mat√©ria-prima {MaterialName} criada por {EmployeeName} (ID: {EmployeeId})",
+                "MatÈria-prima {MaterialName} criada por {EmployeeName} (ID: {EmployeeId})",
                 material.Name, employee.FullName, employee.Id);
 
             return CreatedAtAction(nameof(GetById), new { id = material.Id }, new
@@ -236,13 +236,13 @@ public class RawMaterialsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao criar mat√©ria-prima por Employee {EmployeeId}", employee.Id);
-            return StatusCode(500, new { error = "Erro ao criar mat√©ria-prima" });
+            _logger.LogError(ex, "Erro ao criar matÈria-prima por Employee {EmployeeId}", employee.Id);
+            return StatusCode(500, new { error = "Erro ao criar matÈria-prima" });
         }
     }
 
     /// <summary>
-    /// Busca uma mat√©ria-prima espec√≠fica
+    /// Busca uma matÈria-prima especÌfica
     /// </summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
@@ -250,12 +250,12 @@ public class RawMaterialsController : ControllerBase
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
         {
-            return Unauthorized(new { error = "Funcion√°rio n√£o autenticado" });
+            return Unauthorized(new { error = "Funcion·rio n„o autenticado" });
         }
 
         if (!IsEmployeeActive(employee))
         {
-            return Unauthorized(new { error = "Funcion√°rio inativo ou em situa√ß√£o irregular" });
+            return Unauthorized(new { error = "Funcion·rio inativo ou em situaÁ„o irregular" });
         }
 
         try
@@ -270,10 +270,10 @@ public class RawMaterialsController : ControllerBase
 
             if (material == null)
             {
-                return NotFound(new { error = "Mat√©ria-prima n√£o encontrada" });
+                return NotFound(new { error = "MatÈria-prima n„o encontrada" });
             }
 
-            // Buscar informa√ß√µes dos funcion√°rios separadamente (se necess√°rio)
+            // Buscar informaÁıes dos funcion·rios separadamente (se necess·rio)
             Employee? createdByEmp = null;
             Employee? updatedByEmp = null;
 
@@ -291,7 +291,7 @@ public class RawMaterialsController : ControllerBase
                     .FirstOrDefaultAsync(e => e.Id == material.UpdatedByEmployeeId.Value);
             }
 
-            // Calcular estat√≠sticas dos lotes
+            // Calcular estatÌsticas dos lotes
             var batchStats = material.Batches?.Any() == true ? new
             {
                 totalBatches = material.Batches.Count,
@@ -360,14 +360,14 @@ public class RawMaterialsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar mat√©ria-prima {MaterialId} por Employee {EmployeeId}",
+            _logger.LogError(ex, "Erro ao buscar matÈria-prima {MaterialId} por Employee {EmployeeId}",
                 id, employee.Id);
-            return StatusCode(500, new { error = "Erro ao buscar mat√©ria-prima" });
+            return StatusCode(500, new { error = "Erro ao buscar matÈria-prima" });
         }
     }
 
     /// <summary>
-    /// Atualiza uma mat√©ria-prima existente
+    /// Atualiza uma matÈria-prima existente
     /// </summary>
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRawMaterialDto dto)
@@ -375,12 +375,12 @@ public class RawMaterialsController : ControllerBase
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
         {
-            return Unauthorized(new { error = "Funcion√°rio n√£o autenticado" });
+            return Unauthorized(new { error = "Funcion·rio n„o autenticado" });
         }
 
         if (!IsEmployeeActive(employee))
         {
-            return Unauthorized(new { error = "Funcion√°rio inativo ou em situa√ß√£o irregular" });
+            return Unauthorized(new { error = "Funcion·rio inativo ou em situaÁ„o irregular" });
         }
 
         if (!await HasStockManagementPermission(employee))
@@ -398,10 +398,10 @@ public class RawMaterialsController : ControllerBase
 
             if (material == null)
             {
-                return NotFound(new { error = "Mat√©ria-prima n√£o encontrada" });
+                return NotFound(new { error = "MatÈria-prima n„o encontrada" });
             }
 
-            // Valida√ß√£o adicional para mudan√ßa de tipo de controle
+            // ValidaÁ„o adicional para mudanÁa de tipo de controle
             if (material.ControlType == "COMUM" && dto.ControlType != "COMUM")
             {
                 if (!await HasControlledSubstancePermission(employee))
@@ -429,12 +429,12 @@ public class RawMaterialsController : ControllerBase
             await _db.SaveChangesAsync();
 
             _logger.LogInformation(
-                "Mat√©ria-prima {MaterialName} atualizada por {EmployeeName} (ID: {EmployeeId})",
+                "MatÈria-prima {MaterialName} atualizada por {EmployeeName} (ID: {EmployeeId})",
                 material.Name, employee.FullName, employee.Id);
 
             return Ok(new
             {
-                message = "Mat√©ria-prima atualizada com sucesso",
+                message = "MatÈria-prima atualizada com sucesso",
                 material = new
                 {
                     material.Id,
@@ -452,14 +452,14 @@ public class RawMaterialsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao atualizar mat√©ria-prima {MaterialId} por Employee {EmployeeId}",
+            _logger.LogError(ex, "Erro ao atualizar matÈria-prima {MaterialId} por Employee {EmployeeId}",
                 id, employee.Id);
-            return StatusCode(500, new { error = "Erro ao atualizar mat√©ria-prima" });
+            return StatusCode(500, new { error = "Erro ao atualizar matÈria-prima" });
         }
     }
 
     /// <summary>
-    /// Desativa uma mat√©ria-prima (soft delete)
+    /// Desativa uma matÈria-prima (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
@@ -467,12 +467,12 @@ public class RawMaterialsController : ControllerBase
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
         {
-            return Unauthorized(new { error = "Funcion√°rio n√£o autenticado" });
+            return Unauthorized(new { error = "Funcion·rio n„o autenticado" });
         }
 
         if (!IsEmployeeActive(employee))
         {
-            return Unauthorized(new { error = "Funcion√°rio inativo ou em situa√ß√£o irregular" });
+            return Unauthorized(new { error = "Funcion·rio inativo ou em situaÁ„o irregular" });
         }
 
         if (!await HasStockManagementPermission(employee))
@@ -491,7 +491,7 @@ public class RawMaterialsController : ControllerBase
 
             if (material == null)
             {
-                return NotFound(new { error = "Mat√©ria-prima n√£o encontrada" });
+                return NotFound(new { error = "MatÈria-prima n„o encontrada" });
             }
 
             // Validar se existem lotes ativos
@@ -500,7 +500,7 @@ public class RawMaterialsController : ControllerBase
             {
                 return BadRequest(new
                 {
-                    error = "N√£o √© poss√≠vel desativar mat√©ria-prima com lotes ativos",
+                    error = "N„o È possÌvel desativar matÈria-prima com lotes ativos",
                     activeBatchesCount = activeBatches
                 });
             }
@@ -513,25 +513,25 @@ public class RawMaterialsController : ControllerBase
             await _db.SaveChangesAsync();
 
             _logger.LogWarning(
-                "Mat√©ria-prima {MaterialName} desativada por {EmployeeName} (ID: {EmployeeId})",
+                "MatÈria-prima {MaterialName} desativada por {EmployeeName} (ID: {EmployeeId})",
                 material.Name, employee.FullName, employee.Id);
 
             return Ok(new
             {
-                message = "Mat√©ria-prima desativada com sucesso",
+                message = "MatÈria-prima desativada com sucesso",
                 materialId = material.Id
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao desativar mat√©ria-prima {MaterialId} por Employee {EmployeeId}",
+            _logger.LogError(ex, "Erro ao desativar matÈria-prima {MaterialId} por Employee {EmployeeId}",
                 id, employee.Id);
-            return StatusCode(500, new { error = "Erro ao desativar mat√©ria-prima" });
+            return StatusCode(500, new { error = "Erro ao desativar matÈria-prima" });
         }
     }
 
     /// <summary>
-    /// Retorna estat√≠sticas de estoque de mat√©rias-primas
+    /// Retorna estatÌsticas de estoque de matÈrias-primas
     /// </summary>
     [HttpGet("statistics")]
     public async Task<IActionResult> GetStatistics()
@@ -539,12 +539,12 @@ public class RawMaterialsController : ControllerBase
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
         {
-            return Unauthorized(new { error = "Funcion√°rio n√£o autenticado" });
+            return Unauthorized(new { error = "Funcion·rio n„o autenticado" });
         }
 
         if (!IsEmployeeActive(employee))
         {
-            return Unauthorized(new { error = "Funcion√°rio inativo ou em situa√ß√£o irregular" });
+            return Unauthorized(new { error = "Funcion·rio inativo ou em situaÁ„o irregular" });
         }
 
         try
@@ -565,22 +565,22 @@ public class RawMaterialsController : ControllerBase
                 requiresRefrigeration = materials.Count(m => m.RequiresRefrigeration),
                 lightSensitive = materials.Count(m => m.LightSensitive),
                 humiditySensitive = materials.Count(m => m.HumiditySensitive),
-                totalStockValue = materials.Sum(m => m.CurrentStock) // Poderia multiplicar por pre√ßo unit√°rio
+                totalStockValue = materials.Sum(m => m.CurrentStock) // Poderia multiplicar por preÁo unit·rio
             };
 
             return Ok(stats);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar estat√≠sticas por Employee {EmployeeId}", employee.Id);
-            return StatusCode(500, new { error = "Erro ao buscar estat√≠sticas" });
+            _logger.LogError(ex, "Erro ao buscar estatÌsticas por Employee {EmployeeId}", employee.Id);
+            return StatusCode(500, new { error = "Erro ao buscar estatÌsticas" });
         }
     }
 
-    // ==================== M√âTODOS AUXILIARES ====================
+    // ==================== M…TODOS AUXILIARES ====================
 
     /// <summary>
-    /// Verifica se o funcion√°rio est√° ativo e pode operar no sistema
+    /// Verifica se o funcion·rio est· ativo e pode operar no sistema
     /// </summary>
     private bool IsEmployeeActive(Employee employee)
     {
@@ -597,11 +597,11 @@ public class RawMaterialsController : ControllerBase
     }
 
     /// <summary>
-    /// Verifica se o funcion√°rio tem permiss√£o para gerenciar estoque
+    /// Verifica se o funcion·rio tem permiss„o para gerenciar estoque
     /// </summary>
     private async Task<bool> HasStockManagementPermission(Employee employee)
     {
-        // Carregar o cargo se n√£o estiver carregado
+        // Carregar o cargo se n„o estiver carregado
         if (employee.JobPosition == null)
         {
             await _db.Entry(employee)
@@ -615,8 +615,8 @@ public class RawMaterialsController : ControllerBase
         // Lista de cargos que podem gerenciar estoque
                 var allowedPositionCodes = new[]
          {
-            "pharmacist",           // Farmac√™utico
-            "pharmacist_rt",        // Farmac√™utico RT ‚úÖ
+            "pharmacist",           // FarmacÍutico
+            "pharmacist_rt",        // FarmacÍutico RT ?
             "manager",              // Gerente
             "admin",                // Administrador
             "stock_assistant"       // Auxiliar de Estoque
@@ -626,11 +626,11 @@ public class RawMaterialsController : ControllerBase
     }
 
     /// <summary>
-    /// Verifica se o funcion√°rio tem permiss√£o para manipular subst√¢ncias controladas
+    /// Verifica se o funcion·rio tem permiss„o para manipular subst‚ncias controladas
     /// </summary>
     private async Task<bool> HasControlledSubstancePermission(Employee employee)
     {
-        // Carregar o cargo se n√£o estiver carregado
+        // Carregar o cargo se n„o estiver carregado
         if (employee.JobPosition == null)
         {
             await _db.Entry(employee)
@@ -641,22 +641,22 @@ public class RawMaterialsController : ControllerBase
         if (employee.JobPosition == null)
             return false;
 
-        // Apenas farmac√™uticos podem lidar com subst√¢ncias controladas (usando CODE)
+        // Apenas farmacÍuticos podem lidar com subst‚ncias controladas (usando CODE)
         var allowedPositionCodes = new[]
         {
-        "pharmacist",     // Farmac√™utico
-        "pharmacist_rt",  // Farmac√™utico RT ‚úÖ Corrigido!
+        "pharmacist",     // FarmacÍutico
+        "pharmacist_rt",  // FarmacÍutico RT ? Corrigido!
         "admin"           // Administrador
     };
 
-        return allowedPositionCodes.Contains(employee.JobPosition.Code);  // ‚úÖ Usando Code
+        return allowedPositionCodes.Contains(employee.JobPosition.Code);  // ? Usando Code
     }
 
     // ==================== DTOs ====================
 
     public class CreateRawMaterialDto
     {
-        [Required(ErrorMessage = "Nome √© obrigat√≥rio")]
+        [Required(ErrorMessage = "Nome È obrigatÛrio")]
         [MaxLength(200)]
         public string Name { get; set; } = "";
 
@@ -666,28 +666,28 @@ public class RawMaterialsController : ControllerBase
         [MaxLength(50)]
         public string? DciCode { get; set; }
 
-        [Required(ErrorMessage = "N√∫mero CAS √© obrigat√≥rio")]
+        [Required(ErrorMessage = "N˙mero CAS È obrigatÛrio")]
         [MaxLength(50)]
         public string CasNumber { get; set; } = "";
 
         [MaxLength(1000)]
         public string? Description { get; set; }
 
-        [Required(ErrorMessage = "Tipo de controle √© obrigat√≥rio")]
+        [Required(ErrorMessage = "Tipo de controle È obrigatÛrio")]
         [MaxLength(50)]
         public string ControlType { get; set; } = "COMUM";
 
-        [Required(ErrorMessage = "Unidade de medida √© obrigat√≥ria")]
+        [Required(ErrorMessage = "Unidade de medida È obrigatÛria")]
         [MaxLength(20)]
         public string Unit { get; set; } = "g";
 
         [Range(0.01, 100, ErrorMessage = "Fator de pureza deve estar entre 0.01 e 100")]
         public decimal PurityFactor { get; set; } = 1.0m;
 
-        [Range(0, double.MaxValue, ErrorMessage = "Estoque m√≠nimo n√£o pode ser negativo")]
+        [Range(0, double.MaxValue, ErrorMessage = "Estoque mÌnimo n„o pode ser negativo")]
         public decimal MinimumStock { get; set; }
 
-        [Range(0, double.MaxValue, ErrorMessage = "Estoque m√°ximo n√£o pode ser negativo")]
+        [Range(0, double.MaxValue, ErrorMessage = "Estoque m·ximo n„o pode ser negativo")]
         public decimal MaximumStock { get; set; }
 
         [MaxLength(500)]

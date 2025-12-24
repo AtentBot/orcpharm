@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs.Common;
+using DTOs;
 using DTOs.Formulas;
 using Models.Pharmacy;
 

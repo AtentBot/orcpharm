@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -13,8 +13,8 @@ namespace Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // BASELINE (NO-OP): n√£o criar nem alterar nada.
-            // As tabelas abaixo j√° existem no banco e N√ÉO devem ser recriadas:
+            // BASELINE (NO-OP): n„o criar nem alterar nada.
+            // As tabelas abaixo j· existem no banco e N√O devem ser recriadas:
             // AccessLevels
             // AccessProfiles
             // Batches

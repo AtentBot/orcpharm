@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +10,7 @@ public class Category
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    // ==================== IDENTIFICA√á√ÉO ====================
+    // ==================== IDENTIFICA«√O ====================
     [Required, MaxLength(100)]
     public string Name { get; set; } = default!;
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs;
@@ -22,7 +22,7 @@ public class SngpcController : ControllerBase
     }
 
     // ============================================
-    // MOVIMENTAÇÕES
+    // MOVIMENTA��ES
     // ============================================
 
     [HttpPost("movements")]
@@ -36,11 +36,11 @@ public class SngpcController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT", "FARMACEUTICO" });
         if (!hasPermission)
@@ -65,11 +65,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var query = _context.Set<ControlledSubstanceMovement>()
             .Where(m => m.EstablishmentId == establishmentId.Value);
@@ -122,11 +122,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var movement = await _context.Set<ControlledSubstanceMovement>()
             .Where(m => m.Id == id && m.EstablishmentId == establishmentId.Value)
@@ -154,13 +154,13 @@ public class SngpcController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (movement == null)
-            return NotFound(new { message = "Movimentação não encontrada" });
+            return NotFound(new { message = "Movimenta��o n�o encontrada" });
 
         return Ok(movement);
     }
 
     // ============================================
-    // BALANÇOS
+    // BALAN�OS
     // ============================================
 
     [HttpPost("balances/generate")]
@@ -174,11 +174,11 @@ public class SngpcController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT", "FARMACEUTICO" });
         if (!hasPermission)
@@ -200,11 +200,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var query = _context.Set<ControlledSubstanceBalance>()
             .Where(b => b.EstablishmentId == establishmentId.Value);
@@ -245,11 +245,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT" });
         if (!hasPermission)
@@ -265,7 +265,7 @@ public class SngpcController : ControllerBase
     }
 
     // ============================================
-    // RECEITUÁRIOS ESPECIAIS
+    // RECEITU�RIOS ESPECIAIS
     // ============================================
 
     [HttpPost("prescriptions")]
@@ -279,11 +279,11 @@ public class SngpcController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var (success, message, control) = await _service.RegisterSpecialPrescriptionAsync(
             dto, establishmentId.Value, employeeId.Value);
@@ -301,11 +301,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var query = _context.Set<SpecialPrescriptionControl>()
             .Where(s => s.EstablishmentId == establishmentId.Value);
@@ -324,7 +324,7 @@ public class SngpcController : ControllerBase
     }
 
     // ============================================
-    // XML E RELATÓRIOS
+    // XML E RELAT�RIOS
     // ============================================
 
     [HttpPost("xml/generate")]
@@ -332,11 +332,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "FARMACEUTICO_RT" });
         if (!hasPermission)
@@ -358,11 +358,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var start = startDate ?? DateTime.Today.AddMonths(-1);
         var end = endDate ?? DateTime.Today;
@@ -377,11 +377,11 @@ public class SngpcController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var pendingMovements = await _context.Set<ControlledSubstanceMovement>()
             .CountAsync(m => m.EstablishmentId == establishmentId.Value && !m.SngpcSent);

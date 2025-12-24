@@ -1,4 +1,4 @@
-ï»¿using FluentValidation;
+using FluentValidation;
 using DTOs.BatchQuality;
 
 namespace Validators.BatchQuality;
@@ -9,11 +9,11 @@ public class ApproveBatchValidator : AbstractValidator<ApproveBatchDto>
     {
         RuleFor(x => x.CertificateNumber)
             .MaximumLength(100)
-            .WithMessage("NÃºmero do certificado nÃ£o pode exceder 100 caracteres");
+            .WithMessage("Número do certificado não pode exceder 100 caracteres");
 
         RuleFor(x => x.QualityNotes)
             .MaximumLength(500)
-            .WithMessage("ObservaÃ§Ãµes nÃ£o podem exceder 500 caracteres");
+            .WithMessage("Observações não podem exceder 500 caracteres");
     }
 }
 
@@ -23,12 +23,12 @@ public class RejectBatchValidator : AbstractValidator<RejectBatchDto>
     {
         RuleFor(x => x.Reason)
             .NotEmpty()
-            .WithMessage("Motivo da reprovaÃ§Ã£o Ã© obrigatÃ³rio")
+            .WithMessage("Motivo da reprovação é obrigatório")
             .MaximumLength(500)
-            .WithMessage("Motivo nÃ£o pode exceder 500 caracteres");
+            .WithMessage("Motivo não pode exceder 500 caracteres");
 
         RuleFor(x => x.QualityNotes)
             .MaximumLength(500)
-            .WithMessage("ObservaÃ§Ãµes nÃ£o podem exceder 500 caracteres");
+            .WithMessage("Observações não podem exceder 500 caracteres");
     }
 }

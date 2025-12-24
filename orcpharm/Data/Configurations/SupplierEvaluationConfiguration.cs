@@ -1,4 +1,4 @@
-ï»¿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models.Pharmacy;
 
@@ -8,17 +8,17 @@ public class SupplierEvaluationConfiguration : IEntityTypeConfiguration<Supplier
 {
     public void Configure(EntityTypeBuilder<SupplierEvaluation> builder)
     {
-        // EvaluationDate - Default automÃ¡tico no banco
+        // EvaluationDate - Default automático no banco
         builder.Property(e => e.EvaluationDate)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
-        // CreatedAt - Default automÃ¡tico no banco
+        // CreatedAt - Default automático no banco
         builder.Property(e => e.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
-        // UpdatedAt - Default automÃ¡tico no banco
+        // UpdatedAt - Default automático no banco
         builder.Property(e => e.UpdatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAddOrUpdate();
@@ -47,7 +47,7 @@ public class SupplierEvaluationConfiguration : IEntityTypeConfiguration<Supplier
         builder.Property(e => e.Returns)
             .HasDefaultValue(0);
 
-        // Ãndices
+        // Índices
         builder.HasIndex(e => new { e.SupplierId, e.EvaluationDate });
         builder.HasIndex(e => e.Classification);
         builder.HasIndex(e => e.IsApproved);

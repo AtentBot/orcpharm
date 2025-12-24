@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace DTOs.Pharmacy.ManipulationOrders;
 
@@ -126,7 +126,7 @@ public class StartRotulagemDto
 }
 
 // ===================================================================
-// DTOs - CONFERÊNCIA
+// DTOs - CONFER�NCIA
 // ===================================================================
 
 public class StartConferenciaDto

@@ -18,13 +18,14 @@ using Service.BatchQuality;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Extensions;
 using Isopoh.Cryptography.Argon2;
-using Filters; // ← ADICIONADO
+using Filters; 
+using Service.CustomerFormulas;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddScoped<CurrentEmployeeFilter>(); // ← ADICIONADO
+builder.Services.AddScoped<CurrentEmployeeFilter>(); 
 
 builder.Services.AddControllersWithViews(options =>
 {
@@ -44,6 +45,11 @@ builder.Services.AddScoped<QuoteEmailService>();
 builder.Services.AddScoped<PrescriptionWorkflowService>();
 builder.Services.AddScoped<CashRegisterService>();
 builder.Services.AddScoped<CustomerAuthService>();
+// Program.cs
+builder.Services.AddScoped<CustomFormulaService>();
+builder.Services.AddScoped<PricingService>();
+builder.Services.AddScoped<PharmaceuticalAnalysisService>();
+builder.Services.AddScoped<RefundService>();
 
 builder.Services.Configure<Configuration.EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));

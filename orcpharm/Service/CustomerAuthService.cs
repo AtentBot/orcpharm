@@ -18,6 +18,7 @@ public class CustomerAuthService
     private const int MAX_VERIFICATION_ATTEMPTS = 5;
     private const int MAX_LOGIN_ATTEMPTS = 5;
     private const int LOCKOUT_MINUTES = 30;
+    private const int MAX_CODE_GENERATION_RETRIES = 5;
 
     public CustomerAuthService(
         AppDbContext context,
@@ -31,10 +32,6 @@ public class CustomerAuthService
 
     // ==================== LOGIN ====================
 
-    /// <summary>
-    /// Login simples: telefone + senha (sem verificação de código)
-    /// Verificação de código só é necessária no cadastro e recuperação de senha
-    /// </summary>
     public async Task<CustomerLoginResponseDto> LoginAsync(CustomerLoginDto dto, string ipAddress, string userAgent)
     {
         try
@@ -72,7 +69,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar lockout
             if (auth.LockoutEnd.HasValue && auth.LockoutEnd > DateTime.UtcNow)
             {
                 var minutes = (int)(auth.LockoutEnd.Value - DateTime.UtcNow).TotalMinutes;
@@ -83,7 +79,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar se conta está verificada
             if (!auth.IsVerified)
             {
                 return new CustomerLoginResponseDto
@@ -93,7 +88,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar se tem senha definida
             if (string.IsNullOrEmpty(auth.PasswordHash))
             {
                 return new CustomerLoginResponseDto
@@ -103,7 +97,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Validar senha
             if (!VerifyPassword(dto.Password, auth.PasswordHash))
             {
                 auth.FailedLoginAttempts++;
@@ -122,7 +115,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Login com sucesso - criar sessão
             var session = await CreateSessionAsync(auth, ipAddress, userAgent);
 
             auth.FailedLoginAttempts = 0;
@@ -160,7 +152,6 @@ public class CustomerAuthService
             var phone = NormalizePhone(dto.Phone);
             var cpf = NormalizeCpf(dto.Cpf);
 
-            // Validar CPF
             if (!ValidateCpf(cpf))
             {
                 return new CustomerRegisterResponseDto
@@ -170,7 +161,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar se já existe
             var existingAuth = await _context.CustomerAuths
                 .FirstOrDefaultAsync(a => a.Phone == phone || a.Cpf == cpf);
 
@@ -182,7 +172,6 @@ public class CustomerAuthService
                     return new CustomerRegisterResponseDto { Success = false, Message = "CPF já cadastrado." };
             }
 
-            // Buscar primeiro estabelecimento ativo
             var defaultEstablishment = await _context.Establishments
                 .Where(e => e.IsActive == true)
                 .FirstOrDefaultAsync();
@@ -196,71 +185,98 @@ public class CustomerAuthService
                 };
             }
 
-            // Gerar código do cliente
-            var lastCustomer = await _context.Customers
-                .Where(c => c.EstablishmentId == defaultEstablishment.Id)
-                .OrderByDescending(c => c.Code)
-                .FirstOrDefaultAsync();
-
-            var nextCode = 1;
-            if (lastCustomer != null && int.TryParse(lastCustomer.Code, out var lastCode))
+            // Loop de retry para lidar com race conditions
+            for (int attempt = 1; attempt <= MAX_CODE_GENERATION_RETRIES; attempt++)
             {
-                nextCode = lastCode + 1;
+                try
+                {
+                    // Gerar código no formato CLI{ano}{sequencial} - mesmo formato do CustomerService
+                    var nextCode = await GenerateCustomerCodeAsync(defaultEstablishment.Id);
+                    
+                    _logger.LogInformation("Tentativa {Attempt}: Gerando código {Code} para establishment {EstId}", 
+                        attempt, nextCode, defaultEstablishment.Id);
+
+                    var customerId = Guid.NewGuid();
+
+                    var customer = new Customer
+                    {
+                        Id = customerId,
+                        EstablishmentId = defaultEstablishment.Id,
+                        Code = nextCode,
+                        FullName = dto.FullName.Trim(),
+                        Cpf = cpf,
+                        Phone = phone,
+                        WhatsApp = phone,
+                        Email = dto.Email?.Trim(),
+                        BirthDate = !string.IsNullOrEmpty(dto.BirthDate) ? DateTime.Parse(dto.BirthDate) : null,
+                        Gender = dto.Gender,
+                        ZipCode = dto.ZipCode,
+                        Street = dto.Street,
+                        Number = dto.Number,
+                        Complement = dto.Complement,
+                        Neighborhood = dto.Neighborhood,
+                        City = dto.City,
+                        State = dto.State,
+                        ConsentDataProcessing = dto.ConsentDataProcessing,
+                        ConsentDate = dto.ConsentDataProcessing ? DateTime.UtcNow : null,
+                        Status = "ATIVO",
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedByEmployeeId = Guid.Empty,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Customers.Add(customer);
+
+                    var auth = new CustomerAuth
+                    {
+                        Id = Guid.NewGuid(),
+                        CustomerId = customerId,
+                        Phone = phone,
+                        Cpf = cpf,
+                        IsVerified = false,
+                        PasswordAlgorithm = "Argon2id",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.CustomerAuths.Add(auth);
+                    await _context.SaveChangesAsync();
+
+                    await SendVerificationCodeAsync(auth);
+
+                    _logger.LogInformation("Cliente cadastrado com sucesso: {CustomerId}, Code: {Code}", 
+                        customerId, customer.Code);
+
+                    return new CustomerRegisterResponseDto
+                    {
+                        Success = true,
+                        Message = "Cadastro iniciado! Verifique o código enviado por WhatsApp.",
+                        CustomerId = customerId,
+                        RequiresVerification = true
+                    };
+                }
+                catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+                {
+                    _context.ChangeTracker.Clear();
+
+                    if (attempt == MAX_CODE_GENERATION_RETRIES)
+                    {
+                        _logger.LogError(ex, "Falha após {Attempts} tentativas de gerar código único", MAX_CODE_GENERATION_RETRIES);
+                        return new CustomerRegisterResponseDto
+                        {
+                            Success = false,
+                            Message = "Erro ao gerar código do cliente. Por favor, tente novamente."
+                        };
+                    }
+
+                    _logger.LogWarning("Conflito de código na tentativa {Attempt}, tentando novamente...", attempt);
+                    await Task.Delay(100 * attempt);
+                }
             }
-
-            // Criar Customer com campos corretos do modelo
-            var customer = new Customer
-            {
-                Id = Guid.NewGuid(),
-                EstablishmentId = defaultEstablishment.Id,
-                Code = nextCode.ToString("D6"),
-                FullName = dto.FullName.Trim(),
-                Cpf = cpf,
-                Phone = phone,
-                WhatsApp = phone,
-                Email = dto.Email?.Trim(),
-                BirthDate = !string.IsNullOrEmpty(dto.BirthDate) ? DateTime.Parse(dto.BirthDate) : null,
-                Gender = dto.Gender,
-                ZipCode = dto.ZipCode,
-                Street = dto.Street,
-                Number = dto.Number,
-                Complement = dto.Complement,
-                Neighborhood = dto.Neighborhood,
-                City = dto.City,
-                State = dto.State,
-                ConsentDataProcessing = dto.ConsentDataProcessing,
-                ConsentDate = dto.ConsentDataProcessing ? DateTime.UtcNow : null,
-                Status = "ATIVO",
-                CreatedAt = DateTime.UtcNow,
-                CreatedByEmployeeId = Guid.Empty, // Auto-cadastro pelo portal
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _context.Customers.Add(customer);
-
-            // Criar CustomerAuth
-            var auth = new CustomerAuth
-            {
-                Id = Guid.NewGuid(),
-                CustomerId = customer.Id,
-                Phone = phone,
-                Cpf = cpf,
-                IsVerified = false,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.CustomerAuths.Add(auth);
-            await _context.SaveChangesAsync();
-
-            // Enviar código de verificação
-            await SendVerificationCodeAsync(auth);
 
             return new CustomerRegisterResponseDto
             {
-                Success = true,
-                Message = "Cadastro iniciado! Verifique o código enviado por WhatsApp.",
-                CustomerId = customer.Id,
-                RequiresVerification = true
+                Success = false,
+                Message = "Erro ao processar cadastro. Tente novamente."
             };
         }
         catch (Exception ex)
@@ -272,6 +288,36 @@ public class CustomerAuthService
                 Message = "Erro ao processar cadastro. Tente novamente."
             };
         }
+    }
+
+    /// <summary>
+    /// Gera código no formato CLI{ano}{sequencial:5 dígitos}
+    /// Exemplo: CLI202400019
+    /// Mesmo formato usado pelo CustomerService
+    /// </summary>
+    private async Task<string> GenerateCustomerCodeAsync(Guid establishmentId)
+    {
+        var year = DateTime.UtcNow.Year;
+        var prefix = $"CLI{year}";
+
+        // Buscar o maior código que começa com o prefixo do ano atual
+        var lastCode = await _context.Customers
+            .Where(c => c.EstablishmentId == establishmentId && c.Code.StartsWith(prefix))
+            .OrderByDescending(c => c.Code)
+            .Select(c => c.Code)
+            .FirstOrDefaultAsync();
+
+        int nextNumber = 1;
+        if (!string.IsNullOrEmpty(lastCode) && lastCode.Length > prefix.Length)
+        {
+            var numberPart = lastCode.Substring(prefix.Length);
+            if (int.TryParse(numberPart, out int lastNumber))
+            {
+                nextNumber = lastNumber + 1;
+            }
+        }
+
+        return $"{prefix}{nextNumber:D5}";
     }
 
     // ==================== VERIFICAÇÃO ====================
@@ -295,7 +341,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar tentativas
             if (auth.VerificationAttempts >= MAX_VERIFICATION_ATTEMPTS)
             {
                 return new CustomerVerifyResponseDto
@@ -305,7 +350,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar expiração
             if (auth.VerificationCodeExpiresAt < DateTime.UtcNow)
             {
                 return new CustomerVerifyResponseDto
@@ -315,7 +359,6 @@ public class CustomerAuthService
                 };
             }
 
-            // Verificar código
             if (auth.VerificationCode != dto.Code)
             {
                 auth.VerificationAttempts++;
@@ -328,13 +371,11 @@ public class CustomerAuthService
                 };
             }
 
-            // Código válido - marcar como verificado
             auth.IsVerified = true;
             auth.VerificationCode = null;
             auth.VerificationCodeExpiresAt = null;
             auth.VerificationAttempts = 0;
 
-            // Criar sessão
             var session = await CreateSessionAsync(auth, ipAddress, userAgent);
 
             auth.LastLoginAt = DateTime.UtcNow;
@@ -374,7 +415,6 @@ public class CustomerAuthService
             if (auth == null)
                 return (false, "Telefone não encontrado.");
 
-            // Rate limiting - máximo 1 código por minuto
             if (auth.LastVerificationSentAt.HasValue &&
                 auth.LastVerificationSentAt.Value.AddMinutes(1) > DateTime.UtcNow)
             {
@@ -555,6 +595,12 @@ public class CustomerAuthService
         await _context.SaveChangesAsync();
 
         return session;
+    }
+
+    private static bool IsDuplicateKeyException(DbUpdateException ex)
+    {
+        return ex.InnerException is Npgsql.PostgresException pgEx && 
+               pgEx.SqlState == "23505";
     }
 
     private static string GenerateVerificationCode() => RandomNumberGenerator.GetInt32(100000, 999999).ToString();

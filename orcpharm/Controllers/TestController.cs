@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Isopoh.Cryptography.Argon2;
 
 namespace Controllers;

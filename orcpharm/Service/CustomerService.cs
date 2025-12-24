@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
 using DTOs;
@@ -8,6 +8,7 @@ namespace Service;
 public class CustomerService
 {
     private readonly AppDbContext _context;
+    private const int MAX_CODE_GENERATION_RETRIES = 3;
 
     public CustomerService(AppDbContext context)
     {
@@ -32,43 +33,68 @@ public class CustomerService
                     return (false, "Já existe um cliente cadastrado com este CPF", null);
             }
 
-            // Gerar código único
-            var code = await GenerateCustomerCodeAsync(establishmentId);
-
-            var customer = new Customer
+            // Loop de retry para lidar com race conditions na geração do código
+            for (int attempt = 1; attempt <= MAX_CODE_GENERATION_RETRIES; attempt++)
             {
-                EstablishmentId = establishmentId,
-                Code = code,
-                FullName = dto.FullName.ToUpper(),
-                Cpf = dto.Cpf?.Replace(".", "").Replace("-", ""),
-                Rg = dto.Rg,
-                BirthDate = dto.BirthDate,
-                Gender = dto.Gender?.ToUpper(),
-                Phone = dto.Phone?.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", ""),
-                WhatsApp = dto.WhatsApp?.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", ""),
-                Email = dto.Email?.ToLower(),
-                ZipCode = dto.ZipCode?.Replace("-", ""),
-                Street = dto.Street,
-                Number = dto.Number,
-                Complement = dto.Complement,
-                Neighborhood = dto.Neighborhood,
-                City = dto.City,
-                State = dto.State?.ToUpper(),
-                Allergies = dto.Allergies,
-                MedicalConditions = dto.MedicalConditions,
-                Observations = dto.Observations,
-                ConsentDataProcessing = dto.ConsentDataProcessing,
-                ConsentDate = dto.ConsentDataProcessing ? DateTime.UtcNow : null,
-                Status = "ATIVO",
-                CreatedAt = DateTime.UtcNow,
-                CreatedByEmployeeId = employeeId,
-                UpdatedAt = DateTime.UtcNow
-            };
+                try
+                {
+                    // Gerar código único
+                    var code = await GenerateCustomerCodeAsync(establishmentId);
 
-            _context.Set<Customer>().Add(customer);
-            await _context.SaveChangesAsync();
+                    var customer = new Customer
+                    {
+                        EstablishmentId = establishmentId,
+                        Code = code,
+                        FullName = dto.FullName.ToUpper(),
+                        Cpf = dto.Cpf?.Replace(".", "").Replace("-", ""),
+                        Rg = dto.Rg,
+                        BirthDate = dto.BirthDate,
+                        Gender = dto.Gender?.ToUpper(),
+                        Phone = dto.Phone?.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", ""),
+                        WhatsApp = dto.WhatsApp?.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", ""),
+                        Email = dto.Email?.ToLower(),
+                        ZipCode = dto.ZipCode?.Replace("-", ""),
+                        Street = dto.Street,
+                        Number = dto.Number,
+                        Complement = dto.Complement,
+                        Neighborhood = dto.Neighborhood,
+                        City = dto.City,
+                        State = dto.State?.ToUpper(),
+                        Allergies = dto.Allergies,
+                        MedicalConditions = dto.MedicalConditions,
+                        Observations = dto.Observations,
+                        ConsentDataProcessing = dto.ConsentDataProcessing,
+                        ConsentDate = dto.ConsentDataProcessing ? DateTime.UtcNow : null,
+                        Status = "ATIVO",
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedByEmployeeId = employeeId,
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-            return (true, "Cliente cadastrado com sucesso", customer);
+                    _context.Set<Customer>().Add(customer);
+                    await _context.SaveChangesAsync();
+
+                    return (true, "Cliente cadastrado com sucesso", customer);
+                }
+                catch (DbUpdateException ex) when (IsDuplicateKeyException(ex))
+                {
+                    // Limpar o contexto para tentar novamente
+                    foreach (var entry in _context.ChangeTracker.Entries().ToList())
+                    {
+                        entry.State = EntityState.Detached;
+                    }
+
+                    if (attempt == MAX_CODE_GENERATION_RETRIES)
+                    {
+                        return (false, "Erro ao gerar código do cliente. Por favor, tente novamente.", null);
+                    }
+
+                    // Pequeno delay antes de tentar novamente
+                    await Task.Delay(50 * attempt);
+                }
+            }
+
+            return (false, "Erro ao cadastrar cliente. Tente novamente.", null);
         }
         catch (Exception ex)
         {
@@ -170,17 +196,16 @@ public class CustomerService
         var year = DateTime.UtcNow.Year;
         var prefix = $"CLI{year}";
 
-        var lastCustomer = await _context.Set<Customer>()
+        // Usar MAX para evitar race conditions
+        var maxCode = await _context.Set<Customer>()
             .Where(c => c.EstablishmentId == establishmentId &&
                        c.Code.StartsWith(prefix))
-            .OrderByDescending(c => c.Code)
-            .Select(c => c.Code)
-            .FirstOrDefaultAsync();
+            .MaxAsync(c => (string?)c.Code);
 
         int nextNumber = 1;
-        if (lastCustomer != null && lastCustomer.Length > prefix.Length)
+        if (!string.IsNullOrEmpty(maxCode) && maxCode.Length > prefix.Length)
         {
-            var numberPart = lastCustomer.Substring(prefix.Length);
+            var numberPart = maxCode.Substring(prefix.Length);
             if (int.TryParse(numberPart, out int lastNumber))
             {
                 nextNumber = lastNumber + 1;
@@ -188,5 +213,11 @@ public class CustomerService
         }
 
         return $"{prefix}{nextNumber:D5}";
+    }
+
+    private static bool IsDuplicateKeyException(DbUpdateException ex)
+    {
+        return ex.InnerException is Npgsql.PostgresException pgEx && 
+               pgEx.SqlState == "23505"; // Código PostgreSQL para unique violation
     }
 }

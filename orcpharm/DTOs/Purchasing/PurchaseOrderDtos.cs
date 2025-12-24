@@ -1,4 +1,4 @@
-﻿namespace DTOs.Purchasing;
+namespace DTOs.Purchasing;
 
 public class CreatePurchaseOrderDto
 {
@@ -22,7 +22,7 @@ public class CreatePurchaseOrderItemDto
 
 public class UpdatePurchaseOrderDto
 {
-    public Guid SupplierId { get; set; }  // ✅ MUDOU DE int PARA Guid
+    public Guid SupplierId { get; set; }  // ? MUDOU DE int PARA Guid
     public DateTime? ExpectedDeliveryDate { get; set; }
     public decimal DiscountValue { get; set; }
     public decimal ShippingValue { get; set; }
@@ -43,7 +43,7 @@ public class ReceivePurchaseOrderDto
 
 public class ReceivePurchaseOrderItemDto
 {
-    public int PurchaseOrderItemId { get; set; }  // ✅ Mantém int (PurchaseOrderItem.Id é int)
+    public int PurchaseOrderItemId { get; set; }  // ? Mant�m int (PurchaseOrderItem.Id � int)
     public string BatchNumber { get; set; } = string.Empty;
     public DateTime ManufactureDate { get; set; }
     public DateTime ExpiryDate { get; set; }
@@ -54,9 +54,9 @@ public class ReceivePurchaseOrderItemDto
 
 public class PurchaseOrderResponseDto
 {
-    public int Id { get; set; }  // ✅ Mantém int (PurchaseOrder.Id é int)
+    public int Id { get; set; }  // ? Mant�m int (PurchaseOrder.Id � int)
     public string OrderNumber { get; set; } = string.Empty;
-    public Guid SupplierId { get; set; }  // ✅ MUDOU DE int PARA Guid
+    public Guid SupplierId { get; set; }  // ? MUDOU DE int PARA Guid
     public string SupplierName { get; set; } = string.Empty;
     public DateTime OrderDate { get; set; }
     public DateTime? ExpectedDeliveryDate { get; set; }
@@ -77,8 +77,8 @@ public class PurchaseOrderResponseDto
 
 public class PurchaseOrderItemResponseDto
 {
-    public int Id { get; set; }  // ✅ Mantém int (PurchaseOrderItem.Id é int)
-    public Guid RawMaterialId { get; set; }  // ✅ MUDOU DE int PARA Guid
+    public int Id { get; set; }  // ? Mant�m int (PurchaseOrderItem.Id � int)
+    public Guid RawMaterialId { get; set; }  // ? MUDOU DE int PARA Guid
     public string RawMaterialName { get; set; } = string.Empty;
     public decimal QuantityOrdered { get; set; }
     public decimal QuantityReceived { get; set; }

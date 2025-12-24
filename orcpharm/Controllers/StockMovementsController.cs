@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Models.Pharmacy;
@@ -226,7 +226,7 @@ public class StockMovementsController : ControllerBase
 
             _db.Batches.Add(batch);
 
-            // Criar movimentaÃ§Ã£o
+            // Criar movimentação
             var movement = new StockMovement
             {
                 Id = Guid.NewGuid(),
@@ -304,7 +304,7 @@ public class StockMovementsController : ControllerBase
             if (material.CurrentStock < request.Quantity)
                 return BadRequest(new { message = "Insufficient stock" });
 
-            // Criar movimentaÃ§Ã£o
+            // Criar movimentação
             var movement = new StockMovement
             {
                 Id = Guid.NewGuid(),
@@ -384,7 +384,7 @@ public class StockMovementsController : ControllerBase
             if (newMaterialStock < 0)
                 return BadRequest(new { message = "Resulting stock cannot be negative" });
 
-            // Criar movimentaÃ§Ã£o
+            // Criar movimentação
             var movement = new StockMovement
             {
                 Id = Guid.NewGuid(),
@@ -460,7 +460,7 @@ public class StockMovementsController : ControllerBase
 
             var reason = $"[{request.LossType}] {request.Reason}";
 
-            // Criar movimentaÃ§Ã£o
+            // Criar movimentação
             var movement = new StockMovement
             {
                 Id = Guid.NewGuid(),
@@ -553,7 +553,7 @@ public class StockMovementsController : ControllerBase
                 if (material.CurrentStock < item.Quantity)
                     return BadRequest(new { message = $"Insufficient stock for {material.Name}" });
 
-                // Criar movimentaÃ§Ã£o
+                // Criar movimentação
                 var movement = new StockMovement
                 {
                     Id = Guid.NewGuid(),

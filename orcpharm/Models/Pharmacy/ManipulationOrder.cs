@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -28,12 +28,12 @@ public class ManipulationOrder
     public Guid? FormulaId { get; set; }
     public Formula? Formula { get; set; }
 
-    // ========== V√≠nculo com Or√ßamento ==========
+    // ========== VÌnculo com OrÁamento ==========
     [Column("PrescriptionQuoteId")]
     public Guid? PrescriptionQuoteId { get; set; }
-    // Navega√ß√£o removida para evitar PrescriptionQuoteId1
+    // NavegaÁ„o removida para evitar PrescriptionQuoteId1
 
-    // Prescri√ß√£o
+    // PrescriÁ„o
     [MaxLength(50)]
     public string? PrescriptionNumber { get; set; }
 
@@ -50,7 +50,7 @@ public class ManipulationOrder
     [MaxLength(20)]
     public string? CustomerPhone { get; set; }
 
-    // Produ√ß√£o
+    // ProduÁ„o
     [Column(TypeName = "decimal(10,2)")]
     public decimal QuantityToProduce { get; set; }
 
@@ -80,7 +80,7 @@ public class ManipulationOrder
     // Validade do produto
     public DateTime? ExpiryDate { get; set; }
 
-    // Respons√°veis
+    // Respons·veis
     public Guid RequestedByEmployeeId { get; set; }
     public Employee? RequestedByEmployee { get; set; }
 
@@ -103,11 +103,11 @@ public class ManipulationOrder
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // Navega√ß√£o
+    // NavegaÁ„o
     public ICollection<StockMovement>? StockMovements { get; set; }
     public ICollection<SaleItem>? SaleItems { get; set; }
 
-    // Navega√ß√£o para Workflow de Manipula√ß√£o
+    // NavegaÁ„o para Workflow de ManipulaÁ„o
     public ICollection<ManipulationStep>? Steps { get; set; }
     public ICollection<ManipulationPhoto>? Photos { get; set; }
     public ICollection<ManipulationOrderComponent>? Components { get; set; }

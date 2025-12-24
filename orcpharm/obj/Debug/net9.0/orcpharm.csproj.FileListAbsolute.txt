@@ -1,3 +1,4 @@
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.orcpharm.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\appsettings.Development.json
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\appsettings.json
 E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\orcpharm.staticwebassets.runtime.json
@@ -227,7 +228,6 @@ E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.build.json
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.development.json
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.build.endpoints.json
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.orcpharm.Microsoft.AspNetCore.StaticWebAssets.props
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.orcpharm.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.build.orcpharm.props
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.orcpharm.props
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.orcpharm.props

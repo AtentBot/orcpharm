@@ -1,4 +1,4 @@
-﻿namespace DTOs.BatchQuality;
+namespace DTOs.BatchQuality;
 
 public class ApproveBatchDto
 {

@@ -1,4 +1,4 @@
-ï»¿using Models.Employees;
+using Models.Employees;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -49,7 +49,7 @@ public class Customer
     [MaxLength(200)]
     public string? Email { get; set; }
 
-    // EndereÃ§o
+    // Endereço
     [Column("zip_code")]
     [MaxLength(8)]
     public string? ZipCode { get; set; }
@@ -78,7 +78,7 @@ public class Customer
     [MaxLength(2)]
     public string? State { get; set; }
 
-    // InformaÃ§Ãµes mÃ©dicas
+    // Informações médicas
     [Column("allergies")]
     public string? Allergies { get; set; }
 
@@ -116,7 +116,7 @@ public class Customer
     [Column("updated_by_employee_id")]
     public Guid? UpdatedByEmployeeId { get; set; }
 
-    // NavegaÃ§Ã£o
+    // Navegação
     [ForeignKey("EstablishmentId")]
     public virtual Establishment? Establishment { get; set; }
 

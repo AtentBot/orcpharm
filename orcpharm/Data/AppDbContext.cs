@@ -10,6 +10,7 @@ using Models.Auth;
 using Models.Fiscal;
 using Models.Billing;
 using Models.Controlled;
+using Models.Cart;
 
 namespace Data;
 
@@ -258,6 +259,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<AuditorAccessLog> AuditorAccessLogs { get; set; } = null!;
 
+    // ════════════════════════════════════════════════════════════════════════
+    // CUSTOMER FORMULAS - FÓRMULAS PERSONALIZADAS
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Tipos de produtos para fórmulas personalizadas (Creme, Gel, Pomada, Shampoo, etc)
+    /// </summary>
+    public DbSet<ProductType> ProductTypes { get; set; } = null!;
+
+    /// <summary>
+    /// Subtipos de produtos (Creme Lanette, Gel Carbopol, Shampoo Base, etc)
+    /// </summary>
+    public DbSet<ProductSubType> ProductSubTypes { get; set; } = null!;
+
+    /// <summary>
+    /// Fórmulas personalizadas criadas por clientes via portal
+    /// </summary>
+    public DbSet<CustomerFormula> CustomerFormulas { get; set; } = null!;
+
+    /// <summary>
+    /// Log de análises farmacêuticas de fórmulas personalizadas
+    /// </summary>
+    public DbSet<PharmaceuticalAnalysisLog> PharmaceuticalAnalysisLogs { get; set; } = null!;
+
+    /// <summary>
+    /// Reembolsos de fórmulas reprovadas pela análise farmacêutica
+    /// </summary>
+    public DbSet<Refund> Refunds { get; set; } = null!;
+
+    /// <summary>
+    /// Itens do carrinho de compras (produtos regulares + fórmulas personalizadas)
+    /// </summary>
+    public DbSet<CartItem> CartItems { get; set; } = null!;
+    public DbSet<ActiveIngredient> ActiveIngredients { get; set; }
+
 
     // ════════════════════════════════════════════════════════════════════════
     // CONFIGURAÇÃO DO MODELO
@@ -324,6 +360,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     private void ConfigureManipulationEntities(ModelBuilder modelBuilder)
     {
+
+        modelBuilder.Entity<ActiveIngredient>(entity =>
+        {
+            entity.ToTable("active_ingredients");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.NormalizedName)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.PricePerUnit)
+                .HasColumnType("decimal(10,4)");
+
+            entity.HasIndex(e => e.NormalizedName);
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.Popularity);
+        });
 
         // ──────────────────────────────────────────────────────────────────
         // MANIPULATION LOSS

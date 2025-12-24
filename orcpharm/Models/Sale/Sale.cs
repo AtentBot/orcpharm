@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models.Employees;
 
@@ -60,7 +60,7 @@ public class Sale
     [Column("payment_date")]
     public DateTime? PaymentDate { get; set; }
 
-    // ==================== MÚLTIPLOS PAGAMENTOS (NOVO) ====================
+    // ==================== M�LTIPLOS PAGAMENTOS (NOVO) ====================
     [Column("has_multiple_payments")]
     public bool HasMultiplePayments { get; set; } = false;
 

@@ -1,4 +1,4 @@
-ï»¿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models.Pharmacy;
 
@@ -8,19 +8,19 @@ public class SupplierCertificateConfiguration : IEntityTypeConfiguration<Supplie
 {
     public void Configure(EntityTypeBuilder<SupplierCertificate> builder)
     {
-        // CreatedAt - Default automÃ¡tico no banco
+        // CreatedAt - Default automático no banco
         builder.Property(c => c.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
-        // UpdatedAt - Default automÃ¡tico no banco
+        // UpdatedAt - Default automático no banco
         builder.Property(c => c.UpdatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAddOrUpdate();
 
         // Status - Default
         builder.Property(c => c.Status)
-            .HasDefaultValue("VÃ¡lido");
+            .HasDefaultValue("Válido");
 
         // IsActive - Default
         builder.Property(c => c.IsActive)
@@ -34,7 +34,7 @@ public class SupplierCertificateConfiguration : IEntityTypeConfiguration<Supplie
         builder.Property(c => c.AlertDaysBefore)
             .HasDefaultValue(30);
 
-        // Ãndices
+        // Índices
         builder.HasIndex(c => new { c.SupplierId, c.IsActive });
         builder.HasIndex(c => c.ExpiryDate);
         builder.HasIndex(c => c.CertificateType);

@@ -1,0 +1,326 @@
+@{
+    ViewData["Title"] = "Carrinho de Compras";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">🛒 Meu Carrinho</h2>
+                <span class="badge bg-primary" id="itemCount">0 itens</span>
+            </div>
+
+            <!-- Carrinho Vazio -->
+            <div id="emptyCart" class="card shadow-sm d-none">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-cart-x" style="font-size: 4rem; color: #ddd;"></i>
+                    <h4 class="mt-3">Seu carrinho está vazio</h4>
+                    <p class="text-muted">Adicione produtos ou crie uma fórmula personalizada</p>
+                    <div class="mt-4">
+                        <a href="/produtos" class="btn btn-primary">Ver Produtos</a>
+                        <a href="/customer-portal/create-formula" class="btn btn-outline-primary">
+                            Criar Fórmula Personalizada
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Itens do Carrinho -->
+            <div id="cartItems">
+                <!-- Carregado via JavaScript -->
+            </div>
+
+        </div>
+
+        <!-- Resumo do Pedido -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Resumo do Pedido</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <strong id="subtotal">R$ 0,00</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Frete</span>
+                        <span id="shipping" class="text-success">Grátis</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total</strong>
+                        <strong class="text-primary" id="total" style="font-size: 1.5rem;">R$ 0,00</strong>
+                    </div>
+
+                    <!-- Alertas -->
+                    <div id="customFormulaAlert" class="alert alert-warning small d-none">
+                        <strong>⚠️ Importante:</strong><br>
+                        Sua fórmula personalizada será analisada por um farmacêutico após o pagamento.
+                        Se reprovada, você será reembolsado em até 7 dias úteis.
+                    </div>
+
+                    <div id="controlledAlert" class="alert alert-info small d-none">
+                        <strong>ℹ️ Atenção:</strong><br>
+                        Alguns itens requerem prescrição médica para retirada.
+                    </div>
+
+                    <!-- Botão Finalizar -->
+                    <button id="checkoutBtn" class="btn btn-success btn-lg w-100" onclick="goToCheckout()">
+                        Finalizar Compra
+                    </button>
+
+                    <div class="text-center mt-3">
+                        <a href="/produtos" class="text-decoration-none">
+                            ← Continuar Comprando
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.cart-item {
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.custom-formula-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.quantity-control {
+    display: inline-flex;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.quantity-control button {
+    background: #f8f9fa;
+    border: none;
+    padding: 5px 15px;
+    cursor: pointer;
+}
+
+.quantity-control button:hover {
+    background: #e9ecef;
+}
+
+.quantity-control input {
+    border: none;
+    width: 60px;
+    text-align: center;
+    padding: 5px;
+}
+</style>
+
+<script>
+let cart = null;
+
+// Carregar ao iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadCart();
+});
+
+// Carregar carrinho
+async function loadCart() {
+    try {
+        const response = await fetch('/api/cart');
+        const data = await response.json();
+        
+        if (data.success) {
+            cart = data.data;
+            renderCart();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar carrinho:', error);
+        showError('Erro ao carregar carrinho');
+    }
+}
+
+// Renderizar carrinho
+function renderCart() {
+    if (!cart || cart.items.length === 0) {
+        document.getElementById('emptyCart').classList.remove('d-none');
+        document.getElementById('cartItems').innerHTML = '';
+        document.getElementById('checkoutBtn').disabled = true;
+        return;
+    }
+
+    document.getElementById('emptyCart').classList.add('d-none');
+    document.getElementById('checkoutBtn').disabled = false;
+
+    // Atualizar contador
+    document.getElementById('itemCount').textContent = `${cart.itemCount} ${cart.itemCount === 1 ? 'item' : 'itens'}`;
+
+    // Renderizar itens
+    const container = document.getElementById('cartItems');
+    container.innerHTML = cart.items.map(item => `
+        <div class="cart-item">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${item.name}</h6>
+                            ${item.isCustomFormula ? '<span class="custom-formula-badge">⭐ Fórmula Personalizada</span>' : ''}
+                            ${item.description ? `<p class="text-muted small mb-0">${item.description}</p>` : ''}
+                            ${item.requiresPrescription ? '<span class="badge bg-warning text-dark mt-1">Requer Receita</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-2 text-center">
+                    ${item.isCustomFormula ? 
+                        `<span class="badge bg-secondary">1 un</span>` :
+                        `<div class="quantity-control">
+                            <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})">-</button>
+                            <input type="number" value="${item.quantity}" readonly>
+                            <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
+                        </div>`
+                    }
+                </div>
+
+                <div class="col-md-3 text-center">
+                    <strong>R$ ${item.totalPrice.toFixed(2)}</strong>
+                    ${item.quantity > 1 ? `<br><small class="text-muted">R$ ${item.unitPrice.toFixed(2)} cada</small>` : ''}
+                    ${item.isCustomFormula ? '<br><small class="text-muted">*Preço estimado</small>' : ''}
+                </div>
+
+                <div class="col-md-1 text-end">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeItem('${item.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    // Atualizar resumo
+    document.getElementById('subtotal').textContent = `R$ ${cart.subtotal.toFixed(2)}`;
+    document.getElementById('total').textContent = `R$ ${cart.subtotal.toFixed(2)}`;
+
+    // Mostrar alertas
+    if (cart.hasCustomFormulas) {
+        document.getElementById('customFormulaAlert').classList.remove('d-none');
+    } else {
+        document.getElementById('customFormulaAlert').classList.add('d-none');
+    }
+
+    if (cart.hasControlledItems) {
+        document.getElementById('controlledAlert').classList.remove('d-none');
+    } else {
+        document.getElementById('controlledAlert').classList.add('d-none');
+    }
+}
+
+// Atualizar quantidade
+async function updateQuantity(itemId, newQuantity) {
+    if (newQuantity < 1) {
+        removeItem(itemId);
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/cart/item/${itemId}/quantity`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: newQuantity })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            cart = data.data;
+            renderCart();
+        } else {
+            showError(data.message);
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar quantidade:', error);
+        showError('Erro ao atualizar quantidade');
+    }
+}
+
+// Remover item
+async function removeItem(itemId) {
+    if (!confirm('Deseja remover este item do carrinho?')) return;
+
+    try {
+        const response = await fetch(`/api/cart/item/${itemId}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            cart = data.data;
+            renderCart();
+            showSuccess('Item removido do carrinho');
+        } else {
+            showError(data.message);
+        }
+    } catch (error) {
+        console.error('Erro ao remover item:', error);
+        showError('Erro ao remover item');
+    }
+}
+
+// Limpar carrinho
+async function clearCart() {
+    if (!confirm('Deseja limpar todo o carrinho?')) return;
+
+    try {
+        const response = await fetch('/api/cart/clear', {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            cart = { items: [], subtotal: 0, itemCount: 0 };
+            renderCart();
+            showSuccess('Carrinho limpo');
+        }
+    } catch (error) {
+        console.error('Erro ao limpar carrinho:', error);
+        showError('Erro ao limpar carrinho');
+    }
+}
+
+// Ir para checkout
+function goToCheckout() {
+    if (!cart || cart.items.length === 0) {
+        showError('Seu carrinho está vazio');
+        return;
+    }
+
+    window.location.href = '/checkout';
+}
+
+// Notificações
+function showSuccess(message) {
+    // TODO: Implementar toast de sucesso
+    alert(message);
+}
+
+function showError(message) {
+    // TODO: Implementar toast de erro
+    alert(message);
+}
+</script>

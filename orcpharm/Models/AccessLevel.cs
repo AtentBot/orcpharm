@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,11 +10,11 @@ public class AccessLevel
     [Key]
     public Guid Id { get; set; }
 
-    // C√≥digo curto e est√°vel para usar em regras: "user", "adm"
+    // CÛdigo curto e est·vel para usar em regras: "user", "adm"
     [Required, MaxLength(20)]
     public string Code { get; set; } = default!;
 
-    // Nome leg√≠vel (ex.: "Usu√°rio", "Administrador")
+    // Nome legÌvel (ex.: "Usu·rio", "Administrador")
     [Required, MaxLength(60)]
     public string Name { get; set; } = default!;
 

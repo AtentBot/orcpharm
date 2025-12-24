@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Models.Pharmacy;
 
@@ -16,7 +16,7 @@ public class PurchaseOrderItem
     public virtual PurchaseOrder? PurchaseOrder { get; set; }
 
     [Required]
-    public Guid RawMaterialId { get; set; }  // ✅ MUDOU DE int PARA Guid
+    public Guid RawMaterialId { get; set; }  // ? MUDOU DE int PARA Guid
 
     [ForeignKey(nameof(RawMaterialId))]
     public virtual RawMaterial? RawMaterial { get; set; }

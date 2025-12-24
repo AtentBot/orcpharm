@@ -1,4 +1,4 @@
-Ôªøusing Data;
+using Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
 
@@ -29,7 +29,7 @@ namespace Service
             }
 
 
-            // --- A PARTIR DAQUI, sess√£o √© obrigat√≥ria ---
+            // --- A PARTIR DAQUI, sess„o È obrigatÛria ---
             if (!ctx.Request.Headers.TryGetValue("X-SESSION-TOKEN", out var token) || StringValues.IsNullOrEmpty(token))
             {
                 ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -48,12 +48,12 @@ namespace Service
                 await ctx.Response.WriteAsJsonAsync(new
                 {
                     error = "session_expired",
-                    message = "Sua sess√£o expirou ou √© inv√°lida. Por favor, fa√ßa login novamente para continuar usando a plataforma."
+                    message = "Sua sess„o expirou ou È inv·lida. Por favor, faÁa login novamente para continuar usando a plataforma."
                 });
                 return;
             }
 
-            // Regras extras (opcional): bloquear se a conta desativou ap√≥s o login
+            // Regras extras (opcional): bloquear se a conta desativou apÛs o login
             if (session.Establishment is { IsActive: false })
             {
                 ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;

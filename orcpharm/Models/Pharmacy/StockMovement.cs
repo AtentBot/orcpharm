@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +41,7 @@ public class StockMovement
     [MaxLength(500)]
     public string? Reason { get; set; }
 
-    // ReferÃªncias
+    // Referências
     public Guid? ManipulationOrderId { get; set; }
     public Guid? SaleId { get; set; }
     public Guid? SupplierId { get; set; }
@@ -59,7 +59,7 @@ public class StockMovement
 
     public DateTime CreatedAt { get; set; }
 
-    // Para substÃ¢ncias controladas
+    // Para substâncias controladas
     [MaxLength(50)]
     public string? PrescriptionNumber { get; set; }
 

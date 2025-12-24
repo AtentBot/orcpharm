@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +18,7 @@ public class Establishment
     [Required]
     public Guid CategoryId { get; set; }
 
-    // Raz√£o social / Nome fantasia / CNPJ
+    // Raz„o social / Nome fantasia / CNPJ
     [Required, MaxLength(200)]
     public string RazaoSocial { get; set; } = default!;
 
@@ -28,11 +28,11 @@ public class Establishment
     [MaxLength(20)]
     public string? InscricaoEstadual { get; set; }    
 
-    // CNPJ apenas d√≠gitos (formata√ß√£o fica para o front/DTO)
+    // CNPJ apenas dÌgitos (formataÁ„o fica para o front/DTO)
     [MaxLength(14)]
     public string? Cnpj { get; set; }  // Nullable para permitir cadastro sem CNPJ inicialmente
 
-    // Endere√ßo (Brasil) - Todos opcionais para signup inicial
+    // EndereÁo (Brasil) - Todos opcionais para signup inicial
     [MaxLength(200)]
     public string? Street { get; set; }      // Logradouro
 
@@ -52,12 +52,12 @@ public class Establishment
     public string? State { get; set; } // UF (ex.: SP)
 
     [MaxLength(8)]
-    public string? PostalCode { get; set; } // CEP (s√≥ d√≠gitos)
+    public string? PostalCode { get; set; } // CEP (sÛ dÌgitos)
 
     [MaxLength(60)]
     public string Country { get; set; } = "Brasil";
 
-    // Geolocaliza√ß√£o (opcional)
+    // GeolocalizaÁ„o (opcional)
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 
@@ -81,7 +81,7 @@ public class Establishment
     [MaxLength(200)]
     public string? TikTok { get; set; }
 
-    // Seguran√ßa de senha (armazenar apenas hash e metadados)
+    // SeguranÁa de senha (armazenar apenas hash e metadados)
     [Required]
     public string PasswordHash { get; set; } = default!;
 
@@ -95,14 +95,14 @@ public class Establishment
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // ==================== NAVEGA√á√ÉO ====================
+    // ==================== NAVEGA«√O ====================
     [Required]
     public Guid AccessLevelId { get; set; }
 
     [ForeignKey(nameof(AccessLevelId))]
     public AccessLevel? AccessLevel { get; set; }
 
-    // Navega√ß√£o para Category
+    // NavegaÁ„o para Category
     [ForeignKey(nameof(CategoryId))]
     public Category? Category { get; set; }
 

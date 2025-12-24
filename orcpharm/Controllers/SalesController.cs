@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Service;
@@ -30,11 +30,11 @@ public class SalesController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var query = _context.Sales
             .Where(s => s.EstablishmentId == establishmentId.Value);
@@ -61,7 +61,7 @@ public class SalesController : ControllerBase
                     _context.Customers
                         .Where(c => c.Id == s.CustomerId.Value)
                         .Select(c => c.FullName)
-                        .FirstOrDefault() : "CLIENTE NÃO IDENTIFICADO",
+                        .FirstOrDefault() : "CLIENTE N�O IDENTIFICADO",
                 SaleDate = s.SaleDate,
                 TotalAmount = s.TotalAmount,
                 PaymentMethod = s.PaymentMethod,
@@ -79,11 +79,11 @@ public class SalesController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var sale = await _context.Sales
             .Include(s => s.Items)
@@ -91,7 +91,7 @@ public class SalesController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (sale == null)
-            return NotFound(new { message = "Venda não encontrada" });
+            return NotFound(new { message = "Venda n�o encontrada" });
 
         var response = new SaleResponseDto
         {
@@ -102,7 +102,7 @@ public class SalesController : ControllerBase
                 await _context.Customers
                     .Where(c => c.Id == sale.CustomerId.Value)
                     .Select(c => c.FullName)
-                    .FirstOrDefaultAsync() : "CLIENTE NÃO IDENTIFICADO",
+                    .FirstOrDefaultAsync() : "CLIENTE N�O IDENTIFICADO",
             CustomerCpf = sale.CustomerId.HasValue ?
                 await _context.Customers
                     .Where(c => c.Id == sale.CustomerId.Value)
@@ -165,11 +165,11 @@ public class SalesController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var (success, message, sale) = await _service.CreateSaleAsync(
             dto, establishmentId.Value, employeeId.Value);
@@ -194,11 +194,11 @@ public class SalesController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var hasPermission = await HasPermission(employeeId.Value, new[] { "GERENTE", "FARMACEUTICO_RT" });
         if (!hasPermission)
@@ -218,11 +218,11 @@ public class SalesController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var reportDate = date ?? DateTime.Today;
         var report = await _service.GetDailySalesReportAsync(establishmentId.Value, reportDate);
@@ -237,11 +237,11 @@ public class SalesController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sess�o inv�lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento n�o encontrado" });
 
         var start = startDate ?? DateTime.Today.AddDays(-30);
         var end = endDate ?? DateTime.Today;

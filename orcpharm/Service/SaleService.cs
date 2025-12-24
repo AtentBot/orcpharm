@@ -1,4 +1,4 @@
-Ôªøusing Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
 using DTOs.Sales;
@@ -30,7 +30,7 @@ public class SaleService
                                   c.EstablishmentId == establishmentId);
 
                 if (!customerExists)
-                    return (false, "Cliente n√£o encontrado", null);
+                    return (false, "Cliente n„o encontrado", null);
             }
 
             // Calcular valores
@@ -54,7 +54,7 @@ public class SaleService
             if (changeAmount < 0)
                 return (false, "Valor pago insuficiente", null);
 
-            // Gerar c√≥digo
+            // Gerar cÛdigo
             var code = await GenerateSaleCodeAsync(establishmentId);
 
             var sale = new Sale
@@ -121,7 +121,7 @@ public class SaleService
                     }
                 }
 
-                // Atualizar status da prescri√ß√£o se vinculada
+                // Atualizar status da prescriÁ„o se vinculada
                 if (itemDto.PrescriptionId.HasValue)
                 {
                     var prescription = await _context.Prescriptions
@@ -162,10 +162,10 @@ public class SaleService
                                          s.EstablishmentId == establishmentId);
 
             if (sale == null)
-                return (false, "Venda n√£o encontrada");
+                return (false, "Venda n„o encontrada");
 
             if (sale.Status == "CANCELADA")
-                return (false, "Venda j√° est√° cancelada");
+                return (false, "Venda j· est· cancelada");
 
             // Reverter status das OMs
             foreach (var item in sale.Items)

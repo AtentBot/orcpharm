@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models;
 
 /// <summary>
-/// Arquivo de imagem/PDF da receita médica para processamento OCR
+/// Arquivo de imagem/PDF da receita m�dica para processamento OCR
 /// </summary>
 [Table("prescription_files")]
 public class PrescriptionFile

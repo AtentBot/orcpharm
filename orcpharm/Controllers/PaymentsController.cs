@@ -1,6 +1,6 @@
 using Data;
-using DTOs.Common;
 using DTOs.Payments;
+using DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

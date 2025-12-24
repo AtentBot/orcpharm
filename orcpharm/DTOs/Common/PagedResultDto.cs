@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DTOs.Common;
+namespace DTOs;
 
 /// <summary>
 /// DTO genérico para respostas paginadas

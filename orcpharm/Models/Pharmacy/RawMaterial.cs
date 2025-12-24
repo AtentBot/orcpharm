@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -22,10 +22,10 @@ public class RawMaterial
     public string Name { get; set; } = default!;
 
     [MaxLength(50)]
-    public string? DcbCode { get; set; } // DenominaÃ§Ã£o Comum Brasileira
+    public string? DcbCode { get; set; } // Denominação Comum Brasileira
 
     [MaxLength(50)]
-    public string? DciCode { get; set; } // DenominaÃ§Ã£o Comum Internacional
+    public string? DciCode { get; set; } // Denominação Comum Internacional
 
     [Required, MaxLength(50)]
     public string CasNumber { get; set; } = default!; // Chemical Abstracts Service
@@ -33,7 +33,7 @@ public class RawMaterial
     [MaxLength(500)]
     public string? Description { get; set; }
 
-    // ClassificaÃ§Ã£o regulatÃ³ria
+    // Classificação regulatória
     [Required, MaxLength(20)]
     public string ControlType { get; set; } = "COMUM";
     // COMUM, LISTA_A, LISTA_B, LISTA_C1, LISTA_C2, ANTIMICROBIANO, HORMONIO
@@ -42,7 +42,7 @@ public class RawMaterial
     [Required, MaxLength(10)]
     public string Unit { get; set; } = "g"; // g, mg, mL, UI
 
-    // Fatores de correÃ§Ã£o
+    // Fatores de correção
     [Column(TypeName = "decimal(10,4)")]
     public decimal PurityFactor { get; set; } = 1.0m;
 
@@ -59,7 +59,7 @@ public class RawMaterial
     [Column(TypeName = "decimal(18,4)")]
     public decimal MaximumStock { get; set; } = 0;
 
-    // CondiÃ§Ãµes de armazenamento
+    // Condições de armazenamento
     [MaxLength(200)]
     public string? StorageConditions { get; set; }
 
@@ -76,7 +76,7 @@ public class RawMaterial
     public Guid? CreatedByEmployeeId { get; set; }
     public Guid? UpdatedByEmployeeId { get; set; }
 
-    // NavegaÃ§Ã£o
+    // Navegação
     public ICollection<Batch>? Batches { get; set; }
     public ICollection<FormulaComponent>? FormulaComponents { get; set; }
     public ICollection<StockMovement>? StockMovements { get; set; }

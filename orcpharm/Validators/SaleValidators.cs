@@ -1,4 +1,4 @@
-Ôªøusing FluentValidation;
+using FluentValidation;
 using DTOs.Sales;
 
 namespace Validators;
@@ -8,13 +8,13 @@ public class CreateSaleValidator : AbstractValidator<CreateSaleDto>
     public CreateSaleValidator()
     {
         RuleFor(x => x.SaleDate)
-            .NotEmpty().WithMessage("Data da venda √© obrigat√≥ria")
-            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n√£o pode ser futura");
+            .NotEmpty().WithMessage("Data da venda È obrigatÛria")
+            .LessThanOrEqualTo(DateTime.Today).WithMessage("Data n„o pode ser futura");
 
         RuleFor(x => x.PaymentMethod)
             .Must(x => x == "DINHEIRO" || x == "CARTAO_CREDITO" ||
                       x == "CARTAO_DEBITO" || x == "PIX" || x == "BOLETO")
-            .WithMessage("Forma de pagamento inv√°lida");
+            .WithMessage("Forma de pagamento inv·lida");
 
         RuleFor(x => x.PaidAmount)
             .GreaterThan(0).WithMessage("Valor pago deve ser maior que zero");
@@ -25,13 +25,13 @@ public class CreateSaleValidator : AbstractValidator<CreateSaleDto>
         RuleForEach(x => x.Items).ChildRules(item =>
         {
             item.RuleFor(i => i.Description)
-                .NotEmpty().WithMessage("Descri√ß√£o do item √© obrigat√≥ria");
+                .NotEmpty().WithMessage("DescriÁ„o do item È obrigatÛria");
 
             item.RuleFor(i => i.Quantity)
                 .GreaterThan(0).WithMessage("Quantidade deve ser maior que zero");
 
             item.RuleFor(i => i.UnitPrice)
-                .GreaterThan(0).WithMessage("Pre√ßo unit√°rio deve ser maior que zero");
+                .GreaterThan(0).WithMessage("PreÁo unit·rio deve ser maior que zero");
         });
     }
 }
@@ -41,8 +41,8 @@ public class CancelSaleValidator : AbstractValidator<CancelSaleDto>
     public CancelSaleValidator()
     {
         RuleFor(x => x.Reason)
-            .NotEmpty().WithMessage("Motivo do cancelamento √© obrigat√≥rio")
-            .MinimumLength(10).WithMessage("Motivo deve ter no m√≠nimo 10 caracteres");
+            .NotEmpty().WithMessage("Motivo do cancelamento È obrigatÛrio")
+            .MinimumLength(10).WithMessage("Motivo deve ter no mÌnimo 10 caracteres");
     }
 }
 
@@ -51,18 +51,18 @@ public class CreateQuotationValidator : AbstractValidator<CreateQuotationDto>
     public CreateQuotationValidator()
     {
         RuleFor(x => x.Items)
-            .NotEmpty().WithMessage("Or√ßamento deve ter pelo menos um item");
+            .NotEmpty().WithMessage("OrÁamento deve ter pelo menos um item");
 
         RuleForEach(x => x.Items).ChildRules(item =>
         {
             item.RuleFor(i => i.Description)
-                .NotEmpty().WithMessage("Descri√ß√£o do item √© obrigat√≥ria");
+                .NotEmpty().WithMessage("DescriÁ„o do item È obrigatÛria");
 
             item.RuleFor(i => i.Quantity)
                 .GreaterThan(0).WithMessage("Quantidade deve ser maior que zero");
 
             item.RuleFor(i => i.UnitPrice)
-                .GreaterThan(0).WithMessage("Pre√ßo unit√°rio deve ser maior que zero");
+                .GreaterThan(0).WithMessage("PreÁo unit·rio deve ser maior que zero");
         });
     }
 }

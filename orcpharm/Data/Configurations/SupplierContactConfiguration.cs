@@ -1,4 +1,4 @@
-ï»¿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Models.Pharmacy;
 
@@ -8,12 +8,12 @@ public class SupplierContactConfiguration : IEntityTypeConfiguration<SupplierCon
 {
     public void Configure(EntityTypeBuilder<SupplierContact> builder)
     {
-        // CreatedAt - Default automÃ¡tico no banco
+        // CreatedAt - Default automático no banco
         builder.Property(c => c.CreatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAdd();
 
-        // UpdatedAt - Default automÃ¡tico no banco
+        // UpdatedAt - Default automático no banco
         builder.Property(c => c.UpdatedAt)
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .ValueGeneratedOnAddOrUpdate();
@@ -30,7 +30,7 @@ public class SupplierContactConfiguration : IEntityTypeConfiguration<SupplierCon
         builder.Property(c => c.IsEmergencyContact)
             .HasDefaultValue(false);
 
-        // Ãndices
+        // Índices
         builder.HasIndex(c => new { c.SupplierId, c.IsPrimary, c.IsActive });
     }
 }

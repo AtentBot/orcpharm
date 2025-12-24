@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs;
-using DTOs.Common;
 using DTOs.Sales;
 using Models;
 using Models.Pharmacy;
@@ -31,7 +30,7 @@ public class PDVController : ControllerBase
     {
         var employee = HttpContext.Items["Employee"] as Models.Employees.Employee;
         if (employee != null) return employee.EstablishmentId;
-        
+
         var claim = User.FindFirst("EstablishmentId");
         return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
     }
@@ -40,7 +39,7 @@ public class PDVController : ControllerBase
     {
         var employee = HttpContext.Items["Employee"] as Models.Employees.Employee;
         if (employee != null) return employee.Id;
-        
+
         var claim = User.FindFirst("EmployeeId");
         return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
     }
@@ -53,9 +52,9 @@ public class PDVController : ControllerBase
     public async Task<ActionResult<ApiResponse<CashRegisterStatusDto>>> GetCashRegisterStatus()
     {
         var establishmentId = GetEstablishmentId();
-        
+
         var cashRegister = await _cashService.GetOpenCashRegisterAsync(establishmentId);
-        
+
         if (cashRegister == null)
         {
             return Ok(ApiResponse<CashRegisterStatusDto>.SuccessResponse(
@@ -320,7 +319,7 @@ public class PDVController : ControllerBase
         var quote = await _context.PrescriptionQuotes
             .Where(q => q.ManipulationOrderId == id && (q.Status == "APROVADO" || q.Status == "CONVERTIDO"))
             .FirstOrDefaultAsync();
-        
+
         var totalPrice = quote?.FinalPrice ?? dto.PaidAmount;
 
         // Gerar código da venda
@@ -439,7 +438,7 @@ public class PDVController : ControllerBase
                 Subtotal = o.Subtotal,
                 Discount = o.Discount,
                 Status = o.Status,
-                StatusDisplay = o.Status == "READY" ? "Pronto" : 
+                StatusDisplay = o.Status == "READY" ? "Pronto" :
                                o.Status == "CONFIRMED" ? "Confirmado" :
                                o.Status == "PREPARING" ? "Preparando" :
                                o.Status == "DELIVERED" ? "Entregue" : o.Status,
@@ -461,7 +460,7 @@ public class PDVController : ControllerBase
 
     [HttpPost("process-online-order/{orderId}")]
     public async Task<ActionResult<ApiResponse<ProcessOnlineOrderResultDto>>> ProcessOnlineOrder(
-        Guid orderId, 
+        Guid orderId,
         [FromBody] ProcessOnlineOrderDto dto)
     {
         var establishmentId = GetEstablishmentId();
@@ -595,7 +594,7 @@ public class PDVController : ControllerBase
                 Subtotal = o.Subtotal,
                 Discount = o.Discount,
                 Status = o.Status,
-                StatusDisplay = o.Status == "READY" ? "Pronto" : 
+                StatusDisplay = o.Status == "READY" ? "Pronto" :
                                o.Status == "CONFIRMED" ? "Confirmado" :
                                o.Status == "DELIVERED" ? "Entregue" : o.Status,
                 PaymentStatus = o.PaymentStatus,
@@ -992,7 +991,7 @@ public class PDVController : ControllerBase
             }
 
             await _context.SaveChangesAsync();
-            
+
             await _cashService.RegisterSaleInCashRegisterAsync(
                 openCashRegister.Id, sale.Id, total, dto.Payment.Method, employeeId);
 
@@ -1153,7 +1152,7 @@ public class ProductSearchDto
     public int StockQuantity { get; set; }
     public string Unit { get; set; } = "UN";
     public string? CategoryName { get; set; }
-    
+
     // Novos campos para diferenciar fonte
     public string Source { get; set; } = "CATALOGO"; // CATALOGO ou MATERIA_PRIMA
     public string? ControlType { get; set; } // COMUM, LISTA_A, LISTA_B, etc.

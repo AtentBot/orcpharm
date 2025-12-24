@@ -1,7 +1,7 @@
-Ôªønamespace DTOs.Pharmacy.ManipulationOrders;
+namespace DTOs.Pharmacy.ManipulationOrders;
 
 // ===================================================================
-// DTOs - SEPARA√á√ÉO
+// DTOs - SEPARA«√O
 // ===================================================================
 
 public class StartSeparacaoDto
@@ -26,7 +26,7 @@ public class ItemSeparadoDto
 }
 
 // ===================================================================
-// DTOs - EXPEDI√á√ÉO
+// DTOs - EXPEDI«√O
 // ===================================================================
 
 public class StartExpedicaoDto
@@ -56,5 +56,5 @@ public class ConfirmDeliveryDto
 
 // ===================================================================
 // NOTA: StartAprovacaoDto foi REMOVIDO daqui
-// Usar a defini√ß√£o em ManipulationAprovacaoDtos.cs
+// Usar a definiÁ„o em ManipulationAprovacaoDtos.cs
 // ===================================================================

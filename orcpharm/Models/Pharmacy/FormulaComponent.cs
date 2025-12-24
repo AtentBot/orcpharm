@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +29,7 @@ public class FormulaComponent
     public string ComponentType { get; set; } = "ATIVO";
     // ATIVO, EXCIPIENTE, VEICULO, CONSERVANTE
 
-    public int OrderIndex { get; set; } // Ordem de adiÃ§Ã£o
+    public int OrderIndex { get; set; } // Ordem de adição
 
     [MaxLength(500)]
     public string? SpecialInstructions { get; set; }

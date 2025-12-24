@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -24,7 +24,7 @@ namespace Models
         public string WhatsApp { get; set; } = string.Empty;
 
         [Column("numero")]
-        [Range(100000, 999999, ErrorMessage = "O nÃºmero deve conter 6 dÃ­gitos.")]
+        [Range(100000, 999999, ErrorMessage = "O número deve conter 6 dígitos.")]
         [Required]
         public int Numero { get; set; }
 

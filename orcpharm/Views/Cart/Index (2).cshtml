@@ -1,0 +1,382 @@
+@{
+    ViewData["Title"] = "Análise Farmacêutica - Detalhes";
+}
+
+@section Scripts {
+    <script>
+        const formulaId = '@ViewBag.FormulaId';
+    </script>
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <a href="/PharmaceuticalAnalysis" class="btn btn-sm btn-outline-secondary">
+                        ← Voltar
+                    </a>
+                </div>
+                <h2 class="mb-0">🔬 Análise Farmacêutica</h2>
+                <div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações da Fórmula -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Informações da Fórmula</h5>
+                </div>
+                <div class="card-body" id="formulaInfo">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3">Carregando informações...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checklist de Análise -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">✅ Checklist de Segurança</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="safetyCheck">
+                        <label class="form-check-label" for="safetyCheck">
+                            <strong>Segurança da formulação verificada</strong>
+                            <br><small class="text-muted">Compatibilidade química entre componentes</small>
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="dosageCheck">
+                        <label class="form-check-label" for="dosageCheck">
+                            <strong>Dosagem dentro dos limites terapêuticos</strong>
+                            <br><small class="text-muted">Concentrações adequadas e seguras</small>
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="interactionCheck">
+                        <label class="form-check-label" for="interactionCheck">
+                            <strong>Sem interações medicamentosas perigosas</strong>
+                            <br><small class="text-muted">Avaliação de possíveis interações</small>
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="stabilityCheck">
+                        <label class="form-check-label" for="stabilityCheck">
+                            <strong>Estabilidade da formulação adequada</strong>
+                            <br><small class="text-muted">Prazo de validade viável</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Análise Técnica -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">📝 Análise Técnica</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Parecer Técnico *</label>
+                        <textarea class="form-control" id="analysisText" rows="5" 
+                                  placeholder="Descreva sua análise técnica detalhada da formulação...
+Exemplo: Formulação adequada. Base compatível com os ativos solicitados. Concentração dentro dos limites farmacotécnicos."></textarea>
+                        <small class="text-muted">Campo obrigatório para aprovação ou reprovação</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Prazo de Validade (dias)</label>
+                            <input type="number" class="form-control" id="shelfLife" value="90" min="1" max="365">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Requer Receita Médica?</label>
+                            <select class="form-select" id="requiresPrescription">
+                                <option value="false">Não</option>
+                                <option value="true">Sim</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Observações Adicionais (opcional)</label>
+                        <textarea class="form-control" id="observations" rows="3" 
+                                  placeholder="Observações ou recomendações adicionais..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Ações -->
+        <div class="col-lg-4">
+            <!-- Status Atual -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <span class="badge bg-warning fs-6 mb-3" id="currentStatus">AGUARDANDO ANÁLISE</span>
+                    <p class="mb-0 text-muted small">Status Atual</p>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">Decisão Farmacêutica</h6>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success btn-lg w-100 mb-3" onclick="approveFormula()">
+                        ✅ Aprovar Fórmula
+                    </button>
+
+                    <button class="btn btn-warning btn-lg w-100 mb-3" onclick="requestAdjustment()">
+                        📝 Solicitar Ajuste
+                    </button>
+
+                    <button class="btn btn-danger btn-lg w-100" onclick="rejectFormula()">
+                        ❌ Reprovar Fórmula
+                    </button>
+                </div>
+            </div>
+
+            <!-- Histórico -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">📋 Histórico de Análises</h6>
+                </div>
+                <div class="card-body" id="historyLog" style="max-height: 400px; overflow-y: auto;">
+                    <p class="text-muted text-center">Nenhuma análise prévia</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let formula = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const formulaId = params.get('id');
+    
+    if (formulaId) {
+        loadFormula(formulaId);
+        loadHistory(formulaId);
+    }
+});
+
+// Carregar fórmula
+async function loadFormula(id) {
+    try {
+        const response = await fetch(`/api/customer-portal/custom-formula/${id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            formula = data.data;
+            renderFormulaInfo();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar fórmula:', error);
+        showError('Erro ao carregar informações da fórmula');
+    }
+}
+
+// Renderizar informações
+function renderFormulaInfo() {
+    const container = document.getElementById('formulaInfo');
+    const hoursWaiting = formula.paidAt ? 
+        ((new Date() - new Date(formula.paidAt)) / 1000 / 60 / 60).toFixed(1) : 0;
+    
+    container.innerHTML = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6 class="text-muted">Código</h6>
+                <p class="fw-bold">${formula.code}</p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Tempo de Espera</h6>
+                <p class="fw-bold text-danger">${hoursWaiting}h</p>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h6 class="text-muted">Cliente</h6>
+                <p>${formula.customerName || 'Não informado'}<br>
+                <small>${formula.customerPhone || ''}</small></p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-muted">Valor Pago</h6>
+                <p class="fw-bold text-success fs-5">R$ ${(formula.paidAmount || formula.estimatedPrice || 0).toFixed(2)}</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="row mb-3">
+            <div class="col-12">
+                <h6 class="text-muted">Fórmula Solicitada</h6>
+                <div class="alert alert-light">
+                    <strong>${formula.productTypeName}</strong> - ${formula.productSubTypeName}<br>
+                    Quantidade: <strong>${formula.quantity} ${formula.unit}</strong>
+                </div>
+            </div>
+        </div>
+
+        ${formula.customerNotes ? `
+        <div class="row">
+            <div class="col-12">
+                <h6 class="text-muted">Observações do Cliente</h6>
+                <p class="fst-italic">"${formula.customerNotes}"</p>
+            </div>
+        </div>
+        ` : ''}
+    `;
+
+    document.getElementById('currentStatus').textContent = formula.status.replace('_', ' ');
+}
+
+// Carregar histórico
+async function loadHistory(formulaId) {
+    try {
+        const response = await fetch(`/api/pharmaceutical-analysis/history/${formulaId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            const container = document.getElementById('historyLog');
+            container.innerHTML = data.data.map(log => `
+                <div class="border-bottom pb-2 mb-2">
+                    <small class="text-muted">${new Date(log.createdAt).toLocaleString('pt-BR')}</small>
+                    <p class="mb-0"><strong>${log.actionType}</strong></p>
+                    ${log.analysis ? `<p class="small mb-0">${log.analysis}</p>` : ''}
+                    <small class="text-muted">Por: ${log.pharmacistName} (${log.pharmacistCrf})</small>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+    }
+}
+
+// Aprovar fórmula
+async function approveFormula() {
+    const analysis = document.getElementById('analysisText').value;
+    
+    if (!analysis.trim()) {
+        showError('Por favor, preencha o parecer técnico');
+        return;
+    }
+
+    if (!confirm('Confirma a aprovação desta fórmula?')) return;
+
+    const data = {
+        customerFormulaId: formula.id,
+        analysis: analysis,
+        requiresPrescription: document.getElementById('requiresPrescription').value === 'true',
+        estimatedShelfLifeDays: parseInt(document.getElementById('shelfLife').value),
+        safetyCheck: document.getElementById('safetyCheck').checked,
+        dosageCheck: document.getElementById('dosageCheck').checked,
+        interactionCheck: document.getElementById('interactionCheck').checked,
+        stabilityCheck: document.getElementById('stabilityCheck').checked
+    };
+
+    try {
+        const response = await fetch('/api/pharmaceutical-analysis/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showSuccess('Fórmula aprovada com sucesso! Cliente será notificado.');
+            setTimeout(() => window.location.href = '/PharmaceuticalAnalysis', 2000);
+        } else {
+            showError(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao aprovar:', error);
+        showError('Erro ao aprovar fórmula');
+    }
+}
+
+// Reprovar fórmula
+async function rejectFormula() {
+    const reason = prompt('Motivo da reprovação:');
+    
+    if (!reason) return;
+
+    const data = {
+        customerFormulaId: formula.id,
+        rejectionReason: reason
+    };
+
+    try {
+        const response = await fetch('/api/pharmaceutical-analysis/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showSuccess('Fórmula reprovada. Cliente será reembolsado.');
+            setTimeout(() => window.location.href = '/PharmaceuticalAnalysis', 2000);
+        } else {
+            showError(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao reprovar:', error);
+        showError('Erro ao reprovar fórmula');
+    }
+}
+
+// Solicitar ajuste
+async function requestAdjustment() {
+    const request = prompt('Que ajuste você sugere?');
+    
+    if (!request) return;
+
+    const data = {
+        customerFormulaId: formula.id,
+        adjustmentRequest: request
+    };
+
+    try {
+        const response = await fetch('/api/pharmaceutical-analysis/request-adjustment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showSuccess('Ajuste solicitado. Cliente será notificado.');
+            setTimeout(() => window.location.href = '/PharmaceuticalAnalysis', 2000);
+        } else {
+            showError(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao solicitar ajuste:', error);
+        showError('Erro ao solicitar ajuste');
+    }
+}
+
+function showSuccess(message) {
+    alert(message);
+}
+
+function showError(message) {
+    alert(message);
+}
+</script>

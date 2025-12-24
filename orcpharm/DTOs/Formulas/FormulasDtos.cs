@@ -1,4 +1,4 @@
-﻿namespace DTOs.Formulas;
+namespace DTOs.Formulas;
 
 public class CreateFormulaDto
 {
@@ -23,7 +23,7 @@ public class CreateFormulaComponentDto
     public decimal Quantity { get; set; }
     public string Unit { get; set; } = string.Empty;
     public string ComponentType { get; set; } = "ATIVO";
-    public int OrderIndex { get; set; } = 0;  // ✅ ADICIONADO
+    public int OrderIndex { get; set; } = 0;  // ? ADICIONADO
     public string? SpecialInstructions { get; set; }
     public bool IsOptional { get; set; } = false;
 }
@@ -52,7 +52,7 @@ public class UpdateFormulaComponentDto
     public decimal Quantity { get; set; }
     public string Unit { get; set; } = string.Empty;
     public string ComponentType { get; set; } = "ATIVO";
-    public int OrderIndex { get; set; } = 0;  // ✅ ADICIONADO
+    public int OrderIndex { get; set; } = 0;  // ? ADICIONADO
     public string? SpecialInstructions { get; set; }
     public bool IsOptional { get; set; }
 }
@@ -127,18 +127,18 @@ public class FormulaComponentDto
     public Guid FormulaId { get; set; }
     public Guid RawMaterialId { get; set; }
     public string RawMaterialName { get; set; } = string.Empty;
-    public string? RawMaterialCode { get; set; }  // ✅ ADICIONADO
+    public string? RawMaterialCode { get; set; }  // ? ADICIONADO
     public string Unit { get; set; } = string.Empty;
-    public string? RawMaterialUnit { get; set; }  // ✅ ADICIONADO
+    public string? RawMaterialUnit { get; set; }  // ? ADICIONADO
     public decimal Quantity { get; set; }
     public string ComponentType { get; set; } = string.Empty;
     public int OrderIndex { get; set; }
     public string? SpecialInstructions { get; set; }
     public bool IsOptional { get; set; }
-    public bool RawMaterialIsControlled { get; set; } = false;  // ✅ ADICIONADO
+    public bool RawMaterialIsControlled { get; set; } = false;  // ? ADICIONADO
 }
 
-// ✅ DTO SIMPLES PARA LISTAGEM DE FÓRMULAS (uso em outros módulos)
+// ? DTO SIMPLES PARA LISTAGEM DE F�RMULAS (uso em outros m�dulos)
 public class FormulaListDto
 {
     public Guid Id { get; set; }

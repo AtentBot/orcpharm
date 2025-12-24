@@ -1,4 +1,4 @@
-Ôªøusing System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models;
@@ -27,7 +27,7 @@ public class ControlledSubstanceMovement
     public string MovementType { get; set; } = string.Empty;
     // ENTRADA, SAIDA, TRANSFERENCIA, PERDA, DEVOLUCAO, AJUSTE
 
-    // Classifica√ß√£o Portaria 344/98
+    // ClassificaÁ„o Portaria 344/98
     [Column("controlled_list")]
     [MaxLength(10)]
     public string ControlledList { get; set; } = string.Empty;
@@ -74,7 +74,7 @@ public class ControlledSubstanceMovement
     [Column("purchase_order_id")]
     public Guid? PurchaseOrderId { get; set; }
 
-    // Receitu√°rio (quando aplic√°vel)
+    // Receitu·rio (quando aplic·vel)
     [Column("prescription_number")]
     [MaxLength(50)]
     public string? PrescriptionNumber { get; set; }
@@ -124,7 +124,7 @@ public class ControlledSubstanceMovement
     public string? SngpcStatus { get; set; }
     // PENDENTE, ENVIADO, ACEITO, REJEITADO
 
-    // Observa√ß√µes
+    // ObservaÁıes
     [Column("observations")]
     public string? Observations { get; set; }
 

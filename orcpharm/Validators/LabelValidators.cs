@@ -1,4 +1,4 @@
-Ôªøusing FluentValidation;
+using FluentValidation;
 using DTOs.Labels;
 
 namespace Validators.Labels;
@@ -8,17 +8,17 @@ public class CreateLabelTemplateValidator : AbstractValidator<CreateLabelTemplat
     public CreateLabelTemplateValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Nome √© obrigat√≥rio")
-            .MaximumLength(100).WithMessage("Nome deve ter no m√°ximo 100 caracteres");
+            .NotEmpty().WithMessage("Nome È obrigatÛrio")
+            .MaximumLength(100).WithMessage("Nome deve ter no m·ximo 100 caracteres");
 
         RuleFor(x => x.Description)
-            .MaximumLength(500).WithMessage("Descri√ß√£o deve ter no m√°ximo 500 caracteres");
+            .MaximumLength(500).WithMessage("DescriÁ„o deve ter no m·ximo 500 caracteres");
 
         RuleFor(x => x.TemplateType)
-            .NotEmpty().WithMessage("Tipo de template √© obrigat√≥rio")
+            .NotEmpty().WithMessage("Tipo de template È obrigatÛrio")
             .Must(type => new[] { "PADRAO", "CONTROLADO", "HOMEOPATICO", "FITOTERAPICO", "VETERINARIO" }
                 .Contains(type.ToUpper()))
-            .WithMessage("Tipo de template inv√°lido");
+            .WithMessage("Tipo de template inv·lido");
 
         RuleFor(x => x.Width)
             .GreaterThan(0).WithMessage("Largura deve ser maior que zero");
@@ -27,7 +27,7 @@ public class CreateLabelTemplateValidator : AbstractValidator<CreateLabelTemplat
             .GreaterThan(0).WithMessage("Altura deve ser maior que zero");
 
         RuleFor(x => x.HtmlTemplate)
-            .NotEmpty().WithMessage("Template HTML √© obrigat√≥rio");
+            .NotEmpty().WithMessage("Template HTML È obrigatÛrio");
     }
 }
 
@@ -36,11 +36,11 @@ public class UpdateLabelTemplateValidator : AbstractValidator<UpdateLabelTemplat
     public UpdateLabelTemplateValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty().WithMessage("Nome √© obrigat√≥rio")
-            .MaximumLength(100).WithMessage("Nome deve ter no m√°ximo 100 caracteres");
+            .NotEmpty().WithMessage("Nome È obrigatÛrio")
+            .MaximumLength(100).WithMessage("Nome deve ter no m·ximo 100 caracteres");
 
         RuleFor(x => x.Description)
-            .MaximumLength(500).WithMessage("Descri√ß√£o deve ter no m√°ximo 500 caracteres");
+            .MaximumLength(500).WithMessage("DescriÁ„o deve ter no m·ximo 500 caracteres");
     }
 }
 
@@ -49,7 +49,7 @@ public class GenerateLabelValidator : AbstractValidator<GenerateLabelDto>
     public GenerateLabelValidator()
     {
         RuleFor(x => x.ManipulationOrderId)
-            .NotEmpty().WithMessage("ID da ordem de manipula√ß√£o √© obrigat√≥rio");
+            .NotEmpty().WithMessage("ID da ordem de manipulaÁ„o È obrigatÛrio");
     }
 }
 
@@ -58,18 +58,18 @@ public class PrintLabelValidator : AbstractValidator<PrintLabelDto>
     public PrintLabelValidator()
     {
         RuleFor(x => x.Copies)
-            .GreaterThan(0).WithMessage("N√∫mero de c√≥pias deve ser maior que zero")
-            .LessThanOrEqualTo(10).WithMessage("M√°ximo de 10 c√≥pias por impress√£o");
+            .GreaterThan(0).WithMessage("N˙mero de cÛpias deve ser maior que zero")
+            .LessThanOrEqualTo(10).WithMessage("M·ximo de 10 cÛpias por impress„o");
 
         RuleFor(x => x.Format)
-            .NotEmpty().WithMessage("Formato √© obrigat√≥rio")
+            .NotEmpty().WithMessage("Formato È obrigatÛrio")
             .Must(format => new[] { "HTML", "PDF", "ZPL" }.Contains(format.ToUpper()))
-            .WithMessage("Formato inv√°lido (HTML, PDF ou ZPL)");
+            .WithMessage("Formato inv·lido (HTML, PDF ou ZPL)");
 
         RuleFor(x => x.PrintReason)
-            .NotEmpty().WithMessage("Motivo da impress√£o √© obrigat√≥rio")
+            .NotEmpty().WithMessage("Motivo da impress„o È obrigatÛrio")
             .Must(reason => new[] { "IMPRESSAO", "REIMPRESSAO", "TESTE" }.Contains(reason.ToUpper()))
-            .WithMessage("Motivo inv√°lido");
+            .WithMessage("Motivo inv·lido");
     }
 }
 
@@ -78,16 +78,16 @@ public class BatchPrintValidator : AbstractValidator<BatchPrintDto>
     public BatchPrintValidator()
     {
         RuleFor(x => x.LabelIds)
-            .NotEmpty().WithMessage("Lista de IDs n√£o pode estar vazia")
-            .Must(list => list.Count <= 50).WithMessage("M√°ximo de 50 r√≥tulos por lote");
+            .NotEmpty().WithMessage("Lista de IDs n„o pode estar vazia")
+            .Must(list => list.Count <= 50).WithMessage("M·ximo de 50 rÛtulos por lote");
 
         RuleFor(x => x.Copies)
-            .GreaterThan(0).WithMessage("N√∫mero de c√≥pias deve ser maior que zero")
-            .LessThanOrEqualTo(10).WithMessage("M√°ximo de 10 c√≥pias por impress√£o");
+            .GreaterThan(0).WithMessage("N˙mero de cÛpias deve ser maior que zero")
+            .LessThanOrEqualTo(10).WithMessage("M·ximo de 10 cÛpias por impress„o");
 
         RuleFor(x => x.Format)
-            .NotEmpty().WithMessage("Formato √© obrigat√≥rio")
+            .NotEmpty().WithMessage("Formato È obrigatÛrio")
             .Must(format => new[] { "HTML", "PDF", "ZPL" }.Contains(format.ToUpper()))
-            .WithMessage("Formato inv√°lido (HTML, PDF ou ZPL)");
+            .WithMessage("Formato inv·lido (HTML, PDF ou ZPL)");
     }
 }

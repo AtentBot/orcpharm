@@ -1,4 +1,4 @@
-﻿using Models;
+using Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,7 +10,7 @@ public class UserSession
     [Required]
     public Guid EstablishmentId { get; set; }
 
-    // 🔹 Adicione esta propriedade:
+    // ?? Adicione esta propriedade:
     [ForeignKey(nameof(EstablishmentId))]
     public Establishment Establishment { get; set; } = default!;
 

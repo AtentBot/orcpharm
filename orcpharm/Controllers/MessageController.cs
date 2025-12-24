@@ -1,4 +1,4 @@
-ï»¿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Net.Http.Json;
 
@@ -30,7 +30,7 @@ namespace Controllers
             if (string.IsNullOrWhiteSpace(apiKey))
                 return StatusCode(500, new { error = "atentbot_apikey_not_configured" });
 
-            // monta requisiÃ§Ã£o
+            // monta requisição
             var client = _httpClientFactory.CreateClient();
             var url = $"{baseUrl.TrimEnd('/')}/message/sendText/crescer";
             var payload = new { number = req.Number, text = req.Text };

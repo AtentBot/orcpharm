@@ -1,11 +1,11 @@
-ï»¿using Models.Pharmacy;
+using Models.Pharmacy;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models;
 
 /// <summary>
-/// PrescriÃ§Ã£o mÃ©dica (receita)
+/// Prescrição médica (receita)
 /// </summary>
 [Table("prescriptions")]
 public class Prescription
@@ -30,7 +30,7 @@ public class Prescription
     [Column("expiration_date")]
     public DateTime ExpirationDate { get; set; }
 
-    // MÃ©dico prescritor
+    // Médico prescritor
     [Column("doctor_name")]
     [MaxLength(200)]
     public string DoctorName { get; set; } = string.Empty;
@@ -59,7 +59,7 @@ public class Prescription
     public string? PrescriptionColor { get; set; }
     // BRANCA, AMARELA, AZUL
 
-    // ConteÃºdo da receita
+    // Conteúdo da receita
     [Column("medications")]
     public string Medications { get; set; } = string.Empty;
 
@@ -76,7 +76,7 @@ public class Prescription
     [Column("image_path")]
     public string? ImagePath { get; set; }
 
-    // ValidaÃ§Ã£o farmacÃªutica
+    // Validação farmacêutica
     [Column("status")]
     [MaxLength(20)]
     public string Status { get; set; } = "PENDENTE";
@@ -91,7 +91,7 @@ public class Prescription
     [Column("validation_notes")]
     public string? ValidationNotes { get; set; }
 
-    // VÃ­nculo com Ordem de ManipulaÃ§Ã£o
+    // Vínculo com Ordem de Manipulação
     [Column("manipulation_order_id")]
     public Guid? ManipulationOrderId { get; set; }
 
@@ -131,6 +131,6 @@ public class Prescription
     [ForeignKey("ManipulationOrderId")]
     public virtual ManipulationOrder? ManipulationOrder { get; set; }
 
-    // ColeÃ§Ã£o de arquivos
+    // Coleção de arquivos
     public virtual ICollection<PrescriptionFile>? Files { get; set; }
 }
