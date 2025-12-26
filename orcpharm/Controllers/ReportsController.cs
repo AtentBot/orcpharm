@@ -708,7 +708,7 @@ public class ReportsController : ControllerBase
             .Include(o => o.Formula)
             .Where(o => o.EstablishmentId == establishmentId && o.OrderDate >= startOfMonth && o.Formula != null)
             .GroupBy(o => o.Formula!.Name)
-            .Select(g => new TopFormulaDto { FormulaName = g.Key, OrderCount = g.Count() })
+            .Select(g => new DTOs.Reports.TopFormulaDto { FormulaName = g.Key, OrderCount = g.Count() })
             .OrderByDescending(x => x.OrderCount)
             .Take(5)
             .ToListAsync();

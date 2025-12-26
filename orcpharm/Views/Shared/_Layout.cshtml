@@ -221,22 +221,44 @@
 
         .btn-logout:hover {
             background: rgba(239, 68, 68, 0.2);
-            border-color: var(--danger-color);
-            color: white;
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        /* Menu Section Divider */
+        .nav-section {
+            padding: 0.5rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Badges no menu */
+        .nav-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            margin-left: auto;
         }
     </style>
+    
+    @* Permite que Views adicionem CSS personalizado *@
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     @{
         var employee = Context.Items["Employee"] as Models.Employees.Employee;
         var isAuthenticated = employee != null;
-        var jobCode = (employee?.JobPosition?.Code ?? "USER").ToUpper();
+        var jobCode = employee?.JobPosition?.Code?.ToUpper() ?? "";
         
-        // Códigos aceitos (comparação case-insensitive via ToUpper)
-        var reportCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "ADMIN", "GENERAL_MANAGER" };
-        var employeeCodes = new[] { "OWNER", "MANAGER", "ADMIN", "GENERAL_MANAGER" };
-        var inventoryCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "SUPERVISOR", "STOCK_CONTROLLER", "ADMIN", "GENERAL_MANAGER" };
-        var formulaCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "ADMIN", "GENERAL_MANAGER" };
+        // Definição de permissões por código de cargo
+        var reportCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "ACCOUNTANT", "ADMIN", "GENERAL_MANAGER" };
+        var employeeCodes = new[] { "OWNER", "MANAGER", "HR", "ADMIN", "GENERAL_MANAGER" };
+        var inventoryCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "STOCK_ASSISTANT", "TECHNICIAN", "ADMIN", "GENERAL_MANAGER" };
+        var formulaCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "TECHNICIAN", "ADMIN", "GENERAL_MANAGER" };
         var purchaseCodes = new[] { "OWNER", "MANAGER", "SUPERVISOR", "BUYER", "PURCHASER", "ADMIN", "GENERAL_MANAGER" };
         
         var canViewReports = reportCodes.Contains(jobCode);
@@ -246,6 +268,7 @@
         var canManagePurchases = purchaseCodes.Contains(jobCode);
         
         var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
     }
 
     @if (isAuthenticated)
@@ -270,37 +293,46 @@
                         </a>
                     </li>
 
-                    <!-- Estoque -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- ESTOQUE - ATUALIZADO COM DASHBOARD DE PREÇOS -->
+                    <!-- ═══════════════════════════════════════════════ -->
                     @if (canManageInventory)
                     {
                         <li class="nav-item">
-                            <a class="nav-link has-submenu @(currentController == "Stock" || currentController == "MateriasPrimas" || currentController == "RawMaterialsView" ? "active open" : "")" 
+                            <a class="nav-link has-submenu @(currentController == "Stock" || currentPath.StartsWith("/materias-primas") || currentPath.StartsWith("/precificacao") ? "active open" : "")" 
                                href="#" 
                                onclick="toggleSubmenu(event, 'estoqueSubmenu')">
                                 <i class="bi bi-boxes"></i>
                                 Estoque
                             </a>
-                            <ul class="nav flex-column nav-submenu @(currentController == "Stock" || currentController == "MateriasPrimas" || currentController == "RawMaterialsView" ? "show" : "")" id="estoqueSubmenu">
+                            <ul class="nav flex-column nav-submenu @(currentController == "Stock" || currentPath.StartsWith("/materias-primas") || currentPath.StartsWith("/precificacao") ? "show" : "")" id="estoqueSubmenu">
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Stock">
+                                    <a class="nav-link @(currentPath == "/stock" ? "active" : "")" href="/Stock">
                                         <i class="bi bi-grid"></i>
                                         Visão Geral
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/MateriasPrimas">
-                                        <i class="bi bi-file-earmark-medical"></i>
+                                    <a class="nav-link @(currentPath == "/materias-primas" ? "active" : "")" href="/materias-primas">
+                                        <i class="bi bi-box-seam"></i>
                                         Matérias-Primas
                                     </a>
                                 </li>
+                                <!-- ✅ Dashboard de Preços -->
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Stock/Movements">
+                                    <a class="nav-link @(currentPath.StartsWith("/precificacao") ? "active" : "")" href="/Precificacao">
+                                        <i class="bi bi-currency-dollar"></i>
+                                        Dashboard de Preços
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/stock/movements" ? "active" : "")" href="/Stock/Movements">
                                         <i class="bi bi-arrow-left-right"></i>
                                         Movimentações
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="/Stock/LowStock">
+                                    <a class="nav-link @(currentPath == "/stock/lowstock" ? "active" : "")" href="/Stock/LowStock">
                                         <i class="bi bi-exclamation-triangle"></i>
                                         Estoque Baixo
                                     </a>
@@ -528,17 +560,24 @@
 
                     <!-- Financeiro -->
                     <li class="nav-item">
-                        <a class="nav-link has-submenu @(currentController == "PDV" || currentController == "PaymentManagement" || currentController == "Fiscal" ? "active open" : "")"
+                        <a class="nav-link has-submenu @(currentController == "PDV" || currentController == "PDVView" || currentController == "PaymentManagement" || currentController == "Fiscal" ? "active open" : "")"
                            href="#"
                            onclick="toggleSubmenu(event, 'financeiroSubmenu')">
                             <i class="bi bi-credit-card"></i>
                             Financeiro
                         </a>
-                        <ul class="nav flex-column nav-submenu @(currentController == "PDV" || currentController == "PaymentManagement" || currentController == "Fiscal" ? "show" : "")" id="financeiroSubmenu">
+                        <ul class="nav flex-column nav-submenu @(currentController == "PDV" || currentController == "PDVView" || currentController == "PaymentManagement" || currentController == "Fiscal" ? "show" : "")" id="financeiroSubmenu">
                             <li class="nav-item">
                                 <a class="nav-link" href="/PDV">
                                     <i class="bi bi-shop"></i>
                                     PDV
+                                </a>
+                            </li>
+                            <!-- ✅ NOVO: Orçamentos PDV -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="/pdv/orcamentos">
+                                    <i class="bi bi-file-earmark-check"></i>
+                                    Orçamentos
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -574,15 +613,56 @@
                         </ul>
                     </li>
 
-                    <!-- Relatórios -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- ✅ RELATÓRIOS - FASE 7 - SUBMENU COMPLETO -->
+                    <!-- ═══════════════════════════════════════════════ -->
                     @if (canViewReports)
                     {
                         <li class="nav-item">
-                            <a class="nav-link @(currentController == "Reports" ? "active" : "")" 
-                               href="/Reports">
+                            <a class="nav-link has-submenu @(currentController == "ReportsView" || currentPath.StartsWith("/reports") ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'relatoriosSubmenu')">
                                 <i class="bi bi-bar-chart-line"></i>
                                 Relatórios
                             </a>
+                            <ul class="nav flex-column nav-submenu @(currentPath.StartsWith("/reports") ? "show" : "")" id="relatoriosSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/reports" ? "active" : "")" href="/Reports">
+                                        <i class="bi bi-speedometer2"></i>
+                                        Dashboard Executivo
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/reports/vendas" ? "active" : "")" href="/Reports/Vendas">
+                                        <i class="bi bi-graph-up"></i>
+                                        Vendas
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/reports/producao" ? "active" : "")" href="/Reports/Producao">
+                                        <i class="bi bi-gear"></i>
+                                        Produção
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/reports/estoque" ? "active" : "")" href="/Reports/Estoque">
+                                        <i class="bi bi-boxes"></i>
+                                        Estoque
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/reports/financeiro" ? "active" : "")" href="/Reports/Financeiro">
+                                        <i class="bi bi-currency-dollar"></i>
+                                        Financeiro
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/reports/sngpc" ? "active" : "")" href="/Reports/SNGPC">
+                                        <i class="bi bi-shield-exclamation"></i>
+                                        SNGPC / ANVISA
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     }
 

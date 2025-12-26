@@ -52,16 +52,40 @@
                         </select>
                     </div>
 
+                    <!-- Quantidade do Produto -->
+                    <div class="mb-3" id="productQuantityContainer" style="display: none;">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-box me-1"></i>Quantidade do Produto *
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <select class="form-select" id="productQuantitySelect">
+                                </select>
+                            </div>
+                            <div class="col-5">
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="productQuantityCustom" 
+                                           min="1" placeholder="Outro" style="display: none;">
+                                    <span class="input-group-text" id="productQuantityUnit">un</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted" id="productQuantityHint">
+                            Selecione quantas unidades deseja
+                        </small>
+                    </div>
+
                     <!-- Formulário de Ingredientes -->
                     <div id="ingredientForm" style="display: none;">
                         <hr class="my-3">
                         
                         <!-- Resumo da fórmula atual -->
-                        <div class="alert alert-light border mb-3" id="currentFormulaInfo">
+                        <div class="alert alert-success border mb-3" id="currentFormulaInfo">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong id="currentTypeName"></strong>
                                     <small class="text-muted d-block" id="currentSubTypeName"></small>
+                                    <span class="badge bg-success mt-1" id="currentQuantityBadge">60 cápsulas</span>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearCurrentFormula()" title="Limpar e escolher outro tipo">
                                     <i class="bi bi-arrow-repeat"></i>
@@ -147,7 +171,10 @@
                             <hr>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="text-muted">Preço desta fórmula:</span>
-                                <strong class="text-primary fs-5" id="currentFormulaPrice">R$ 0,00</strong>
+                                <div class="text-end">
+                                    <strong class="text-primary fs-5" id="currentFormulaPrice">R$ 0,00</strong>
+                                    <div id="priceConfidenceIndicator" class="confidence-summary"></div>
+                                </div>
                             </div>
                             <button type="button" class="btn btn-success btn-lg w-100" onclick="saveFormula()">
                                 <i class="bi bi-check-lg me-2"></i>Salvar Fórmula e Criar Outra
@@ -240,6 +267,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/pricing.js"></script>
     <script>
         // ==================== DADOS ====================
         const customerData = {
@@ -251,10 +279,33 @@
         let productTypes = [];
         let selectedProductType = null;
         let selectedSubType = null;
-        let currentIngredients = [];        // Ingredientes da fórmula atual
-        let savedFormulas = [];              // Fórmulas já salvas
+        let selectedProductQuantity = null;
+        let currentIngredients = [];
+        let savedFormulas = [];
         let autocompleteTimeout = null;
         let selectedIngredientData = null;
+        let lastPricingResult = null;
+
+        const QUANTITY_OPTIONS = {
+            'cápsula': { unit: 'cápsulas', options: [30, 60, 90, 120, 180, 240], default: 60 },
+            'capsula': { unit: 'cápsulas', options: [30, 60, 90, 120, 180, 240], default: 60 },
+            'comprimido': { unit: 'comprimidos', options: [30, 60, 90, 120], default: 60 },
+            'creme': { unit: 'g', options: [30, 50, 100, 150, 200], default: 50 },
+            'pomada': { unit: 'g', options: [30, 50, 100, 150, 200], default: 50 },
+            'gel': { unit: 'g', options: [30, 50, 100, 150, 200], default: 50 },
+            'loção': { unit: 'ml', options: [50, 100, 150, 200, 250], default: 100 },
+            'locao': { unit: 'ml', options: [50, 100, 150, 200, 250], default: 100 },
+            'solução': { unit: 'ml', options: [30, 50, 100, 150, 200], default: 100 },
+            'solucao': { unit: 'ml', options: [30, 50, 100, 150, 200], default: 100 },
+            'xarope': { unit: 'ml', options: [100, 150, 200, 250, 300], default: 150 },
+            'spray': { unit: 'ml', options: [30, 50, 100], default: 50 },
+            'gotas': { unit: 'ml', options: [15, 30, 50, 100], default: 30 },
+            'sachê': { unit: 'sachês', options: [15, 30, 60, 90], default: 30 },
+            'sache': { unit: 'sachês', options: [15, 30, 60, 90], default: 30 },
+            'pó': { unit: 'g', options: [100, 200, 300, 500], default: 200 },
+            'po': { unit: 'g', options: [100, 200, 300, 500], default: 200 },
+            'default': { unit: 'un', options: [30, 60, 90, 120], default: 60 }
+        };
 
         const PRICING = {
             basePrice: 25.00,
@@ -273,7 +324,6 @@
             updateFormulaNumber();
         });
         
-        // Enter para adicionar ingrediente
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 const activeElement = document.activeElement;
@@ -418,19 +468,16 @@
             ingredientInput.value = data.name;
             document.getElementById('ingredientId').value = data.id;
             
-            // Unidade padrão
             const unitSelect = document.getElementById('ingredientUnit');
             const unitOption = Array.from(unitSelect.options).find(opt => 
                 opt.value.toLowerCase() === data.defaultUnit.toLowerCase()
             );
             if (unitOption) unitSelect.value = unitOption.value;
             
-            // Info
             document.getElementById('ingredientCategory').textContent = data.category ? `📁 ${data.category}` : '';
             document.getElementById('ingredientIndications').textContent = data.indications ? `• ${data.indications}` : '';
             document.getElementById('ingredientInfo').style.display = 'block';
             
-            // Dosagem
             if (data.minDosage || data.maxDosage) {
                 document.getElementById('dosageRange').textContent = 
                     `Dosagem típica: ${data.minDosage || '?'} - ${data.maxDosage || '?'} ${data.defaultUnit}`;
@@ -524,6 +571,7 @@
         document.getElementById('productSubType').addEventListener('change', function() {
             const subTypeId = this.value;
             if (!subTypeId) {
+                document.getElementById('productQuantityContainer').style.display = 'none';
                 document.getElementById('ingredientForm').style.display = 'none';
                 return;
             }
@@ -534,14 +582,92 @@
                 unit: this.selectedOptions[0].dataset.unit || 'g'
             };
 
+            setupQuantityOptions();
+            document.getElementById('productQuantityContainer').style.display = 'block';
+        });
+
+        document.getElementById('productQuantitySelect').addEventListener('change', function() {
+            const value = this.value;
+            
+            if (value === 'custom') {
+                document.getElementById('productQuantityCustom').style.display = 'block';
+                document.getElementById('productQuantityCustom').focus();
+                selectedProductQuantity = null;
+            } else {
+                document.getElementById('productQuantityCustom').style.display = 'none';
+                selectedProductQuantity = parseInt(value);
+                showIngredientForm();
+            }
+        });
+
+        document.getElementById('productQuantityCustom').addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value > 0) {
+                selectedProductQuantity = value;
+                showIngredientForm();
+            }
+        });
+
+        function setupQuantityOptions() {
+            const typeName = selectedProductType.name.toLowerCase();
+            let config = QUANTITY_OPTIONS.default;
+            
+            for (const [key, value] of Object.entries(QUANTITY_OPTIONS)) {
+                if (typeName.includes(key)) {
+                    config = value;
+                    break;
+                }
+            }
+            
+            const select = document.getElementById('productQuantitySelect');
+            select.innerHTML = '<option value="">Selecione...</option>';
+            
+            config.options.forEach(qty => {
+                const option = document.createElement('option');
+                option.value = qty;
+                option.textContent = `${qty} ${config.unit}`;
+                if (qty === config.default) option.selected = true;
+                select.appendChild(option);
+            });
+            
+            const customOption = document.createElement('option');
+            customOption.value = 'custom';
+            customOption.textContent = 'Outra quantidade...';
+            select.appendChild(customOption);
+            
+            document.getElementById('productQuantityUnit').textContent = config.unit;
+            document.getElementById('productQuantityHint').textContent = 
+                `Quantidade de ${config.unit} que você deseja`;
+            
+            if (config.default) {
+                selectedProductQuantity = config.default;
+                select.value = config.default;
+                showIngredientForm();
+            }
+        }
+
+        function showIngredientForm() {
+            const config = getQuantityConfig();
+            
             document.getElementById('currentTypeName').textContent = selectedProductType.name;
             document.getElementById('currentSubTypeName').textContent = selectedSubType.name;
+            document.getElementById('currentQuantityBadge').textContent = 
+                `${selectedProductQuantity} ${config.unit}`;
+            
             document.getElementById('ingredientForm').style.display = 'block';
             document.getElementById('ingredientUnit').value = selectedSubType.unit;
             
             loadPopularIngredients();
             setTimeout(() => document.getElementById('ingredientName').focus(), 100);
-        });
+        }
+
+        function getQuantityConfig() {
+            const typeName = selectedProductType.name.toLowerCase();
+            for (const [key, value] of Object.entries(QUANTITY_OPTIONS)) {
+                if (typeName.includes(key)) return value;
+            }
+            return QUANTITY_OPTIONS.default;
+        }
 
         // ==================== INGREDIENTES ====================
 
@@ -597,6 +723,7 @@
                 list.innerHTML = '';
                 badge.style.display = 'none';
                 saveSection.style.display = 'none';
+                document.getElementById('priceConfidenceIndicator').innerHTML = '';
                 return;
             }
             
@@ -608,8 +735,9 @@
                 <div class="border rounded p-2 bg-light">
                     <small class="text-muted d-block mb-2">Ingredientes desta fórmula:</small>
                     ${currentIngredients.map((ing, i) => `
-                        <div class="d-flex justify-content-between align-items-center py-1 ${i > 0 ? 'border-top' : ''}">
+                        <div class="d-flex justify-content-between align-items-center py-1 ${i > 0 ? 'border-top' : ''}" data-index="${i}">
                             <div>
+                                <span class="price-dot-placeholder" data-ing-id="${ing.id || ''}" data-ing-name="${escapeHtml(ing.name)}"></span>
                                 <strong class="small">${escapeHtml(ing.name)}</strong>
                                 <span class="text-muted small ms-1">${ing.quantity} ${ing.unit}</span>
                             </div>
@@ -620,6 +748,44 @@
                     `).join('')}
                 </div>
             `;
+            
+            // Adicionar indicadores de preço de forma assíncrona
+            addPriceIndicatorsToIngredients();
+        }
+        
+        // ==================== INDICADORES DE PREÇO (INTEGRAÇÃO) ====================
+        
+        async function addPriceIndicatorsToIngredients() {
+            if (typeof OrcPharmPricing === 'undefined') return;
+            
+            const placeholders = document.querySelectorAll('.price-dot-placeholder');
+            
+            for (const placeholder of placeholders) {
+                const ingId = placeholder.dataset.ingId;
+                const ingName = placeholder.dataset.ingName;
+                
+                try {
+                    let priceResult = null;
+                    if (ingId) {
+                        priceResult = await OrcPharmPricing.getIngredientPrice(ingId);
+                    } else if (ingName) {
+                        priceResult = await OrcPharmPricing.searchIngredientPrice(ingName);
+                    }
+                    
+                    if (priceResult) {
+                        const dotClass = priceResult.source === 1 ? 'stock' : 
+                                         priceResult.source === 2 ? 'historical' : 'base';
+                        const title = priceResult.source === 1 ? 'Em Estoque' : 
+                                      priceResult.source === 2 ? 'Preço Estimado' : 'Tabela Base';
+                        
+                        placeholder.outerHTML = `<span class="price-dot ${dotClass}" title="${title} - ${priceResult.confidence}% confiança"></span>`;
+                    } else {
+                        placeholder.outerHTML = '';
+                    }
+                } catch (e) {
+                    placeholder.outerHTML = '';
+                }
+            }
         }
 
         function clearIngredientInputs() {
@@ -633,9 +799,48 @@
             document.getElementById('ingredientName').focus();
         }
 
-        function updateCurrentFormulaPrice() {
-            const price = calculateFormulaPrice(currentIngredients);
-            document.getElementById('currentFormulaPrice').textContent = formatCurrency(price);
+        async function updateCurrentFormulaPrice() {
+            // Primeiro calcula local (rápido)
+            const localPrice = calculateFormulaPrice(currentIngredients, selectedProductQuantity || 1);
+            document.getElementById('currentFormulaPrice').textContent = formatCurrency(localPrice);
+            
+            // Depois tenta API (mais preciso)
+            if (typeof OrcPharmPricing !== 'undefined' && currentIngredients.length > 0 && selectedProductType) {
+                try {
+                    const request = {
+                        productType: selectedProductType.name || 'Cápsula',
+                        productQuantity: selectedProductQuantity || 60,
+                        ingredients: currentIngredients.map(ing => ({
+                            rawMaterialId: ing.id || null,
+                            name: ing.name,
+                            quantity: ing.quantity,
+                            unit: ing.unit
+                        }))
+                    };
+                    
+                    const result = await OrcPharmPricing.calculateFormulaPrice(request);
+                    
+                    if (result) {
+                        lastPricingResult = result;
+                        document.getElementById('currentFormulaPrice').textContent = 
+                            formatCurrency(result.suggestedPrice);
+                        
+                        // Mostrar indicador de confiança
+                        const confidence = result.averageConfidence || 0;
+                        const level = confidence >= 80 ? 'high' : confidence >= 50 ? 'medium' : 'low';
+                        const icon = confidence >= 80 ? '🟢' : confidence >= 50 ? '🟡' : '🔴';
+                        
+                        document.getElementById('priceConfidenceIndicator').innerHTML = `
+                            <span title="Confiança do orçamento">${icon} ${confidence}%</span>
+                            <span class="confidence-bar-mini">
+                                <span class="confidence-bar-mini-fill ${level}" style="width: ${confidence}%"></span>
+                            </span>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Erro ao calcular preço via API:', error);
+                }
+            }
         }
 
         // ==================== FÓRMULAS ====================
@@ -646,24 +851,43 @@
                 return;
             }
 
+            if (!selectedProductQuantity) {
+                showToast('Selecione a quantidade do produto', 'warning');
+                return;
+            }
+
+            const config = getQuantityConfig();
+            const price = lastPricingResult?.suggestedPrice || calculateFormulaPrice(currentIngredients, selectedProductQuantity);
+            
             const formula = {
                 id: Date.now(),
                 productType: { ...selectedProductType },
                 subType: { ...selectedSubType },
+                productQuantity: selectedProductQuantity,
+                productUnit: config.unit,
                 ingredients: [...currentIngredients],
-                price: calculateFormulaPrice(currentIngredients)
+                price: price,
+                pricingData: lastPricingResult ? {
+                    confidence: lastPricingResult.averageConfidence,
+                    inStock: lastPricingResult.inStockCount,
+                    estimated: lastPricingResult.estimatedCount,
+                    base: lastPricingResult.baseCount
+                } : null
             };
 
             savedFormulas.push(formula);
             
-            // Limpar formulário atual
             currentIngredients = [];
             selectedProductType = null;
             selectedSubType = null;
+            selectedProductQuantity = null;
+            lastPricingResult = null;
             
             document.getElementById('productType').value = '';
             document.getElementById('subTypeContainer').style.display = 'none';
+            document.getElementById('productQuantityContainer').style.display = 'none';
             document.getElementById('ingredientForm').style.display = 'none';
+            document.getElementById('productQuantityCustom').style.display = 'none';
             
             renderCurrentIngredients();
             renderSavedFormulas();
@@ -682,7 +906,6 @@
 
         function renderSavedFormulas() {
             const list = document.getElementById('savedFormulasList');
-            const emptyState = document.getElementById('emptyFormulasState');
             const checkout = document.getElementById('checkoutSection');
             const countBadge = document.getElementById('totalFormulasCount');
             
@@ -701,25 +924,38 @@
             
             let html = '';
             savedFormulas.forEach((formula, index) => {
+                const confidenceHtml = formula.pricingData ? `
+                    <span class="badge bg-light text-dark ms-1" title="Confiança: ${formula.pricingData.confidence}%">
+                        ${formula.pricingData.confidence >= 80 ? '🟢' : formula.pricingData.confidence >= 50 ? '🟡' : '🔴'}
+                    </span>
+                ` : '';
+                
                 html += `
                     <div class="card mb-3 border-success formula-card">
                         <div class="card-header bg-success bg-opacity-10 py-2 d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="badge bg-success me-2">#${index + 1}</span>
                                 <strong>${escapeHtml(formula.productType.name)}</strong>
+                                ${confidenceHtml}
                             </div>
                             <button class="btn btn-sm btn-outline-danger" onclick="removeFormula(${index})" title="Remover fórmula">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                         <div class="card-body py-2">
-                            <small class="text-muted d-block mb-2">${escapeHtml(formula.subType.name)}</small>
-                            ${formula.ingredients.map(ing => `
-                                <div class="d-flex justify-content-between small">
-                                    <span>• ${escapeHtml(ing.name)}</span>
-                                    <span class="text-muted">${ing.quantity} ${ing.unit}</span>
-                                </div>
-                            `).join('')}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-muted">${escapeHtml(formula.subType.name)}</small>
+                                <span class="badge bg-primary">${formula.productQuantity} ${formula.productUnit}</span>
+                            </div>
+                            <div class="border-top pt-2">
+                                <small class="text-muted d-block mb-1">Composição:</small>
+                                ${formula.ingredients.map(ing => `
+                                    <div class="d-flex justify-content-between small">
+                                        <span>• ${escapeHtml(ing.name)}</span>
+                                        <span class="text-muted">${ing.quantity} ${ing.unit}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
                             <div class="text-end mt-2 pt-2 border-top">
                                 <strong class="text-success">${formatCurrency(formula.price)}</strong>
                             </div>
@@ -731,7 +967,6 @@
             list.innerHTML = html;
             countBadge.textContent = `${savedFormulas.length} fórmula${savedFormulas.length > 1 ? 's' : ''}`;
             
-            // Totais
             const total = savedFormulas.reduce((sum, f) => sum + f.price, 0);
             document.getElementById('formulasCountTotal').textContent = savedFormulas.length;
             document.getElementById('formulasTotalPrice').textContent = formatCurrency(total);
@@ -751,31 +986,43 @@
             currentIngredients = [];
             selectedProductType = null;
             selectedSubType = null;
+            selectedProductQuantity = null;
+            lastPricingResult = null;
             
             document.getElementById('productType').value = '';
             document.getElementById('subTypeContainer').style.display = 'none';
+            document.getElementById('productQuantityContainer').style.display = 'none';
             document.getElementById('ingredientForm').style.display = 'none';
+            document.getElementById('productQuantityCustom').style.display = 'none';
             
             renderCurrentIngredients();
         }
 
         // ==================== CÁLCULOS ====================
 
-        function calculateFormulaPrice(ingredients) {
-            let price = PRICING.basePrice;
+        function calculateFormulaPrice(ingredients, productQty = 1) {
+            let pricePerUnit = PRICING.basePrice;
+            
             ingredients.forEach(ing => {
                 const qty = ing.quantity;
                 const unit = ing.unit.toLowerCase();
                 switch(unit) {
-                    case 'g': price += qty * PRICING.pricePerGram; break;
-                    case 'ml': price += qty * PRICING.pricePerMl; break;
-                    case 'mg': price += qty * PRICING.pricePerMg; break;
-                    case 'mcg': price += qty * PRICING.pricePerMcg; break;
-                    case 'ui': case 'ufc': price += qty * PRICING.pricePerUi; break;
-                    case '%': price += qty * PRICING.pricePerPercent; break;
+                    case 'g': pricePerUnit += qty * PRICING.pricePerGram; break;
+                    case 'ml': pricePerUnit += qty * PRICING.pricePerMl; break;
+                    case 'mg': pricePerUnit += qty * PRICING.pricePerMg; break;
+                    case 'mcg': pricePerUnit += qty * PRICING.pricePerMcg; break;
+                    case 'ui': case 'ufc': pricePerUnit += qty * PRICING.pricePerUi; break;
+                    case '%': pricePerUnit += qty * PRICING.pricePerPercent; break;
                 }
             });
-            return price;
+            
+            let multiplier = 1;
+            if (productQty <= 30) multiplier = 1;
+            else if (productQty <= 60) multiplier = 0.95;
+            else if (productQty <= 120) multiplier = 0.90;
+            else multiplier = 0.85;
+            
+            return pricePerUnit * (productQty / 30) * multiplier;
         }
 
         function formatCurrency(value) {
@@ -785,7 +1032,6 @@
         // ==================== CARRINHO ====================
 
         async function addAllToCart() {
-            // Se tem fórmula em progresso, salvar primeiro
             if (currentIngredients.length > 0) {
                 if (confirm('Você tem uma fórmula em progresso. Salvar antes de adicionar ao carrinho?')) {
                     saveFormula();
@@ -813,8 +1059,10 @@
                         productSubTypeId: formula.subType.id,
                         productTypeName: formula.productType.name,
                         productSubTypeName: formula.subType.name,
-                        quantity: formula.ingredients.reduce((sum, ing) => sum + parseFloat(ing.quantity), 0),
-                        unit: formula.subType.unit || 'g',
+                        productQuantity: formula.productQuantity,
+                        productUnit: formula.productUnit,
+                        quantity: formula.productQuantity,
+                        unit: formula.productUnit,
                         customerName: customerData.name,
                         customerPhone: customerData.phone,
                         customerEmail: customerData.email || '',
@@ -826,7 +1074,8 @@
                             unit: ing.unit,
                             notes: ing.notes || ''
                         })),
-                        estimatedPrice: formula.price
+                        estimatedPrice: formula.price,
+                        pricingConfidence: formula.pricingData?.confidence || null
                     };
 
                     const response = await fetch('/api/cliente/cart/add-formula', {
@@ -945,6 +1194,45 @@
         .formula-card {
             animation: fadeIn 0.3s ease;
         }
+        
+        /* Indicadores de preço sutis */
+        .price-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .price-dot.stock { background-color: #28a745; }
+        .price-dot.historical { background-color: #ffc107; }
+        .price-dot.base { background-color: #dc3545; }
+        
+        .confidence-summary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        .confidence-bar-mini {
+            display: inline-block;
+            width: 50px;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .confidence-bar-mini-fill {
+            display: block;
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        .confidence-bar-mini-fill.high { background: #28a745; }
+        .confidence-bar-mini-fill.medium { background: #ffc107; }
+        .confidence-bar-mini-fill.low { background: #dc3545; }
         
         @@keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }

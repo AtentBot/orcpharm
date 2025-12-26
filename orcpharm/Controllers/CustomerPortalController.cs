@@ -1,221 +1,684 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using DTOs;
-using DTOs.CustomerFormulas;
-using Models.Pharmacy;
 using Service.CustomerFormulas;
+using Models.Pharmacy;
 
-namespace Controllers;
+namespace Controllers.Api;
 
-[Route("api/customer-portal")]
+/// <summary>
+/// API do Portal do Cliente - Tipos de Produto, Fórmulas e Carrinho
+/// </summary>
 [ApiController]
+[Route("api/customer-portal")]
 public class CustomerPortalController : ControllerBase
 {
-    private readonly AppDbContext _context;
-    private readonly CustomFormulaService _formulaService;
+    private readonly AppDbContext _db;
     private readonly PricingService _pricingService;
     private readonly ILogger<CustomerPortalController> _logger;
 
     public CustomerPortalController(
-        AppDbContext context,
-        CustomFormulaService formulaService,
+        AppDbContext db,
         PricingService pricingService,
         ILogger<CustomerPortalController> logger)
     {
-        _context = context;
-        _formulaService = formulaService;
+        _db = db;
         _pricingService = pricingService;
         _logger = logger;
     }
 
+    #region Helpers
+
+    private async Task<(Guid? CustomerId, Guid? EstablishmentId)> GetCustomerContext()
+    {
+        // 1. Tentar via HttpContext.Items (se middleware já setou)
+        var customerId = HttpContext.Items["CustomerId"] as Guid?;
+        if (customerId.HasValue)
+        {
+            var customer = await _db.Customers.FindAsync(customerId.Value);
+            if (customer != null)
+            {
+                return (customer.Id, customer.EstablishmentId);
+            }
+        }
+
+        // 2. Tentar via cookie de sessão do cliente
+        var sessionToken = HttpContext.Request.Cookies["CustomerSessionId"];
+        if (!string.IsNullOrEmpty(sessionToken))
+        {
+            var session = await _db.CustomerSessions
+                .Include(s => s.Customer)
+                .FirstOrDefaultAsync(s => s.SessionToken == sessionToken 
+                    && s.IsActive 
+                    && s.ExpiresAt > DateTime.UtcNow);
+            
+            if (session?.Customer != null)
+            {
+                // Atualizar última atividade
+                session.LastActivityAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+                
+                return (session.CustomerId, session.CurrentEstablishmentId ?? session.Customer.EstablishmentId);
+            }
+        }
+
+        // 3. Tentar via employee (funcionário acessando portal)
+        var employee = HttpContext.Items["Employee"] as Models.Employees.Employee;
+        if (employee != null)
+        {
+            return (null, employee.EstablishmentId);
+        }
+
+        return (null, null);
+    }
+
+    #endregion
+
+    #region Product Types
+
     /// <summary>
-    /// GET api/customer-portal/product-types
-    /// Listar todos os tipos de produtos disponíveis
+    /// Lista tipos de produtos disponíveis (Cápsula, Creme, Solução, etc.)
+    /// ProductType NÃO tem EstablishmentId - é global
     /// </summary>
     [HttpGet("product-types")]
-    [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<List<ProductTypeDto>>>> GetProductTypes()
+    public async Task<IActionResult> GetProductTypes()
     {
+        var (_, establishmentId) = await GetCustomerContext();
+        
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Usuário não autenticado" });
+
         try
         {
-            var types = await _context.ProductTypes
+            // ProductType é global (não tem EstablishmentId)
+            var types = await _db.ProductTypes
                 .Where(pt => pt.IsActive)
                 .OrderBy(pt => pt.DisplayOrder)
-                .Select(pt => new ProductTypeDto
+                .ThenBy(pt => pt.Name)
+                .Select(pt => new
                 {
-                    Id = pt.Id,
-                    Name = pt.Name,
-                    Description = pt.Description,
-                    PharmaceuticalForm = pt.PharmaceuticalForm,
-                    Category = pt.Category
+                    id = pt.Id,
+                    name = pt.Name,
+                    description = pt.Description,
+                    pharmaceuticalForm = pt.PharmaceuticalForm,
+                    category = pt.Category,
+                    displayOrder = pt.DisplayOrder
                 })
                 .ToListAsync();
 
-            return Ok(ApiResponse<List<ProductTypeDto>>.SuccessResponse(types));
+            return Ok(new { success = true, data = types });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar tipos de produtos");
-            return StatusCode(500, ApiResponse<List<ProductTypeDto>>.ErrorResponse("Erro ao buscar tipos de produtos"));
+            _logger.LogError(ex, "Erro ao listar tipos de produtos");
+            return StatusCode(500, new { success = false, error = "Erro ao listar tipos" });
         }
     }
 
     /// <summary>
-    /// GET api/customer-portal/product-types/{id}/subtypes
-    /// Listar subtipos de um tipo específico
+    /// Lista subtipos de um tipo de produto (60 cápsulas, 100g creme, etc.)
     /// </summary>
-    [HttpGet("product-types/{id}/subtypes")]
-    [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<List<ProductSubTypeDto>>>> GetSubTypes(Guid id)
+    [HttpGet("product-types/{typeId}/subtypes")]
+    public async Task<IActionResult> GetProductSubTypes(Guid typeId)
     {
+        var (_, establishmentId) = await GetCustomerContext();
+        
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Usuário não autenticado" });
+
         try
         {
-            var subTypes = await _context.ProductSubTypes
-                .Where(pst => pst.ProductTypeId == id && pst.IsActive)
+            var subTypes = await _db.ProductSubTypes
+                .Where(pst => pst.ProductTypeId == typeId && pst.IsActive)
                 .OrderBy(pst => pst.DisplayOrder)
-                .Select(pst => new ProductSubTypeDto
+                .ThenBy(pst => pst.Name)
+                .Select(pst => new
                 {
-                    Id = pst.Id,
-                    ProductTypeId = pst.ProductTypeId,
-                    Name = pst.Name,
-                    Description = pst.Description,
-                    StandardQuantity = pst.StandardQuantity,
-                    StandardUnit = pst.StandardUnit,
-                    PriceModifier = pst.PriceModifier
+                    id = pst.Id,
+                    name = pst.Name,
+                    description = pst.Description,
+                    standardUnit = pst.StandardUnit,
+                    standardQuantity = pst.StandardQuantity,
+                    priceModifier = pst.PriceModifier,
+                    displayOrder = pst.DisplayOrder
                 })
                 .ToListAsync();
 
-            return Ok(ApiResponse<List<ProductSubTypeDto>>.SuccessResponse(subTypes));
+            return Ok(new { success = true, data = subTypes });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao buscar subtipos");
-            return StatusCode(500, ApiResponse<List<ProductSubTypeDto>>.ErrorResponse("Erro ao buscar subtipos"));
+            _logger.LogError(ex, "Erro ao listar subtipos para {TypeId}", typeId);
+            return StatusCode(500, new { success = false, error = "Erro ao listar apresentações" });
         }
     }
 
+    #endregion
+
+    #region Customer Formulas
+
     /// <summary>
-    /// POST api/customer-portal/custom-formula
-    /// Cliente cria fórmula personalizada
+    /// Salva uma fórmula do cliente
     /// </summary>
-    [HttpPost("custom-formula")]
-    [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<CustomerFormulaDto>>> CreateCustomFormula(
-        [FromBody] CreateCustomFormulaDto dto)
+    [HttpPost("formulas")]
+    public async Task<IActionResult> SaveFormula([FromBody] SaveFormulaRequest request)
     {
+        var (customerId, establishmentId) = await GetCustomerContext();
+        
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Estabelecimento não identificado" });
+
+        if (request.Ingredients == null || !request.Ingredients.Any())
+            return BadRequest(new { success = false, error = "Fórmula deve ter pelo menos um ingrediente" });
+
         try
         {
-            var establishmentId = GetEstablishmentId();
-            
-            // Criar fórmula
-            var formula = await _formulaService.CreateFormulaAsync(dto, establishmentId);
-            
+            var code = $"CF-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+
             // Calcular preço estimado
-            var estimatedPrice = await _pricingService.CalculatePriceAsync(
-                dto.ProductSubTypeId,
-                dto.Quantity,
-                establishmentId
-            );
+            decimal estimatedPrice = 0;
             
-            formula.EstimatedPrice = estimatedPrice;
-            await _context.SaveChangesAsync();
+            try
+            {
+                var ingredientIds = request.Ingredients
+                    .Where(i => i.RawMaterialId.HasValue)
+                    .Select(i => i.RawMaterialId!.Value)
+                    .ToList();
 
-            var result = MapToDto(formula);
-            
-            return Ok(ApiResponse<CustomerFormulaDto>.SuccessResponse(result));
+                if (ingredientIds.Any())
+                {
+                    var prices = new List<decimal>();
+                    foreach (var ingId in ingredientIds)
+                    {
+                        var priceResult = await _pricingService.GetIngredientPriceAsync(ingId, establishmentId.Value);
+                        if (priceResult != null)
+                        {
+                            var ing = request.Ingredients.First(i => i.RawMaterialId == ingId);
+                            prices.Add(priceResult.Price * ing.Quantity);
+                        }
+                    }
+                    
+                    if (prices.Any())
+                    {
+                        estimatedPrice = prices.Sum() * 1.30m; // + 30% margem
+                    }
+                }
+            }
+            catch (Exception priceEx)
+            {
+                _logger.LogWarning(priceEx, "Erro ao calcular preço, usando estimativa");
+                estimatedPrice = request.Ingredients.Sum(i => i.Quantity * 2.0m);
+            }
+
+            // Criar fórmula usando o modelo CustomerFormula de Models.Pharmacy
+            var formula = new CustomerFormula
+            {
+                Id = Guid.NewGuid(),
+                Code = code,
+                EstablishmentId = establishmentId.Value,
+                CustomerId = customerId,
+                ProductTypeId = request.ProductTypeId,
+                ProductSubTypeId = request.ProductSubTypeId,
+                Quantity = request.ProductQuantity,
+                Unit = request.ProductUnit ?? "un",
+                CustomerNotes = request.Notes,
+                EstimatedPrice = estimatedPrice,
+                FinalPrice = estimatedPrice,
+                Status = "AGUARDANDO_COMPRA",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // Salvar ingredientes como JSON no AdditionalIngredients
+            var ingredientsJson = System.Text.Json.JsonSerializer.Serialize(
+                request.Ingredients.Select(i => new
+                {
+                    rawMaterialId = i.RawMaterialId,
+                    name = i.Name,
+                    quantity = i.Quantity,
+                    unit = i.Unit,
+                    notes = i.Notes
+                })
+            );
+            formula.AdditionalIngredients = ingredientsJson;
+
+            _db.CustomerFormulas.Add(formula);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Fórmula {Code} criada pelo cliente {CustomerId}", code, customerId);
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    id = formula.Id,
+                    code = formula.Code,
+                    estimatedPrice = formula.EstimatedPrice
+                }
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao criar fórmula personalizada");
-            return StatusCode(500, ApiResponse<CustomerFormulaDto>.ErrorResponse("Erro ao criar fórmula"));
+            _logger.LogError(ex, "Erro ao salvar fórmula para cliente {CustomerId}", customerId);
+            return StatusCode(500, new { success = false, error = "Erro ao salvar fórmula" });
         }
     }
 
     /// <summary>
-    /// GET api/customer-portal/custom-formula/{id}
-    /// Buscar fórmula por ID
+    /// Lista fórmulas do cliente
     /// </summary>
-    [HttpGet("custom-formula/{id}")]
-    [AllowAnonymous]
-    public async Task<ActionResult<ApiResponse<CustomerFormulaDto>>> GetCustomFormula(Guid id)
+    [HttpGet("formulas")]
+    public async Task<IActionResult> GetFormulas(
+        [FromQuery] string? status = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
+        var (customerId, establishmentId) = await GetCustomerContext();
+        
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Estabelecimento não identificado" });
+
         try
         {
-            var formula = await _context.CustomerFormulas
-                .Include(cf => cf.ProductType)
-                .Include(cf => cf.ProductSubType)
-                .FirstOrDefaultAsync(cf => cf.Id == id);
+            var query = _db.CustomerFormulas
+                .Where(cf => cf.EstablishmentId == establishmentId.Value);
+
+            // Se tem customerId, filtrar apenas as do cliente
+            if (customerId.HasValue)
+                query = query.Where(cf => cf.CustomerId == customerId.Value);
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(cf => cf.Status == status);
+
+            var total = await query.CountAsync();
+
+            var formulas = await query
+                .OrderByDescending(cf => cf.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(cf => new
+                {
+                    id = cf.Id,
+                    code = cf.Code,
+                    productTypeId = cf.ProductTypeId,
+                    productSubTypeId = cf.ProductSubTypeId,
+                    quantity = cf.Quantity,
+                    unit = cf.Unit,
+                    estimatedPrice = cf.EstimatedPrice,
+                    finalPrice = cf.FinalPrice,
+                    status = cf.Status,
+                    customerNotes = cf.CustomerNotes,
+                    createdAt = cf.CreatedAt
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                success = true,
+                data = formulas,
+                pagination = new { page, pageSize, total, totalPages = (int)Math.Ceiling((double)total / pageSize) }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar fórmulas");
+            return StatusCode(500, new { success = false, error = "Erro ao listar fórmulas" });
+        }
+    }
+
+    /// <summary>
+    /// Detalhes de uma fórmula específica
+    /// </summary>
+    [HttpGet("formulas/{id}")]
+    public async Task<IActionResult> GetFormula(Guid id)
+    {
+        var (customerId, establishmentId) = await GetCustomerContext();
+        
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Estabelecimento não identificado" });
+
+        try
+        {
+            var query = _db.CustomerFormulas
+                .Where(cf => cf.Id == id && cf.EstablishmentId == establishmentId.Value);
+
+            // Se tem customerId, verificar se pertence ao cliente
+            if (customerId.HasValue)
+                query = query.Where(cf => cf.CustomerId == customerId.Value);
+
+            var formula = await query
+                .Select(cf => new
+                {
+                    id = cf.Id,
+                    code = cf.Code,
+                    productTypeId = cf.ProductTypeId,
+                    productSubTypeId = cf.ProductSubTypeId,
+                    quantity = cf.Quantity,
+                    unit = cf.Unit,
+                    estimatedPrice = cf.EstimatedPrice,
+                    finalPrice = cf.FinalPrice,
+                    status = cf.Status,
+                    customerNotes = cf.CustomerNotes,
+                    rejectionReason = cf.RejectionReason,
+                    pharmaceuticalAnalysis = cf.PharmaceuticalAnalysis,
+                    requiresPrescription = cf.RequiresPrescription,
+                    isControlledSubstance = cf.IsControlledSubstance,
+                    additionalIngredients = cf.AdditionalIngredients,
+                    createdAt = cf.CreatedAt,
+                    analyzedAt = cf.AnalyzedAt,
+                    approvedAt = cf.ApprovedAt
+                })
+                .FirstOrDefaultAsync();
 
             if (formula == null)
-                return NotFound(ApiResponse<CustomerFormulaDto>.ErrorResponse("Fórmula não encontrada"));
+                return NotFound(new { success = false, error = "Fórmula não encontrada" });
 
-            var result = MapToDto(formula);
-            
-            return Ok(ApiResponse<CustomerFormulaDto>.SuccessResponse(result));
+            // Parse ingredientes do JSON
+            object? ingredients = null;
+            if (!string.IsNullOrEmpty(formula.additionalIngredients))
+            {
+                try
+                {
+                    ingredients = System.Text.Json.JsonSerializer.Deserialize<object>(formula.additionalIngredients);
+                }
+                catch { }
+            }
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    formula.id,
+                    formula.code,
+                    formula.productTypeId,
+                    formula.productSubTypeId,
+                    formula.quantity,
+                    formula.unit,
+                    formula.estimatedPrice,
+                    formula.finalPrice,
+                    formula.status,
+                    formula.customerNotes,
+                    formula.rejectionReason,
+                    formula.pharmaceuticalAnalysis,
+                    formula.requiresPrescription,
+                    formula.isControlledSubstance,
+                    formula.createdAt,
+                    formula.analyzedAt,
+                    formula.approvedAt,
+                    ingredients
+                }
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao buscar fórmula {Id}", id);
-            return StatusCode(500, ApiResponse<CustomerFormulaDto>.ErrorResponse("Erro ao buscar fórmula"));
+            return StatusCode(500, new { success = false, error = "Erro ao buscar fórmula" });
         }
     }
 
-    // ==================== MÉTODOS AUXILIARES ====================
+    #endregion
 
-    private Guid GetEstablishmentId()
-    {
-        // TODO: Implementar lógica para obter EstablishmentId
-        // Por enquanto retorna um GUID fixo
-        return Guid.Parse("00000000-0000-0000-0000-000000000001");
-    }
+    #region Cart (usando CartItem de sessão)
 
-    private CustomerFormulaDto MapToDto(CustomerFormula formula)
+    /// <summary>
+    /// Adiciona fórmula ao carrinho (usando CartItem baseado em sessão)
+    /// </summary>
+    [HttpPost("cart/add")]
+    public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
     {
-        return new CustomerFormulaDto
+        var (customerId, establishmentId) = await GetCustomerContext();
+        
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Estabelecimento não identificado" });
+
+        if (request.FormulaIds == null || !request.FormulaIds.Any())
+            return BadRequest(new { success = false, error = "Nenhuma fórmula selecionada" });
+
+        // Obter ou criar token de sessão
+        var sessionToken = HttpContext.Request.Cookies["CartSession"] ?? Guid.NewGuid().ToString();
+
+        try
         {
-            Id = formula.Id,
-            Code = formula.Code,
-            Status = formula.Status,
-            ProductTypeName = formula.ProductType?.Name ?? "",
-            ProductSubTypeName = formula.ProductSubType?.Name ?? "",
-            Quantity = formula.Quantity,
-            Unit = formula.Unit,
-            CustomerName = formula.CustomerName,
-            CustomerPhone = formula.CustomerPhone,
-            EstimatedPrice = formula.EstimatedPrice,
-            FinalPrice = formula.FinalPrice,
-            RequiresPrescription = formula.RequiresPrescription,
-            EstimatedShelfLifeDays = formula.EstimatedShelfLifeDays,
-            PharmaceuticalAnalysis = formula.PharmaceuticalAnalysis,
-            ApprovedAt = formula.ApprovedAt,
-            RejectedAt = formula.RejectedAt,
-            RejectionReason = formula.RejectionReason,
-            CreatedAt = formula.CreatedAt,
-            PaidAt = formula.PaidAt,
-            PaidAmount = formula.PaidAmount
-        };
+            var addedCount = 0;
+            foreach (var formulaId in request.FormulaIds)
+            {
+                var formula = await _db.CustomerFormulas
+                    .FirstOrDefaultAsync(cf => cf.Id == formulaId && cf.EstablishmentId == establishmentId.Value);
+
+                if (formula == null) continue;
+
+                // Verificar se já está no carrinho
+                var existingItem = await _db.CartItems
+                    .FirstOrDefaultAsync(ci => 
+                        ci.SessionToken == sessionToken && 
+                        ci.ReferenceId == formulaId &&
+                        ci.ItemType == "FORMULA");
+
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += 1;
+                    existingItem.TotalPrice = existingItem.Quantity * existingItem.UnitPrice;
+                }
+                else
+                {
+                    var item = new Models.Cart.CartItem
+                    {
+                        Id = Guid.NewGuid(),
+                        SessionToken = sessionToken,
+                        CustomerId = customerId,
+                        EstablishmentId = establishmentId.Value,
+                        ItemType = "FORMULA",
+                        ReferenceId = formulaId,
+                        Name = $"Fórmula {formula.Code}",
+                        Description = formula.CustomerNotes,
+                        Quantity = 1,
+                        UnitPrice = formula.EstimatedPrice ?? 0,
+                        TotalPrice = formula.EstimatedPrice ?? 0,
+                        RequiresPrescription = formula.RequiresPrescription,
+                        IsControlled = formula.IsControlledSubstance,
+                        IsCustomFormula = true,
+                        CreatedAt = DateTime.UtcNow,
+                        ExpiresAt = DateTime.UtcNow.AddDays(7)
+                    };
+                    _db.CartItems.Add(item);
+                }
+                addedCount++;
+            }
+
+            await _db.SaveChangesAsync();
+
+            // Definir cookie de sessão
+            HttpContext.Response.Cookies.Append("CartSession", sessionToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddDays(7)
+            });
+
+            // Contar itens no carrinho
+            var totalItems = await _db.CartItems
+                .Where(ci => ci.SessionToken == sessionToken)
+                .SumAsync(ci => ci.Quantity);
+
+            return Ok(new
+            {
+                success = true,
+                message = $"{addedCount} fórmula(s) adicionada(s) ao carrinho",
+                data = new { sessionToken, totalItems }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao adicionar ao carrinho");
+            return StatusCode(500, new { success = false, error = "Erro ao adicionar ao carrinho" });
+        }
     }
+
+    /// <summary>
+    /// Retorna o carrinho atual
+    /// </summary>
+    [HttpGet("cart")]
+    public async Task<IActionResult> GetCart()
+    {
+        var (customerId, establishmentId) = await GetCustomerContext();
+        var sessionToken = HttpContext.Request.Cookies["CartSession"];
+
+        if (string.IsNullOrEmpty(sessionToken))
+        {
+            return Ok(new
+            {
+                success = true,
+                data = new { items = Array.Empty<object>(), total = 0m, itemCount = 0 }
+            });
+        }
+
+        try
+        {
+            var items = await _db.CartItems
+                .Where(ci => ci.SessionToken == sessionToken)
+                .OrderByDescending(ci => ci.CreatedAt)
+                .Select(ci => new
+                {
+                    id = ci.Id,
+                    itemType = ci.ItemType,
+                    referenceId = ci.ReferenceId,
+                    name = ci.Name,
+                    description = ci.Description,
+                    quantity = ci.Quantity,
+                    unitPrice = ci.UnitPrice,
+                    totalPrice = ci.TotalPrice,
+                    requiresPrescription = ci.RequiresPrescription,
+                    isControlled = ci.IsControlled,
+                    isCustomFormula = ci.IsCustomFormula
+                })
+                .ToListAsync();
+
+            var total = items.Sum(i => i.totalPrice);
+            var itemCount = items.Sum(i => i.quantity);
+
+            return Ok(new
+            {
+                success = true,
+                data = new { items, total, itemCount }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao buscar carrinho");
+            return StatusCode(500, new { success = false, error = "Erro ao buscar carrinho" });
+        }
+    }
+
+    /// <summary>
+    /// Remove item do carrinho
+    /// </summary>
+    [HttpDelete("cart/items/{itemId}")]
+    public async Task<IActionResult> RemoveFromCart(Guid itemId)
+    {
+        var sessionToken = HttpContext.Request.Cookies["CartSession"];
+
+        if (string.IsNullOrEmpty(sessionToken))
+            return NotFound(new { success = false, error = "Carrinho não encontrado" });
+
+        try
+        {
+            var item = await _db.CartItems
+                .FirstOrDefaultAsync(ci => ci.Id == itemId && ci.SessionToken == sessionToken);
+
+            if (item == null)
+                return NotFound(new { success = false, error = "Item não encontrado" });
+
+            _db.CartItems.Remove(item);
+            await _db.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Item removido do carrinho" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao remover item {ItemId} do carrinho", itemId);
+            return StatusCode(500, new { success = false, error = "Erro ao remover item" });
+        }
+    }
+
+    /// <summary>
+    /// Atualiza quantidade de um item no carrinho
+    /// </summary>
+    [HttpPut("cart/items/{itemId}")]
+    public async Task<IActionResult> UpdateCartItem(Guid itemId, [FromBody] UpdateCartItemRequest request)
+    {
+        var sessionToken = HttpContext.Request.Cookies["CartSession"];
+
+        if (string.IsNullOrEmpty(sessionToken))
+            return NotFound(new { success = false, error = "Carrinho não encontrado" });
+
+        if (request.Quantity < 1)
+            return BadRequest(new { success = false, error = "Quantidade deve ser maior que zero" });
+
+        try
+        {
+            var item = await _db.CartItems
+                .FirstOrDefaultAsync(ci => ci.Id == itemId && ci.SessionToken == sessionToken);
+
+            if (item == null)
+                return NotFound(new { success = false, error = "Item não encontrado" });
+
+            item.Quantity = request.Quantity;
+            item.TotalPrice = item.Quantity * item.UnitPrice;
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    id = item.Id,
+                    quantity = item.Quantity,
+                    totalPrice = item.TotalPrice
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar item {ItemId}", itemId);
+            return StatusCode(500, new { success = false, error = "Erro ao atualizar item" });
+        }
+    }
+
+    #endregion
 }
 
-// DTOs auxiliares
-public class ProductTypeDto
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = default!;
-    public string? Description { get; set; }
-    public string PharmaceuticalForm { get; set; } = default!;
-    public string Category { get; set; } = default!;
-}
+#region DTOs
 
-public class ProductSubTypeDto
+public class SaveFormulaRequest
 {
-    public Guid Id { get; set; }
     public Guid ProductTypeId { get; set; }
-    public string Name { get; set; } = default!;
-    public string? Description { get; set; }
-    public decimal? StandardQuantity { get; set; }
-    public string? StandardUnit { get; set; }
-    public decimal PriceModifier { get; set; }
+    public Guid ProductSubTypeId { get; set; }
+    public decimal ProductQuantity { get; set; }
+    public string? ProductUnit { get; set; }
+    public List<PortalIngredientDto> Ingredients { get; set; } = new();
+    public string? Notes { get; set; }
 }
+
+public class PortalIngredientDto
+{
+    public Guid? RawMaterialId { get; set; }
+    public string Name { get; set; } = "";
+    public decimal Quantity { get; set; }
+    public string Unit { get; set; } = "mg";
+    public string? Notes { get; set; }
+}
+
+public class AddToCartRequest
+{
+    public List<Guid> FormulaIds { get; set; } = new();
+}
+
+public class UpdateCartItemRequest
+{
+    public int Quantity { get; set; }
+}
+
+#endregion

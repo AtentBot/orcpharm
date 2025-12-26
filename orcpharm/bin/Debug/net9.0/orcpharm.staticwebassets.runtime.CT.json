@@ -24,6 +24,14 @@
             },
             "Patterns": null
           },
+          "pricing-indicators.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/pricing-indicators.css"
+            },
+            "Patterns": null
+          },
           "pricing.css": {
             "Children": null,
             "Asset": {
@@ -77,6 +85,14 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "ofpng2l96d-mt0ck4zlm8.gz"
+            },
+            "Patterns": null
+          },
+          "pricing-indicators.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "ypkjpnzjpo-8vq5wv6131.gz"
             },
             "Patterns": null
           },
@@ -150,6 +166,14 @@
             },
             "Patterns": null
           },
+          "CriarFormula.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/CriarFormula.js"
+            },
+            "Patterns": null
+          },
           "employees-auth-adapter.js": {
             "Children": null,
             "Asset": {
@@ -203,6 +227,14 @@
             "Asset": {
               "ContentRootIndex": 0,
               "SubPath": "js/prescription-ocr.js"
+            },
+            "Patterns": null
+          },
+          "pricing.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/pricing.js"
             },
             "Patterns": null
           },
@@ -302,6 +334,14 @@
             },
             "Patterns": null
           },
+          "CriarFormula.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "pa7h01dmhr-0hgx4mt13o.gz"
+            },
+            "Patterns": null
+          },
           "employees-auth-adapter.js.gz": {
             "Children": null,
             "Asset": {
@@ -355,6 +395,14 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "z7jqet4le9-4ku0ovsvft.gz"
+            },
+            "Patterns": null
+          },
+          "pricing.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "wjjaf43odw-h5wosprybl.gz"
             },
             "Patterns": null
           },

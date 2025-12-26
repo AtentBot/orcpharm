@@ -17,6 +17,10 @@
       "PackagePath": "staticwebassets\\css\\employees-shared.css"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\pricing-indicators.css",
+      "PackagePath": "staticwebassets\\css\\pricing-indicators.css"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\pricing.css",
       "PackagePath": "staticwebassets\\css\\pricing.css"
     },
@@ -35,6 +39,10 @@
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\favicon.ico",
       "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\CriarFormula.js",
+      "PackagePath": "staticwebassets\\js\\CriarFormula.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\admin-charts.js",
@@ -75,6 +83,10 @@
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\prescription-ocr.js",
       "PackagePath": "staticwebassets\\js\\prescription-ocr.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\pricing.js",
+      "PackagePath": "staticwebassets\\js\\pricing.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\public-homepage.js",

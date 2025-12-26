@@ -1,4 +1,4 @@
-using Data;
+Ôªøusing Data;
 using Microsoft.EntityFrameworkCore;
 using Models.Employees;
 using System.Security.Claims;
@@ -20,15 +20,15 @@ public class EmployeeAuthMiddleware
     {
         var path = context.Request.Path.Value?.ToLower() ?? "";
 
-        // 1. ROTAS P⁄BLICAS (sem autenticaÁ„o)
+        // 1. ROTAS P√öBLICAS (sem autentica√ß√£o)
         if (IsPublicPath(path))
         {
-            _logger.LogDebug("Rota p˙blica: {Path}", path);
+            _logger.LogDebug("Rota p√∫blica: {Path}", path);
             await _next(context);
             return;
         }
 
-        // 2. ROTAS COM API KEY (sem necessidade de sess„o)
+        // 2. ROTAS COM API KEY (sem necessidade de sess√£o)
         if (IsApiKeyOnlyPath(path))
         {
             _logger.LogDebug("Rota API Key: {Path}", path);
@@ -65,11 +65,11 @@ public class EmployeeAuthMiddleware
     }
 
     /// <summary>
-    /// Verifica se o path È de uma rota p˙blica
+    /// Verifica se o path √© de uma rota p√∫blica
     /// </summary>
     private static bool IsPublicPath(string path)
     {
-        // ===== PREFIXOS P⁄BLICOS =====
+        // ===== PREFIXOS P√öBLICOS =====
         var publicPrefixes = new[]
         {
             "/admin",                   // AdminAuthMiddleware cuida
@@ -79,8 +79,8 @@ public class EmployeeAuthMiddleware
             "/api/customer-portal/",    // APIs Portal Cliente
             "/c/",                      // QR Code redirect (Portal Cliente)
             "/signup",                  // Cadastro (todas as rotas)
-            "/orcamento/",              // OrÁamentos p˙blicos
-            "/swagger",                 // DocumentaÁ„o API
+            "/orcamento/",              // Or√ßamentos p√∫blicos
+            "/swagger",                 // Documenta√ß√£o API
             "/account/login",
             "/account/register",
             "/account/forgotpassword",
@@ -112,7 +112,7 @@ public class EmployeeAuthMiddleware
         if (exactPaths.Contains(path))
             return true;
 
-        // ===== APIs P⁄BLICAS =====
+        // ===== APIs P√öBLICAS =====
         var publicApis = new[]
         {
             "/api/auth/login",
@@ -125,13 +125,15 @@ public class EmployeeAuthMiddleware
             "/api/subscriptionplans",
             "/api/stripe/webhook",
             "/api/prescriptionquotes/public",
-            "/api/ingredients"              // ? ADICIONADO: Autocomplete de ingredientes
+            "/api/ingredients",                     // ‚úÖ Autocomplete de ingredientes
+            "/api/pricing/ingredient/search",       // ‚úÖ Busca pre√ßo por nome (Portal Cliente)
+            "/api/pricing/formula"                  // ‚úÖ C√°lculo de f√≥rmula (Portal Cliente)
         };
 
         if (publicApis.Any(api => path.StartsWith(api)))
             return true;
 
-        // ===== ARQUIVOS EST¡TICOS =====
+        // ===== ARQUIVOS EST√ÅTICOS =====
         var staticExtensions = new[]
         {
             ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".ico",
@@ -145,7 +147,7 @@ public class EmployeeAuthMiddleware
     }
 
     /// <summary>
-    /// Rotas protegidas apenas com API Key (sem sess„o)
+    /// Rotas protegidas apenas com API Key (sem sess√£o)
     /// </summary>
     private static bool IsApiKeyOnlyPath(string path)
     {
@@ -160,7 +162,7 @@ public class EmployeeAuthMiddleware
     }
 
     /// <summary>
-    /// ObtÈm o token de sess„o do Cookie ou Header
+    /// Obt√©m o token de sess√£o do Cookie ou Header
     /// </summary>
     private static string? GetSessionToken(HttpContext context)
     {
@@ -179,7 +181,7 @@ public class EmployeeAuthMiddleware
     }
 
     /// <summary>
-    /// Valida a sess„o no banco de dados
+    /// Valida a sess√£o no banco de dados
     /// </summary>
     private async Task<SessionValidationResult> ValidateSession(AppDbContext db, string token, string path)
     {
@@ -194,28 +196,28 @@ public class EmployeeAuthMiddleware
 
             if (session == null)
             {
-                _logger.LogWarning("Token inv·lido: {TokenPrefix}...", token[..Math.Min(10, token.Length)]);
-                return SessionValidationResult.Fail("Token inv·lido ou sess„o n„o encontrada");
+                _logger.LogWarning("Token inv√°lido: {TokenPrefix}...", token[..Math.Min(10, token.Length)]);
+                return SessionValidationResult.Fail("Token inv√°lido ou sess√£o n√£o encontrada");
             }
 
             if (session.ExpiresAt < DateTime.UtcNow)
             {
-                _logger.LogWarning("Sess„o expirada: {EmployeeId}", session.EmployeeId);
+                _logger.LogWarning("Sess√£o expirada: {EmployeeId}", session.EmployeeId);
                 session.IsActive = false;
                 await db.SaveChangesAsync();
-                return SessionValidationResult.Fail("Sess„o expirada. FaÁa login novamente.");
+                return SessionValidationResult.Fail("Sess√£o expirada. Fa√ßa login novamente.");
             }
 
             if (session.Employee == null)
             {
-                _logger.LogWarning("Sess„o sem Employee: {SessionId}", session.Id);
-                return SessionValidationResult.Fail("Funcion·rio n„o encontrado");
+                _logger.LogWarning("Sess√£o sem Employee: {SessionId}", session.Id);
+                return SessionValidationResult.Fail("Funcion√°rio n√£o encontrado");
             }
 
             if (session.Employee.Status.ToUpper() != "ATIVO")
             {
                 _logger.LogWarning("Employee inativo: {EmployeeId}", session.EmployeeId);
-                return SessionValidationResult.Fail("Funcion·rio inativo");
+                return SessionValidationResult.Fail("Funcion√°rio inativo");
             }
 
             if (session.Employee.Establishment == null || !session.Employee.Establishment.IsActive)
@@ -231,8 +233,8 @@ public class EmployeeAuthMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao validar sess„o: {Path}", path);
-            return SessionValidationResult.Fail("Erro ao validar autenticaÁ„o");
+            _logger.LogError(ex, "Erro ao validar sess√£o: {Path}", path);
+            return SessionValidationResult.Fail("Erro ao validar autentica√ß√£o");
         }
     }
 
@@ -276,7 +278,7 @@ public class EmployeeAuthMiddleware
             context.Response.StatusCode = 401;
             await context.Response.WriteAsJsonAsync(new
             {
-                error = "Token de autenticaÁ„o n„o fornecido",
+                error = "Token de autentica√ß√£o n√£o fornecido",
                 message = "Envie o token no header X-Session-Token ou no cookie X-SESSION-TOKEN"
             });
         }

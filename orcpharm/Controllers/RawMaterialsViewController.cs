@@ -36,4 +36,13 @@ public class RawMaterialsViewController : Controller
         ViewBag.RawMaterialId = id;
         return View("~/Views/RawMaterials/Batches.cshtml");
     }
+
+    /// <summary>
+    /// Dashboard de Preços - Fase 4.3
+    /// </summary>
+    [HttpGet("/materias-primas/precos")]
+    public IActionResult Precos()
+    {
+        return View("~/Views/RawMaterials/Precos.cshtml");
+    }
 }

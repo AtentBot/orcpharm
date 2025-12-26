@@ -9,6 +9,10 @@ namespace Models.Pharmacy;
 [Index(nameof(Name))]
 [Index(nameof(ControlType))]
 [Index(nameof(EstablishmentId), nameof(IsActive))]
+[Index(nameof(Category))]
+[Index(nameof(IsVirtual))]
+
+[Table("RawMaterials")]
 public class RawMaterial
 {
     [Key]
@@ -22,10 +26,10 @@ public class RawMaterial
     public string Name { get; set; } = default!;
 
     [MaxLength(50)]
-    public string? DcbCode { get; set; } // Denomina��o Comum Brasileira
+    public string? DcbCode { get; set; } // Denominação Comum Brasileira
 
     [MaxLength(50)]
-    public string? DciCode { get; set; } // Denomina��o Comum Internacional
+    public string? DciCode { get; set; } // Denominação Comum Internacional
 
     [Required, MaxLength(50)]
     public string CasNumber { get; set; } = default!; // Chemical Abstracts Service
@@ -33,7 +37,7 @@ public class RawMaterial
     [MaxLength(500)]
     public string? Description { get; set; }
 
-    // Classifica��o regulat�ria
+    // Classificação regulatória
     [Required, MaxLength(20)]
     public string ControlType { get; set; } = "COMUM";
     // COMUM, LISTA_A, LISTA_B, LISTA_C1, LISTA_C2, ANTIMICROBIANO, HORMONIO
@@ -42,7 +46,7 @@ public class RawMaterial
     [Required, MaxLength(10)]
     public string Unit { get; set; } = "g"; // g, mg, mL, UI
 
-    // Fatores de corre��o
+    // Fatores de correção
     [Column(TypeName = "decimal(10,4)")]
     public decimal PurityFactor { get; set; } = 1.0m;
 
@@ -59,7 +63,7 @@ public class RawMaterial
     [Column(TypeName = "decimal(18,4)")]
     public decimal MaximumStock { get; set; } = 0;
 
-    // Condi��es de armazenamento
+    // Condições de armazenamento
     [MaxLength(200)]
     public string? StorageConditions { get; set; }
 
@@ -67,7 +71,75 @@ public class RawMaterial
     public bool LightSensitive { get; set; } = false;
     public bool HumiditySensitive { get; set; } = false;
 
-    // Status e auditoria
+    // ════════════════════════════════════════════════════════════════════════
+    // PRECIFICAÇÃO INTELIGENTE
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Preço base de referência de mercado (R$/unidade)
+    /// Usado como fallback quando não há estoque nem histórico
+    /// </summary>
+    [Column(TypeName = "decimal(18,4)")]
+    public decimal? BasePrice { get; set; }
+
+    /// <summary>
+    /// Último preço efetivamente pago (R$/unidade)
+    /// Atualizado automaticamente quando batch é aprovado
+    /// </summary>
+    [Column(TypeName = "decimal(18,4)")]
+    public decimal? LastKnownPrice { get; set; }
+
+    /// <summary>
+    /// Data do último preço pago
+    /// </summary>
+    public DateTime? LastPriceDate { get; set; }
+
+    /// <summary>
+    /// TRUE = ingrediente virtual, nunca teve em estoque físico
+    /// Usado para ingredientes importados do catálogo base
+    /// </summary>
+    public bool IsVirtual { get; set; } = false;
+
+    /// <summary>
+    /// Origem do preço atual: ESTOQUE, HISTORICO, BASE
+    /// </summary>
+    [MaxLength(20)]
+    public string PriceSource { get; set; } = "BASE";
+
+    // ════════════════════════════════════════════════════════════════════════
+    // CATEGORIZAÇÃO E BUSCA
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Categoria do ingrediente (Vitaminas, Minerais, Aminoácidos, etc.)
+    /// </summary>
+    [MaxLength(100)]
+    public string? Category { get; set; }
+
+    /// <summary>
+    /// Nomes alternativos separados por vírgula
+    /// Ex: "Vitamina D, Colecalciferol, D3"
+    /// </summary>
+    [MaxLength(500)]
+    public string? Synonyms { get; set; }
+
+    /// <summary>
+    /// Indicações terapêuticas principais
+    /// Ex: "Ossos, imunidade, absorção de cálcio"
+    /// </summary>
+    [MaxLength(1000)]
+    public string? Indications { get; set; }
+
+    /// <summary>
+    /// Popularidade de 1-100 para ordenação em buscas
+    /// Ingredientes mais usados = maior popularidade
+    /// </summary>
+    public int Popularity { get; set; } = 50;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // STATUS E AUDITORIA
+    // ════════════════════════════════════════════════════════════════════════
+
     public bool IsActive { get; set; } = true;
     public bool RequiresSpecialAuthorization { get; set; } = false;
 
@@ -76,7 +148,10 @@ public class RawMaterial
     public Guid? CreatedByEmployeeId { get; set; }
     public Guid? UpdatedByEmployeeId { get; set; }
 
-    // Navega��o
+    // ════════════════════════════════════════════════════════════════════════
+    // NAVEGAÇÃO
+    // ════════════════════════════════════════════════════════════════════════
+
     public ICollection<Batch>? Batches { get; set; }
     public ICollection<FormulaComponent>? FormulaComponents { get; set; }
     public ICollection<StockMovement>? StockMovements { get; set; }

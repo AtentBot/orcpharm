@@ -5,7 +5,13 @@ using Models.Employees;
 using Models.Pharmacy;
 using System.ComponentModel.DataAnnotations;
 
-namespace Controllers;
+namespace Controllers.Api;
+
+/// <summary>
+/// Controller API para gestÃ£o de MatÃ©rias-Primas
+/// AutenticaÃ§Ã£o via EmployeeAuthMiddleware (HttpContext.Items["Employee"])
+/// Rotas protegidas - requer X-Session-Token
+/// </summary>
 
 [ApiController]
 [Route("api/[controller]")]
@@ -21,27 +27,26 @@ public class RawMaterialsController : ControllerBase
     }
 
     /// <summary>
-    /// Lista todas as matérias-primas do estabelecimento
+    /// Lista todas as matÃ©rias-primas do estabelecimento com informaÃ§Ãµes de preÃ§o
     /// </summary>
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? search,
         [FromQuery] string? controlType,
+        [FromQuery] string? priceSource,      // NOVO: Filtro por origem do preÃ§o
+        [FromQuery] bool? isVirtual,          // NOVO: Filtro por virtual
         [FromQuery] bool? lowStock,
+        [FromQuery] bool? outdatedPrice,      // NOVO: PreÃ§o desatualizado (>6 meses)
+        [FromQuery] string? category,         // NOVO: Filtro por categoria
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
-        {
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-        }
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
 
-        // Validar status do funcionário
         if (!IsEmployeeActive(employee))
-        {
-            return Unauthorized(new { error = "Funcionário inativo ou em situação irregular" });
-        }
+            return Unauthorized(new { error = "FuncionÃ¡rio inativo ou em situaÃ§Ã£o irregular" });
 
         try
         {
@@ -51,62 +56,102 @@ public class RawMaterialsController : ControllerBase
             // Filtro de busca
             if (!string.IsNullOrEmpty(search))
             {
+                var searchLower = search.ToLower();
                 query = query.Where(rm =>
-                    rm.Name.Contains(search) ||
-                    (rm.DcbCode != null && rm.DcbCode.Contains(search)) ||
-                    (rm.DciCode != null && rm.DciCode.Contains(search)) ||
-                    rm.CasNumber.Contains(search));
+                    rm.Name.ToLower().Contains(searchLower) ||
+                    (rm.DcbCode != null && rm.DcbCode.ToLower().Contains(searchLower)) ||
+                    (rm.DciCode != null && rm.DciCode.ToLower().Contains(searchLower)) ||
+                    rm.CasNumber.ToLower().Contains(searchLower) ||
+                    (rm.Synonyms != null && rm.Synonyms.ToLower().Contains(searchLower)));
             }
 
             // Filtro por tipo de controle
             if (!string.IsNullOrEmpty(controlType))
-            {
                 query = query.Where(rm => rm.ControlType == controlType);
-            }
+
+            // NOVO: Filtro por origem do preÃ§o
+            if (!string.IsNullOrEmpty(priceSource))
+                query = query.Where(rm => rm.PriceSource == priceSource);
+
+            // NOVO: Filtro por virtual (sem estoque fÃ­sico)
+            if (isVirtual.HasValue)
+                query = query.Where(rm => rm.IsVirtual == isVirtual.Value);
+
+            // Filtro por categoria
+            if (!string.IsNullOrEmpty(category))
+                query = query.Where(rm => rm.Category == category);
 
             // Filtro de estoque baixo
             if (lowStock.HasValue && lowStock.Value)
-            {
                 query = query.Where(rm => rm.CurrentStock <= rm.MinimumStock);
+
+            // NOVO: Filtro por preÃ§o desatualizado (mais de 6 meses)
+            if (outdatedPrice.HasValue && outdatedPrice.Value)
+            {
+                var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
+                query = query.Where(rm => 
+                    rm.LastPriceDate == null || 
+                    rm.LastPriceDate < sixMonthsAgo);
             }
 
-            // Total de registros (antes da paginação)
             var totalRecords = await query.CountAsync();
 
-            // Aplicar paginação
             var materials = await query
                 .OrderBy(rm => rm.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(rm => new
+                .Select(rm => new RawMaterialListDto
                 {
-                    rm.Id,
-                    rm.Name,
-                    rm.DcbCode,
-                    rm.DciCode,
-                    rm.CasNumber,
-                    rm.ControlType,
-                    rm.CurrentStock,
-                    rm.MinimumStock,
-                    rm.MaximumStock,
-                    rm.Unit,
-                    StockStatus = rm.CurrentStock <= rm.MinimumStock ? "BAIXO" :
+                    Id = rm.Id,
+                    Name = rm.Name,
+                    DcbCode = rm.DcbCode,
+                    DciCode = rm.DciCode,
+                    CasNumber = rm.CasNumber,
+                    ControlType = rm.ControlType,
+                    Category = rm.Category,
+                    CurrentStock = rm.CurrentStock,
+                    MinimumStock = rm.MinimumStock,
+                    MaximumStock = rm.MaximumStock,
+                    Unit = rm.Unit,
+                    
+                    // InformaÃ§Ãµes de preÃ§o
+                    BasePrice = rm.BasePrice,
+                    LastKnownPrice = rm.LastKnownPrice,
+                    LastPriceDate = rm.LastPriceDate,
+                    IsVirtual = rm.IsVirtual,
+                    PriceSource = rm.PriceSource,
+                    
+                    // PreÃ§o atual calculado
+                    CurrentPrice = rm.CurrentStock > 0 
+                        ? rm.LastKnownPrice ?? rm.BasePrice ?? 0
+                        : rm.LastKnownPrice ?? rm.BasePrice ?? 0,
+                    
+                    // Indicadores
+                    StockStatus = rm.CurrentStock <= 0 ? "SEM_ESTOQUE" :
+                                  rm.CurrentStock <= rm.MinimumStock ? "BAIXO" :
                                   rm.CurrentStock >= rm.MaximumStock ? "EXCESSO" : "NORMAL",
-                    StockPercentage = rm.MaximumStock > 0
-                        ? (rm.CurrentStock / rm.MaximumStock * 100)
-                        : 0,
-                    rm.RequiresSpecialAuthorization,
-                    rm.RequiresRefrigeration,
-                    rm.LightSensitive,
-                    rm.HumiditySensitive,
-                    rm.PurityFactor,
-                    rm.CreatedAt,
-                    rm.UpdatedAt
+                    
+                    PriceStatus = rm.CurrentStock > 0 ? "ESTOQUE" :
+                                  rm.LastKnownPrice.HasValue ? "HISTORICO" : "BASE",
+                    
+                    IsPriceOutdated = rm.LastPriceDate == null || 
+                                      rm.LastPriceDate < DateTime.UtcNow.AddMonths(-6),
+                    
+                    DaysSinceLastPrice = rm.LastPriceDate.HasValue 
+                        ? (int)(DateTime.UtcNow - rm.LastPriceDate.Value).TotalDays 
+                        : (int?)null,
+                    
+                    RequiresSpecialAuthorization = rm.RequiresSpecialAuthorization,
+                    RequiresRefrigeration = rm.RequiresRefrigeration,
+                    Popularity = rm.Popularity,
+                    CreatedAt = rm.CreatedAt,
+                    UpdatedAt = rm.UpdatedAt
                 })
                 .ToListAsync();
 
             return Ok(new
             {
+                success = true,
                 data = materials,
                 pagination = new
                 {
@@ -115,193 +160,47 @@ public class RawMaterialsController : ControllerBase
                     totalRecords,
                     totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize)
                 },
-                filters = new
-                {
-                    search,
-                    controlType,
-                    lowStock
-                }
+                filters = new { search, controlType, priceSource, isVirtual, lowStock, outdatedPrice, category }
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao listar matérias-primas para Employee {EmployeeId}", employee.Id);
-            return StatusCode(500, new { error = "Erro ao buscar matérias-primas" });
+            _logger.LogError(ex, "Erro ao listar matÃ©rias-primas");
+            return StatusCode(500, new { success = false, error = "Erro ao buscar matÃ©rias-primas" });
         }
     }
 
     /// <summary>
-    /// Cria uma nova matéria-prima
+    /// Retorna detalhes de uma matÃ©ria-prima incluindo informaÃ§Ãµes de preÃ§o
     /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateRawMaterialDto dto)
-    {
-        var employee = HttpContext.Items["Employee"] as Employee;
-        if (employee == null)
-        {
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-        }
-
-        // Validar status e permissões
-        if (!IsEmployeeActive(employee))
-        {
-            return Unauthorized(new { error = "Funcionário inativo ou em situação irregular" });
-        }
-
-        if (!await HasStockManagementPermission(employee))
-        {
-            return StatusCode(403, new { error = "Sem permissão para gerenciar estoque" });
-        }
-
-        // Validação adicional para substâncias controladas
-        if (dto.ControlType != "COMUM" && !await HasControlledSubstancePermission(employee))
-        {
-            return Forbid();
-        }
-
-        // Validar se já existe matéria-prima com mesmo CAS ou DCB
-        var existingMaterial = await _db.RawMaterials
-            .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
-            .Where(rm => rm.CasNumber == dto.CasNumber ||
-                        (dto.DcbCode != null && rm.DcbCode == dto.DcbCode))
-            .FirstOrDefaultAsync();
-
-        if (existingMaterial != null)
-        {
-            return BadRequest(new
-            {
-                error = "Já existe uma matéria-prima cadastrada com este CAS ou DCB",
-                existingMaterial = new { existingMaterial.Id, existingMaterial.Name }
-            });
-        }
-
-        try
-        {
-            var material = new RawMaterial
-            {
-                Id = Guid.NewGuid(),
-                EstablishmentId = employee.EstablishmentId,
-                Name = dto.Name.Trim(),
-                DcbCode = dto.DcbCode?.Trim(),
-                DciCode = dto.DciCode?.Trim(),
-                CasNumber = dto.CasNumber.Trim(),
-                Description = dto.Description?.Trim(),
-                ControlType = dto.ControlType.ToUpper(),
-                Unit = dto.Unit.ToLower(),
-                PurityFactor = dto.PurityFactor > 0 ? dto.PurityFactor : 1.0m,
-                MinimumStock = dto.MinimumStock >= 0 ? dto.MinimumStock : 0,
-                MaximumStock = dto.MaximumStock >= 0 ? dto.MaximumStock : 0,
-                CurrentStock = 0, // Estoque inicial zerado
-                StorageConditions = dto.StorageConditions?.Trim(),
-                RequiresRefrigeration = dto.RequiresRefrigeration,
-                LightSensitive = dto.LightSensitive,
-                HumiditySensitive = dto.HumiditySensitive,
-                RequiresSpecialAuthorization = dto.ControlType != "COMUM",
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                CreatedByEmployeeId = employee.Id,
-                UpdatedByEmployeeId = employee.Id
-            };
-
-            _db.RawMaterials.Add(material);
-            await _db.SaveChangesAsync();
-
-            _logger.LogInformation(
-                "Matéria-prima {MaterialName} criada por {EmployeeName} (ID: {EmployeeId})",
-                material.Name, employee.FullName, employee.Id);
-
-            return CreatedAtAction(nameof(GetById), new { id = material.Id }, new
-            {
-                material.Id,
-                material.Name,
-                material.DcbCode,
-                material.DciCode,
-                material.CasNumber,
-                material.ControlType,
-                material.Unit,
-                material.PurityFactor,
-                material.CurrentStock,
-                material.MinimumStock,
-                material.MaximumStock,
-                material.RequiresSpecialAuthorization,
-                material.CreatedAt,
-                CreatedBy = new
-                {
-                    employee.Id,
-                    employee.FullName,
-                    JobPosition = employee.JobPosition?.Name
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao criar matéria-prima por Employee {EmployeeId}", employee.Id);
-            return StatusCode(500, new { error = "Erro ao criar matéria-prima" });
-        }
-    }
-
-    /// <summary>
-    /// Busca uma matéria-prima específica
-    /// </summary>
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
+
+        var material = await _db.RawMaterials
+            .Include(rm => rm.Batches!.Where(b => b.CurrentQuantity > 0))
+            .FirstOrDefaultAsync(rm => 
+                rm.Id == id && 
+                rm.EstablishmentId == employee.EstablishmentId && 
+                rm.IsActive);
+
+        if (material == null)
+            return NotFound(new { error = "MatÃ©ria-prima nÃ£o encontrada" });
+
+        // Buscar Ãºltimo lote com preÃ§o (lotes com quantidade > 0)
+        var lastBatchWithPrice = await _db.Batches
+            .Where(b => b.RawMaterialId == id && b.CurrentQuantity > 0)
+            .OrderByDescending(b => b.ReceivedDate)
+            .Select(b => new { b.UnitCost, b.ReceivedDate })
+            .FirstOrDefaultAsync();
+
+        return Ok(new
         {
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-        }
-
-        if (!IsEmployeeActive(employee))
-        {
-            return Unauthorized(new { error = "Funcionário inativo ou em situação irregular" });
-        }
-
-        try
-        {
-            var material = await _db.RawMaterials
-                .Include(rm => rm.Batches!.Where(b => b.Status == "APROVADO"))
-                    .ThenInclude(b => b.Supplier)
-                .FirstOrDefaultAsync(rm =>
-                    rm.Id == id &&
-                    rm.EstablishmentId == employee.EstablishmentId &&
-                    rm.IsActive);
-
-            if (material == null)
-            {
-                return NotFound(new { error = "Matéria-prima não encontrada" });
-            }
-
-            // Buscar informações dos funcionários separadamente (se necessário)
-            Employee? createdByEmp = null;
-            Employee? updatedByEmp = null;
-
-            if (material.CreatedByEmployeeId.HasValue)
-            {
-                createdByEmp = await _db.Employees
-                    .Include(e => e.JobPosition)
-                    .FirstOrDefaultAsync(e => e.Id == material.CreatedByEmployeeId.Value);
-            }
-
-            if (material.UpdatedByEmployeeId.HasValue)
-            {
-                updatedByEmp = await _db.Employees
-                    .Include(e => e.JobPosition)
-                    .FirstOrDefaultAsync(e => e.Id == material.UpdatedByEmployeeId.Value);
-            }
-
-            // Calcular estatísticas dos lotes
-            var batchStats = material.Batches?.Any() == true ? new
-            {
-                totalBatches = material.Batches.Count,
-                totalQuantity = material.Batches.Sum(b => b.CurrentQuantity),
-                totalReceived = material.Batches.Sum(b => b.ReceivedQuantity),
-                oldestExpiry = material.Batches.Min(b => b.ExpiryDate),
-                averageCost = material.Batches.Average(b => b.UnitCost)
-            } : null;
-
-            return Ok(new
+            success = true,
+            data = new
             {
                 material.Id,
                 material.Name,
@@ -310,250 +209,380 @@ public class RawMaterialsController : ControllerBase
                 material.CasNumber,
                 material.Description,
                 material.ControlType,
+                material.Category,
+                material.Synonyms,
+                material.Indications,
                 material.Unit,
                 material.PurityFactor,
+                material.EquivalenceFactor,
                 material.CurrentStock,
                 material.MinimumStock,
                 material.MaximumStock,
+                
+                // PreÃ§os
+                material.BasePrice,
+                material.LastKnownPrice,
+                material.LastPriceDate,
+                material.IsVirtual,
+                material.PriceSource,
+                
+                // PreÃ§o atual calculado
+                CurrentPrice = material.CurrentStock > 0 
+                    ? lastBatchWithPrice?.UnitCost ?? material.LastKnownPrice ?? material.BasePrice ?? 0
+                    : material.LastKnownPrice ?? material.BasePrice ?? 0,
+                
+                PriceStatus = material.CurrentStock > 0 ? "ESTOQUE" :
+                              material.LastKnownPrice.HasValue ? "HISTORICO" : "BASE",
+                
+                // Info do Ãºltimo lote
+                LastBatchPrice = lastBatchWithPrice?.UnitCost,
+                LastBatchDate = lastBatchWithPrice?.ReceivedDate,
+                
+                // Armazenamento
                 material.StorageConditions,
                 material.RequiresRefrigeration,
                 material.LightSensitive,
                 material.HumiditySensitive,
                 material.RequiresSpecialAuthorization,
-                material.CreatedAt,
-                material.UpdatedAt,
-                createdBy = createdByEmp != null ? new
-                {
-                    createdByEmp.Id,
-                    createdByEmp.FullName,
-                    JobPosition = createdByEmp.JobPosition?.Name
-                } : null,
-                updatedBy = updatedByEmp != null ? new
-                {
-                    updatedByEmp.Id,
-                    updatedByEmp.FullName,
-                    JobPosition = updatedByEmp.JobPosition?.Name
-                } : null,
-                batches = material.Batches?.Select(b => new
+                material.Popularity,
+                
+                // Lotes ativos
+                ActiveBatches = material.Batches?.Select(b => new
                 {
                     b.Id,
                     b.BatchNumber,
-                    b.InvoiceNumber,
-                    ReceivedQuantity = b.ReceivedQuantity,
-                    CurrentQuantity = b.CurrentQuantity,
+                    b.CurrentQuantity,
                     b.UnitCost,
-                    b.ExpiryDate,
-                    b.ManufactureDate,
-                    b.ReceivedDate,
-                    b.Status,
-                    b.CertificateNumber,
-                    b.ApprovalDate,
-                    DaysUntilExpiry = (b.ExpiryDate - DateTime.UtcNow).Days,
-                    supplier = b.Supplier != null ? new
-                    {
-                        b.Supplier.Id,
-                        b.Supplier.TradeName
-                    } : null
-                }).OrderBy(b => b.ExpiryDate),
-                batchStatistics = batchStats
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao buscar matéria-prima {MaterialId} por Employee {EmployeeId}",
-                id, employee.Id);
-            return StatusCode(500, new { error = "Erro ao buscar matéria-prima" });
-        }
+                    b.ReceivedDate
+                }).ToList(),
+                
+                material.CreatedAt,
+                material.UpdatedAt
+            }
+        });
     }
 
     /// <summary>
-    /// Atualiza uma matéria-prima existente
+    /// Atualiza o preÃ§o base de uma matÃ©ria-prima
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPatch("{id:guid}/base-price")]
+    public async Task<IActionResult> UpdateBasePrice(Guid id, [FromBody] UpdateBasePriceDto dto)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
+
+        if (!await HasStockManagementPermission(employee))
+            return StatusCode(403, new { error = "Sem permissÃ£o para gerenciar preÃ§os" });
+
+        var material = await _db.RawMaterials
+            .FirstOrDefaultAsync(rm => 
+                rm.Id == id && 
+                rm.EstablishmentId == employee.EstablishmentId && 
+                rm.IsActive);
+
+        if (material == null)
+            return NotFound(new { error = "MatÃ©ria-prima nÃ£o encontrada" });
+
+        var oldPrice = material.BasePrice;
+        material.BasePrice = dto.BasePrice;
+        material.UpdatedAt = DateTime.UtcNow;
+        material.UpdatedByEmployeeId = employee.Id;
+
+        // Se nÃ£o tem LastKnownPrice, atualiza PriceSource
+        if (!material.LastKnownPrice.HasValue && material.CurrentStock <= 0)
+            material.PriceSource = "BASE";
+
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "PreÃ§o base de {MaterialName} alterado de {OldPrice} para {NewPrice} por {EmployeeName}",
+            material.Name, oldPrice, dto.BasePrice, employee.FullName);
+
+        return Ok(new
+        {
+            success = true,
+            message = "PreÃ§o base atualizado com sucesso",
+            data = new
+            {
+                material.Id,
+                material.Name,
+                OldBasePrice = oldPrice,
+                NewBasePrice = material.BasePrice,
+                material.PriceSource
+            }
+        });
+    }
+
+    /// <summary>
+    /// Retorna estatÃ­sticas de precificaÃ§Ã£o
+    /// </summary>
+    [HttpGet("pricing-statistics")]
+    public async Task<IActionResult> GetPricingStatistics()
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
+
+        var materials = await _db.RawMaterials
+            .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
+            .ToListAsync();
+
+        var sixMonthsAgo = DateTime.UtcNow.AddMonths(-6);
+
+        var stats = new
+        {
+            totalMaterials = materials.Count,
+            
+            // Por estoque
+            withStock = materials.Count(m => m.CurrentStock > 0),
+            withoutStock = materials.Count(m => m.CurrentStock <= 0),
+            virtualOnly = materials.Count(m => m.IsVirtual),
+            
+            // Por origem de preÃ§o
+            priceFromStock = materials.Count(m => m.PriceSource == "ESTOQUE"),
+            priceFromHistory = materials.Count(m => m.PriceSource == "HISTORICO"),
+            priceFromBase = materials.Count(m => m.PriceSource == "BASE"),
+            
+            // Qualidade dos preÃ§os
+            withBasePrice = materials.Count(m => m.BasePrice.HasValue && m.BasePrice > 0),
+            withoutBasePrice = materials.Count(m => !m.BasePrice.HasValue || m.BasePrice <= 0),
+            withLastKnownPrice = materials.Count(m => m.LastKnownPrice.HasValue),
+            outdatedPrice = materials.Count(m => 
+                m.LastPriceDate == null || m.LastPriceDate < sixMonthsAgo),
+            
+            // Por categoria
+            byCategory = materials
+                .Where(m => !string.IsNullOrEmpty(m.Category))
+                .GroupBy(m => m.Category)
+                .Select(g => new { category = g.Key, count = g.Count() })
+                .OrderByDescending(x => x.count)
+                .Take(10),
+            
+            // Mais usados sem estoque
+            popularWithoutStock = materials
+                .Where(m => m.CurrentStock <= 0)
+                .OrderByDescending(m => m.Popularity)
+                .Take(10)
+                .Select(m => new { m.Id, m.Name, m.Popularity, m.LastKnownPrice, m.BasePrice }),
+            
+            // PreÃ§os desatualizados (mais usados primeiro)
+            outdatedPriceList = materials
+                .Where(m => m.LastPriceDate == null || m.LastPriceDate < sixMonthsAgo)
+                .OrderByDescending(m => m.Popularity)
+                .Take(10)
+                .Select(m => new 
+                { 
+                    m.Id, 
+                    m.Name, 
+                    m.LastPriceDate,
+                    DaysSinceUpdate = m.LastPriceDate.HasValue 
+                        ? (int)(DateTime.UtcNow - m.LastPriceDate.Value).TotalDays 
+                        : (int?)null,
+                    m.BasePrice,
+                    m.LastKnownPrice
+                })
+        };
+
+        return Ok(new { success = true, data = stats });
+    }
+
+    /// <summary>
+    /// Retorna lista de categorias disponÃ­veis
+    /// </summary>
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
+
+        var categories = await _db.RawMaterials
+            .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
+            .Where(rm => !string.IsNullOrEmpty(rm.Category))
+            .GroupBy(rm => rm.Category)
+            .Select(g => new { category = g.Key, count = g.Count() })
+            .OrderBy(x => x.category)
+            .ToListAsync();
+
+        return Ok(new { success = true, data = categories });
+    }
+
+    /// <summary>
+    /// Cria uma nova matÃ©ria-prima
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateRawMaterialDto dto)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
+
+        if (!IsEmployeeActive(employee))
+            return Unauthorized(new { error = "FuncionÃ¡rio inativo" });
+
+        if (!await HasStockManagementPermission(employee))
+            return StatusCode(403, new { error = "Sem permissÃ£o para gerenciar estoque" });
+
+        if (dto.ControlType != "COMUM" && !await HasControlledSubstancePermission(employee))
+            return Forbid();
+
+        // Validar duplicidade
+        var existing = await _db.RawMaterials
+            .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
+            .Where(rm => rm.CasNumber == dto.CasNumber ||
+                        (dto.DcbCode != null && rm.DcbCode == dto.DcbCode))
+            .FirstOrDefaultAsync();
+
+        if (existing != null)
+            return BadRequest(new { error = "JÃ¡ existe matÃ©ria-prima com este CAS ou DCB" });
+
+        var material = new RawMaterial
+        {
+            Id = Guid.NewGuid(),
+            EstablishmentId = employee.EstablishmentId,
+            Name = dto.Name.Trim(),
+            DcbCode = dto.DcbCode?.Trim(),
+            DciCode = dto.DciCode?.Trim(),
+            CasNumber = dto.CasNumber.Trim(),
+            Description = dto.Description?.Trim(),
+            ControlType = dto.ControlType.ToUpper(),
+            Category = dto.Category?.Trim(),
+            Synonyms = dto.Synonyms?.Trim(),
+            Indications = dto.Indications?.Trim(),
+            Unit = dto.Unit.ToLower(),
+            PurityFactor = dto.PurityFactor > 0 ? dto.PurityFactor : 1.0m,
+            MinimumStock = dto.MinimumStock >= 0 ? dto.MinimumStock : 0,
+            MaximumStock = dto.MaximumStock >= 0 ? dto.MaximumStock : 0,
+            CurrentStock = 0,
+            BasePrice = dto.BasePrice,
+            IsVirtual = true, // Novo ingrediente comeÃ§a como virtual
+            PriceSource = dto.BasePrice.HasValue ? "BASE" : "BASE",
+            StorageConditions = dto.StorageConditions?.Trim(),
+            RequiresRefrigeration = dto.RequiresRefrigeration,
+            LightSensitive = dto.LightSensitive,
+            HumiditySensitive = dto.HumiditySensitive,
+            RequiresSpecialAuthorization = dto.ControlType != "COMUM",
+            Popularity = dto.Popularity > 0 ? dto.Popularity : 50,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedByEmployeeId = employee.Id,
+            UpdatedByEmployeeId = employee.Id
+        };
+
+        _db.RawMaterials.Add(material);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("MatÃ©ria-prima {Name} criada por {Employee}", material.Name, employee.FullName);
+
+        return CreatedAtAction(nameof(GetById), new { id = material.Id }, new
+        {
+            success = true,
+            message = "MatÃ©ria-prima criada com sucesso",
+            data = new { material.Id, material.Name }
+        });
+    }
+
+    /// <summary>
+    /// Atualiza uma matÃ©ria-prima
+    /// </summary>
+    [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRawMaterialDto dto)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
-        {
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-        }
-
-        if (!IsEmployeeActive(employee))
-        {
-            return Unauthorized(new { error = "Funcionário inativo ou em situação irregular" });
-        }
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
 
         if (!await HasStockManagementPermission(employee))
-        {
-            return Forbid();
-        }
+            return StatusCode(403, new { error = "Sem permissÃ£o" });
 
-        try
-        {
-            var material = await _db.RawMaterials
-                .FirstOrDefaultAsync(rm =>
-                    rm.Id == id &&
-                    rm.EstablishmentId == employee.EstablishmentId &&
-                    rm.IsActive);
+        var material = await _db.RawMaterials
+            .FirstOrDefaultAsync(rm => 
+                rm.Id == id && 
+                rm.EstablishmentId == employee.EstablishmentId && 
+                rm.IsActive);
 
-            if (material == null)
-            {
-                return NotFound(new { error = "Matéria-prima não encontrada" });
-            }
+        if (material == null)
+            return NotFound(new { error = "MatÃ©ria-prima nÃ£o encontrada" });
 
-            // Validação adicional para mudança de tipo de controle
-            if (material.ControlType == "COMUM" && dto.ControlType != "COMUM")
-            {
-                if (!await HasControlledSubstancePermission(employee))
-                {
-                    return Forbid();
-                }
-            }
+        // Atualizar campos
+        if (!string.IsNullOrEmpty(dto.Name)) material.Name = dto.Name.Trim();
+        if (dto.Description != null) material.Description = dto.Description.Trim();
+        if (!string.IsNullOrEmpty(dto.ControlType)) material.ControlType = dto.ControlType.ToUpper();
+        if (!string.IsNullOrEmpty(dto.Category)) material.Category = dto.Category.Trim();
+        if (dto.Synonyms != null) material.Synonyms = dto.Synonyms.Trim();
+        if (dto.Indications != null) material.Indications = dto.Indications.Trim();
+        if (!string.IsNullOrEmpty(dto.Unit)) material.Unit = dto.Unit.ToLower();
+        if (dto.PurityFactor.HasValue) material.PurityFactor = dto.PurityFactor.Value;
+        if (dto.MinimumStock.HasValue) material.MinimumStock = dto.MinimumStock.Value;
+        if (dto.MaximumStock.HasValue) material.MaximumStock = dto.MaximumStock.Value;
+        if (dto.BasePrice.HasValue) material.BasePrice = dto.BasePrice.Value;
+        if (dto.Popularity.HasValue) material.Popularity = dto.Popularity.Value;
+        if (dto.StorageConditions != null) material.StorageConditions = dto.StorageConditions.Trim();
+        if (dto.RequiresRefrigeration.HasValue) material.RequiresRefrigeration = dto.RequiresRefrigeration.Value;
+        if (dto.LightSensitive.HasValue) material.LightSensitive = dto.LightSensitive.Value;
+        if (dto.HumiditySensitive.HasValue) material.HumiditySensitive = dto.HumiditySensitive.Value;
 
-            // Atualizar campos
-            material.Name = dto.Name?.Trim() ?? material.Name;
-            material.Description = dto.Description?.Trim();
-            material.ControlType = dto.ControlType?.ToUpper() ?? material.ControlType;
-            material.Unit = dto.Unit?.ToLower() ?? material.Unit;
-            material.PurityFactor = dto.PurityFactor ?? material.PurityFactor;
-            material.MinimumStock = dto.MinimumStock ?? material.MinimumStock;
-            material.MaximumStock = dto.MaximumStock ?? material.MaximumStock;
-            material.StorageConditions = dto.StorageConditions?.Trim();
-            material.RequiresRefrigeration = dto.RequiresRefrigeration ?? material.RequiresRefrigeration;
-            material.LightSensitive = dto.LightSensitive ?? material.LightSensitive;
-            material.HumiditySensitive = dto.HumiditySensitive ?? material.HumiditySensitive;
-            material.RequiresSpecialAuthorization = material.ControlType != "COMUM";
-            material.UpdatedAt = DateTime.UtcNow;
-            material.UpdatedByEmployeeId = employee.Id;
+        material.UpdatedAt = DateTime.UtcNow;
+        material.UpdatedByEmployeeId = employee.Id;
 
-            await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "Matéria-prima {MaterialName} atualizada por {EmployeeName} (ID: {EmployeeId})",
-                material.Name, employee.FullName, employee.Id);
-
-            return Ok(new
-            {
-                message = "Matéria-prima atualizada com sucesso",
-                material = new
-                {
-                    material.Id,
-                    material.Name,
-                    material.ControlType,
-                    material.UpdatedAt,
-                    updatedBy = new
-                    {
-                        employee.Id,
-                        employee.FullName,
-                        JobPosition = employee.JobPosition?.Name
-                    }
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao atualizar matéria-prima {MaterialId} por Employee {EmployeeId}",
-                id, employee.Id);
-            return StatusCode(500, new { error = "Erro ao atualizar matéria-prima" });
-        }
+        return Ok(new { success = true, message = "MatÃ©ria-prima atualizada" });
     }
 
     /// <summary>
-    /// Desativa uma matéria-prima (soft delete)
+    /// Desativa uma matÃ©ria-prima
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
-        {
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-        }
-
-        if (!IsEmployeeActive(employee))
-        {
-            return Unauthorized(new { error = "Funcionário inativo ou em situação irregular" });
-        }
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
 
         if (!await HasStockManagementPermission(employee))
-        {
-            return Forbid();
-        }
+            return StatusCode(403, new { error = "Sem permissÃ£o" });
 
-        try
-        {
-            var material = await _db.RawMaterials
-                .Include(rm => rm.Batches)
-                .FirstOrDefaultAsync(rm =>
-                    rm.Id == id &&
-                    rm.EstablishmentId == employee.EstablishmentId &&
-                    rm.IsActive);
+        var material = await _db.RawMaterials
+            .FirstOrDefaultAsync(rm => 
+                rm.Id == id && 
+                rm.EstablishmentId == employee.EstablishmentId && 
+                rm.IsActive);
 
-            if (material == null)
-            {
-                return NotFound(new { error = "Matéria-prima não encontrada" });
-            }
+        if (material == null)
+            return NotFound(new { error = "MatÃ©ria-prima nÃ£o encontrada" });
 
-            // Validar se existem lotes ativos
-            var activeBatches = material.Batches?.Count(b => b.Status == "APROVADO") ?? 0;
-            if (activeBatches > 0)
-            {
-                return BadRequest(new
-                {
-                    error = "Não é possível desativar matéria-prima com lotes ativos",
-                    activeBatchesCount = activeBatches
-                });
-            }
+        material.IsActive = false;
+        material.UpdatedAt = DateTime.UtcNow;
+        material.UpdatedByEmployeeId = employee.Id;
 
-            // Soft delete
-            material.IsActive = false;
-            material.UpdatedAt = DateTime.UtcNow;
-            material.UpdatedByEmployeeId = employee.Id;
+        await _db.SaveChangesAsync();
 
-            await _db.SaveChangesAsync();
+        _logger.LogWarning("MatÃ©ria-prima {Name} desativada por {Employee}", material.Name, employee.FullName);
 
-            _logger.LogWarning(
-                "Matéria-prima {MaterialName} desativada por {EmployeeName} (ID: {EmployeeId})",
-                material.Name, employee.FullName, employee.Id);
-
-            return Ok(new
-            {
-                message = "Matéria-prima desativada com sucesso",
-                materialId = material.Id
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao desativar matéria-prima {MaterialId} por Employee {EmployeeId}",
-                id, employee.Id);
-            return StatusCode(500, new { error = "Erro ao desativar matéria-prima" });
-        }
+        return Ok(new { success = true, message = "MatÃ©ria-prima desativada" });
     }
 
     /// <summary>
-    /// Retorna estatísticas de estoque de matérias-primas
+    /// Retorna estatÃ­sticas gerais de estoque
     /// </summary>
     [HttpGet("statistics")]
     public async Task<IActionResult> GetStatistics()
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
-        {
-            return Unauthorized(new { error = "Funcionário não autenticado" });
-        }
+            return Unauthorized(new { error = "FuncionÃ¡rio nÃ£o autenticado" });
 
-        if (!IsEmployeeActive(employee))
-        {
-            return Unauthorized(new { error = "Funcionário inativo ou em situação irregular" });
-        }
+        var materials = await _db.RawMaterials
+            .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
+            .ToListAsync();
 
-        try
+        return Ok(new
         {
-            var materials = await _db.RawMaterials
-                .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
-                .ToListAsync();
-
-            var stats = new
+            success = true,
+            data = new
             {
                 totalMaterials = materials.Count,
                 controlledSubstances = materials.Count(m => m.ControlType != "COMUM"),
@@ -562,102 +591,95 @@ public class RawMaterialsController : ControllerBase
                 lowStock = materials.Count(m => m.CurrentStock <= m.MinimumStock),
                 excessStock = materials.Count(m => m.CurrentStock >= m.MaximumStock),
                 normalStock = materials.Count(m => m.CurrentStock > m.MinimumStock && m.CurrentStock < m.MaximumStock),
-                requiresRefrigeration = materials.Count(m => m.RequiresRefrigeration),
-                lightSensitive = materials.Count(m => m.LightSensitive),
-                humiditySensitive = materials.Count(m => m.HumiditySensitive),
-                totalStockValue = materials.Sum(m => m.CurrentStock) // Poderia multiplicar por preço unitário
-            };
-
-            return Ok(stats);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao buscar estatísticas por Employee {EmployeeId}", employee.Id);
-            return StatusCode(500, new { error = "Erro ao buscar estatísticas" });
-        }
+                virtualIngredients = materials.Count(m => m.IsVirtual),
+                withBasePrice = materials.Count(m => m.BasePrice.HasValue && m.BasePrice > 0)
+            }
+        });
     }
 
-    // ==================== MÉTODOS AUXILIARES ====================
+    // ==================== MÃ‰TODOS AUXILIARES ====================
 
     /// <summary>
-    /// Verifica se o funcionário está ativo e pode operar no sistema
+    /// Verifica se o funcionÃ¡rio estÃ¡ ativo (mesmo padrÃ£o do EmployeeAuthMiddleware)
     /// </summary>
     private bool IsEmployeeActive(Employee employee)
     {
-        if (employee.Status != "Ativo")
-            return false;
-
-        if (employee.TerminationDate.HasValue && employee.TerminationDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow))
-            return false;
-
-        if (employee.LockedUntil.HasValue && employee.LockedUntil.Value > DateTime.UtcNow)
-            return false;
-
+        // Usar ToUpper() para consistÃªncia com o middleware
+        if (employee.Status.ToUpper() != "ATIVO") return false;
+        if (employee.TerminationDate.HasValue && employee.TerminationDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow)) return false;
+        if (employee.LockedUntil.HasValue && employee.LockedUntil.Value > DateTime.UtcNow) return false;
         return true;
     }
 
-    /// <summary>
-    /// Verifica se o funcionário tem permissão para gerenciar estoque
-    /// </summary>
     private async Task<bool> HasStockManagementPermission(Employee employee)
     {
-        // Carregar o cargo se não estiver carregado
         if (employee.JobPosition == null)
-        {
-            await _db.Entry(employee)
-                .Reference(e => e.JobPosition)
-                .LoadAsync();
-        }
+            await _db.Entry(employee).Reference(e => e.JobPosition).LoadAsync();
 
-        if (employee.JobPosition == null)
-            return false;
+        if (employee.JobPosition == null) return false;
 
-        // Lista de cargos que podem gerenciar estoque
-                var allowedPositionCodes = new[]
-         {
-            "pharmacist",           // Farmacêutico
-            "pharmacist_rt",        // Farmacêutico RT ?
-            "manager",              // Gerente
-            "admin",                // Administrador
-            "stock_assistant"       // Auxiliar de Estoque
-        };
-
-        return allowedPositionCodes.Contains(employee.JobPosition.Code);
+        var allowedCodes = new[] { "pharmacist", "pharmacist_rt", "manager", "admin", "stock_assistant" };
+        return allowedCodes.Contains(employee.JobPosition.Code);
     }
 
-    /// <summary>
-    /// Verifica se o funcionário tem permissão para manipular substâncias controladas
-    /// </summary>
     private async Task<bool> HasControlledSubstancePermission(Employee employee)
     {
-        // Carregar o cargo se não estiver carregado
         if (employee.JobPosition == null)
-        {
-            await _db.Entry(employee)
-                .Reference(e => e.JobPosition)
-                .LoadAsync();
-        }
+            await _db.Entry(employee).Reference(e => e.JobPosition).LoadAsync();
 
-        if (employee.JobPosition == null)
-            return false;
+        if (employee.JobPosition == null) return false;
 
-        // Apenas farmacêuticos podem lidar com substâncias controladas (usando CODE)
-        var allowedPositionCodes = new[]
-        {
-        "pharmacist",     // Farmacêutico
-        "pharmacist_rt",  // Farmacêutico RT ? Corrigido!
-        "admin"           // Administrador
-    };
-
-        return allowedPositionCodes.Contains(employee.JobPosition.Code);  // ? Usando Code
+        var allowedCodes = new[] { "pharmacist", "pharmacist_rt", "admin" };
+        return allowedCodes.Contains(employee.JobPosition.Code);
     }
 
     // ==================== DTOs ====================
 
+    public class RawMaterialListDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = "";
+        public string? DcbCode { get; set; }
+        public string? DciCode { get; set; }
+        public string CasNumber { get; set; } = "";
+        public string ControlType { get; set; } = "";
+        public string? Category { get; set; }
+        public decimal CurrentStock { get; set; }
+        public decimal MinimumStock { get; set; }
+        public decimal MaximumStock { get; set; }
+        public string Unit { get; set; } = "";
+        
+        // PreÃ§os
+        public decimal? BasePrice { get; set; }
+        public decimal? LastKnownPrice { get; set; }
+        public DateTime? LastPriceDate { get; set; }
+        public bool IsVirtual { get; set; }
+        public string PriceSource { get; set; } = "";
+        public decimal CurrentPrice { get; set; }
+        
+        // Status
+        public string StockStatus { get; set; } = "";
+        public string PriceStatus { get; set; } = "";
+        public bool IsPriceOutdated { get; set; }
+        public int? DaysSinceLastPrice { get; set; }
+        
+        public bool RequiresSpecialAuthorization { get; set; }
+        public bool RequiresRefrigeration { get; set; }
+        public int Popularity { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class UpdateBasePriceDto
+    {
+        [Required]
+        [Range(0.0001, 999999.99, ErrorMessage = "PreÃ§o deve ser maior que zero")]
+        public decimal BasePrice { get; set; }
+    }
+
     public class CreateRawMaterialDto
     {
-        [Required(ErrorMessage = "Nome é obrigatório")]
-        [MaxLength(200)]
+        [Required, MaxLength(200)]
         public string Name { get; set; } = "";
 
         [MaxLength(50)]
@@ -666,29 +688,32 @@ public class RawMaterialsController : ControllerBase
         [MaxLength(50)]
         public string? DciCode { get; set; }
 
-        [Required(ErrorMessage = "Número CAS é obrigatório")]
-        [MaxLength(50)]
+        [Required, MaxLength(50)]
         public string CasNumber { get; set; } = "";
 
         [MaxLength(1000)]
         public string? Description { get; set; }
 
-        [Required(ErrorMessage = "Tipo de controle é obrigatório")]
         [MaxLength(50)]
         public string ControlType { get; set; } = "COMUM";
 
-        [Required(ErrorMessage = "Unidade de medida é obrigatória")]
+        [MaxLength(100)]
+        public string? Category { get; set; }
+
+        [MaxLength(500)]
+        public string? Synonyms { get; set; }
+
+        [MaxLength(1000)]
+        public string? Indications { get; set; }
+
         [MaxLength(20)]
         public string Unit { get; set; } = "g";
 
-        [Range(0.01, 100, ErrorMessage = "Fator de pureza deve estar entre 0.01 e 100")]
         public decimal PurityFactor { get; set; } = 1.0m;
-
-        [Range(0, double.MaxValue, ErrorMessage = "Estoque mínimo não pode ser negativo")]
         public decimal MinimumStock { get; set; }
-
-        [Range(0, double.MaxValue, ErrorMessage = "Estoque máximo não pode ser negativo")]
         public decimal MaximumStock { get; set; }
+        public decimal? BasePrice { get; set; }
+        public int Popularity { get; set; } = 50;
 
         [MaxLength(500)]
         public string? StorageConditions { get; set; }
@@ -709,17 +734,23 @@ public class RawMaterialsController : ControllerBase
         [MaxLength(50)]
         public string? ControlType { get; set; }
 
+        [MaxLength(100)]
+        public string? Category { get; set; }
+
+        [MaxLength(500)]
+        public string? Synonyms { get; set; }
+
+        [MaxLength(1000)]
+        public string? Indications { get; set; }
+
         [MaxLength(20)]
         public string? Unit { get; set; }
 
-        [Range(0.01, 100)]
         public decimal? PurityFactor { get; set; }
-
-        [Range(0, double.MaxValue)]
         public decimal? MinimumStock { get; set; }
-
-        [Range(0, double.MaxValue)]
         public decimal? MaximumStock { get; set; }
+        public decimal? BasePrice { get; set; }
+        public int? Popularity { get; set; }
 
         [MaxLength(500)]
         public string? StorageConditions { get; set; }

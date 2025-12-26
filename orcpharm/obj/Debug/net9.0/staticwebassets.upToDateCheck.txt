@@ -57,6 +57,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rt
 E:\orcpharm\orcpharm\orcpharm\wwwroot\css\employees-shared.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\payment-management.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\CriarFormula.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.min.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-reboot.rtl.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.rtl.min.css
@@ -74,7 +75,9 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap.min.css.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery\dist\jquery.slim.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.esm.js.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\pricing.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\jquery.validate.min.js
+E:\orcpharm\orcpharm\orcpharm\wwwroot\css\pricing-indicators.css
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.js.map
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\prescription-ocr.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.rtl.css
@@ -87,6 +90,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation\dist\additional-meth
 wwwroot\css\admin.css
 wwwroot\css\employees-shared.css
 wwwroot\css\pricing.css
+wwwroot\css\pricing-indicators.css
 wwwroot\css\public.css
 wwwroot\css\signup.css
 wwwroot\css\site.css
@@ -95,6 +99,7 @@ wwwroot\favicon.ico
 wwwroot\js\admin-charts.js
 wwwroot\js\admin-dashboard.js
 wwwroot\js\admin-establishments.js
+wwwroot\js\CriarFormula.js
 wwwroot\js\employees-auth-adapter.js
 wwwroot\js\employees-shared.js
 wwwroot\js\gateway-configuration.js
@@ -102,6 +107,7 @@ wwwroot\js\manipulation-weighing.js
 wwwroot\js\payment-management.js
 wwwroot\js\pdv.js
 wwwroot\js\prescription-ocr.js
+wwwroot\js\pricing.js
 wwwroot\js\public-homepage.js
 wwwroot\js\purchase-orders.js
 wwwroot\js\purchase-orders-create.js

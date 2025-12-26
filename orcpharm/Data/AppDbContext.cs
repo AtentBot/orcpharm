@@ -20,6 +20,42 @@ namespace Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     // ════════════════════════════════════════════════════════════════════════
+    // PORTAL DO CLIENTE - FÓRMULAS PERSONALIZADAS
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Tipos de produtos farmacêuticos (Cápsula, Creme, Solução, etc.)
+    /// </summary>
+    public DbSet<ProductType> ProductTypes { get; set; } = null!;
+
+    /// <summary>
+    /// Subtipos/apresentações (30 cápsulas, 60 cápsulas, 100g, etc.)
+    /// </summary>
+    public DbSet<ProductSubType> ProductSubTypes { get; set; } = null!;
+
+    /// <summary>
+    /// Fórmulas personalizadas criadas pelos clientes no portal
+    /// </summary>
+    public DbSet<CustomerFormula> CustomerFormulas { get; set; } = null!;
+
+    /// <summary>
+    /// Carrinhos de compras dos clientes (fórmulas personalizadas)
+    /// </summary>
+    public DbSet<Cart> Carts { get; set; } = null!;
+
+    /// <summary>
+    /// Itens dos carrinhos de compras
+    /// </summary>
+    public DbSet<CartItem> CartItems { get; set; } = null!;
+
+    /// <summary>
+    /// Itens do carrinho de fórmulas personalizadas
+    /// </summary>
+    public DbSet<FormulaCartItem> FormulaCartItems { get; set; } = null!;
+
+
+
+    // ════════════════════════════════════════════════════════════════════════
     // CORE & INFRAESTRUTURA
     // ════════════════════════════════════════════════════════════════════════
 
@@ -61,6 +97,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// Sessões dos administradores SaaS
     /// </summary>
     public DbSet<SaasAdminSession> SaasAdminSessions { get; set; } = null!;
+
+    /// <summary>
+    /// Configurações de precificação por estabelecimento
+    /// </summary>
+    public DbSet<EstablishmentPricingSettings> EstablishmentPricingSettings { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
     // FUNCIONÁRIOS & RH
@@ -259,24 +300,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<AuditorAccessLog> AuditorAccessLogs { get; set; } = null!;
 
-    // ════════════════════════════════════════════════════════════════════════
-    // CUSTOMER FORMULAS - FÓRMULAS PERSONALIZADAS
-    // ════════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Tipos de produtos para fórmulas personalizadas (Creme, Gel, Pomada, Shampoo, etc)
-    /// </summary>
-    public DbSet<ProductType> ProductTypes { get; set; } = null!;
-
-    /// <summary>
-    /// Subtipos de produtos (Creme Lanette, Gel Carbopol, Shampoo Base, etc)
-    /// </summary>
-    public DbSet<ProductSubType> ProductSubTypes { get; set; } = null!;
-
-    /// <summary>
-    /// Fórmulas personalizadas criadas por clientes via portal
-    /// </summary>
-    public DbSet<CustomerFormula> CustomerFormulas { get; set; } = null!;
 
     /// <summary>
     /// Log de análises farmacêuticas de fórmulas personalizadas
@@ -288,10 +311,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<Refund> Refunds { get; set; } = null!;
 
-    /// <summary>
-    /// Itens do carrinho de compras (produtos regulares + fórmulas personalizadas)
-    /// </summary>
-    public DbSet<CartItem> CartItems { get; set; } = null!;
     public DbSet<ActiveIngredient> ActiveIngredients { get; set; }
 
 
@@ -302,6 +321,80 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+
+        // ──────────────────────────────────────────────────────────────────
+        // ESTABLISHMENT PRICING SETTINGS
+        // 
+        modelBuilder.Entity<EstablishmentPricingSettings>(entity =>
+        {
+            entity.ToTable("establishment_pricing_settings");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .HasColumnName("id");
+
+            entity.Property(e => e.EstablishmentId)
+                .HasColumnName("establishment_id")
+                .IsRequired();
+
+            entity.Property(e => e.InflationRateMonthly)
+                .HasColumnName("inflation_rate_monthly")
+                .HasPrecision(5, 2)
+                .HasDefaultValue(0.5m);
+
+            entity.Property(e => e.SafetyMarginPercent)
+                .HasColumnName("safety_margin_percent")
+                .HasPrecision(5, 2)
+                .HasDefaultValue(10m);
+
+            entity.Property(e => e.DefaultProfitMargin)
+                .HasColumnName("default_profit_margin")
+                .HasPrecision(5, 2)
+                .HasDefaultValue(100m);
+
+            entity.Property(e => e.PriceValidityDays)
+                .HasColumnName("price_validity_days")
+                .HasDefaultValue(180);
+
+            entity.Property(e => e.ManipulationFee)
+                .HasColumnName("manipulation_fee")
+                .HasPrecision(10, 2)
+                .HasDefaultValue(25m);
+
+            entity.Property(e => e.DefaultPackagingCost)
+                .HasColumnName("default_packaging_cost")
+                .HasPrecision(10, 2)
+                .HasDefaultValue(5m);
+
+            entity.Property(e => e.AlertOnEstimated)
+                .HasColumnName("alert_on_estimated")
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.BlockWithoutStock)
+                .HasColumnName("block_without_stock")
+                .HasDefaultValue(false);
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .HasDefaultValueSql("NOW()");
+
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnName("updated_at")
+                .HasDefaultValueSql("NOW()");
+
+            // Índice único por estabelecimento
+            entity.HasIndex(e => e.EstablishmentId)
+                .IsUnique()
+                .HasDatabaseName("uq_establishment_pricing_settings");
+
+            // Relacionamento com Establishment
+            entity.HasOne(e => e.Establishment)
+                .WithOne()
+                .HasForeignKey<EstablishmentPricingSettings>(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // ──────────────────────────────────────────────────────────────────
         // APLICAR CONFIGURAÇÕES VIA FLUENT API
@@ -327,6 +420,165 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // ──────────────────────────────────────────────────────────────────
         // SEED DE DADOS INICIAIS
         // ──────────────────────────────────────────────────────────────────
+
+        // Product Types (Global - sem EstablishmentId)
+        modelBuilder.Entity<ProductType>(entity =>
+        {
+            entity.ToTable("product_types");
+            entity.HasKey(e => e.Id);
+            // Colunas em PascalCase (como existem no banco)
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.Property(e => e.Name).HasColumnName("Name");
+            entity.Property(e => e.Description).HasColumnName("Description");
+            entity.Property(e => e.PharmaceuticalForm).HasColumnName("PharmaceuticalForm");
+            entity.Property(e => e.Category).HasColumnName("Category");
+            entity.Property(e => e.DisplayOrder).HasColumnName("DisplayOrder");
+            entity.Property(e => e.IsActive).HasColumnName("IsActive");
+            entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt");
+            entity.Property(e => e.UpdatedAt).HasColumnName("UpdatedAt");
+
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.IsActive);
+        });
+
+        modelBuilder.Entity<ProductSubType>(entity =>
+        {
+            entity.ToTable("product_sub_types");
+            entity.HasKey(e => e.Id);
+            // Colunas em PascalCase (como existem no banco)
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.Property(e => e.ProductTypeId).HasColumnName("ProductTypeId");
+            entity.Property(e => e.Name).HasColumnName("Name");
+            entity.Property(e => e.Description).HasColumnName("Description");
+            entity.Property(e => e.StandardUnit).HasColumnName("StandardUnit");
+            entity.Property(e => e.StandardQuantity).HasColumnName("StandardQuantity");
+            entity.Property(e => e.PriceModifier).HasColumnName("PriceModifier");
+            entity.Property(e => e.ManipulationCostBase).HasColumnName("ManipulationCostBase");
+            entity.Property(e => e.DisplayOrder).HasColumnName("DisplayOrder");
+            entity.Property(e => e.IsActive).HasColumnName("IsActive");
+            entity.Property(e => e.CreatedAt).HasColumnName("CreatedAt");
+            entity.Property(e => e.UpdatedAt).HasColumnName("UpdatedAt");
+
+            entity.HasIndex(e => e.ProductTypeId);
+        });
+
+        modelBuilder.Entity<CustomerFormula>(entity =>
+        {
+            entity.ToTable("customer_formulas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.EstablishmentId).HasColumnName("establishment_id");
+            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+            entity.Property(e => e.CustomerName).HasColumnName("customer_name");
+            entity.Property(e => e.CustomerPhone).HasColumnName("customer_phone");
+            entity.Property(e => e.CustomerEmail).HasColumnName("customer_email");
+            entity.Property(e => e.ProductTypeId).HasColumnName("product_type_id");
+            entity.Property(e => e.ProductSubTypeId).HasColumnName("product_sub_type_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.Unit).HasColumnName("unit");
+            entity.Property(e => e.AdditionalIngredients).HasColumnName("additional_ingredients");
+            entity.Property(e => e.CustomerNotes).HasColumnName("customer_notes");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.PharmacistId).HasColumnName("pharmacist_id");
+            entity.Property(e => e.PharmaceuticalAnalysis).HasColumnName("pharmaceutical_analysis");
+            entity.Property(e => e.AnalyzedAt).HasColumnName("analyzed_at");
+            entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
+            entity.Property(e => e.RejectedAt).HasColumnName("rejected_at");
+            entity.Property(e => e.RejectionReason).HasColumnName("rejection_reason");
+            entity.Property(e => e.AdjustmentRequest).HasColumnName("adjustment_request");
+            entity.Property(e => e.RequiresPrescription).HasColumnName("requires_prescription");
+            entity.Property(e => e.IsControlledSubstance).HasColumnName("is_controlled_substance");
+            entity.Property(e => e.HasIncompatibilities).HasColumnName("has_incompatibilities");
+            entity.Property(e => e.IncompatibilityDetails).HasColumnName("incompatibility_details");
+            entity.Property(e => e.EstimatedShelfLifeDays).HasColumnName("estimated_shelf_life_days");
+            entity.Property(e => e.EstimatedPrice).HasColumnName("estimated_price");
+            entity.Property(e => e.FinalPrice).HasColumnName("final_price");
+            entity.Property(e => e.DiscountApplied).HasColumnName("discount_applied");
+            entity.Property(e => e.PrescriptionQuoteId).HasColumnName("prescription_quote_id");
+            entity.Property(e => e.ManipulationOrderId).HasColumnName("manipulation_order_id");
+            entity.Property(e => e.OnlineOrderId).HasColumnName("online_order_id");
+            entity.Property(e => e.PaidAt).HasColumnName("paid_at");
+            entity.Property(e => e.PaidAmount).HasColumnName("paid_amount");
+            entity.Property(e => e.RequiresRefund).HasColumnName("requires_refund");
+            entity.Property(e => e.RefundedAt).HasColumnName("refunded_at");
+            entity.Property(e => e.RefundAmount).HasColumnName("refund_amount");
+            entity.Property(e => e.SessionToken).HasColumnName("session_token");
+            entity.Property(e => e.SessionExpiresAt).HasColumnName("session_expires_at");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+            entity.Property(e => e.CreatedByEmployeeId).HasColumnName("created_by_employee_id");
+
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.Code);
+        });
+
+        modelBuilder.Entity<Cart>(entity =>
+        {
+            entity.ToTable("carts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+            entity.Property(e => e.EstablishmentId).HasColumnName("establishment_id");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasIndex(e => e.CustomerId);
+        });
+
+        // CartItem (Carrinho baseado em sessão)
+        modelBuilder.Entity<CartItem>(entity =>
+        {
+            entity.ToTable("cart_items");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.SessionToken).HasColumnName("session_token");
+            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+            entity.Property(e => e.EstablishmentId).HasColumnName("establishment_id");
+            entity.Property(e => e.ItemType).HasColumnName("item_type");
+            entity.Property(e => e.ReferenceId).HasColumnName("reference_id");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.UnitPrice).HasColumnName("unit_price");
+            entity.Property(e => e.TotalPrice).HasColumnName("total_price");
+            entity.Property(e => e.RequiresPrescription).HasColumnName("requires_prescription");
+            entity.Property(e => e.IsControlled).HasColumnName("is_controlled");
+            entity.Property(e => e.IsCustomFormula).HasColumnName("is_custom_formula");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+
+            entity.HasIndex(e => e.SessionToken);
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.EstablishmentId);
+        });
+
+        // FormulaCartItem (Itens do carrinho de fórmulas)
+        modelBuilder.Entity<FormulaCartItem>(entity =>
+        {
+            entity.ToTable("formula_cart_items");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CartId).HasColumnName("cart_id");
+            entity.Property(e => e.CustomerFormulaId).HasColumnName("customer_formula_id");
+            entity.Property(e => e.CatalogProductId).HasColumnName("catalog_product_id");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.UnitPrice).HasColumnName("unit_price");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasIndex(e => e.CartId);
+            entity.HasIndex(e => e.CustomerFormulaId);
+
+            entity.HasOne(e => e.Cart)
+                .WithMany(c => c.Items)
+                .HasForeignKey(e => e.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         SeedInitialData(modelBuilder);
     }
@@ -354,6 +606,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration(new SupplierCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new SupplierEvaluationConfiguration());
     }
+
+
+
+
 
     /// <summary>
     /// Configura entidades de manipulação (Losses, Leftovers, Verification, Production)
