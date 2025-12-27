@@ -3,16 +3,8 @@
   "WorkspaceRootPath": "E:\\orcpharm\\orcpharm\\orcpharm\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\controllers\\alertascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:controllers\\alertascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\controllers\\dashboardapicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:controllers\\dashboardapicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\models\\cashregister.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:models\\cashregister.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|e:\\orcpharm\\orcpharm\\orcpharm\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{C286E5E7-E831-4AC6-A99A-B39A3A5E2C52}|orcpharm.csproj|solutionrelative:views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,41 +26,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "DashboardApiController.cs",
-              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\DashboardApiController.cs",
-              "RelativeDocumentMoniker": "Controllers\\DashboardApiController.cs",
-              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\DashboardApiController.cs",
-              "RelativeToolTip": "Controllers\\DashboardApiController.cs",
-              "ViewState": "AgIAALoAAAAAAAAAAAAqwMgAAAAfAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-26T20:20:32.738Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "AlertasController.cs",
-              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\AlertasController.cs",
-              "RelativeDocumentMoniker": "Controllers\\AlertasController.cs",
-              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Controllers\\AlertasController.cs*",
-              "RelativeToolTip": "Controllers\\AlertasController.cs*",
-              "ViewState": "AgIAAC4AAAAAAAAAAAAqwDoAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-26T20:20:21.585Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "CashRegister.cs",
-              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\CashRegister.cs",
-              "RelativeDocumentMoniker": "Models\\CashRegister.cs",
-              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Models\\CashRegister.cs",
-              "RelativeToolTip": "Models\\CashRegister.cs",
-              "ViewState": "AgIAAAIAAAAAAAAAAAASwAoAAAAZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-26T20:13:23.266Z",
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "E:\\orcpharm\\orcpharm\\orcpharm\\Views\\Shared\\_Layout.cshtml*",
+              "RelativeToolTip": "Views\\Shared\\_Layout.cshtml*",
+              "ViewState": "AgIAAKsCAAAAAAAAAAAUwL4CAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-12-27T02:26:14.16Z",
               "EditorCaption": ""
             }
           ]

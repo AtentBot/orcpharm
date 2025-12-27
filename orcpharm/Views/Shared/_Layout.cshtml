@@ -678,6 +678,84 @@
                         </li>
                     }
 
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- ✅ QUALIDADE - FASE 7 -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    @{
+                        var qualityCodes = new[] { "OWNER", "MANAGER", "PHARMACIST_RT", "PHARMACIST", "ADMIN", "GENERAL_MANAGER", "QUALITY" };
+                        var canManageQuality = qualityCodes.Contains(jobCode);
+                    }
+                    @if (canManageQuality)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link has-submenu @(currentPath.StartsWith("/qualidade") ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'qualidadeSubmenu')">
+                                <i class="bi bi-patch-check"></i>
+                                Qualidade
+                            </a>
+                            <ul class="nav flex-column nav-submenu @(currentPath.StartsWith("/qualidade") ? "show" : "")" id="qualidadeSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/qualidade" ? "active" : "")" href="/Qualidade">
+                                        <i class="bi bi-speedometer2"></i>
+                                        Dashboard
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/qualidade/pops" ? "active" : "")" href="/Qualidade/POPs">
+                                        <i class="bi bi-file-text"></i>
+                                        POPs
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/qualidade/capas" ? "active" : "")" href="/Qualidade/CAPAs">
+                                        <i class="bi bi-exclamation-diamond"></i>
+                                        CAPAs
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- ✅ CONFIGURAÇÕES - FASE 8/9 -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    @{
+                        var configCodes = new[] { "OWNER", "ADMIN", "GENERAL_MANAGER", "MANAGER" };
+                        var canManageConfig = configCodes.Contains(jobCode);
+                    }
+                    @if (canManageConfig)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link has-submenu @(currentPath.StartsWith("/integracoes") || currentPath.StartsWith("/sistema") ? "active open" : "")"
+                               href="#"
+                               onclick="toggleSubmenu(event, 'configSubmenu')">
+                                <i class="bi bi-gear"></i>
+                                Configurações
+                            </a>
+                            <ul class="nav flex-column nav-submenu @(currentPath.StartsWith("/integracoes") || currentPath.StartsWith("/sistema") ? "show" : "")" id="configSubmenu">
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/integracoes" ? "active" : "")" href="/Integracoes">
+                                        <i class="bi bi-plug"></i>
+                                        Integrações
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/api/health/detailed" target="_blank">
+                                        <i class="bi bi-heart-pulse"></i>
+                                        Status do Sistema
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/api/health/diagnostics" target="_blank">
+                                        <i class="bi bi-activity"></i>
+                                        Diagnóstico
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+
                 </ul>
 
                 <div style="position: absolute; bottom: 1rem; left: 0; right: 0; padding: 0 1rem;">

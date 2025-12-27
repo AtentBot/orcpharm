@@ -6,6 +6,7 @@ namespace Controllers;
 /// <summary>
 /// Controller MVC para páginas de Gestão da Qualidade
 /// Rota: /Qualidade/*
+/// Views em: /Views/Qualidade/
 /// </summary>
 [Route("Qualidade")]
 public class QualidadeViewController : Controller
@@ -32,7 +33,7 @@ public class QualidadeViewController : Controller
 
         ViewData["Employee"] = employee;
         ViewData["Title"] = "Gestão da Qualidade";
-        return View();
+        return View("~/Views/Qualidade/Index.cshtml");
     }
 
     /// <summary>
@@ -48,7 +49,7 @@ public class QualidadeViewController : Controller
 
         ViewData["Employee"] = employee;
         ViewData["Title"] = "Procedimentos Operacionais Padrão";
-        return View();
+        return View("~/Views/Qualidade/POPs.cshtml");
     }
 
     /// <summary>
@@ -65,7 +66,7 @@ public class QualidadeViewController : Controller
         ViewData["Employee"] = employee;
         ViewData["Title"] = id.HasValue ? "Editar POP" : "Novo POP";
         ViewData["POPId"] = id;
-        return View();
+        return View("~/Views/Qualidade/EditarPOP.cshtml");
     }
 
     /// <summary>
@@ -81,7 +82,7 @@ public class QualidadeViewController : Controller
 
         ViewData["Employee"] = employee;
         ViewData["Title"] = "Ações Corretivas e Preventivas";
-        return View();
+        return View("~/Views/Qualidade/CAPAs.cshtml");
     }
 
     /// <summary>
@@ -98,7 +99,7 @@ public class QualidadeViewController : Controller
         ViewData["Employee"] = employee;
         ViewData["Title"] = id.HasValue ? "Editar CAPA" : "Nova CAPA";
         ViewData["CAPAId"] = id;
-        return View();
+        return View("~/Views/Qualidade/EditarCAPA.cshtml");
     }
 
     /// <summary>
@@ -114,6 +115,6 @@ public class QualidadeViewController : Controller
 
         ViewData["Employee"] = employee;
         ViewData["Title"] = "Indicadores de Qualidade";
-        return View();
+        return View("~/Views/Qualidade/Indicadores.cshtml");
     }
 }
