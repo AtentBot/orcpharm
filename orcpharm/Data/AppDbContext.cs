@@ -313,6 +313,34 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ActiveIngredient> ActiveIngredients { get; set; }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // FORMAS FARMACÊUTICAS & PRECIFICAÇÃO
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Formas farmacêuticas disponíveis (Cápsula, Creme, etc.)
+    /// </summary>
+    public DbSet<PharmaceuticalForm> PharmaceuticalForms { get; set; } = null!;
+
+    /// <summary>
+    /// Subtipos de formas farmacêuticas (Cápsula 00, Creme Lanette, etc.)
+    /// </summary>
+    public DbSet<PharmaceuticalFormSubtype> PharmaceuticalFormSubtypes { get; set; } = null!;
+
+    /// <summary>
+    /// Composições de subtipos (matérias-primas que compõem bases/veículos)
+    /// </summary>
+    public DbSet<PharmaceuticalFormComposition> PharmaceuticalFormCompositions { get; set; } = null!;
+
+    /// <summary>
+    /// Tabela de referência de tamanhos de cápsulas
+    /// </summary>
+    public DbSet<CapsuleSizeReference> CapsuleSizeReferences { get; set; } = null!;
+
+    /// <summary>
+    /// Configuração de precificação por estabelecimento (taxas, impostos, markup)
+    /// </summary>
+    public DbSet<EstablishmentPricingConfig> EstablishmentPricingConfigs { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
     // CONFIGURAÇÃO DO MODELO
@@ -579,6 +607,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(e => e.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Configurar entidades de Formas Farmacêuticas e Precificação
+        ConfigurePharmaceuticalFormsEntities(modelBuilder);
 
         SeedInitialData(modelBuilder);
     }
@@ -1820,6 +1851,159 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+    }
+
+    /// <summary>
+    /// Configura entidades de Formas Farmacêuticas e Precificação
+    /// </summary>
+    private void ConfigurePharmaceuticalFormsEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // PHARMACEUTICAL FORM
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<PharmaceuticalForm>(entity =>
+        {
+            entity.ToTable("pharmaceutical_forms");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.EstablishmentId, e.Code })
+                  .IsUnique();
+
+            entity.HasIndex(e => new { e.EstablishmentId, e.IsActive });
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.UpdatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.UpdatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.Subtypes)
+                  .WithOne(s => s.PharmaceuticalForm)
+                  .HasForeignKey(s => s.PharmaceuticalFormId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PHARMACEUTICAL FORM SUBTYPE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<PharmaceuticalFormSubtype>(entity =>
+        {
+            entity.ToTable("pharmaceutical_form_subtypes");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.EstablishmentId, e.PharmaceuticalFormId, e.Code })
+                  .IsUnique();
+
+            entity.HasIndex(e => e.PharmaceuticalFormId);
+            entity.HasIndex(e => e.EstablishmentId);
+
+            entity.HasOne(e => e.PharmaceuticalForm)
+                  .WithMany(f => f.Subtypes)
+                  .HasForeignKey(e => e.PharmaceuticalFormId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.UpdatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.UpdatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.Compositions)
+                  .WithOne(c => c.Subtype)
+                  .HasForeignKey(c => c.SubtypeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PHARMACEUTICAL FORM COMPOSITION
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<PharmaceuticalFormComposition>(entity =>
+        {
+            entity.ToTable("pharmaceutical_form_compositions");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.SubtypeId, e.RawMaterialId })
+                  .IsUnique();
+
+            entity.HasIndex(e => e.SubtypeId);
+
+            entity.HasOne(e => e.Subtype)
+                  .WithMany(s => s.Compositions)
+                  .HasForeignKey(e => e.SubtypeId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RawMaterial)
+                  .WithMany()
+                  .HasForeignKey(e => e.RawMaterialId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CAPSULE SIZE REFERENCE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CapsuleSizeReference>(entity =>
+        {
+            entity.ToTable("capsule_size_reference");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.EstablishmentId, e.SizeCode })
+                  .IsUnique();
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // ESTABLISHMENT PRICING CONFIG
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<EstablishmentPricingConfig>(entity =>
+        {
+            entity.ToTable("establishment_pricing_config");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.EstablishmentId)
+                  .IsUnique();
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.UpdatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.UpdatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

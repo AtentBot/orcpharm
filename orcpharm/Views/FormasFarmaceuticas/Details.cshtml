@@ -1,0 +1,521 @@
+@{
+    ViewData["Title"] = "Detalhes da Forma Farmacêutica";
+    Layout = "_Layout";
+    var formId = ViewData["FormId"];
+}
+
+<style>
+    .subtype-card {
+        transition: all 0.2s ease;
+        border: 1px solid #e9ecef;
+    }
+    .subtype-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .capsule-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    .composition-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid #eee;
+    }
+    .composition-item:last-child {
+        border-bottom: none;
+    }
+    .stat-box {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+</style>
+
+<!-- Header com Loading -->
+<div id="headerLoading" class="mb-4">
+    <div class="placeholder-glow">
+        <span class="placeholder col-4"></span>
+    </div>
+</div>
+
+<!-- Header Real -->
+<div id="header" class="mb-4" style="display: none;">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="/FormasFarmaceuticas">Formas Farmacêuticas</a></li>
+                    <li class="breadcrumb-item active" id="breadcrumbName">...</li>
+                </ol>
+            </nav>
+            <h2 class="mb-1">
+                <i class="bi" id="formIconDisplay"></i>
+                <span id="formNameDisplay"></span>
+            </h2>
+            <p class="text-muted mb-0" id="formDescriptionDisplay"></p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-secondary fs-6" id="statusBadge">Ativo</span>
+            <button class="btn btn-outline-primary" onclick="editForm()">
+                <i class="bi bi-pencil me-1"></i>Editar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Coluna Principal -->
+    <div class="col-lg-8">
+        <!-- Estatísticas -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-box">
+                    <div class="stat-value" id="statMinPrice">R$ 0</div>
+                    <div class="text-muted">Preço Mínimo</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-box">
+                    <div class="stat-value" id="statValidity">0</div>
+                    <div class="text-muted">Dias de Validade</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-box">
+                    <div class="stat-value" id="statSubtypes">0</div>
+                    <div class="text-muted">Subtipos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subtipos -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Subtipos</h5>
+                <button class="btn btn-primary btn-sm" onclick="showCreateSubtypeModal()">
+                    <i class="bi bi-plus-lg me-1"></i>Novo Subtipo
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div id="subtypesLoading" class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                </div>
+                <div id="subtypesList">
+                    <!-- Subtipos inseridos via JS -->
+                </div>
+                <div id="subtypesEmpty" class="text-center py-4" style="display: none;">
+                    <i class="bi bi-inbox text-muted fs-1"></i>
+                    <p class="text-muted mt-2 mb-0">Nenhum subtipo cadastrado</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna Lateral -->
+    <div class="col-lg-4">
+        <!-- Configurações -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0"><i class="bi bi-gear me-2"></i>Configurações</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Código</label>
+                    <div class="fw-bold" id="formCodeDisplay">-</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Unidade Padrão</label>
+                    <div class="fw-bold" id="formUnitDisplay">-</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Tipo de Uso</label>
+                    <div id="formUsageDisplay">-</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Limite Máximo</label>
+                    <div class="fw-bold" id="formMaxQtyDisplay">Sem limite</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações Rápidas -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Ações Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/FormasFarmaceuticas/Capsulas/Calculadora" class="btn btn-outline-primary" id="btnCalculadora" style="display: none;">
+                        <i class="bi bi-calculator me-1"></i>Calculadora de Cápsulas
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="toggleFormStatus()">
+                        <i class="bi bi-toggle-on me-1" id="toggleIcon"></i>
+                        <span id="toggleText">Desativar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Subtipo -->
+<div class="modal fade" id="subtypeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="subtypeModalTitle">Novo Subtipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subtypeForm">
+                    <input type="hidden" id="subtypeId">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Código <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control text-uppercase" id="subtypeCode" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Nome <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="subtypeName" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descrição</label>
+                            <textarea class="form-control" id="subtypeDescription" rows="2"></textarea>
+                        </div>
+                        
+                        <!-- Campos para Cápsulas -->
+                        <div class="col-12" id="capsuleFields" style="display: none;">
+                            <hr>
+                            <h6 class="text-primary mb-3"><i class="bi bi-capsule me-1"></i>Especificações da Cápsula</h6>
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Tamanho</label>
+                                    <input type="text" class="form-control" id="capsuleSize" placeholder="00">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Volume (mL)</label>
+                                    <input type="number" class="form-control" id="capsuleVolume" step="0.01">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Cap. Mín (mg)</label>
+                                    <input type="number" class="form-control" id="capsuleCapMin">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Cap. Máx (mg)</label>
+                                    <input type="number" class="form-control" id="capsuleCapMax">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Cor</label>
+                                    <input type="text" class="form-control" id="capsuleColor" placeholder="Transparente">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Preço Mínimo</label>
+                            <input type="number" class="form-control" id="subtypeMinPrice" step="0.01">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Rendimento</label>
+                            <input type="number" class="form-control" id="subtypeYield" value="100">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Unidade</label>
+                            <select class="form-select" id="subtypeYieldUnit">
+                                <option value="g">g</option>
+                                <option value="mL">mL</option>
+                                <option value="un">un</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="subtypeIsDefault">
+                                <label class="form-check-label" for="subtypeIsDefault">Subtipo padrão</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveSubtype()">
+                    <i class="bi bi-check-lg me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const formId = '@formId';
+    let formData = null;
+    const subtypeModal = new bootstrap.Modal(document.getElementById('subtypeModal'));
+
+    document.addEventListener('DOMContentLoaded', loadFormDetails);
+
+    async function loadFormDetails() {
+        try {
+            const response = await fetch(`/api/PharmaceuticalForms/${formId}`);
+            if (!response.ok) throw new Error('Erro ao carregar');
+            
+            formData = await response.json();
+            renderFormDetails();
+            renderSubtypes();
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast('Erro ao carregar dados', 'danger');
+        }
+    }
+
+    function renderFormDetails() {
+        document.getElementById('headerLoading').style.display = 'none';
+        document.getElementById('header').style.display = 'block';
+
+        document.getElementById('breadcrumbName').textContent = formData.name;
+        document.getElementById('formNameDisplay').textContent = formData.name;
+        document.getElementById('formIconDisplay').className = `bi ${formData.icon} me-2`;
+        document.getElementById('formDescriptionDisplay').textContent = formData.description || '';
+        
+        document.getElementById('statusBadge').textContent = formData.isActive ? 'Ativo' : 'Inativo';
+        document.getElementById('statusBadge').className = `badge fs-6 ${formData.isActive ? 'bg-success' : 'bg-secondary'}`;
+        
+        document.getElementById('statMinPrice').textContent = `R$ ${formData.minimumPrice.toFixed(2)}`;
+        document.getElementById('statValidity').textContent = formData.defaultValidityDays;
+        document.getElementById('statSubtypes').textContent = formData.subtypes?.length || 0;
+
+        document.getElementById('formCodeDisplay').textContent = formData.code;
+        document.getElementById('formUnitDisplay').textContent = formData.defaultUnit;
+        document.getElementById('formMaxQtyDisplay').textContent = formData.maxQuantityLimit || 'Sem limite';
+        
+        const usageTypes = { 'ORAL': 'Uso Oral', 'TOPICAL': 'Uso Tópico', 'BOTH': 'Oral e Tópico' };
+        document.getElementById('formUsageDisplay').innerHTML = `<span class="badge bg-info">${usageTypes[formData.usageType]}</span>`;
+
+        // Mostrar calculadora se for cápsula
+        if (formData.code === 'CAPSULA') {
+            document.getElementById('btnCalculadora').style.display = 'block';
+        }
+
+        // Toggle button
+        document.getElementById('toggleText').textContent = formData.isActive ? 'Desativar' : 'Ativar';
+        document.getElementById('toggleIcon').className = `bi ${formData.isActive ? 'bi-toggle-on' : 'bi-toggle-off'} me-1`;
+    }
+
+    function renderSubtypes() {
+        document.getElementById('subtypesLoading').style.display = 'none';
+        const list = document.getElementById('subtypesList');
+        const empty = document.getElementById('subtypesEmpty');
+
+        if (!formData.subtypes || formData.subtypes.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        list.innerHTML = formData.subtypes.map(s => `
+            <div class="subtype-card p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            ${s.name}
+                            ${s.isDefault ? '<span class="badge bg-primary ms-2">Padrão</span>' : ''}
+                            ${s.capsuleSize ? `<span class="capsule-badge ms-2">${s.capsuleSize}</span>` : ''}
+                        </h6>
+                        <small class="text-muted">${s.code}</small>
+                        ${s.description ? `<p class="text-muted small mb-0 mt-1">${s.description}</p>` : ''}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="editSubtype('${s.id}')" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteSubtype('${s.id}', '${s.name}')" title="Excluir">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                ${s.capsuleSize ? `
+                <div class="mt-2 small">
+                    <span class="text-muted">Volume: ${s.capsuleVolumeMl} mL</span>
+                    <span class="text-muted ms-3">Capacidade: ${s.capsuleCapacityMgMin}-${s.capsuleCapacityMgMax} mg</span>
+                </div>` : ''}
+                ${s.minimumPrice ? `<div class="mt-1"><span class="text-success fw-bold">R$ ${s.minimumPrice.toFixed(2)}</span> mínimo</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function showCreateSubtypeModal() {
+        document.getElementById('subtypeId').value = '';
+        document.getElementById('subtypeCode').value = '';
+        document.getElementById('subtypeName').value = '';
+        document.getElementById('subtypeDescription').value = '';
+        document.getElementById('subtypeMinPrice').value = '';
+        document.getElementById('subtypeYield').value = '100';
+        document.getElementById('subtypeYieldUnit').value = 'g';
+        document.getElementById('subtypeIsDefault').checked = false;
+        
+        // Campos de cápsula
+        if (formData.code === 'CAPSULA') {
+            document.getElementById('capsuleFields').style.display = 'block';
+        } else {
+            document.getElementById('capsuleFields').style.display = 'none';
+        }
+        
+        document.getElementById('subtypeModalTitle').textContent = 'Novo Subtipo';
+        subtypeModal.show();
+    }
+
+    async function editSubtype(id) {
+        try {
+            const response = await fetch(`/api/PharmaceuticalForms/subtypes/${id}`);
+            if (!response.ok) throw new Error('Erro ao carregar');
+            
+            const subtype = await response.json();
+            
+            document.getElementById('subtypeId').value = subtype.id;
+            document.getElementById('subtypeCode').value = subtype.code;
+            document.getElementById('subtypeName').value = subtype.name;
+            document.getElementById('subtypeDescription').value = subtype.description || '';
+            document.getElementById('subtypeMinPrice').value = subtype.minimumPrice || '';
+            document.getElementById('subtypeYield').value = subtype.yieldQuantity;
+            document.getElementById('subtypeYieldUnit').value = subtype.yieldUnit;
+            document.getElementById('subtypeIsDefault').checked = subtype.isDefault;
+            
+            // Campos de cápsula
+            if (subtype.capsuleSize) {
+                document.getElementById('capsuleFields').style.display = 'block';
+                document.getElementById('capsuleSize').value = subtype.capsuleSize;
+                document.getElementById('capsuleVolume').value = subtype.capsuleVolumeMl || '';
+                document.getElementById('capsuleCapMin').value = subtype.capsuleCapacityMgMin || '';
+                document.getElementById('capsuleCapMax').value = subtype.capsuleCapacityMgMax || '';
+                document.getElementById('capsuleColor').value = subtype.capsuleColor || '';
+            }
+            
+            document.getElementById('subtypeModalTitle').textContent = 'Editar Subtipo';
+            subtypeModal.show();
+        } catch (error) {
+            showToast('Erro ao carregar subtipo', 'danger');
+        }
+    }
+
+    async function saveSubtype() {
+        const id = document.getElementById('subtypeId').value;
+        const isEdit = !!id;
+
+        const data = {
+            code: document.getElementById('subtypeCode').value,
+            name: document.getElementById('subtypeName').value,
+            description: document.getElementById('subtypeDescription').value || null,
+            minimumPrice: parseFloat(document.getElementById('subtypeMinPrice').value) || null,
+            yieldQuantity: parseFloat(document.getElementById('subtypeYield').value) || 100,
+            yieldUnit: document.getElementById('subtypeYieldUnit').value,
+            isDefault: document.getElementById('subtypeIsDefault').checked
+        };
+
+        // Adicionar campos de cápsula se visíveis
+        if (document.getElementById('capsuleFields').style.display !== 'none') {
+            data.capsuleSize = document.getElementById('capsuleSize').value || null;
+            data.capsuleVolumeMl = parseFloat(document.getElementById('capsuleVolume').value) || null;
+            data.capsuleCapacityMgMin = parseFloat(document.getElementById('capsuleCapMin').value) || null;
+            data.capsuleCapacityMgMax = parseFloat(document.getElementById('capsuleCapMax').value) || null;
+            data.capsuleColor = document.getElementById('capsuleColor').value || null;
+        }
+
+        if (!data.name || !data.code) {
+            showToast('Nome e código são obrigatórios', 'warning');
+            return;
+        }
+
+        try {
+            const url = isEdit ? `/api/PharmaceuticalForms/subtypes/${id}` : `/api/PharmaceuticalForms/${formId}/subtypes`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Erro ao salvar');
+            }
+
+            subtypeModal.hide();
+            showToast(`Subtipo ${isEdit ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+            loadFormDetails();
+        } catch (error) {
+            showToast(error.message, 'danger');
+        }
+    }
+
+    async function deleteSubtype(id, name) {
+        if (!confirm(`Deseja excluir o subtipo "${name}"?`)) return;
+
+        try {
+            const response = await fetch(`/api/PharmaceuticalForms/subtypes/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Erro ao excluir');
+
+            showToast('Subtipo excluído', 'success');
+            loadFormDetails();
+        } catch (error) {
+            showToast('Erro ao excluir subtipo', 'danger');
+        }
+    }
+
+    async function toggleFormStatus() {
+        const newStatus = !formData.isActive;
+        try {
+            const response = await fetch(`/api/PharmaceuticalForms/${formId}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isActive: newStatus })
+            });
+
+            if (!response.ok) throw new Error('Erro ao atualizar');
+
+            showToast(`Forma ${newStatus ? 'ativada' : 'desativada'}`, 'success');
+            loadFormDetails();
+        } catch (error) {
+            showToast('Erro ao atualizar status', 'danger');
+        }
+    }
+
+    function editForm() {
+        window.location.href = `/FormasFarmaceuticas/Edit/${formId}`;
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        container.appendChild(toast);
+        new bootstrap.Toast(toast).show();
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(container);
+        return container;
+    }
+</script>
+}

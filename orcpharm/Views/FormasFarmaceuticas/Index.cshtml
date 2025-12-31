@@ -1,0 +1,995 @@
+@{
+    ViewData["Title"] = "Matérias-Primas";
+    Layout = "_Layout";
+}
+
+<style>
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* HEADER */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .mp-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* STATS */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .stat-mini {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    .stat-mini .value { font-size: 1.5rem; font-weight: 700; }
+    .stat-mini .label { font-size: 0.75rem; color: #6c757d; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* FILTROS */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .filters-bar {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* TABELA */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .mp-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .mp-table table { margin-bottom: 0; }
+    .mp-table th {
+        background: #f8f9fa;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        padding: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .mp-table td { padding: 0.75rem; vertical-align: middle; }
+    .mp-table tr:hover { background: #f8f9fa; }
+
+    .mp-name { font-weight: 600; }
+    .mp-code { font-size: 0.8rem; color: #6c757d; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* BADGES */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .control-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .control-badge.comum { background: #d1e7dd; color: #0f5132; }
+    .control-badge.c1 { background: #f8d7da; color: #842029; }
+    .control-badge.c2 { background: #fff3cd; color: #664d03; }
+    .control-badge.c4 { background: #cfe2ff; color: #084298; }
+    .control-badge.c5 { background: #e2e3e5; color: #41464b; }
+
+    .stock-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    .stock-indicator.ok { background: #28a745; }
+    .stock-indicator.low { background: #ffc107; }
+    .stock-indicator.out { background: #dc3545; }
+
+    .price-source {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+    }
+    .price-source.estoque { background: #d1e7dd; color: #0f5132; }
+    .price-source.historico { background: #fff3cd; color: #664d03; }
+    .price-source.base { background: #e2e3e5; color: #41464b; }
+    .price-source.sem { background: #f8d7da; color: #842029; }
+
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* MODAL FORM */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .form-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* TABS CATEGORIAS */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    .category-tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+    .category-tab {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+        background: white;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .category-tab:hover { border-color: #0d6efd; }
+    .category-tab.active {
+        background: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+    .category-tab .count {
+        background: rgba(0,0,0,0.1);
+        padding: 0.1rem 0.4rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-left: 0.3rem;
+    }
+    .category-tab.active .count { background: rgba(255,255,255,0.3); }
+</style>
+
+<!-- Header -->
+<div class="mp-header">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h2><i class="bi bi-box-seam me-2"></i>Matérias-Primas</h2>
+            <p class="mb-0 opacity-75">Gerencie ativos, excipientes e bases para manipulação</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <button class="btn btn-light me-2" onclick="exportData()">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <button class="btn btn-warning" onclick="openCreateModal()">
+                <i class="bi bi-plus-lg me-1"></i>Nova Matéria-Prima
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="stat-mini">
+            <div class="value text-primary" id="statTotal">-</div>
+            <div class="label">Total</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-mini">
+            <div class="value text-success" id="statActive">-</div>
+            <div class="label">Ativos</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-mini">
+            <div class="value text-danger" id="statControlled">-</div>
+            <div class="label">Controlados</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-mini">
+            <div class="value text-warning" id="statLowStock">-</div>
+            <div class="label">Estoque Baixo</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-mini">
+            <div class="value text-info" id="statNoPrice">-</div>
+            <div class="label">Sem Preço</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-mini">
+            <div class="value text-secondary" id="statVirtual">-</div>
+            <div class="label">Virtuais</div>
+        </div>
+    </div>
+</div>
+
+<!-- Categorias -->
+<div class="category-tabs" id="categoryTabs">
+    <div class="category-tab active" data-category="" onclick="filterByCategory(this)">
+        Todas <span class="count" id="countAll">-</span>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="filters-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <input type="text" class="form-control" id="searchInput" placeholder="Buscar por nome, DCB, CAS..." oninput="debounceSearch()">
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="filterControl" onchange="loadData()">
+                <option value="">Controle</option>
+                <option value="COMUM">Comum</option>
+                <option value="C1">Lista C1</option>
+                <option value="C2">Lista C2</option>
+                <option value="C4">Lista C4</option>
+                <option value="C5">Lista C5</option>
+                <option value="A1">Lista A1</option>
+                <option value="A2">Lista A2</option>
+                <option value="B1">Lista B1</option>
+                <option value="B2">Lista B2</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="filterUsage" onchange="loadData()">
+                <option value="">Uso</option>
+                <option value="ORAL">Oral</option>
+                <option value="TOPICAL">Tópico</option>
+                <option value="BOTH">Ambos</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="filterStock" onchange="loadData()">
+                <option value="">Estoque</option>
+                <option value="ok">Normal</option>
+                <option value="low">Baixo</option>
+                <option value="out">Zerado</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="filterActive" onchange="loadData()">
+                <option value="true">Ativos</option>
+                <option value="false">Inativos</option>
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela -->
+<div class="mp-table">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th style="width: 30%;">Nome / Código</th>
+                <th>Categoria</th>
+                <th>Controle</th>
+                <th>Uso</th>
+                <th>Estoque</th>
+                <th>Preço Unit.</th>
+                <th>Densidade</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr>
+                <td colspan="8" class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginação -->
+<nav class="mt-3" id="pagination"></nav>
+
+<!-- Modal Criar/Editar -->
+<div class="modal fade" id="formModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="formModalTitle">
+                    <i class="bi bi-box-seam me-2"></i>Nova Matéria-Prima
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="formId">
+                
+                <div class="row">
+                    <!-- Coluna Esquerda -->
+                    <div class="col-md-6">
+                        <!-- Identificação -->
+                        <div class="form-section">
+                            <div class="form-section-title"><i class="bi bi-tag me-1"></i>Identificação</div>
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label">Nome *</label>
+                                    <input type="text" class="form-control" id="formName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Código DCB</label>
+                                    <input type="text" class="form-control" id="formDcbCode" placeholder="Ex: 01234">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Número CAS</label>
+                                    <input type="text" class="form-control" id="formCasNumber" placeholder="Ex: 50-78-2">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Sinônimos</label>
+                                    <input type="text" class="form-control" id="formSynonyms" placeholder="Nomes alternativos separados por vírgula">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Categoria</label>
+                                    <input type="text" class="form-control" id="formCategory" list="categoryList" placeholder="Ex: Vitaminas">
+                                    <datalist id="categoryList"></datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Popularidade</label>
+                                    <input type="number" class="form-control" id="formPopularity" min="1" max="100" value="50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controle e Uso -->
+                        <div class="form-section">
+                            <div class="form-section-title"><i class="bi bi-shield-check me-1"></i>Controle e Uso</div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tipo de Controle *</label>
+                                    <select class="form-select" id="formControlType">
+                                        <option value="COMUM">Comum</option>
+                                        <option value="C1">Lista C1 - Outras substâncias</option>
+                                        <option value="C2">Lista C2 - Retinoides</option>
+                                        <option value="C4">Lista C4 - Anti-retrovirais</option>
+                                        <option value="C5">Lista C5 - Anabolizantes</option>
+                                        <option value="A1">Lista A1 - Entorpecentes</option>
+                                        <option value="A2">Lista A2 - Entorpecentes (uso permitido)</option>
+                                        <option value="B1">Lista B1 - Psicotrópicos</option>
+                                        <option value="B2">Lista B2 - Psicotrópicos (uso permitido)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Uso Permitido *</label>
+                                    <select class="form-select" id="formAllowedUsage">
+                                        <option value="BOTH">Oral e Tópico</option>
+                                        <option value="ORAL">Apenas Oral</option>
+                                        <option value="TOPICAL">Apenas Tópico</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Estado Físico</label>
+                                    <select class="form-select" id="formPhysicalState">
+                                        <option value="SOLID">Sólido</option>
+                                        <option value="LIQUID">Líquido</option>
+                                        <option value="SEMI_SOLID">Semi-sólido</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Unidade Padrão</label>
+                                    <select class="form-select" id="formUnit">
+                                        <option value="g">Gramas (g)</option>
+                                        <option value="mg">Miligramas (mg)</option>
+                                        <option value="mL">Mililitros (mL)</option>
+                                        <option value="L">Litros (L)</option>
+                                        <option value="kg">Quilogramas (kg)</option>
+                                        <option value="UI">Unidades Internacionais (UI)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita -->
+                    <div class="col-md-6">
+                        <!-- Propriedades Físicas -->
+                        <div class="form-section">
+                            <div class="form-section-title"><i class="bi bi-rulers me-1"></i>Propriedades Físicas (para Cápsulas)</div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Densidade Aparente (g/mL)</label>
+                                    <input type="number" class="form-control" id="formBulkDensity" step="0.0001" min="0" placeholder="Ex: 0.5000">
+                                    <small class="text-muted">Pó solto - essencial para cápsulas</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Densidade Compactada (g/mL)</label>
+                                    <input type="number" class="form-control" id="formTappedDensity" step="0.0001" min="0" placeholder="Ex: 0.7000">
+                                    <small class="text-muted">Após compactação</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fator de Correção</label>
+                                    <input type="number" class="form-control" id="formCorrectionFactor" step="0.01" min="0.1" max="10" value="1.00">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fator de Pureza</label>
+                                    <input type="number" class="form-control" id="formPurityFactor" step="0.01" min="0.1" max="1" value="1.00">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fator de Diluição</label>
+                                    <input type="number" class="form-control" id="formDilutionFactor" step="0.01" min="1" value="1.00">
+                                    <small class="text-muted">Ex: 100 para diluição 1:100</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Perda Típica (%)</label>
+                                    <input type="number" class="form-control" id="formLossFactor" step="0.1" min="0" max="50" value="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Precificação -->
+                        <div class="form-section">
+                            <div class="form-section-title"><i class="bi bi-currency-dollar me-1"></i>Precificação</div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Preço Base (R$/unidade)</label>
+                                    <input type="number" class="form-control" id="formBasePrice" step="0.0001" min="0" placeholder="0.0000">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Markup Específico (%)</label>
+                                    <input type="number" class="form-control" id="formSpecificMarkup" step="0.1" min="0" placeholder="Adicional">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Última Compra (R$)</label>
+                                    <input type="number" class="form-control" id="formLastPurchasePrice" step="0.0001" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Data Última Compra</label>
+                                    <input type="date" class="form-control" id="formLastPurchaseDate" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estoque -->
+                        <div class="form-section">
+                            <div class="form-section-title"><i class="bi bi-boxes me-1"></i>Estoque</div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Estoque Atual</label>
+                                    <input type="number" class="form-control" id="formCurrentStock" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Estoque Mínimo</label>
+                                    <input type="number" class="form-control" id="formMinStock" step="0.01" min="0" value="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Estoque Máximo</label>
+                                    <input type="number" class="form-control" id="formMaxStock" step="0.01" min="0">
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="formIsVirtual">
+                                        <label class="form-check-label" for="formIsVirtual">
+                                            Matéria-prima virtual (sem estoque físico)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div class="form-section">
+                    <div class="form-section-title"><i class="bi bi-journal-text me-1"></i>Informações Adicionais</div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Indicações Terapêuticas</label>
+                            <textarea class="form-control" id="formTherapeuticIndications" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Observações</label>
+                            <textarea class="form-control" id="formNotes" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="form-check me-auto">
+                    <input type="checkbox" class="form-check-input" id="formIsActive" checked>
+                    <label class="form-check-label" for="formIsActive">Ativo</label>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveForm()">
+                    <i class="bi bi-check-lg me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalhes -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailModalTitle">Detalhes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody">
+                <div class="text-center py-5"><div class="spinner-border"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="detailEditBtn">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // VARIÁVEIS GLOBAIS
+    // ═══════════════════════════════════════════════════════════════════════════
+    let currentPage = 1;
+    let pageSize = 25;
+    let searchTimeout = null;
+    let categories = [];
+    let currentCategory = '';
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INICIALIZAÇÃO
+    // ═══════════════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        loadCategories();
+        loadData();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ESTATÍSTICAS
+    // ═══════════════════════════════════════════════════════════════════════════
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/RawMaterials/stats');
+            const stats = await response.json();
+            
+            document.getElementById('statTotal').textContent = stats.total || 0;
+            document.getElementById('statActive').textContent = stats.active || 0;
+            document.getElementById('statControlled').textContent = stats.controlled || 0;
+            document.getElementById('statLowStock').textContent = stats.lowStock || 0;
+            document.getElementById('statNoPrice').textContent = stats.noPrice || 0;
+            document.getElementById('statVirtual').textContent = stats.virtual || 0;
+        } catch (e) {
+            console.error('Erro ao carregar estatísticas:', e);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CATEGORIAS
+    // ═══════════════════════════════════════════════════════════════════════════
+    async function loadCategories() {
+        try {
+            const response = await fetch('/api/RawMaterials/categories');
+            categories = await response.json();
+            
+            const container = document.getElementById('categoryTabs');
+            let html = `<div class="category-tab active" data-category="" onclick="filterByCategory(this)">
+                Todas <span class="count" id="countAll">-</span>
+            </div>`;
+            
+            categories.forEach(cat => {
+                html += `<div class="category-tab" data-category="${cat.name}" onclick="filterByCategory(this)">
+                    ${cat.name} <span class="count">${cat.count}</span>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+            
+            // Preencher datalist
+            const datalist = document.getElementById('categoryList');
+            datalist.innerHTML = categories.map(c => `<option value="${c.name}">`).join('');
+        } catch (e) {
+            console.error('Erro ao carregar categorias:', e);
+        }
+    }
+
+    function filterByCategory(el) {
+        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        currentCategory = el.dataset.category;
+        currentPage = 1;
+        loadData();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LISTAGEM
+    // ═══════════════════════════════════════════════════════════════════════════
+    function debounceSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => { currentPage = 1; loadData(); }, 300);
+    }
+
+    async function loadData() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+
+        const params = new URLSearchParams({
+            page: currentPage,
+            pageSize: pageSize
+        });
+
+        const search = document.getElementById('searchInput').value;
+        const control = document.getElementById('filterControl').value;
+        const usage = document.getElementById('filterUsage').value;
+        const stock = document.getElementById('filterStock').value;
+        const active = document.getElementById('filterActive').value;
+
+        if (search) params.append('search', search);
+        if (control) params.append('controlType', control);
+        if (usage) params.append('allowedUsage', usage);
+        if (stock) params.append('stockStatus', stock);
+        if (active) params.append('isActive', active);
+        if (currentCategory) params.append('category', currentCategory);
+
+        try {
+            const response = await fetch(`/api/RawMaterials?${params}`);
+            const data = await response.json();
+
+            renderTable(data.items || data);
+            renderPagination(data.total, data.totalPages);
+            
+            // Atualizar contador
+            document.getElementById('countAll').textContent = data.total || '-';
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Erro ao carregar dados</td></tr>';
+        }
+    }
+
+    function renderTable(items) {
+        const tbody = document.getElementById('tableBody');
+
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5">Nenhuma matéria-prima encontrada</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = items.map(item => {
+            const stockClass = item.currentStock <= 0 ? 'out' : (item.currentStock <= (item.minStock || 0) ? 'low' : 'ok');
+            const controlClass = (item.controlType || 'COMUM').toLowerCase();
+            const priceSource = getPriceSource(item);
+            
+            return `
+                <tr>
+                    <td>
+                        <div class="mp-name">${item.name}</div>
+                        <div class="mp-code">
+                            ${item.dcbCode ? `DCB: ${item.dcbCode}` : ''} 
+                            ${item.casNumber ? `| CAS: ${item.casNumber}` : ''}
+                        </div>
+                    </td>
+                    <td><span class="text-muted">${item.category || '-'}</span></td>
+                    <td><span class="control-badge ${controlClass}">${item.controlType || 'COMUM'}</span></td>
+                    <td>${formatUsage(item.allowedUsage)}</td>
+                    <td>
+                        <span class="stock-indicator ${stockClass}"></span>
+                        ${item.currentStock?.toFixed(2) || '0.00'} ${item.unit || 'g'}
+                    </td>
+                    <td>
+                        ${item.basePrice ? `R$ ${item.basePrice.toFixed(4)}` : '-'}
+                        <br><span class="price-source ${priceSource.class}">${priceSource.label}</span>
+                    </td>
+                    <td>${item.bulkDensity ? item.bulkDensity.toFixed(4) : '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewDetail('${item.id}')" title="Ver">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editItem('${item.id}')" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getPriceSource(item) {
+        if (item.stockPrice > 0) return { class: 'estoque', label: 'Estoque' };
+        if (item.lastPurchasePrice > 0) return { class: 'historico', label: 'Histórico' };
+        if (item.basePrice > 0) return { class: 'base', label: 'Base' };
+        return { class: 'sem', label: 'Sem preço' };
+    }
+
+    function formatUsage(usage) {
+        const map = { 'ORAL': '💊 Oral', 'TOPICAL': '🧴 Tópico', 'BOTH': '💊🧴 Ambos' };
+        return map[usage] || usage || '-';
+    }
+
+    function renderPagination(total, totalPages) {
+        const container = document.getElementById('pagination');
+        if (!totalPages || totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = '<ul class="pagination justify-content-center">';
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="goToPage(${currentPage - 1})">«</a></li>`;
+
+        for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="goToPage(${i})">${i}</a></li>`;
+        }
+
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="goToPage(${currentPage + 1})">»</a></li>`;
+        html += '</ul>';
+        html += `<div class="text-center text-muted small">Total: ${total}</div>`;
+
+        container.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadData();
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterControl').value = '';
+        document.getElementById('filterUsage').value = '';
+        document.getElementById('filterStock').value = '';
+        document.getElementById('filterActive').value = 'true';
+        currentCategory = '';
+        currentPage = 1;
+        document.querySelectorAll('.category-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+        loadData();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CRIAR/EDITAR
+    // ═══════════════════════════════════════════════════════════════════════════
+    function openCreateModal() {
+        document.getElementById('formId').value = '';
+        document.getElementById('formModalTitle').innerHTML = '<i class="bi bi-box-seam me-2"></i>Nova Matéria-Prima';
+        clearForm();
+        new bootstrap.Modal(document.getElementById('formModal')).show();
+    }
+
+    async function editItem(id) {
+        document.getElementById('formId').value = id;
+        document.getElementById('formModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Matéria-Prima';
+        
+        try {
+            const response = await fetch(`/api/RawMaterials/${id}`);
+            const item = await response.json();
+            fillForm(item);
+            new bootstrap.Modal(document.getElementById('formModal')).show();
+        } catch (e) {
+            showToast('Erro ao carregar dados', 'danger');
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('formName').value = '';
+        document.getElementById('formDcbCode').value = '';
+        document.getElementById('formCasNumber').value = '';
+        document.getElementById('formSynonyms').value = '';
+        document.getElementById('formCategory').value = '';
+        document.getElementById('formPopularity').value = '50';
+        document.getElementById('formControlType').value = 'COMUM';
+        document.getElementById('formAllowedUsage').value = 'BOTH';
+        document.getElementById('formPhysicalState').value = 'SOLID';
+        document.getElementById('formUnit').value = 'g';
+        document.getElementById('formBulkDensity').value = '';
+        document.getElementById('formTappedDensity').value = '';
+        document.getElementById('formCorrectionFactor').value = '1.00';
+        document.getElementById('formPurityFactor').value = '1.00';
+        document.getElementById('formDilutionFactor').value = '1.00';
+        document.getElementById('formLossFactor').value = '0';
+        document.getElementById('formBasePrice').value = '';
+        document.getElementById('formSpecificMarkup').value = '';
+        document.getElementById('formLastPurchasePrice').value = '';
+        document.getElementById('formLastPurchaseDate').value = '';
+        document.getElementById('formCurrentStock').value = '';
+        document.getElementById('formMinStock').value = '0';
+        document.getElementById('formMaxStock').value = '';
+        document.getElementById('formIsVirtual').checked = false;
+        document.getElementById('formTherapeuticIndications').value = '';
+        document.getElementById('formNotes').value = '';
+        document.getElementById('formIsActive').checked = true;
+    }
+
+    function fillForm(item) {
+        document.getElementById('formName').value = item.name || '';
+        document.getElementById('formDcbCode').value = item.dcbCode || '';
+        document.getElementById('formCasNumber').value = item.casNumber || '';
+        document.getElementById('formSynonyms').value = item.synonyms || '';
+        document.getElementById('formCategory').value = item.category || '';
+        document.getElementById('formPopularity').value = item.popularity || 50;
+        document.getElementById('formControlType').value = item.controlType || 'COMUM';
+        document.getElementById('formAllowedUsage').value = item.allowedUsage || 'BOTH';
+        document.getElementById('formPhysicalState').value = item.physicalState || 'SOLID';
+        document.getElementById('formUnit').value = item.unit || 'g';
+        document.getElementById('formBulkDensity').value = item.bulkDensity || '';
+        document.getElementById('formTappedDensity').value = item.tappedDensity || '';
+        document.getElementById('formCorrectionFactor').value = item.correctionFactor || 1;
+        document.getElementById('formPurityFactor').value = item.purityFactor || 1;
+        document.getElementById('formDilutionFactor').value = item.dilutionFactor || 1;
+        document.getElementById('formLossFactor').value = item.lossFactor || 0;
+        document.getElementById('formBasePrice').value = item.basePrice || '';
+        document.getElementById('formSpecificMarkup').value = item.specificMarkup || '';
+        document.getElementById('formLastPurchasePrice').value = item.lastPurchasePrice || '';
+        document.getElementById('formLastPurchaseDate').value = item.lastPurchasePriceDate?.split('T')[0] || '';
+        document.getElementById('formCurrentStock').value = item.currentStock || 0;
+        document.getElementById('formMinStock').value = item.minStock || 0;
+        document.getElementById('formMaxStock').value = item.maxStock || '';
+        document.getElementById('formIsVirtual').checked = item.isVirtual || false;
+        document.getElementById('formTherapeuticIndications').value = item.therapeuticIndications || '';
+        document.getElementById('formNotes').value = item.notes || '';
+        document.getElementById('formIsActive').checked = item.isActive !== false;
+    }
+
+    async function saveForm() {
+        const id = document.getElementById('formId').value;
+        const name = document.getElementById('formName').value.trim();
+        
+        if (!name) {
+            showToast('Nome é obrigatório', 'warning');
+            return;
+        }
+
+        const data = {
+            name: name,
+            dcbCode: document.getElementById('formDcbCode').value || null,
+            casNumber: document.getElementById('formCasNumber').value || null,
+            synonyms: document.getElementById('formSynonyms').value || null,
+            category: document.getElementById('formCategory').value || null,
+            popularity: parseInt(document.getElementById('formPopularity').value) || 50,
+            controlType: document.getElementById('formControlType').value,
+            allowedUsage: document.getElementById('formAllowedUsage').value,
+            physicalState: document.getElementById('formPhysicalState').value,
+            unit: document.getElementById('formUnit').value,
+            bulkDensity: parseFloat(document.getElementById('formBulkDensity').value) || null,
+            tappedDensity: parseFloat(document.getElementById('formTappedDensity').value) || null,
+            correctionFactor: parseFloat(document.getElementById('formCorrectionFactor').value) || 1,
+            purityFactor: parseFloat(document.getElementById('formPurityFactor').value) || 1,
+            dilutionFactor: parseFloat(document.getElementById('formDilutionFactor').value) || 1,
+            lossFactor: parseFloat(document.getElementById('formLossFactor').value) || 0,
+            basePrice: parseFloat(document.getElementById('formBasePrice').value) || null,
+            specificMarkup: parseFloat(document.getElementById('formSpecificMarkup').value) || null,
+            minStock: parseFloat(document.getElementById('formMinStock').value) || 0,
+            maxStock: parseFloat(document.getElementById('formMaxStock').value) || null,
+            isVirtual: document.getElementById('formIsVirtual').checked,
+            therapeuticIndications: document.getElementById('formTherapeuticIndications').value || null,
+            notes: document.getElementById('formNotes').value || null,
+            isActive: document.getElementById('formIsActive').checked
+        };
+
+        const url = id ? `/api/RawMaterials/${id}` : '/api/RawMaterials';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                showToast(id ? 'Matéria-prima atualizada!' : 'Matéria-prima criada!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+                loadData();
+                loadStats();
+                loadCategories();
+            } else {
+                const err = await response.json();
+                showToast(err.message || 'Erro ao salvar', 'danger');
+            }
+        } catch (e) {
+            showToast('Erro ao salvar', 'danger');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DETALHES
+    // ═══════════════════════════════════════════════════════════════════════════
+    async function viewDetail(id) {
+        const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+        document.getElementById('detailModalBody').innerHTML = '<div class="text-center py-5"><div class="spinner-border"></div></div>';
+        document.getElementById('detailEditBtn').onclick = () => { modal.hide(); editItem(id); };
+        modal.show();
+
+        try {
+            const response = await fetch(`/api/RawMaterials/${id}`);
+            const item = await response.json();
+            
+            document.getElementById('detailModalTitle').textContent = item.name;
+            document.getElementById('detailModalBody').innerHTML = renderDetailContent(item);
+        } catch (e) {
+            document.getElementById('detailModalBody').innerHTML = '<div class="alert alert-danger">Erro ao carregar</div>';
+        }
+    }
+
+    function renderDetailContent(item) {
+        return `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-2">Identificação</h6>
+                    <table class="table table-sm">
+                        <tr><td>Nome</td><td><strong>${item.name}</strong></td></tr>
+                        <tr><td>DCB</td><td>${item.dcbCode || '-'}</td></tr>
+                        <tr><td>CAS</td><td>${item.casNumber || '-'}</td></tr>
+                        <tr><td>Categoria</td><td>${item.category || '-'}</td></tr>
+                        <tr><td>Sinônimos</td><td>${item.synonyms || '-'}</td></tr>
+                    </table>
+                    
+                    <h6 class="text-muted mb-2 mt-3">Controle e Uso</h6>
+                    <table class="table table-sm">
+                        <tr><td>Controle</td><td><span class="control-badge ${(item.controlType || 'COMUM').toLowerCase()}">${item.controlType || 'COMUM'}</span></td></tr>
+                        <tr><td>Uso Permitido</td><td>${formatUsage(item.allowedUsage)}</td></tr>
+                        <tr><td>Estado Físico</td><td>${item.physicalState || '-'}</td></tr>
+                        <tr><td>Unidade</td><td>${item.unit || 'g'}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-2">Propriedades Físicas</h6>
+                    <table class="table table-sm">
+                        <tr><td>Densidade Aparente</td><td>${item.bulkDensity?.toFixed(4) || '-'} g/mL</td></tr>
+                        <tr><td>Densidade Compactada</td><td>${item.tappedDensity?.toFixed(4) || '-'} g/mL</td></tr>
+                        <tr><td>Fator de Correção</td><td>${item.correctionFactor || 1}</td></tr>
+                        <tr><td>Fator de Pureza</td><td>${item.purityFactor || 1}</td></tr>
+                        <tr><td>Fator de Diluição</td><td>${item.dilutionFactor || 1}</td></tr>
+                    </table>
+                    
+                    <h6 class="text-muted mb-2 mt-3">Precificação e Estoque</h6>
+                    <table class="table table-sm">
+                        <tr><td>Preço Base</td><td>R$ ${item.basePrice?.toFixed(4) || '-'}</td></tr>
+                        <tr><td>Última Compra</td><td>R$ ${item.lastPurchasePrice?.toFixed(4) || '-'}</td></tr>
+                        <tr><td>Estoque Atual</td><td><strong>${item.currentStock?.toFixed(2) || 0} ${item.unit}</strong></td></tr>
+                        <tr><td>Estoque Mínimo</td><td>${item.minStock || 0} ${item.unit}</td></tr>
+                    </table>
+                </div>
+            </div>
+            ${item.therapeuticIndications ? `<div class="mt-3"><strong>Indicações:</strong> ${item.therapeuticIndications}</div>` : ''}
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // EXPORTAR
+    // ═══════════════════════════════════════════════════════════════════════════
+    function exportData() {
+        window.location.href = '/api/RawMaterials/export?format=csv';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // UTILITÁRIOS
+    // ═══════════════════════════════════════════════════════════════════════════
+    function showToast(message, type = 'info') {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1100';
+            document.body.appendChild(container);
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        container.appendChild(toast);
+        new bootstrap.Toast(toast).show();
+        toast.addEventListener('hidden.bs.toast', () => toast.remove());
+    }
+</script>
+}

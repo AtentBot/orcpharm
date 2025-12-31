@@ -106,7 +106,7 @@ public class QuoteApprovalController : ControllerBase
             return NotFound(QuoteApiResponse<QuotePreviewDto>.Error("Ordem não encontrada"));
 
         decimal totalMaterialsCost = 0;
-        var components = new List<QuoteComponentDto>();
+        var components = new List<ManipulationComponentDto>();
 
         if (order.Formula?.Components != null)
         {
@@ -153,7 +153,7 @@ public class QuoteApprovalController : ControllerBase
                 var totalCost = quantity * unitCost;
                 totalMaterialsCost += totalCost;
 
-                components.Add(new QuoteComponentDto
+                components.Add(new ManipulationComponentDto
                 {
                     RawMaterialId = comp.RawMaterialId,
                     Name = comp.RawMaterial?.Name ?? "Componente",
@@ -485,12 +485,16 @@ public class QuoteApprovalController : ControllerBase
         }));
     }
 
+    /// <summary>
+    /// Estatísticas de ordens de manipulação
+    /// GET /api/QuoteApproval/stats
+    /// </summary>
     [HttpGet("stats")]
-    public async Task<ActionResult<QuoteApiResponse<QuoteStatsDto>>> GetStats([FromQuery] int days = 30)
+    public async Task<ActionResult<QuoteApiResponse<ManipulationOrderStatsDto>>> GetStats([FromQuery] int days = 30)
     {
         var establishmentId = GetEstablishmentId();
         if (establishmentId == Guid.Empty)
-            return Unauthorized(QuoteApiResponse<QuoteStatsDto>.Error("Sessão inválida"));
+            return Unauthorized(QuoteApiResponse<ManipulationOrderStatsDto>.Error("Sessão inválida"));
 
         var startDate = DateTime.UtcNow.AddDays(-days);
 
@@ -503,7 +507,7 @@ public class QuoteApprovalController : ControllerBase
         int pending = orders.Count(o => new[] { "PENDENTE", "ORCAMENTO", "AGUARDANDO_APROVACAO", "AGUARDANDO_PRODUCAO" }.Contains(o.Status));
         int rejected = orders.Count(o => o.Status == "CANCELADO");
 
-        return Ok(QuoteApiResponse<QuoteStatsDto>.Success(new QuoteStatsDto
+        return Ok(QuoteApiResponse<ManipulationOrderStatsDto>.Success(new ManipulationOrderStatsDto
         {
             Period = "Últimos " + days + " dias",
             TotalOrders = totalOrders,
@@ -568,7 +572,10 @@ public class QuoteApprovalController : ControllerBase
     }
 }
 
-// DTOs
+// ═══════════════════════════════════════════════════════════════════════════════
+// DTOs - QuoteApprovalController
+// ═══════════════════════════════════════════════════════════════════════════════
+
 public class PendingOrderDto
 {
     public Guid Id { get; set; }
@@ -588,7 +595,10 @@ public class RejectManipulationOrderDto
     public string Reason { get; set; } = "";
 }
 
-public class QuoteStatsDto
+/// <summary>
+/// Estatísticas de ordens de manipulação (renomeado de QuoteStatsDto para evitar conflito)
+/// </summary>
+public class ManipulationOrderStatsDto
 {
     public string Period { get; set; } = "";
     public int TotalOrders { get; set; }
@@ -681,7 +691,7 @@ public class QuotePreviewDto
     public string FormulaName { get; set; } = "";
     public decimal Quantity { get; set; }
     public string Unit { get; set; } = "";
-    public List<QuoteComponentDto> Components { get; set; } = new();
+    public List<ManipulationComponentDto> Components { get; set; } = new();
     public decimal MaterialsCost { get; set; }
     public decimal MarkupPercentage { get; set; }
     public decimal MarkupValue { get; set; }
@@ -695,7 +705,10 @@ public class QuotePreviewDto
     public string EstimatedDelivery { get; set; } = "";
 }
 
-public class QuoteComponentDto
+/// <summary>
+/// Componente de manipulação (renomeado de QuoteComponentDto para evitar conflito)
+/// </summary>
+public class ManipulationComponentDto
 {
     public Guid RawMaterialId { get; set; }
     public string Name { get; set; } = "";

@@ -48,7 +48,7 @@ public class PDVViewController : Controller
 
         ViewBag.EmployeeName = employee.FullName;
         ViewBag.EmployeePosition = employee.JobPosition?.Name ?? "";
-        return View();
+        return View("~/Views/PDV/Index.cshtml");
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ public class PDVViewController : Controller
             .ToListAsync();
 
         ViewBag.EmployeeName = employee.FullName;
-        return View(ordersAguardando);
+        return View("~/Views/PDVView/Orcamentos.cshtml", ordersAguardando);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public class PDVViewController : Controller
         }
 
         ViewBag.EmployeeName = employee.FullName;
-        return View(order);
+        return View("~/Views/PDVView/VendaRapida.cshtml", order);
     }
 
     /// <summary>
@@ -146,7 +146,7 @@ public class PDVViewController : Controller
             .ToListAsync();
         ViewBag.Payments = payments;
 
-        return View(sale);
+        return View("~/Views/PDVView/Recibo.cshtml", sale);
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public class PDVViewController : Controller
         ViewBag.TotalVendas = vendas.Count(v => v.Status == "FINALIZADA");
         ViewBag.TotalFaturamento = vendas.Where(v => v.Status == "FINALIZADA").Sum(v => v.TotalAmount);
 
-        return View(vendas);
+        return View("~/Views/PDVView/Historico.cshtml", vendas);
     }
 
     /// <summary>
@@ -232,7 +232,7 @@ public class PDVViewController : Controller
         ViewBag.TotalPix = movements.Where(m => m.PaymentMethod == "PIX" && m.MovementType == "ENTRADA").Sum(m => m.Amount);
         ViewBag.TotalSaidas = movements.Where(m => m.MovementType == "SAIDA" || m.MovementType == "SANGRIA").Sum(m => m.Amount);
 
-        return View();
+        return View("~/Views/PDVView/Fechamento.cshtml");
     }
 
     /// <summary>
@@ -259,6 +259,6 @@ public class PDVViewController : Controller
         }
 
         ViewBag.EmployeeName = employee.FullName;
-        return View();
+        return View("~/Views/PDVView/AbrirCaixa.cshtml");
     }
 }

@@ -294,18 +294,18 @@
                     </li>
 
                     <!-- ═══════════════════════════════════════════════ -->
-                    <!-- ESTOQUE - ATUALIZADO COM DASHBOARD DE PREÇOS -->
+                    <!-- ESTOQUE - ATUALIZADO COM NOVAS FUNCIONALIDADES -->
                     <!-- ═══════════════════════════════════════════════ -->
                     @if (canManageInventory)
                     {
                         <li class="nav-item">
-                            <a class="nav-link has-submenu @(currentController == "Stock" || currentPath.StartsWith("/materias-primas") || currentPath.StartsWith("/precificacao") ? "active open" : "")" 
+                            <a class="nav-link has-submenu @(currentController == "Stock" || currentPath.StartsWith("/materias-primas") || currentPath.StartsWith("/precificacao") || currentPath.StartsWith("/lotes") ? "active open" : "")" 
                                href="#" 
                                onclick="toggleSubmenu(event, 'estoqueSubmenu')">
                                 <i class="bi bi-boxes"></i>
                                 Estoque
                             </a>
-                            <ul class="nav flex-column nav-submenu @(currentController == "Stock" || currentPath.StartsWith("/materias-primas") || currentPath.StartsWith("/precificacao") ? "show" : "")" id="estoqueSubmenu">
+                            <ul class="nav flex-column nav-submenu @(currentController == "Stock" || currentPath.StartsWith("/materias-primas") || currentPath.StartsWith("/precificacao") || currentPath.StartsWith("/lotes") ? "show" : "")" id="estoqueSubmenu">
                                 <li class="nav-item">
                                     <a class="nav-link @(currentPath == "/stock" ? "active" : "")" href="/Stock">
                                         <i class="bi bi-grid"></i>
@@ -318,9 +318,16 @@
                                         Matérias-Primas
                                     </a>
                                 </li>
+                                <!-- ✅ NOVO: Criar Matéria-Prima -->
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/materias-primas/criar" ? "active" : "")" href="/materias-primas/criar">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Nova Matéria-Prima
+                                    </a>
+                                </li>
                                 <!-- ✅ Dashboard de Preços -->
                                 <li class="nav-item">
-                                    <a class="nav-link @(currentPath.StartsWith("/precificacao") ? "active" : "")" href="/Precificacao">
+                                    <a class="nav-link @(currentPath == "/materias-primas/precos" ? "active" : "")" href="/materias-primas/precos">
                                         <i class="bi bi-currency-dollar"></i>
                                         Dashboard de Preços
                                     </a>
@@ -449,18 +456,32 @@
                                         Dashboard Produção
                                     </a>
                                 </li>
+                                <!-- ✅ NOVO: Calculadora de Cápsulas -->
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/capsulas/calculadora" ? "active" : "")" href="/capsulas/calculadora">
+                                        <i class="bi bi-calculator"></i>
+                                        Calculadora Cápsulas
+                                    </a>
+                                </li>
+                                <!-- ✅ NOVO: Formas Farmacêuticas -->
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath.StartsWith("/formas-farmaceuticas") ? "active" : "")" href="/formas-farmaceuticas">
+                                        <i class="bi bi-capsule"></i>
+                                        Formas Farmacêuticas
+                                    </a>
+                                </li>
                             </ul>
                         </li>
 
                         <!-- Prescrições -->
                         <li class="nav-item">
-                            <a class="nav-link has-submenu @(currentController == "PrescriptionsView" ? "active open" : "")"
+                            <a class="nav-link has-submenu @(currentController == "PrescriptionsView" || currentPath.StartsWith("/orcamentos") ? "active open" : "")"
                                href="#"
                                onclick="toggleSubmenu(event, 'prescricoesSubmenu')">
                                 <i class="bi bi-file-medical"></i>
                                 Prescrições
                             </a>
-                            <ul class="nav flex-column nav-submenu @(currentController == "PrescriptionsView" ? "show" : "")" id="prescricoesSubmenu">
+                            <ul class="nav flex-column nav-submenu @(currentController == "PrescriptionsView" || currentPath.StartsWith("/orcamentos") ? "show" : "")" id="prescricoesSubmenu">
                                 <li class="nav-item">
                                     <a class="nav-link" href="/PrescriptionsView">
                                         <i class="bi bi-list-ul"></i>
@@ -471,6 +492,13 @@
                                     <a class="nav-link" href="/PrescriptionsView/Create">
                                         <i class="bi bi-plus-circle"></i>
                                         Nova Prescrição
+                                    </a>
+                                </li>
+                                <!-- ✅ NOVO: Orçamentos -->
+                                <li class="nav-item">
+                                    <a class="nav-link @(currentPath == "/orcamentos" ? "active" : "")" href="/orcamentos">
+                                        <i class="bi bi-calculator"></i>
+                                        Orçamentos
                                     </a>
                                 </li>
                                 <li class="nav-item">

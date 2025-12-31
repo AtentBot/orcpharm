@@ -26,34 +26,89 @@ public class RawMaterial
     public string Name { get; set; } = default!;
 
     [MaxLength(50)]
-    public string? DcbCode { get; set; } // Denominação Comum Brasileira
+    public string? DcbCode { get; set; }
 
     [MaxLength(50)]
-    public string? DciCode { get; set; } // Denominação Comum Internacional
+    public string? DciCode { get; set; }
 
     [Required, MaxLength(50)]
-    public string CasNumber { get; set; } = default!; // Chemical Abstracts Service
+    public string CasNumber { get; set; } = default!;
 
     [MaxLength(500)]
     public string? Description { get; set; }
 
-    // Classificação regulatória
     [Required, MaxLength(20)]
     public string ControlType { get; set; } = "COMUM";
-    // COMUM, LISTA_A, LISTA_B, LISTA_C1, LISTA_C2, ANTIMICROBIANO, HORMONIO
 
-    // Unidade de medida
     [Required, MaxLength(10)]
-    public string Unit { get; set; } = "g"; // g, mg, mL, UI
+    public string Unit { get; set; } = "g";
 
-    // Fatores de correção
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FATORES BASE
+    // ═══════════════════════════════════════════════════════════════════════════
+
     [Column(TypeName = "decimal(10,4)")]
     public decimal PurityFactor { get; set; } = 1.0m;
 
     [Column(TypeName = "decimal(10,4)")]
     public decimal EquivalenceFactor { get; set; } = 1.0m;
 
-    // Estoque
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROPRIEDADES FÍSICAS (para cálculo de cápsulas e formulações)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Uso permitido: ORAL, TOPICAL, BOTH
+    /// </summary>
+    [Required, MaxLength(20)]
+    public string AllowedUsage { get; set; } = "BOTH";
+
+    /// <summary>
+    /// Estado físico: SOLID, LIQUID, SEMI_SOLID
+    /// </summary>
+    [Required, MaxLength(20)]
+    public string PhysicalState { get; set; } = "SOLID";
+
+    /// <summary>
+    /// Granulometria do pó
+    /// </summary>
+    [MaxLength(50)]
+    public string? ParticleSize { get; set; }
+
+    /// <summary>
+    /// Densidade aparente do pó solto (g/mL)
+    /// </summary>
+    [Column(TypeName = "decimal(6,4)")]
+    public decimal? BulkDensity { get; set; }
+
+    /// <summary>
+    /// Densidade após compactação (g/mL)
+    /// </summary>
+    [Column(TypeName = "decimal(6,4)")]
+    public decimal? TappedDensity { get; set; }
+
+    /// <summary>
+    /// Fator de correção por variação entre lotes
+    /// </summary>
+    [Column(TypeName = "decimal(6,4)")]
+    public decimal CorrectionFactor { get; set; } = 1.0m;
+
+    /// <summary>
+    /// Fator de diluição (ex: 100 para ativo 1:100)
+    /// </summary>
+    [Column(TypeName = "decimal(8,4)")]
+    public decimal DilutionFactor { get; set; } = 1.0m;
+
+    /// <summary>
+    /// Perda típica em manipulação (%)
+    /// </summary>
+    [Column(TypeName = "decimal(5,2)")]
+    public decimal LossFactor { get; set; } = 0m;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ESTOQUE
+    // ═══════════════════════════════════════════════════════════════════════════
+
     [Column(TypeName = "decimal(18,4)")]
     public decimal CurrentStock { get; set; } = 0;
 
@@ -63,7 +118,10 @@ public class RawMaterial
     [Column(TypeName = "decimal(18,4)")]
     public decimal MaximumStock { get; set; } = 0;
 
-    // Condições de armazenamento
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CONDIÇÕES DE ARMAZENAMENTO
+    // ═══════════════════════════════════════════════════════════════════════════
+
     [MaxLength(200)]
     public string? StorageConditions { get; set; }
 
@@ -71,20 +129,18 @@ public class RawMaterial
     public bool LightSensitive { get; set; } = false;
     public bool HumiditySensitive { get; set; } = false;
 
-    // ════════════════════════════════════════════════════════════════════════
-    // PRECIFICAÇÃO INTELIGENTE
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PRECIFICAÇÃO
+    // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Preço base de referência de mercado (R$/unidade)
-    /// Usado como fallback quando não há estoque nem histórico
     /// </summary>
     [Column(TypeName = "decimal(18,4)")]
     public decimal? BasePrice { get; set; }
 
     /// <summary>
     /// Último preço efetivamente pago (R$/unidade)
-    /// Atualizado automaticamente quando batch é aprovado
     /// </summary>
     [Column(TypeName = "decimal(18,4)")]
     public decimal? LastKnownPrice { get; set; }
@@ -95,50 +151,49 @@ public class RawMaterial
     public DateTime? LastPriceDate { get; set; }
 
     /// <summary>
-    /// TRUE = ingrediente virtual, nunca teve em estoque físico
-    /// Usado para ingredientes importados do catálogo base
+    /// Último preço de compra (atualizado automaticamente)
+    /// </summary>
+    [Column(TypeName = "decimal(18,4)")]
+    public decimal? LastPurchasePrice { get; set; }
+
+    /// <summary>
+    /// Data do último preço de compra
+    /// </summary>
+    public DateTime? LastPurchasePriceDate { get; set; }
+
+    /// <summary>
+    /// TRUE = nunca teve em estoque, apenas referência
     /// </summary>
     public bool IsVirtual { get; set; } = false;
 
     /// <summary>
     /// Origem do preço atual: ESTOQUE, HISTORICO, BASE
     /// </summary>
-    [MaxLength(20)]
+    [Required, MaxLength(20)]
     public string PriceSource { get; set; } = "BASE";
 
-    // ════════════════════════════════════════════════════════════════════════
-    // CATEGORIZAÇÃO E BUSCA
-    // ════════════════════════════════════════════════════════════════════════
-
     /// <summary>
-    /// Categoria do ingrediente (Vitaminas, Minerais, Aminoácidos, etc.)
+    /// Markup específico adicional para este ativo (%)
     /// </summary>
+    [Column(TypeName = "decimal(5,2)")]
+    public decimal? SpecificMarkup { get; set; }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CATEGORIZAÇÃO E BUSCA
+    // ═══════════════════════════════════════════════════════════════════════════
+
     [MaxLength(100)]
     public string? Category { get; set; }
 
-    /// <summary>
-    /// Nomes alternativos separados por vírgula
-    /// Ex: "Vitamina D, Colecalciferol, D3"
-    /// </summary>
-    [MaxLength(500)]
     public string? Synonyms { get; set; }
 
-    /// <summary>
-    /// Indicações terapêuticas principais
-    /// Ex: "Ossos, imunidade, absorção de cálcio"
-    /// </summary>
-    [MaxLength(1000)]
     public string? Indications { get; set; }
 
-    /// <summary>
-    /// Popularidade de 1-100 para ordenação em buscas
-    /// Ingredientes mais usados = maior popularidade
-    /// </summary>
     public int Popularity { get; set; } = 50;
 
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════
     // STATUS E AUDITORIA
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════
 
     public bool IsActive { get; set; } = true;
     public bool RequiresSpecialAuthorization { get; set; } = false;
@@ -148,9 +203,9 @@ public class RawMaterial
     public Guid? CreatedByEmployeeId { get; set; }
     public Guid? UpdatedByEmployeeId { get; set; }
 
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════
     // NAVEGAÇÃO
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════
 
     public ICollection<Batch>? Batches { get; set; }
     public ICollection<FormulaComponent>? FormulaComponents { get; set; }
