@@ -198,6 +198,14 @@
             },
             "Patterns": null
           },
+          "Index_loadData.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/Index_loadData.js"
+            },
+            "Patterns": null
+          },
           "manipulation-weighing.js": {
             "Children": null,
             "Asset": {
@@ -363,6 +371,14 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "1i9pagwnol-dzzth887na.gz"
+            },
+            "Patterns": null
+          },
+          "Index_loadData.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "6viq24p44z-oxr62w29mq.gz"
             },
             "Patterns": null
           },

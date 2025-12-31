@@ -20,6 +20,7 @@ using Extensions;
 using Isopoh.Cryptography.Argon2;
 using Filters; 
 using Service.CustomerFormulas;
+using Service.PharmaceuticalForms;
 
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -51,6 +52,7 @@ builder.Services.AddScoped<CustomFormulaService>();
 builder.Services.AddScoped<PricingService>();
 builder.Services.AddScoped<PharmaceuticalAnalysisService>();
 builder.Services.AddScoped<RefundService>();
+builder.Services.AddScoped<CapsuleCalculationService>();
 
 
 builder.Services.Configure<Configuration.EmailSettings>(

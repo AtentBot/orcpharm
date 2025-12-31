@@ -45,6 +45,10 @@
       "PackagePath": "staticwebassets\\js\\CriarFormula.js"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\Index_loadData.js",
+      "PackagePath": "staticwebassets\\js\\Index_loadData.js"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\admin-charts.js",
       "PackagePath": "staticwebassets\\js\\admin-charts.js"
     },

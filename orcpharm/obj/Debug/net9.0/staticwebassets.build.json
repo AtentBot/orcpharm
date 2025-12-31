@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "DcwS4VW/grrXcwcymkMgK6Sr9I/sm3rnqyPEJmXiuns=",
+  "Hash": "yFE9Upf9qP+41MixTKW77A9ooWUAvME0G84BqnilIY0=",
   "Source": "orcpharm",
   "BasePath": "_content/orcpharm",
   "Mode": "Default",
@@ -267,6 +267,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map"
+    },
+    {
+      "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\6viq24p44z-oxr62w29mq.gz",
+      "SourceId": "orcpharm",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/orcpharm",
+      "RelativePath": "js/Index_loadData#[.{fingerprint=oxr62w29mq}]?.js.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\Index_loadData.js",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "j29i9mlo39",
+      "Integrity": "lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\Index_loadData.js"
     },
     {
       "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\7ai0ymz9gt-9j0vet4k8o.gz",
@@ -2304,6 +2325,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\js\\gateway-configuration.js"
+    },
+    {
+      "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\Index_loadData.js",
+      "SourceId": "orcpharm",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\",
+      "BasePath": "_content/orcpharm",
+      "RelativePath": "js/Index_loadData#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "oxr62w29mq",
+      "Integrity": "7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\Index_loadData.js"
     },
     {
       "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\manipulation-weighing.js",
@@ -8431,6 +8473,304 @@
         {
           "Name": "integrity",
           "Value": "sha256-DONR3e8MF/viKKbWkqzUEdj8Ds3R7c6R68LyRfUN5LA="
+        }
+      ]
+    },
+    {
+      "Route": "js/Index_loadData.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\6viq24p44z-oxr62w29mq.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000800000000"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1249"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 31 Dec 2025 13:01:15 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM="
+        }
+      ]
+    },
+    {
+      "Route": "js/Index_loadData.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\Index_loadData.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "5729"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 31 Dec 2025 13:01:15 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM="
+        }
+      ]
+    },
+    {
+      "Route": "js/Index_loadData.js.gz",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\6viq24p44z-oxr62w29mq.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1249"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 31 Dec 2025 13:01:15 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U="
+        }
+      ]
+    },
+    {
+      "Route": "js/Index_loadData.oxr62w29mq.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\6viq24p44z-oxr62w29mq.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000800000000"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1249"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 31 Dec 2025 13:01:15 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "oxr62w29mq"
+        },
+        {
+          "Name": "label",
+          "Value": "js/Index_loadData.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM="
+        }
+      ]
+    },
+    {
+      "Route": "js/Index_loadData.oxr62w29mq.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\Index_loadData.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "5729"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 31 Dec 2025 13:01:15 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "oxr62w29mq"
+        },
+        {
+          "Name": "label",
+          "Value": "js/Index_loadData.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM="
+        }
+      ]
+    },
+    {
+      "Route": "js/Index_loadData.oxr62w29mq.js.gz",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\6viq24p44z-oxr62w29mq.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1249"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 31 Dec 2025 13:01:15 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "oxr62w29mq"
+        },
+        {
+          "Name": "label",
+          "Value": "js/Index_loadData.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U="
         }
       ]
     },

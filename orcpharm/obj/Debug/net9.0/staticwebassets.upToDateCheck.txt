@@ -10,6 +10,7 @@ E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\admin-dashboard.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.min.css.map
+E:\orcpharm\orcpharm\orcpharm\wwwroot\js\Index_loadData.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\js\admin-charts.js
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\jquery-validation-unobtrusive\LICENSE.txt
 E:\orcpharm\orcpharm\orcpharm\wwwroot\lib\bootstrap\dist\css\bootstrap-utilities.rtl.css
@@ -103,6 +104,7 @@ wwwroot\js\CriarFormula.js
 wwwroot\js\employees-auth-adapter.js
 wwwroot\js\employees-shared.js
 wwwroot\js\gateway-configuration.js
+wwwroot\js\Index_loadData.js
 wwwroot\js\manipulation-weighing.js
 wwwroot\js\payment-management.js
 wwwroot\js\pdv.js

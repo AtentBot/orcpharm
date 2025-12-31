@@ -192,6 +192,18 @@
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-aWw5\u002BoI9F48V80a\u002BVf28UpMfNOQoSVGlYao9eTs582o="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"10948"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022aWw5\u002BoI9F48V80a\u002BVf28UpMfNOQoSVGlYao9eTs582o=\u0022"},{"Name":"Last-Modified","Value":"Wed, 26 Nov 2025 16:25:40 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/Index_loadData.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\Index_loadData.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"5729"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00227PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=\u0022"},{"Name":"Last-Modified","Value":"Wed, 31 Dec 2025 13:01:15 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/orcpharm/js/Index_loadData.oxr62w29mq.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\Index_loadData.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"oxr62w29mq"},{"Name":"integrity","Value":"sha256-7PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM="},{"Name":"label","Value":"_content/orcpharm/js/Index_loadData.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"5729"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u00227PQYMoqOAR1aBz6r5oeCVPjtQRtsYOSVMcoa9RNoHYM=\u0022"},{"Name":"Last-Modified","Value":"Wed, 31 Dec 2025 13:01:15 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/orcpharm/js/manipulation-weighing.h2aao0iczs.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\manipulation-weighing.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>

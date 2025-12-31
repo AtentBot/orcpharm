@@ -458,14 +458,14 @@
                                 </li>
                                 <!-- ✅ NOVO: Calculadora de Cápsulas -->
                                 <li class="nav-item">
-                                    <a class="nav-link @(currentPath == "/capsulas/calculadora" ? "active" : "")" href="/capsulas/calculadora">
+                                    <a class="nav-link @(currentPath.ToLower().Contains("capsulas/calculadora") ? "active" : "")" href="/FormasFarmaceuticas/Capsulas/Calculadora">
                                         <i class="bi bi-calculator"></i>
                                         Calculadora Cápsulas
                                     </a>
                                 </li>
                                 <!-- ✅ NOVO: Formas Farmacêuticas -->
                                 <li class="nav-item">
-                                    <a class="nav-link @(currentPath.StartsWith("/formas-farmaceuticas") ? "active" : "")" href="/formas-farmaceuticas">
+                                    <a class="nav-link @(currentPath.ToLower().StartsWith("/formasfarmaceuticas") ? "active" : "")" href="/FormasFarmaceuticas">
                                         <i class="bi bi-capsule"></i>
                                         Formas Farmacêuticas
                                     </a>
