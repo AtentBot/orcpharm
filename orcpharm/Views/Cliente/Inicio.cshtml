@@ -1,320 +1,289 @@
-@using Models
 @{
-    ViewData["Title"] = "Início";
-    ViewData["ActiveNav"] = "inicio";
-    Layout = "_LayoutCliente";
-    
-    var customer = ViewBag.Customer as Customer;
-    var establishment = ViewBag.Establishment as Establishment;
-    var recentOrders = ViewBag.RecentOrders as List<OnlineOrder> ?? new List<OnlineOrder>();
-    var pendingCount = (int)(ViewBag.PendingOrdersCount ?? 0);
-    var readyCount = (int)(ViewBag.ReadyOrdersCount ?? 0);
+    ViewData["Title"] = "Portal do Cliente";
+    Layout = null;
+    var customerName = ViewBag.CustomerName ?? "Cliente";
+    var firstName = customerName.ToString().Split(' ')[0];
+    var pharmacyName = ViewBag.PharmacyName ?? "Farmácia";
+    var cartCount = ViewBag.CartCount ?? 0;
 }
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <title>@ViewData["Title"] - OrcPharm</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #a5b4fc;
+            --secondary: #10b981; --accent: #f59e0b; --danger: #ef4444;
+            --gray-900: #111827; --gray-700: #374151; --gray-500: #6b7280;
+            --gray-400: #9ca3af; --gray-200: #e5e7eb; --gray-100: #f3f4f6;
+            --gray-50: #f9fafb; --white: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --gradient-secondary: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            --gradient-hero: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1); --shadow-glow: 0 0 40px rgba(99,102,241,0.3);
+            --radius: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 9999px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--gray-50); color: var(--gray-900); min-height: 100vh; padding-bottom: 100px; }
 
-<div class="container py-4">
-    <!-- Boas-vindas com botão de logout -->
-    <div class="d-flex justify-content-between align-items-start mb-4">
-        <div>
-            <h5 class="mb-1">Olá, @(customer?.FullName?.Split(' ')[0] ?? "Cliente")! 👋</h5>
-            <p class="text-muted mb-0">O que você precisa hoje?</p>
-        </div>
-        <div class="dropdown">
-            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/Cliente/MeusDados"><i class="bi bi-person me-2"></i>Meus Dados</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="/Cliente/Logout"><i class="bi bi-box-arrow-right me-2"></i>Sair</a></li>
-            </ul>
-        </div>
-    </div>
+        .hero-header { background: var(--gradient-hero); padding: 20px 20px 80px; position: relative; overflow: hidden; }
+        .hero-header::before { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%); border-radius: 50%; animation: float 8s ease-in-out infinite; }
+        @@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
-    <!-- Alertas de Pedidos -->
-    @if (readyCount > 0)
-    {
-        <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
-            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-            <div class="flex-grow-1">
-                <strong>@readyCount pedido(s) pronto(s)!</strong>
-                <div class="small">Disponível para retirada</div>
+        .header-top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10; margin-bottom: 24px; }
+        .greeting { color: var(--white); }
+        .greeting-text { font-size: 14px; opacity: 0.8; margin-bottom: 4px; }
+        .greeting-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .greeting-name .wave { animation: wave 2s ease-in-out infinite; display: inline-block; }
+        @@keyframes wave { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(20deg); } 75% { transform: rotate(-10deg); } }
+
+        .header-actions { display: flex; gap: 12px; }
+        .header-btn { width: 44px; height: 44px; border-radius: var(--radius-full); background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: all 0.3s; position: relative; text-decoration: none; }
+        .header-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
+        .header-btn .badge { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; background: var(--danger); border-radius: var(--radius-full); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #1e1b4b; }
+
+        .pharmacy-selector { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 10px 16px; border-radius: var(--radius-full); border: 1px solid rgba(255,255,255,0.2); color: var(--white); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s; position: relative; z-index: 10; margin-bottom: 20px; width: fit-content; }
+        .pharmacy-selector:hover { background: rgba(255,255,255,0.25); }
+
+        .search-container { position: relative; z-index: 10; }
+        .search-box { background: var(--white); border-radius: var(--radius-lg); padding: 16px 20px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-lg), var(--shadow-glow); cursor: pointer; transition: all 0.3s; }
+        .search-box:hover { transform: scale(1.02); }
+        .search-box i { font-size: 20px; color: var(--gray-400); }
+        .search-box span { flex: 1; color: var(--gray-400); font-size: 16px; }
+
+        .main-content { padding: 0 20px; margin-top: -40px; position: relative; z-index: 20; }
+
+        .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .action-card { background: var(--white); border-radius: var(--radius-lg); padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; border: 1px solid var(--gray-100); text-decoration: none; color: inherit; }
+        .action-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gradient-primary); transform: scaleX(0); transition: transform 0.3s; }
+        .action-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+        .action-card:hover::before { transform: scaleX(1); }
+        .action-card.featured { background: var(--gradient-primary); color: var(--white); border: none; }
+        .action-card.featured::before { display: none; }
+        .action-card .badge-new { position: absolute; top: 8px; right: 8px; background: var(--accent); color: var(--white); font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full); text-transform: uppercase; }
+        .action-icon { width: 56px; height: 56px; border-radius: var(--radius); background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px; color: var(--primary); transition: all 0.3s; }
+        .action-card:hover .action-icon { transform: scale(1.1) rotate(-5deg); }
+        .action-card.featured .action-icon { background: rgba(255,255,255,0.2); color: var(--white); }
+        .action-card.receita .action-icon { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #d97706; }
+        .action-card.formula .action-icon { background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); color: #7c3aed; }
+        .action-card.catalogo .action-icon { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #059669; }
+        .action-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+        .action-subtitle { font-size: 12px; color: var(--gray-500); }
+        .action-card.featured .action-subtitle { color: rgba(255,255,255,0.8); }
+
+        .promo-banner { background: var(--gradient-secondary); border-radius: var(--radius-xl); padding: 24px; margin-bottom: 24px; position: relative; overflow: hidden; cursor: pointer; transition: all 0.3s; text-decoration: none; display: block; }
+        .promo-banner:hover { transform: scale(1.02); box-shadow: var(--shadow-lg); }
+        .promo-content { position: relative; z-index: 1; color: var(--white); }
+        .promo-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+        .promo-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .promo-description { font-size: 14px; opacity: 0.9; margin-bottom: 16px; }
+        .promo-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--secondary); padding: 10px 20px; border-radius: var(--radius-full); font-weight: 600; font-size: 14px; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; }
+        .section-link { color: var(--primary); font-size: 14px; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+
+        .categories-scroll { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 24px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .categories-scroll::-webkit-scrollbar { display: none; }
+        .category-item { flex: 0 0 auto; text-align: center; cursor: pointer; transition: all 0.3s; text-decoration: none; color: inherit; }
+        .category-item:hover { transform: translateY(-4px); }
+        .category-icon { width: 64px; height: 64px; border-radius: var(--radius-lg); background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 8px; box-shadow: var(--shadow); }
+        .category-name { font-size: 12px; font-weight: 600; color: var(--gray-700); }
+
+        .order-card { background: var(--white); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; border: 1px solid var(--gray-100); cursor: pointer; transition: all 0.3s; }
+        .order-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary-light); }
+        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .order-info h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        .order-info p { font-size: 13px; color: var(--gray-500); }
+        .order-status { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+        .order-status.em-producao { background: #fef3c7; color: #d97706; }
+        .order-status.pronto { background: #d1fae5; color: #059669; }
+        .order-progress { display: flex; gap: 4px; margin-bottom: 12px; }
+        .progress-step { flex: 1; height: 4px; background: var(--gray-200); border-radius: var(--radius-full); }
+        .progress-step.active { background: var(--primary); }
+        .progress-step.completed { background: var(--secondary); }
+        .order-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--gray-100); }
+        .order-eta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray-500); }
+        .order-eta i { color: var(--primary); }
+        .order-track-btn { background: var(--gradient-primary); color: var(--white); padding: 8px 16px; border-radius: var(--radius-full); font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+
+        .empty-state { text-align: center; padding: 48px 24px; background: var(--white); border-radius: var(--radius-xl); border: 2px dashed var(--gray-200); }
+        .empty-icon { width: 80px; height: 80px; border-radius: var(--radius-full); background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--gray-400); margin: 0 auto 16px; }
+        .empty-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .empty-text { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
+        .empty-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gradient-primary); color: var(--white); padding: 14px 28px; border-radius: var(--radius-full); font-weight: 600; text-decoration: none; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--gray-100); padding: 8px 16px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); display: flex; justify-content: space-around; z-index: 1000; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 16px; border-radius: var(--radius); text-decoration: none; color: var(--gray-500); position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background: var(--gradient-primary); border-radius: var(--radius-full); }
+        .nav-item:hover { color: var(--primary); background: var(--gray-50); }
+        .nav-item i { font-size: 22px; }
+        .nav-item span { font-size: 11px; font-weight: 600; }
+        .nav-item.cart-nav .badge { position: absolute; top: 2px; right: 8px; width: 18px; height: 18px; background: var(--danger); border-radius: var(--radius-full); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: var(--white); }
+
+        .fab-container { position: fixed; bottom: 90px; right: 20px; z-index: 999; }
+        .fab-btn { width: 60px; height: 60px; border-radius: var(--radius-full); background: var(--gradient-primary); color: var(--white); border: none; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: var(--shadow-lg), var(--shadow-glow); transition: all 0.3s; }
+        .fab-btn:hover { transform: scale(1.1) rotate(90deg); }
+
+        @@media (min-width: 768px) { body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 40px rgba(0,0,0,0.1); } .bottom-nav { max-width: 480px; left: 50%; transform: translateX(-50%); } }
+    </style>
+</head>
+<body>
+    <header class="hero-header">
+        <div class="header-top">
+            <div class="greeting">
+                <p class="greeting-text" id="greetingText">Olá!</p>
+                <h1 class="greeting-name">@firstName <span class="wave">👋</span></h1>
             </div>
-            <a href="/Cliente/MeusPedidos?status=prontos" class="btn btn-success btn-sm">Ver</a>
-        </div>
-    }
-
-    @if (pendingCount > 0 && readyCount == 0)
-    {
-        <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
-            <i class="bi bi-clock-fill me-2 fs-5"></i>
-            <div class="flex-grow-1">
-                <strong>@pendingCount pedido(s) em andamento</strong>
+            <div class="header-actions">
+                <a href="/Cliente/Notificacoes" class="header-btn"><i class="bi bi-bell"></i><span class="badge">3</span></a>
+                <a href="/Cliente/Perfil" class="header-btn"><i class="bi bi-person"></i></a>
             </div>
-            <a href="/Cliente/MeusPedidos?status=pendentes" class="btn btn-info btn-sm text-white">Ver</a>
         </div>
-    }
+        <div class="pharmacy-selector" onclick="location.href='/Cliente/Estabelecimentos'">
+            <i class="bi bi-building"></i><span>@pharmacyName</span><i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="search-container">
+            <div class="search-box" onclick="location.href='/Cliente/Buscar'">
+                <i class="bi bi-search"></i><span>O que você precisa hoje?</span>
+            </div>
+        </div>
+    </header>
 
-    <!-- NOVO: Card de Destaque - Fórmula Personalizada -->
-    @if (establishment != null)
-    {
-        <a href="/Cliente/CriarFormula" class="text-decoration-none">
-            <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <div class="card-body text-white py-4">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 56px; height: 56px;">
-                            <i class="bi bi-stars fs-3"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center mb-1">
-                                <h6 class="mb-0 fw-bold">Criar Fórmula Personalizada</h6>
-                                <span class="badge bg-warning text-dark ms-2 small">NOVO</span>
-                            </div>
-                            <p class="mb-0 small opacity-90">Monte sua fórmula exclusiva em minutos</p>
-                        </div>
-                        <i class="bi bi-chevron-right fs-4"></i>
-                    </div>
-                </div>
+    <main class="main-content">
+        <section class="quick-actions">
+            <a href="/Cliente/EnviarReceita" class="action-card receita">
+                <div class="action-icon"><i class="bi bi-camera"></i></div>
+                <h3 class="action-title">Receita</h3>
+                <p class="action-subtitle">Enviar para orçar</p>
+            </a>
+            <a href="/Cliente/MinhaFormula" class="action-card formula featured">
+                <span class="badge-new">Novo</span>
+                <div class="action-icon"><i class="bi bi-stars"></i></div>
+                <h3 class="action-title">Fórmula</h3>
+                <p class="action-subtitle">Personalizada</p>
+            </a>
+            <a href="/Cliente/Catalogo" class="action-card catalogo">
+                <div class="action-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+                <h3 class="action-title">Catálogo</h3>
+                <p class="action-subtitle">Ver produtos</p>
+            </a>
+        </section>
+
+        <a href="/Cliente/MeusCupons" class="promo-banner">
+            <div class="promo-content">
+                <div class="promo-tag"><i class="bi bi-lightning-fill"></i>Oferta especial</div>
+                <h2 class="promo-title">15% OFF na primeira fórmula</h2>
+                <p class="promo-description">Use o código PRIMEIRA15 e ganhe desconto exclusivo!</p>
+                <span class="promo-btn">Ver cupons <i class="bi bi-arrow-right"></i></span>
             </div>
         </a>
-    }
 
-    <!-- Farmácia selecionada (opcional) -->
-    @if (establishment != null)
-    {
-        <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <div class="card-body text-white py-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <p class="small mb-0 opacity-75">Comprando em</p>
-                        <h6 class="mb-0">@establishment.NomeFantasia</h6>
-                    </div>
-                    <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/Inicio" class="btn btn-light btn-sm">
-                        <i class="bi bi-arrow-repeat"></i>
-                    </a>
-                </div>
+        <section id="activeOrders">
+            <div class="section-header">
+                <h2 class="section-title">Pedidos em andamento</h2>
+                <a href="/Cliente/MeusPedidos" class="section-link">Ver todos <i class="bi bi-chevron-right"></i></a>
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="card border-0 shadow-sm mb-4 bg-light">
-            <div class="card-body py-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <p class="small mb-0 text-muted">Nenhuma farmácia selecionada</p>
-                        <span class="small text-muted">Selecione para comprar</span>
-                    </div>
-                    <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/Inicio" class="btn btn-primary btn-sm">
-                        <i class="bi bi-shop me-1"></i>Escolher
-                    </a>
-                </div>
+            <div id="ordersContainer">
+                <!-- Carregado via JS ou empty state -->
             </div>
-        </div>
-    }
+        </section>
 
-    <!-- Ações principais -->
-    <div class="row g-3 mb-4">
-        <!-- NOVO: Card Fórmula Personalizada -->
-        <div class="col-6">
-            @if (establishment != null)
-            {
-                <a href="/Cliente/CriarFormula" class="card border-0 shadow-sm text-decoration-none h-100 position-relative">
-                    <div class="card-body text-center py-4">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                             style="width: 60px; height: 60px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                            <i class="bi bi-stars text-white fs-4"></i>
+        <section>
+            <div class="section-header"><h2 class="section-title">Categorias</h2></div>
+            <div class="categories-scroll">
+                <a href="/Cliente/Catalogo?categoria=dermatologicos" class="category-item"><div class="category-icon">🧴</div><span class="category-name">Dermatológicos</span></a>
+                <a href="/Cliente/Catalogo?categoria=capilar" class="category-item"><div class="category-icon">💇</div><span class="category-name">Capilares</span></a>
+                <a href="/Cliente/Catalogo?categoria=hormonal" class="category-item"><div class="category-icon">💊</div><span class="category-name">Hormonais</span></a>
+                <a href="/Cliente/Catalogo?categoria=vitaminas" class="category-item"><div class="category-icon">🍊</div><span class="category-name">Vitaminas</span></a>
+                <a href="/Cliente/Catalogo?categoria=emagrecimento" class="category-item"><div class="category-icon">🏃</div><span class="category-name">Emagrecimento</span></a>
+                <a href="/Cliente/Catalogo?categoria=suplementos" class="category-item"><div class="category-icon">💪</div><span class="category-name">Suplementos</span></a>
+            </div>
+        </section>
+
+        <section id="emptyState" style="display: none;">
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-bag-plus"></i></div>
+                <h3 class="empty-title">Faça seu primeiro pedido!</h3>
+                <p class="empty-text">Envie uma receita ou explore nosso catálogo de produtos manipulados.</p>
+                <a href="/Cliente/EnviarReceita" class="empty-btn"><i class="bi bi-camera"></i>Começar agora</a>
+            </div>
+        </section>
+    </main>
+
+    <div class="fab-container">
+        <button class="fab-btn" onclick="location.href='/Cliente/EnviarReceita'" title="Enviar Receita"><i class="bi bi-plus-lg"></i></button>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/Cliente/Inicio" class="nav-item active"><i class="bi bi-house-fill"></i><span>Início</span></a>
+        <a href="/Cliente/Buscar" class="nav-item"><i class="bi bi-search"></i><span>Buscar</span></a>
+        <a href="/Cliente/MeusPedidos" class="nav-item"><i class="bi bi-bag"></i><span>Pedidos</span></a>
+        <a href="/Cliente/Carrinho" class="nav-item cart-nav"><i class="bi bi-cart3"></i><span>Carrinho</span>@if((int)cartCount > 0){<span class="badge">@cartCount</span>}</a>
+        <a href="/Cliente/Perfil" class="nav-item"><i class="bi bi-person"></i><span>Perfil</span></a>
+    </nav>
+
+    <script>
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            let greeting = 'Olá!';
+            if (hour >= 5 && hour < 12) greeting = 'Bom dia!';
+            else if (hour >= 12 && hour < 18) greeting = 'Boa tarde!';
+            else greeting = 'Boa noite!';
+            document.getElementById('greetingText').textContent = greeting;
+        }
+        updateGreeting();
+
+        async function loadActiveOrders() {
+            const container = document.getElementById('ordersContainer');
+            try {
+                const response = await fetch('/api/cliente/orders/active');
+                const data = await response.json();
+                if (data.success && data.orders?.length > 0) {
+                    container.innerHTML = data.orders.map(order => {
+                        // Determinar classe e ícone do status
+                        const statusConfig = {
+                            'PENDING': { class: 'pendente', icon: 'bi-hourglass-split', steps: [true, false, false, false] },
+                            'CONFIRMED': { class: 'confirmado', icon: 'bi-check-circle', steps: [true, true, false, false] },
+                            'PREPARING': { class: 'em-producao', icon: 'bi-gear-fill', steps: [true, true, true, false] },
+                            'READY': { class: 'pronto', icon: 'bi-check-circle-fill', steps: [true, true, true, true] }
+                        };
+                        const config = statusConfig[order.status] || statusConfig['PENDING'];
+                        
+                        return `
+                        <div class="order-card" onclick="location.href='/Cliente/Pedido/${order.id}'">
+                            <div class="order-header">
+                                <div class="order-info"><h4>Pedido #${order.orderNumber}</h4><p>${order.description || 'Fórmula personalizada'}</p></div>
+                                <span class="order-status ${config.class}"><i class="bi ${config.icon}"></i>${order.statusDisplay}</span>
+                            </div>
+                            <div class="order-progress">${config.steps.map((completed, i) => 
+                                `<div class="progress-step ${completed ? (i === config.steps.filter(s=>s).length - 1 ? 'active' : 'completed') : ''}"></div>`
+                            ).join('')}</div>
+                            <div class="order-footer">
+                                <div class="order-eta"><i class="bi bi-clock"></i>Previsão: ${order.eta || '3 dias úteis'}</div>
+                                <button class="order-track-btn">Acompanhar</button>
+                            </div>
                         </div>
-                        <h6 class="mb-1">Fórmula Personalizada</h6>
-                        <p class="text-muted small mb-0">Crie sua fórmula</p>
-                    </div>
-                    <span class="position-absolute top-0 end-0 m-2 badge bg-warning text-dark">NOVO</span>
-                </a>
-            }
-            else
-            {
-                <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/CriarFormula" class="card border-0 shadow-sm text-decoration-none h-100">
-                    <div class="card-body text-center py-4">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
-                             style="width: 60px; height: 60px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                            <i class="bi bi-stars text-white fs-4"></i>
-                        </div>
-                        <h6 class="mb-1">Fórmula Personalizada</h6>
-                        <p class="text-muted small mb-0">Escolha a farmácia</p>
-                    </div>
-                </a>
-            }
-        </div>
-        <div class="col-6">
-            @if (establishment != null)
-            {
-                <a href="/Cliente/EnviarReceita" class="card border-0 shadow-sm text-decoration-none h-100">
-                    <div class="card-body text-center py-4">
-                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                            <i class="bi bi-camera text-primary fs-4"></i>
-                        </div>
-                        <h6 class="mb-1">Enviar Receita</h6>
-                        <p class="text-muted small mb-0">Fotografe sua receita</p>
-                    </div>
-                </a>
-            }
-            else
-            {
-                <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/EnviarReceita" class="card border-0 shadow-sm text-decoration-none h-100">
-                    <div class="card-body text-center py-4">
-                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                            <i class="bi bi-camera text-primary fs-4"></i>
-                        </div>
-                        <h6 class="mb-1">Enviar Receita</h6>
-                        <p class="text-muted small mb-0">Escolha a farmácia</p>
-                    </div>
-                </a>
-            }
-        </div>
-        <div class="col-6">
-            @if (establishment != null)
-            {
-                <a href="/Cliente/Catalogo" class="card border-0 shadow-sm text-decoration-none h-100">
-                    <div class="card-body text-center py-4">
-                        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                            <i class="bi bi-grid text-success fs-4"></i>
-                        </div>
-                        <h6 class="mb-1">Catálogo</h6>
-                        <p class="text-muted small mb-0">Ver produtos</p>
-                    </div>
-                </a>
-            }
-            else
-            {
-                <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/Catalogo" class="card border-0 shadow-sm text-decoration-none h-100">
-                    <div class="card-body text-center py-4">
-                        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                            <i class="bi bi-grid text-success fs-4"></i>
-                        </div>
-                        <h6 class="mb-1">Catálogo</h6>
-                        <p class="text-muted small mb-0">Escolha a farmácia</p>
-                    </div>
-                </a>
-            }
-        </div>
-        <div class="col-6">
-            <a href="/Cliente/MeusPedidos" class="card border-0 shadow-sm text-decoration-none h-100 position-relative">
-                <div class="card-body text-center py-4">
-                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="bi bi-bag text-warning fs-4"></i>
-                    </div>
-                    <h6 class="mb-1">Meus Pedidos</h6>
-                    <p class="text-muted small mb-0">Acompanhar status</p>
-                </div>
-                @if (pendingCount + readyCount > 0)
-                {
-                    <span class="position-absolute top-0 end-0 m-2 badge bg-danger">@(pendingCount + readyCount)</span>
+                    `}).join('');
+                } else {
+                    document.getElementById('activeOrders').style.display = 'none';
+                    document.getElementById('emptyState').style.display = 'block';
                 }
-            </a>
-        </div>
-        <div class="col-6">
-            <a href="/Cliente/Estabelecimentos" class="card border-0 shadow-sm text-decoration-none h-100">
-                <div class="card-body text-center py-4">
-                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="bi bi-shop text-info fs-4"></i>
-                    </div>
-                    <h6 class="mb-1">Farmácias</h6>
-                    <p class="text-muted small mb-0">Trocar farmácia</p>
-                </div>
-            </a>
-        </div>
-        <div class="col-6">
-            <a href="/Cliente/MeusDados" class="card border-0 shadow-sm text-decoration-none h-100">
-                <div class="card-body text-center py-4">
-                    <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                        <i class="bi bi-person text-secondary fs-4"></i>
-                    </div>
-                    <h6 class="mb-1">Meus Dados</h6>
-                    <p class="text-muted small mb-0">Editar perfil</p>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Pedidos recentes (de todas as farmácias) -->
-    <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0">Pedidos Recentes</h6>
-            <a href="/Cliente/MeusPedidos" class="text-decoration-none small">Ver todos</a>
-        </div>
-        
-        @if (recentOrders.Any())
-        {
-            foreach (var order in recentOrders)
-            {
-                var statusClass = order.Status switch
-                {
-                    "PENDING" => "warning",
-                    "CONFIRMED" => "info",
-                    "PREPARING" => "primary",
-                    "READY" => "success",
-                    "DELIVERED" => "secondary",
-                    "CANCELLED" => "danger",
-                    _ => "secondary"
-                };
-                
-                var statusText = order.Status switch
-                {
-                    "PENDING" => "Aguardando",
-                    "CONFIRMED" => "Confirmado",
-                    "PREPARING" => "Em Produção",
-                    "READY" => "Pronto",
-                    "DELIVERED" => "Entregue",
-                    "CANCELLED" => "Cancelado",
-                    _ => order.Status
-                };
-                
-                <div class="card border-0 shadow-sm mb-2">
-                    <div class="card-body py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <strong>#@order.OrderNumber</strong>
-                                    <span class="badge bg-@statusClass">@statusText</span>
-                                </div>
-                                <small class="text-muted">
-                                    @order.Establishment?.NomeFantasia • @order.CreatedAt.ToString("dd/MM HH:mm")
-                                </small>
-                            </div>
-                            <div class="text-end">
-                                <div class="fw-bold text-success">R$ @order.Total.ToString("N2")</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            } catch (e) {
+                document.getElementById('activeOrders').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
             }
         }
-        else
-        {
-            <div class="text-center py-4 text-muted">
-                <i class="bi bi-inbox fs-1"></i>
-                <p class="mt-2 mb-0">Nenhum pedido ainda</p>
-                <a href="/Cliente/Estabelecimentos?returnUrl=/Cliente/Catalogo" class="btn btn-primary btn-sm mt-3">
-                    Fazer primeiro pedido
-                </a>
-            </div>
-        }
-    </div>
-
-    <!-- WhatsApp da farmácia selecionada -->
-    @if (establishment != null && !string.IsNullOrEmpty(establishment.WhatsApp))
-    {
-        var whatsappNumber = establishment.WhatsApp.Replace("-", "").Replace(" ", "").Replace("(", "").Replace(")", "");
-        <div class="d-grid mb-3">
-            <a href="https://wa.me/55@whatsappNumber" class="btn btn-success" target="_blank">
-                <i class="bi bi-whatsapp me-2"></i>Falar com @establishment.NomeFantasia
-            </a>
-        </div>
-    }
-
-    <!-- Botão de Logout -->
-    <div class="d-grid">
-        <a href="/Cliente/Logout" class="btn btn-outline-danger">
-            <i class="bi bi-box-arrow-right me-2"></i>Sair da Conta
-        </a>
-    </div>
-</div>
+        loadActiveOrders();
+    </script>
+</body>
+</html>

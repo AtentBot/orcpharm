@@ -26,6 +26,18 @@ public class SubscriptionInvoice
     [Required]
     public decimal Amount { get; set; }
 
+    [Column("gateway_type")]
+    [MaxLength(20)]
+    public string? GatewayType { get; set; } // Stripe, MercadoPago, Abacatepay
+
+    [Column("external_payment_id")]
+    [MaxLength(255)]
+    public string? ExternalPaymentId { get; set; }
+
+    [Column("payment_method")]
+    [MaxLength(50)]
+    public string? PaymentMethod { get; set; }
+
     [Column("status")]
     [Required]
     [MaxLength(50)]

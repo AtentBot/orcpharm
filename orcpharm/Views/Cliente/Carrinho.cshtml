@@ -1,283 +1,643 @@
-@using Models
+@using Models.Pharmacy
 @{
-    ViewData["Title"] = "Carrinho";
-    ViewData["ActiveNav"] = "carrinho";
-    Layout = "_LayoutCliente";
-    
-    var establishment = ViewBag.Establishment as Establishment;
+    ViewData["Title"] = "Meu Carrinho";
+    Layout = null;
     var cart = ViewBag.Cart as CustomerCart;
-    var items = cart?.Items?.ToList() ?? new List<CustomerCartItem>();
-    var total = items.Sum(i => i.TotalPrice);
+    var cartItems = ViewBag.CartItems as List<CustomerCartItem> ?? new List<CustomerCartItem>();
+    var cartTotal = ViewBag.CartTotal as decimal? ?? 0;
+    var pharmacyName = ViewBag.PharmacyName ?? "Farmácia";
 }
-
-<style>
-    .cart-item {
-        background: white;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .cart-item-image {
-        width: 60px;
-        height: 60px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .cart-item-image i {
-        font-size: 24px;
-        color: #adb5bd;
-    }
-    .qty-mini {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .qty-mini button {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1px solid #dee2e6;
-        background: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-    }
-    .qty-mini button:hover {
-        background: #4361ee;
-        color: white;
-        border-color: #4361ee;
-    }
-    .summary-box {
-        background: white;
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .bottom-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        padding: 12px 20px;
-        box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-        z-index: 1000;
-    }
-</style>
-
-<div class="container py-4" style="padding-bottom: 100px;">
-    <!-- Header -->
-    <div class="d-flex align-items-center mb-4">
-        <a href="/Cliente/Catalogo" class="btn btn-link text-dark p-0 me-3">
-            <i class="bi bi-arrow-left fs-4"></i>
-        </a>
-        <div class="flex-grow-1">
-            <h5 class="mb-0">Meu Carrinho</h5>
-            <small class="text-muted">@establishment?.NomeFantasia</small>
-        </div>
-        @if (items.Any())
-        {
-            <button class="btn btn-link text-danger" onclick="clearCart()">
-                <i class="bi bi-trash"></i>
-            </button>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <title>@ViewData["Title"] - OrcPharm</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #a5b4fc;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --gray-900: #111827;
+            --gray-700: #374151;
+            --gray-500: #6b7280;
+            --gray-400: #9ca3af;
+            --gray-200: #e5e7eb;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+            --white: #ffffff;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
         }
-    </div>
 
-    @if (items.Any())
-    {
-        <!-- Itens -->
-        <div id="cartItems">
-            @foreach (var item in items)
-            {
-                <div class="cart-item" data-item-id="@item.Id">
-                    <div class="d-flex gap-3">
-                        <div class="cart-item-image">
-                            @if (item.CustomerFormula != null)
-                            {
-                                <i class="bi bi-stars text-warning"></i>
-                            }
-                            else
-                            {
-                                <i class="bi bi-capsule"></i>
-                            }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            min-height: 100vh;
+            padding-bottom: 180px;
+        }
+
+        .app-header {
+            background: var(--white);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--gray-100);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--gray-100);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .cart-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .item-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius);
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: var(--white);
+            flex-shrink: 0;
+        }
+
+        .item-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .item-description {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .item-price {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        .item-actions {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .remove-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-full);
+            background: #fee2e2;
+            border: none;
+            color: var(--danger);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gray-100);
+            border-radius: var(--radius-full);
+            padding: 4px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            background: var(--white);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .qty-btn:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .qty-value {
+            min-width: 24px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        /* Coupon Section */
+        .coupon-section {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .coupon-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+        }
+
+        .coupon-header i {
+            color: var(--accent);
+        }
+
+        .coupon-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .coupon-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+
+        .coupon-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .coupon-btn {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .coupon-btn:hover {
+            background: #d97706;
+        }
+
+        .coupon-applied {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #d1fae5;
+            border-radius: var(--radius);
+            color: #059669;
+        }
+
+        .coupon-applied-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coupon-remove {
+            background: none;
+            border: none;
+            color: #059669;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* Summary */
+        .summary {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row.total {
+            padding-top: 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .summary-row.total .value {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        .summary-row.discount {
+            color: var(--secondary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+        }
+
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: var(--radius-full);
+            background: var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--gray-400);
+            margin: 0 auto 20px;
+        }
+
+        .empty-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            font-size: 15px;
+            color: var(--gray-500);
+            margin-bottom: 24px;
+        }
+
+        .empty-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--gradient-primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-full);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Bottom Action */
+        .bottom-action {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            padding: 16px 20px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--gray-100);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--gradient-primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 16px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md), 0 0 40px rgba(99,102,241,0.3);
+        }
+
+        .checkout-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @@media (min-width: 768px) {
+            body { max-width: 480px; margin: 0 auto; }
+            .bottom-action { max-width: 480px; left: 50%; transform: translateX(-50%); }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <button class="back-btn" onclick="history.back()">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+        <div class="header-content">
+            <h1 class="header-title">Meu Carrinho</h1>
+            <p class="header-subtitle">@pharmacyName</p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        @if(cartItems.Any())
+        {
+            <div class="cart-items">
+                @foreach(var item in cartItems)
+                {
+                    <div class="cart-item" data-id="@item.Id">
+                        <div class="item-icon">
+                            <i class="bi bi-capsule"></i>
                         </div>
-                        <div class="flex-grow-1">
-                            @* ✅ TRATAMENTO PRODUTO vs FÓRMULA *@
-                            @if (item.Product != null)
-                            {
-                                <div class="fw-semibold" style="font-size: 14px;">@item.Product.Name</div>
-                                <div class="text-muted" style="font-size: 12px;">@item.Product.ShortDescription</div>
-                            }
-                            else if (item.CustomerFormula != null)
-                            {
-                                <div class="fw-semibold" style="font-size: 14px;">
-                                    <i class="bi bi-stars text-warning me-1"></i>
-                                    Fórmula Personalizada
-                                </div>
-                                <div class="text-muted" style="font-size: 12px;">
-                                    @item.CustomerFormula.Code
-                                </div>
-                                @if (!string.IsNullOrEmpty(item.Notes))
-                                {
-                                    <small class="text-muted d-block mt-1">@item.Notes</small>
-                                }
-                            }
-                            
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                @* ✅ SÓ MOSTRA CONTROLES SE FOR PRODUTO *@
-                                @if (item.Product != null)
-                                {
-                                    <div class="qty-mini">
-                                        <button onclick="updateQty('@item.Id', -1)"><i class="bi bi-dash"></i></button>
-                                        <span class="qty-value">@item.Quantity</span>
-                                        <button onclick="updateQty('@item.Id', 1)"><i class="bi bi-plus"></i></button>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="text-muted small">
-                                        <i class="bi bi-check-circle text-success me-1"></i>
-                                        Quantidade fixa
-                                    </div>
-                                }
-                                <div class="fw-bold text-success">R$ @item.TotalPrice.ToString("N2")</div>
+                        <div class="item-details">
+                            <h3 class="item-name">@(item.CustomerFormula?.CustomerName ?? item.Notes ?? "Fórmula")</h3>
+                            <p class="item-description">@(item.Notes ?? "Fórmula personalizada")</p>
+                            <span class="item-price">R$ @item.UnitPrice.ToString("N2")</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="remove-btn" onclick="removeItem('@item.Id')">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                            <div class="quantity-control">
+                                <button class="qty-btn" onclick="updateQty('@item.Id', -1)">−</button>
+                                <span class="qty-value">@item.Quantity</span>
+                                <button class="qty-btn" onclick="updateQty('@item.Id', 1)">+</button>
                             </div>
                         </div>
-                        <button class="btn btn-link text-danger p-0" onclick="removeItem('@item.Id')">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                    </div>
+                }
+            </div>
+
+            <!-- Coupon Section -->
+            <div class="coupon-section">
+                <h3 class="coupon-header">
+                    <i class="bi bi-ticket-perforated"></i>
+                    Cupom de desconto
+                </h3>
+                <div id="couponForm">
+                    <div class="coupon-form">
+                        <input type="text" class="coupon-input" id="couponCode" placeholder="Digite o código">
+                        <button class="coupon-btn" onclick="applyCoupon()">Aplicar</button>
                     </div>
                 </div>
-            }
-        </div>
+                <div id="couponApplied" class="coupon-applied" style="display: none;">
+                    <div class="coupon-applied-info">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span id="appliedCouponText">PRIMEIRA15 - 15% OFF</span>
+                    </div>
+                    <button class="coupon-remove" onclick="removeCoupon()">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
 
-        <!-- Resumo -->
-        <div class="summary-box mt-4">
-            <h6 class="mb-3">Resumo do Pedido</h6>
-            <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted">Subtotal (@items.Count itens)</span>
-                <span id="subtotal">R$ @total.ToString("N2")</span>
+            <!-- Summary -->
+            <div class="summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>R$ @cartTotal.ToString("N2")</span>
+                </div>
+                <div class="summary-row discount" id="discountRow" style="display: none;">
+                    <span>Desconto</span>
+                    <span id="discountValue">- R$ 0,00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Entrega</span>
+                    <span>A calcular</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span class="value" id="totalValue">R$ @cartTotal.ToString("N2")</span>
+                </div>
             </div>
-            <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted">Taxa de entrega</span>
-                <span class="text-success">Grátis</span>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-cart-x"></i>
+                </div>
+                <h3 class="empty-title">Seu carrinho está vazio</h3>
+                <p class="empty-text">Adicione produtos do catálogo ou envie uma receita para continuar</p>
+                <a href="/Cliente/Catalogo" class="empty-btn">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    Ver Catálogo
+                </a>
             </div>
-            <hr>
-            <div class="d-flex justify-content-between">
-                <span class="fw-bold">Total</span>
-                <span class="fw-bold text-success fs-5" id="totalValue">R$ @total.ToString("N2")</span>
-            </div>
-        </div>
+        }
+    </main>
 
-        <!-- Observações -->
-        <div class="mt-4">
-            <label class="form-label">Observações (opcional)</label>
-            <textarea class="form-control" id="notes" rows="2" placeholder="Alguma observação para a farmácia?"></textarea>
-        </div>
-    }
-    else
+    @if(cartItems.Any())
     {
-        <!-- Carrinho Vazio -->
-        <div class="text-center py-5">
-            <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                <i class="bi bi-cart fs-1 text-secondary"></i>
-            </div>
-            <h5>Seu carrinho está vazio</h5>
-            <p class="text-muted mb-4">Adicione produtos do catálogo para continuar</p>
-            <a href="/Cliente/Catalogo" class="btn btn-primary">
-                <i class="bi bi-grid me-2"></i>Ver Catálogo
-            </a>
+        <div class="bottom-action">
+            <button class="checkout-btn" onclick="checkout()">
+                <i class="bi bi-lock"></i>
+                Finalizar Pedido
+            </button>
         </div>
     }
-</div>
 
-@if (items.Any())
-{
-    <!-- Bottom Bar -->
-    <div class="bottom-bar">
-        <button type="button" class="btn btn-primary btn-lg w-100" onclick="checkout()">
-            <i class="bi bi-bag-check me-2"></i>Finalizar Pedido
-        </button>
-    </div>
-}
+    <script>
+        let subtotal = @cartTotal;
+        let discount = 0;
+        let appliedCoupon = null;
 
-@section Scripts {
-<script>
-    async function updateQty(itemId, delta) {
-        try {
-            const response = await fetch('/api/cliente/cart/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemId, delta })
-            });
-            const data = await response.json();
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message);
-            }
-        } catch (error) {
-            alert('Erro ao atualizar');
+        function updateTotal() {
+            const total = subtotal - discount;
+            document.getElementById('totalValue').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
         }
-    }
-    
-    async function removeItem(itemId) {
-        if (!confirm('Remover este item?')) return;
-        
-        try {
-            const response = await fetch('/api/cliente/cart/remove', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemId })
-            });
-            const data = await response.json();
-            if (data.success) {
-                location.reload();
-            }
-        } catch (error) {
-            alert('Erro ao remover');
-        }
-    }
-    
-    async function clearCart() {
-        if (!confirm('Limpar todo o carrinho?')) return;
-        
-        try {
-            const response = await fetch('/api/cliente/cart/clear', { method: 'POST' });
-            const data = await response.json();
-            if (data.success) {
-                location.reload();
-            }
-        } catch (error) {
-            alert('Erro ao limpar');
-        }
-    }
-    
-    async function checkout() {
-        const notes = document.getElementById('notes')?.value || '';
-        
-        try {
-            const response = await fetch('/api/cliente/orders/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notes })
-            });
-            const data = await response.json();
+
+        async function removeItem(id) {
+            if (!confirm('Remover este item do carrinho?')) return;
             
-            if (data.success) {
-                alert('Pedido #' + data.orderNumber + ' criado com sucesso!');
-                window.location.href = '/Cliente/MeusPedidos';
-            } else {
-                alert(data.message || 'Erro ao criar pedido');
+            try {
+                const response = await fetch(`/api/cliente/cart/items/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (e) {
+                console.error(e);
             }
-        } catch (error) {
-            alert('Erro ao finalizar pedido');
         }
-    }
-</script>
-}
+
+        async function updateQty(id, delta) {
+            const item = document.querySelector(`.cart-item[data-id="${id}"]`);
+            const qtyEl = item.querySelector('.qty-value');
+            let qty = parseInt(qtyEl.textContent) + delta;
+            
+            if (qty < 1) {
+                removeItem(id);
+                return;
+            }
+            
+            try {
+                await fetch(`/api/cliente/cart/items/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity: qty })
+                });
+                
+                qtyEl.textContent = qty;
+                location.reload(); // Refresh for updated totals
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function applyCoupon() {
+            const code = document.getElementById('couponCode').value.trim().toUpperCase();
+            if (!code) return;
+            
+            try {
+                const response = await fetch('/api/cliente/coupons/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, subtotal })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    appliedCoupon = data.coupon;
+                    discount = data.discountAmount;
+                    
+                    document.getElementById('couponForm').style.display = 'none';
+                    document.getElementById('couponApplied').style.display = 'flex';
+                    document.getElementById('appliedCouponText').textContent = 
+                        `${code} - ${data.coupon.discountDisplay}`;
+                    
+                    document.getElementById('discountRow').style.display = 'flex';
+                    document.getElementById('discountValue').textContent = 
+                        `- R$ ${discount.toFixed(2).replace('.', ',')}`;
+                    
+                    updateTotal();
+                } else {
+                    alert(data.message || 'Cupom inválido');
+                }
+            } catch (e) {
+                // Demo mode
+                discount = subtotal * 0.15;
+                document.getElementById('couponForm').style.display = 'none';
+                document.getElementById('couponApplied').style.display = 'flex';
+                document.getElementById('appliedCouponText').textContent = `${code} - 15% OFF`;
+                document.getElementById('discountRow').style.display = 'flex';
+                document.getElementById('discountValue').textContent = 
+                    `- R$ ${discount.toFixed(2).replace('.', ',')}`;
+                updateTotal();
+            }
+        }
+
+        function removeCoupon() {
+            appliedCoupon = null;
+            discount = 0;
+            
+            document.getElementById('couponForm').style.display = 'block';
+            document.getElementById('couponApplied').style.display = 'none';
+            document.getElementById('discountRow').style.display = 'none';
+            document.getElementById('couponCode').value = '';
+            
+            updateTotal();
+        }
+
+        function checkout() {
+            window.location.href = '/Cliente/Checkout';
+        }
+    </script>
+</body>
+</html>

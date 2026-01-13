@@ -23,6 +23,14 @@ public class PaymentMethod
     [MaxLength(20)]
     public string Type { get; set; } = "CARD"; // CARD, BOLETO, PIX
 
+    [Column("external_payment_method_id")]
+    [MaxLength(255)]
+    public string? ExternalPaymentMethodId { get; set; }
+
+    [Column("gateway_type")]
+    [MaxLength(20)]
+    public string? GatewayType { get; set; }
+
     [Column("card_brand")]
     [MaxLength(50)]
     public string? CardBrand { get; set; }

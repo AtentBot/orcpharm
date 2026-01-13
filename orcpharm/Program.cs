@@ -23,6 +23,7 @@ using Service.CustomerFormulas;
 using Service.PharmaceuticalForms;
 
 
+
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +55,11 @@ builder.Services.AddScoped<PharmaceuticalAnalysisService>();
 builder.Services.AddScoped<RefundService>();
 builder.Services.AddScoped<CapsuleCalculationService>();
 
+builder.Services.AddSingleton<IEncryptionService, AesEncryptionService>();
+builder.Services.AddScoped<StripePaymentService>();
+builder.Services.AddScoped<MercadoPagoPaymentService>();
+builder.Services.AddScoped<AbacatepayPaymentService>();
+builder.Services.AddScoped<IPaymentGatewayFactory, PaymentGatewayFactory>();
 
 builder.Services.Configure<Configuration.EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));

@@ -24,6 +24,17 @@ public class Subscription
     [StringLength(255)]
     public string? StripeCustomerId { get; set; }
 
+    [Column("gateway_config_id")]
+    public Guid? GatewayConfigId { get; set; }
+
+    [Column("external_subscription_id")]
+    [StringLength(255)]
+    public string? ExternalSubscriptionId { get; set; }
+
+    [Column("external_customer_id")]
+    [StringLength(255)]
+    public string? ExternalCustomerId { get; set; }
+
     [Column("status")]
     [StringLength(50)]
     public string Status { get; set; } = "TRIALING";
@@ -61,4 +72,7 @@ public class Subscription
 
     [ForeignKey("SubscriptionPlanId")]
     public virtual SubscriptionPlan? SubscriptionPlan { get; set; }
+
+    [ForeignKey("GatewayConfigId")]
+    public virtual PaymentGatewayConfig? GatewayConfig { get; set; }
 }

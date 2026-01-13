@@ -18,6 +18,22 @@ public class SubscriptionPlan
     [Column("description")]
     public string? Description { get; set; }
 
+    [Column("mercadopago_plan_id_monthly")]
+    [MaxLength(255)]
+    public string? MercadoPagoPlanIdMonthly { get; set; }
+
+    [Column("mercadopago_plan_id_yearly")]
+    [MaxLength(255)]
+    public string? MercadoPagoPlanIdYearly { get; set; }
+
+    [Column("abacatepay_plan_id_monthly")]
+    [MaxLength(255)]
+    public string? AbacatepayPlanIdMonthly { get; set; }
+
+    [Column("abacatepay_plan_id_yearly")]
+    [MaxLength(255)]
+    public string? AbacatepayPlanIdYearly { get; set; }
+
     [Column("price_monthly")]
     [Required]
     public decimal PriceMonthly { get; set; }

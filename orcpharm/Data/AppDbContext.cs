@@ -52,6 +52,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// Itens do carrinho de fórmulas personalizadas
     /// </summary>
     public DbSet<FormulaCartItem> FormulaCartItems { get; set; } = null!;
+    public DbSet<PaymentGatewayConfig> PaymentGatewayConfigs { get; set; } = null!;
+
+    /// <summary>
+    /// Logs de webhooks recebidos dos gateways
+    /// </summary>
+    public DbSet<PaymentWebhookLog> PaymentWebhookLogs { get; set; } = null!;
+
+    /// <summary>
+    /// Tokens de recuperação de senha dos admins SaaS
+    /// </summary>
+    public DbSet<SaasAdminPasswordReset> SaasAdminPasswordResets { get; set; } = null!;
 
 
 
@@ -240,7 +251,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<CompanySettings> CompanySettings { get; set; } = null!;
     public DbSet<PrescriptionQuote> PrescriptionQuotes { get; set; } = null!;
     public DbSet<ManipulationOrderComponent> ManipulationOrderComponents { get; set; } = null!;
-    public DbSet<SaasAdminPasswordReset> SaasAdminPasswordResets { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
     // PORTAL DO CLIENTE
@@ -343,13 +353,115 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<EstablishmentPricingConfig> EstablishmentPricingConfigs { get; set; } = null!;
 
     // ════════════════════════════════════════════════════════════════════════
-    // CONFIGURAÇÃO DO MODELO
+    // CUPONS DE DESCONTO
     // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Cupons de desconto promocionais
+    /// </summary>
+    public DbSet<Coupon> Coupons { get; set; } = null!;
+
+    /// <summary>
+    /// Histórico de uso de cupons por cliente
+    /// </summary>
+    public DbSet<CouponUsage> CouponUsages { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        // ──────────────────────────────────────────────────────────────────
+        // PAYMENT GATEWAY CONFIG
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<PaymentGatewayConfig>(entity =>
+        {
+            entity.ToTable("payment_gateway_configs");
+            entity.HasKey(e => e.Id);
+
+            // Conversão de enum para string
+            entity.Property(e => e.GatewayType)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.Property(e => e.Environment)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.Property(e => e.LastTestStatus)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            // Índices
+            entity.HasIndex(e => e.GatewayType);
+            entity.HasIndex(e => e.Environment);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.IsDefault);
+
+            // Relacionamentos com SaasAdmin
+            entity.HasOne(e => e.CreatedByAdmin)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByAdminId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.UpdatedByAdmin)
+                .WithMany()
+                .HasForeignKey(e => e.UpdatedByAdminId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PAYMENT WEBHOOK LOG
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<PaymentWebhookLog>(entity =>
+        {
+            entity.ToTable("payment_webhook_logs");
+            entity.HasKey(e => e.Id);
+
+            // Conversão de enum para string
+            entity.Property(e => e.GatewayType)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.Property(e => e.Status)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            // Índices
+            entity.HasIndex(e => e.GatewayType);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.EventType);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.ExternalEventId);
+            entity.HasIndex(e => e.SubscriptionId);
+
+            // Relacionamentos
+            entity.HasOne(e => e.GatewayConfig)
+                .WithMany()
+                .HasForeignKey(e => e.GatewayConfigId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // SAAS ADMIN PASSWORD RESET
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<SaasAdminPasswordReset>(entity =>
+        {
+            entity.ToTable("saas_admin_password_resets");
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.SaasAdminId);
+            entity.HasIndex(e => e.ExpiresAt);
+
+            entity.HasOne(e => e.SaasAdmin)
+                .WithMany()
+                .HasForeignKey(e => e.SaasAdminId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // ──────────────────────────────────────────────────────────────────
         // ESTABLISHMENT PRICING SETTINGS
@@ -2004,6 +2116,118 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .WithMany()
                   .HasForeignKey(e => e.UpdatedByEmployeeId)
                   .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // COUPON (Cupons de Desconto)
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Coupon>(entity =>
+        {
+            entity.ToTable("Coupons");
+
+            entity.HasKey(e => e.Id);
+
+            // Código único global
+            entity.HasIndex(e => e.Code)
+                  .IsUnique();
+
+            // Índice por estabelecimento
+            entity.HasIndex(e => e.EstablishmentId);
+
+            // Índice para busca de cupons ativos
+            entity.HasIndex(e => new { e.IsActive, e.ValidFrom, e.ValidUntil });
+
+            entity.Property(e => e.Code)
+                  .HasMaxLength(50)
+                  .IsRequired();
+
+            entity.Property(e => e.Description)
+                  .HasMaxLength(200);
+
+            entity.Property(e => e.DiscountType)
+                  .HasMaxLength(20)
+                  .HasDefaultValue("PERCENTAGE");
+
+            entity.Property(e => e.DiscountPercentage)
+                  .HasPrecision(5, 2);
+
+            entity.Property(e => e.DiscountValue)
+                  .HasPrecision(10, 2);
+
+            entity.Property(e => e.MinOrderValue)
+                  .HasPrecision(10, 2);
+
+            entity.Property(e => e.MaxDiscountValue)
+                  .HasPrecision(10, 2);
+
+            entity.Property(e => e.UsedCount)
+                  .HasDefaultValue(0);
+
+            entity.Property(e => e.IsActive)
+                  .HasDefaultValue(true);
+
+            entity.Property(e => e.CreatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.UpdatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Relacionamentos
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.CreatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.UpdatedByEmployee)
+                  .WithMany()
+                  .HasForeignKey(e => e.UpdatedByEmployeeId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.Usages)
+                  .WithOne(u => u.Coupon)
+                  .HasForeignKey(u => u.CouponId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // COUPON USAGE (Histórico de Uso de Cupons)
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<CouponUsage>(entity =>
+        {
+            entity.ToTable("CouponUsages");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.CouponId);
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.UsedAt);
+
+            // Índice composto para verificar uso por cliente
+            entity.HasIndex(e => new { e.CouponId, e.CustomerId });
+
+            entity.Property(e => e.DiscountApplied)
+                  .HasPrecision(10, 2);
+
+            entity.Property(e => e.UsedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Relacionamentos
+            entity.HasOne(e => e.Coupon)
+                  .WithMany(c => c.Usages)
+                  .HasForeignKey(e => e.CouponId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Customer)
+                  .WithMany()
+                  .HasForeignKey(e => e.CustomerId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

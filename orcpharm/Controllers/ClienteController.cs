@@ -1,432 +1,631 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Data;
-using Service;
 using Models;
+using Models.Pharmacy;
 
 namespace Controllers;
 
+/// <summary>
+/// Controller MVC para todas as páginas do Portal do Cliente
+/// Rota: /Cliente/*
+/// </summary>
 [Route("Cliente")]
-[AllowAnonymous]  // Permite acesso sem autenticação do ASP.NET Core
 public class ClienteController : Controller
 {
     private readonly AppDbContext _context;
-    private readonly CustomerAuthService _authService;
     private readonly ILogger<ClienteController> _logger;
 
-    public ClienteController(
-        AppDbContext context,
-        CustomerAuthService authService,
-        ILogger<ClienteController> logger)
+    public ClienteController(AppDbContext context, ILogger<ClienteController> logger)
     {
         _context = context;
-        _authService = authService;
         _logger = logger;
     }
 
-    // ==================== AUTH VIEWS ====================
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    private Customer? GetCurrentCustomer()
+    {
+        return HttpContext.Items["Customer"] as Customer;
+    }
 
+    private CustomerSession? GetCurrentSession()
+    {
+        return HttpContext.Items["CustomerSession"] as CustomerSession;
+    }
+
+    private async Task<Establishment?> GetCurrentEstablishment()
+    {
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null) return null;
+        
+        return await _context.Establishments
+            .FirstOrDefaultAsync(e => e.Id == session.CurrentEstablishmentId);
+    }
+
+    private async Task SetViewBagData()
+    {
+        var customer = GetCurrentCustomer();
+        var establishment = await GetCurrentEstablishment();
+        var session = GetCurrentSession();
+
+        ViewBag.CustomerName = customer?.FullName ?? "Cliente";
+        ViewBag.PharmacyName = establishment?.NomeFantasia ?? "Selecione uma farmácia";
+        ViewBag.PharmacyId = establishment?.Id;
+        
+        // Contar itens no carrinho
+        if (customer != null && session?.CurrentEstablishmentId != null)
+        {
+            var cartCount = await _context.CustomerCartItems
+                .Include(i => i.Cart)
+                .Where(i => i.Cart!.CustomerId == customer.Id && 
+                           i.Cart.EstablishmentId == session.CurrentEstablishmentId)
+                .CountAsync();
+            ViewBag.CartCount = cartCount;
+        }
+        else
+        {
+            ViewBag.CartCount = 0;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // AUTENTICAÇÃO (páginas públicas)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Página de Login
+    /// GET /Cliente/Login
+    /// </summary>
     [HttpGet("Login")]
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login([FromQuery] string? returnUrl = null, [FromQuery] Guid? estabelecimento = null)
     {
-        if (Request.Cookies.ContainsKey("CustomerSessionId"))
+        // Se já está logado, redireciona
+        var session = GetCurrentSession();
+        if (session != null)
         {
-            return RedirectToAction("Estabelecimentos");
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+            return RedirectToAction("Inicio");
         }
+
         ViewBag.ReturnUrl = returnUrl;
-        return View();
-    }
-
-    [HttpGet("Cadastro")]
-    public IActionResult Cadastro()
-    {
-        if (Request.Cookies.ContainsKey("CustomerSessionId"))
+        ViewBag.EstabelecimentoId = estabelecimento;
+        
+        // Se veio de QR Code, buscar nome da farmácia
+        if (estabelecimento.HasValue)
         {
-            return RedirectToAction("Estabelecimentos");
+            var est = _context.Establishments
+                .FirstOrDefault(e => e.Id == estabelecimento.Value && e.IsActive);
+            ViewBag.EstabelecimentoNome = est?.NomeFantasia;
         }
-        return View();
+
+        return View("Login");
     }
 
+    /// <summary>
+    /// Página de Cadastro
+    /// GET /Cliente/Cadastro
+    /// </summary>
+    [HttpGet("Cadastro")]
+    public IActionResult Cadastro([FromQuery] string? returnUrl = null, [FromQuery] Guid? estabelecimento = null)
+    {
+        var session = GetCurrentSession();
+        if (session != null)
+            return RedirectToAction("Inicio");
+
+        ViewBag.ReturnUrl = returnUrl;
+        ViewBag.EstabelecimentoId = estabelecimento;
+        return View("Cadastro");
+    }
+
+    /// <summary>
+    /// Página de Verificação de Código
+    /// GET /Cliente/Verificar
+    /// </summary>
     [HttpGet("Verificar")]
-    public IActionResult Verificar(string? phone = null)
+    public IActionResult Verificar([FromQuery] string? phone = null, [FromQuery] string? returnUrl = null)
     {
+        if (string.IsNullOrEmpty(phone))
+            return RedirectToAction("Login");
+
         ViewBag.Phone = phone;
-        return View();
+        ViewBag.ReturnUrl = returnUrl;
+        return View("Verificar");
     }
 
-    [HttpGet("CriarFormula")]
-    public IActionResult CriarFormula()
-    {
-        var customer = HttpContext.Items["Customer"] as Customer;
-        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
-
-        if (customer == null || session?.CurrentEstablishmentId == null)
-            return RedirectToAction("Login", "Account");
-
-        // Buscar dados da farmácia
-        var farmacia = _context.Establishments
-            .Where(e => e.Id == session.CurrentEstablishmentId.Value)
-            .Select(e => new
-            {
-                e.NomeFantasia,
-                e.Cnpj,
-                e.Street
-            })
-            .FirstOrDefault();
-
-        ViewBag.Farmacia = farmacia;
-        ViewBag.CustomerName = customer.FullName;
-        ViewBag.CustomerPhone = customer.WhatsApp;
-        ViewBag.CustomerEmail = customer.Email;
-
-        return View();
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /// <summary>
+    /// Página de Recuperação de Senha
+    /// GET /Cliente/EsqueciSenha
+    /// </summary>
     [HttpGet("EsqueciSenha")]
+    [HttpGet("RecuperarSenha")]  // Alias
     public IActionResult EsqueciSenha()
     {
-        return View();
+        return View("EsqueciSenha");
     }
 
+    /// <summary>
+    /// Página para Redefinir Senha (após receber código via WhatsApp)
+    /// GET /Cliente/RedefinirSenha?phone=XXX
+    /// </summary>
     [HttpGet("RedefinirSenha")]
-    public IActionResult RedefinirSenha(string? phone = null)
+    public IActionResult RedefinirSenha([FromQuery] string? phone = null)
     {
+        if (string.IsNullOrEmpty(phone))
+            return RedirectToAction("EsqueciSenha");
+
         ViewBag.Phone = phone;
-        return View();
+        return View("RedefinirSenha");
     }
 
-    [HttpGet("DefinirSenha")]
-    public IActionResult DefinirSenha()
+    /// <summary>
+    /// Logout
+    /// GET /Cliente/Logout
+    /// </summary>
+    [HttpGet("Logout")]
+    public IActionResult Logout()
     {
-        return View();
+        Response.Cookies.Delete("CustomerSessionId");
+        Response.Cookies.Delete("orcpharm_customer_session");
+        return RedirectToAction("Login");
     }
 
-    // ==================== ÁREA LOGADA ====================
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PÁGINAS PRINCIPAIS (requerem autenticação)
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    [HttpGet("Estabelecimentos")]
-    public async Task<IActionResult> Estabelecimentos(string? returnUrl = null)
-    {
-        var establishments = await _context.Establishments
-            .Where(e => e.IsActive == true)
-            .OrderBy(e => e.NomeFantasia)
-            .Select(e => new
-            {
-                e.Id,
-                e.NomeFantasia,
-                e.RazaoSocial,
-                e.Phone,
-                e.WhatsApp,
-                e.City,
-                e.State,
-                e.Neighborhood
-            })
-            .ToListAsync();
-
-        ViewBag.Establishments = establishments;
-        ViewBag.ReturnUrl = returnUrl;
-        return View();
-    }
-
-    [HttpGet("LerQRCode")]
-    public IActionResult LerQRCode(string? returnUrl = null)
-    {
-        ViewBag.ReturnUrl = returnUrl;
-        return View();
-    }
-
+    /// <summary>
+    /// Homepage do Portal
+    /// GET /Cliente/Inicio
+    /// </summary>
     [HttpGet("Inicio")]
     public async Task<IActionResult> Inicio()
     {
-        var customer = HttpContext.Items["Customer"] as Customer;
-        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
-
+        var customer = GetCurrentCustomer();
         if (customer == null)
-        {
             return RedirectToAction("Login");
-        }
 
-        // Buscar pedidos recentes de TODAS as farmácias
-        var recentOrders = await _context.Set<OnlineOrder>()
-            .Include(o => o.Establishment)
-            .Where(o => o.CustomerId == customer.Id)
-            .OrderByDescending(o => o.CreatedAt)
-            .Take(5)
-            .ToListAsync();
-
-        // Buscar farmácias onde o cliente já comprou
-        var customerEstablishments = await _context.Set<OnlineOrder>()
-            .Where(o => o.CustomerId == customer.Id)
-            .Select(o => o.EstablishmentId)
-            .Distinct()
-            .CountAsync();
-
-        // Contar pedidos pendentes
-        var pendingOrdersCount = await _context.Set<OnlineOrder>()
-            .Where(o => o.CustomerId == customer.Id && 
-                       (o.Status == "PENDING" || o.Status == "CONFIRMED" || o.Status == "PREPARING"))
-            .CountAsync();
-
-        // Contar pedidos prontos para retirada
-        var readyOrdersCount = await _context.Set<OnlineOrder>()
-            .Where(o => o.CustomerId == customer.Id && o.Status == "READY")
-            .CountAsync();
-
-        ViewBag.Customer = customer;
-        ViewBag.Establishment = session?.CurrentEstablishment;
-        ViewBag.RecentOrders = recentOrders;
-        ViewBag.CustomerEstablishmentsCount = customerEstablishments;
-        ViewBag.PendingOrdersCount = pendingOrdersCount;
-        ViewBag.ReadyOrdersCount = readyOrdersCount;
-        
-        return View();
-    }
-
-    [HttpGet("MeusPedidos")]
-    public async Task<IActionResult> MeusPedidos(string? status = null, Guid? farmacia = null)
-    {
-        var customer = HttpContext.Items["Customer"] as Customer;
-        if (customer == null)
-        {
-            return RedirectToAction("Login");
-        }
-        
-        // Buscar pedidos de TODAS as farmácias
-        var ordersQuery = _context.Set<OnlineOrder>()
-            .Include(o => o.Establishment)
-            .Include(o => o.Items)
-            .Where(o => o.CustomerId == customer.Id);
-        
-        // Filtro por farmácia (opcional)
-        if (farmacia.HasValue)
-        {
-            ordersQuery = ordersQuery.Where(o => o.EstablishmentId == farmacia.Value);
-        }
-        
-        // Filtro por status
-        if (!string.IsNullOrEmpty(status))
-        {
-            ordersQuery = status switch
-            {
-                "pendentes" => ordersQuery.Where(o => o.Status == "PENDING" || o.Status == "CONFIRMED"),
-                "producao" => ordersQuery.Where(o => o.Status == "PREPARING"),
-                "prontos" => ordersQuery.Where(o => o.Status == "READY" || o.Status == "DELIVERED"),
-                _ => ordersQuery
-            };
-        }
-        
-        var orders = await ordersQuery
-            .OrderByDescending(o => o.CreatedAt)
-            .ToListAsync();
-
-        // Buscar farmácias para filtro
-        var establishments = await _context.Set<OnlineOrder>()
-            .Include(o => o.Establishment)
-            .Where(o => o.CustomerId == customer.Id)
-            .Select(o => new { o.EstablishmentId, o.Establishment!.NomeFantasia })
-            .Distinct()
-            .ToListAsync();
-        
-        ViewBag.Orders = orders;
-        ViewBag.SelectedStatus = status;
-        ViewBag.SelectedFarmacia = farmacia;
-        ViewBag.Establishments = establishments;
-        ViewBag.Customer = customer;
-        
-        return View();
-    }
-
-    [HttpGet("Catalogo")]
-    public async Task<IActionResult> Catalogo(string? categoria = null)
-    {
-        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
+        var session = GetCurrentSession();
         if (session?.CurrentEstablishmentId == null)
-        {
             return RedirectToAction("Estabelecimentos");
-        }
-        
-        var establishmentId = session.CurrentEstablishmentId.Value;
-        
-        // Carregar categorias
-        var categories = await _context.Set<CatalogCategory>()
-            .Where(c => c.EstablishmentId == establishmentId && c.IsActive)
-            .OrderBy(c => c.SortOrder)
+
+        await SetViewBagData();
+        return View("Inicio");
+    }
+
+    /// <summary>
+    /// Seleção de Farmácia
+    /// GET /Cliente/Estabelecimentos
+    /// </summary>
+    [HttpGet("Estabelecimentos")]
+    public async Task<IActionResult> Estabelecimentos()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var establishments = await _context.Establishments
+            .Where(e => e.IsActive)
+            .OrderBy(e => e.NomeFantasia)
             .ToListAsync();
-        
-        // Carregar produtos
-        var productsQuery = _context.Set<CatalogProduct>()
-            .Include(p => p.Category)
-            .Where(p => p.EstablishmentId == establishmentId && p.IsActive);
-        
+
+        ViewBag.Establishments = establishments;
+        await SetViewBagData();
+        return View("Estabelecimentos");
+    }
+
+    /// <summary>
+    /// Buscar produtos/fórmulas
+    /// GET /Cliente/Buscar
+    /// </summary>
+    [HttpGet("Buscar")]
+    public async Task<IActionResult> Buscar([FromQuery] string? q = null)
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Estabelecimentos");
+
+        ViewBag.SearchQuery = q;
+        ViewBag.SearchResults = new List<object>();
+
+        if (!string.IsNullOrEmpty(q))
+        {
+            // Buscar em matérias-primas
+            var rawMaterials = await _context.RawMaterials
+                .Where(r => r.EstablishmentId == session.CurrentEstablishmentId &&
+                           r.IsActive &&
+                           (r.Name.ToLower().Contains(q.ToLower()) ||
+                            (r.Synonyms != null && r.Synonyms.ToLower().Contains(q.ToLower()))))
+                .Take(20)
+                .Select(r => new {
+                    Id = r.Id,
+                    Name = r.Name,
+                    Type = "Matéria-Prima",
+                    Category = r.Category,
+                    InStock = r.CurrentStock > 0,
+                    Price = r.BasePrice ?? r.LastPurchasePrice ?? 0
+                })
+                .ToListAsync();
+
+            ViewBag.SearchResults = rawMaterials;
+        }
+
+        await SetViewBagData();
+        return View("Buscar");
+    }
+
+    /// <summary>
+    /// Enviar Receita (OCR)
+    /// GET /Cliente/EnviarReceita
+    /// </summary>
+    [HttpGet("EnviarReceita")]
+    public async Task<IActionResult> EnviarReceita()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Estabelecimentos");
+
+        await SetViewBagData();
+        return View("EnviarReceita");
+    }
+
+    /// <summary>
+    /// Minha Fórmula Personalizada (redireciona para CriarFormula)
+    /// GET /Cliente/MinhaFormula
+    /// </summary>
+    [HttpGet("MinhaFormula")]
+    public async Task<IActionResult> MinhaFormula()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Estabelecimentos");
+
+        // Buscar categorias de produtos
+        var productTypes = await _context.ProductTypes
+            .Where(pt => pt.IsActive)
+            .OrderBy(pt => pt.DisplayOrder)
+            .ToListAsync();
+
+        ViewBag.ProductTypes = productTypes;
+        await SetViewBagData();
+        return View("CriarFormula");  // Usa mesma view de CriarFormula
+    }
+
+    /// <summary>
+    /// Catálogo de Produtos
+    /// GET /Cliente/Catalogo
+    /// </summary>
+    [HttpGet("Catalogo")]
+    public async Task<IActionResult> Catalogo([FromQuery] string? categoria = null)
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Estabelecimentos");
+
+        // Buscar categorias
+        var categories = await _context.RawMaterials
+            .Where(r => r.EstablishmentId == session.CurrentEstablishmentId && 
+                       r.IsActive && 
+                       r.Category != null)
+            .Select(r => r.Category)
+            .Distinct()
+            .ToListAsync();
+
+        // Buscar produtos por categoria
+        var query = _context.RawMaterials
+            .Where(r => r.EstablishmentId == session.CurrentEstablishmentId && r.IsActive);
+
         if (!string.IsNullOrEmpty(categoria))
         {
-            productsQuery = productsQuery.Where(p => p.Category != null && p.Category.Slug == categoria);
+            query = query.Where(r => r.Category != null && 
+                                    r.Category.ToLower().Contains(categoria.ToLower()));
         }
-        
-        var products = await productsQuery
-            .OrderByDescending(p => p.IsHighlight)
-            .ThenByDescending(p => p.IsBestSeller)
-            .ThenBy(p => p.Name)
+
+        var products = await query
+            .OrderBy(r => r.Name)
+            .Take(50)
             .ToListAsync();
-        
-        // Carregar carrinho
-        var customer = HttpContext.Items["Customer"] as Customer;
-        var cartItemCount = 0;
-        if (customer != null)
-        {
-            cartItemCount = await _context.Set<CustomerCartItem>()
-                .Where(i => i.Cart!.CustomerId == customer.Id && i.Cart.EstablishmentId == establishmentId)
-                .SumAsync(i => i.Quantity);
-        }
-        
-        ViewBag.Establishment = session.CurrentEstablishment;
+
         ViewBag.Categories = categories;
         ViewBag.Products = products;
-        ViewBag.SelectedCategory = categoria;
-        ViewBag.CartItemCount = cartItemCount;
-        
-        return View();
+        ViewBag.CurrentCategory = categoria;
+        await SetViewBagData();
+        return View("Catalogo");
     }
-    
-    [HttpGet("Produto/{id}")]
-    public async Task<IActionResult> Produto(Guid id)
+
+    /// <summary>
+    /// Meus Pedidos
+    /// GET /Cliente/MeusPedidos
+    /// </summary>
+    [HttpGet("MeusPedidos")]
+    public async Task<IActionResult> MeusPedidos()
     {
-        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
-        if (session?.CurrentEstablishmentId == null)
-        {
-            return RedirectToAction("Estabelecimentos");
-        }
-        
-        var product = await _context.Set<CatalogProduct>()
-            .Include(p => p.Category)
-            .FirstOrDefaultAsync(p => p.Id == id && p.EstablishmentId == session.CurrentEstablishmentId);
-        
-        if (product == null)
-        {
-            return RedirectToAction("Catalogo");
-        }
-        
-        ViewBag.Establishment = session.CurrentEstablishment;
-        return View(product);
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var orders = await _context.OnlineOrders
+            .Include(o => o.Establishment)
+            .Include(o => o.Items)
+            .Where(o => o.CustomerId == customer.Id)
+            .OrderByDescending(o => o.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+
+        ViewBag.Orders = orders;
+        await SetViewBagData();
+        return View("MeusPedidos");
     }
-    
+
+    /// <summary>
+    /// Detalhe do Pedido
+    /// GET /Cliente/Pedido/{id}
+    /// </summary>
+    [HttpGet("Pedido/{id}")]
+    public async Task<IActionResult> Pedido(Guid id)
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var order = await _context.OnlineOrders
+            .Include(o => o.Establishment)
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == customer.Id);
+
+        if (order == null)
+            return NotFound();
+
+        ViewBag.Order = order;
+        await SetViewBagData();
+        return View("PedidoDetalhe");
+    }
+
+    /// <summary>
+    /// Carrinho
+    /// GET /Cliente/Carrinho
+    /// </summary>
     [HttpGet("Carrinho")]
     public async Task<IActionResult> Carrinho()
     {
-        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
-        var customer = HttpContext.Items["Customer"] as Customer;
-        
-        if (session?.CurrentEstablishmentId == null || customer == null)
-        {
-            return RedirectToAction("Estabelecimentos");
-        }
-        
-        var cart = await _context.Set<CustomerCart>()
-            .Include(c => c.Items!)
-                .ThenInclude(i => i.Product)
-            .FirstOrDefaultAsync(c => c.CustomerId == customer.Id && 
-                                      c.EstablishmentId == session.CurrentEstablishmentId);
-        
-        ViewBag.Establishment = session.CurrentEstablishment;
-        ViewBag.Cart = cart;
-        
-        return View();
-    }
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
 
-    [HttpGet("EnviarReceita")]
-    public IActionResult EnviarReceita()
-    {
-        var session = HttpContext.Items["CustomerSession"] as CustomerSession;
+        var session = GetCurrentSession();
         if (session?.CurrentEstablishmentId == null)
-        {
             return RedirectToAction("Estabelecimentos");
-        }
-        ViewBag.Establishment = session.CurrentEstablishment;
-        return View();
+
+        var cart = await _context.CustomerCarts
+            .Include(c => c.Items!)
+                .ThenInclude(i => i.CustomerFormula)
+            .Include(c => c.Establishment)
+            .FirstOrDefaultAsync(c => c.CustomerId == customer.Id && 
+                                     c.EstablishmentId == session.CurrentEstablishmentId);
+
+        ViewBag.Cart = cart;
+        ViewBag.CartItems = cart?.Items?.ToList() ?? new List<CustomerCartItem>();
+        ViewBag.CartTotal = cart?.Items?.Sum(i => i.UnitPrice * i.Quantity) ?? 0;
+        await SetViewBagData();
+        return View("Carrinho");
     }
 
+    /// <summary>
+    /// Perfil do Cliente
+    /// GET /Cliente/Perfil
+    /// </summary>
+    [HttpGet("Perfil")]
+    public async Task<IActionResult> Perfil()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        ViewBag.Customer = customer;
+        await SetViewBagData();
+        return View("Perfil");
+    }
+
+    /// <summary>
+    /// Notificações
+    /// GET /Cliente/Notificacoes
+    /// </summary>
+    [HttpGet("Notificacoes")]
+    public async Task<IActionResult> Notificacoes()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        // TODO: Implementar sistema de notificações
+        ViewBag.Notifications = new List<object>();
+        await SetViewBagData();
+        return View("Notificacoes");
+    }
+
+    /// <summary>
+    /// Histórico de Fórmulas
+    /// GET /Cliente/Historico
+    /// </summary>
+    [HttpGet("Historico")]
+    public async Task<IActionResult> Historico()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var formulas = await _context.CustomerFormulas
+            .Include(f => f.Establishment)
+            .Include(f => f.ProductType)
+            .Where(f => f.CustomerId == customer.Id)
+            .OrderByDescending(f => f.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+
+        ViewBag.Formulas = formulas;
+        await SetViewBagData();
+        return View("Historico");
+    }
+
+    /// <summary>
+    /// Meus Cupons
+    /// GET /Cliente/MeusCupons
+    /// </summary>
+    [HttpGet("MeusCupons")]
+    public async Task<IActionResult> MeusCupons()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        
+        // Buscar cupons disponíveis para o cliente
+        var coupons = await _context.Coupons
+            .Where(c => c.IsActive && 
+                       c.ValidFrom <= DateTime.UtcNow &&
+                       c.ValidUntil >= DateTime.UtcNow &&
+                       (c.EstablishmentId == null || c.EstablishmentId == session!.CurrentEstablishmentId) &&
+                       (c.MaxUses == null || c.UsedCount < c.MaxUses))
+            .OrderByDescending(c => c.DiscountPercentage)
+            .ToListAsync();
+
+        ViewBag.Coupons = coupons;
+        await SetViewBagData();
+        return View("MeusCupons");
+    }
+
+    /// <summary>
+    /// Selecionar Farmácia via QR Code
+    /// GET /Cliente/SelecionarFarmacia
+    /// </summary>
+    [HttpGet("SelecionarFarmacia")]
+    public async Task<IActionResult> SelecionarFarmacia()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        await SetViewBagData();
+        return View("Estabelecimentos");
+    }
+
+    /// <summary>
+    /// Criar Fórmula Personalizada
+    /// GET /Cliente/CriarFormula
+    /// </summary>
+    [HttpGet("CriarFormula")]
+    public async Task<IActionResult> CriarFormula()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Estabelecimentos");
+
+        // Buscar tipos de produtos para formulário
+        var productTypes = await _context.ProductTypes
+            .Where(pt => pt.IsActive)
+            .OrderBy(pt => pt.DisplayOrder)
+            .ToListAsync();
+
+        ViewBag.ProductTypes = productTypes;
+        await SetViewBagData();
+        return View("CriarFormula");
+    }
+
+    /// <summary>
+    /// Ler QR Code da Farmácia
+    /// GET /Cliente/LerQRCode
+    /// </summary>
+    [HttpGet("LerQRCode")]
+    public async Task<IActionResult> LerQRCode()
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        await SetViewBagData();
+        return View("LerQRCode");
+    }
+
+    /// <summary>
+    /// Meus Dados Pessoais
+    /// GET /Cliente/MeusDados
+    /// </summary>
     [HttpGet("MeusDados")]
-    public IActionResult MeusDados()
+    public async Task<IActionResult> MeusDados()
     {
-        var customer = HttpContext.Items["Customer"] as Customer;
-        return View(customer);
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        ViewBag.Customer = customer;
+        await SetViewBagData();
+        return View("MeusDados");
     }
 
-    [HttpGet("Logout")]
-    public async Task<IActionResult> Logout()
+    /// <summary>
+    /// Detalhe do Produto
+    /// GET /Cliente/Produto/{id}
+    /// </summary>
+    [HttpGet("Produto/{id}")]
+    public async Task<IActionResult> Produto(Guid id)
     {
-        var sessionToken = Request.Cookies["CustomerSessionId"];
-        if (!string.IsNullOrEmpty(sessionToken))
-        {
-            await _authService.LogoutAsync(sessionToken);
-            Response.Cookies.Delete("CustomerSessionId");
-        }
-        return RedirectToAction("Login");
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return RedirectToAction("Login");
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return RedirectToAction("Estabelecimentos");
+
+        // Buscar produto do catálogo
+        var product = await _context.CatalogProducts
+            .Include(p => p.Category)
+            .FirstOrDefaultAsync(p => p.Id == id && 
+                                     p.EstablishmentId == session.CurrentEstablishmentId &&
+                                     p.IsActive);
+
+        if (product == null)
+            return RedirectToAction("Catalogo");
+
+        ViewBag.Product = product;
+        await SetViewBagData();
+        return View("Produto");
     }
-}
 
-// Controller para QR Code redirect
-[Route("c")]
-[AllowAnonymous]  // Permite acesso sem autenticação
-public class QRCodeRedirectController : Controller
-{
-    private readonly AppDbContext _context;
+    // ═══════════════════════════════════════════════════════════════════════════
+    // REDIRECT PADRÃO
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    public QRCodeRedirectController(AppDbContext context)
+    /// <summary>
+    /// Redireciona /Cliente para /Cliente/Inicio
+    /// </summary>
+    [HttpGet("")]
+    public IActionResult Index()
     {
-        _context = context;
-    }
-
-    [HttpGet("{code}")]
-    public async Task<IActionResult> Redirect(string code)
-    {
-        var qrCode = await _context.EstablishmentQRCodes
-            .Include(q => q.Establishment)
-            .FirstOrDefaultAsync(q => q.Code == code && q.IsActive);
-
-        if (qrCode == null)
-        {
-            return RedirectToAction("Login", "Cliente");
-        }
-
-        qrCode.ScanCount++;
-        qrCode.LastScannedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-
-        if (Request.Cookies.ContainsKey("CustomerSessionId"))
-        {
-            return RedirectToAction("Inicio", "Cliente", new { establishment = qrCode.EstablishmentId });
-        }
-
-        return RedirectToAction("Login", "Cliente", new { establishment = qrCode.EstablishmentId });
+        return RedirectToAction("Inicio");
     }
 }

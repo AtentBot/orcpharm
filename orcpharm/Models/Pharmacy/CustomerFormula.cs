@@ -4,6 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Models.Pharmacy;
 
+/// <summary>
+/// Fórmula personalizada criada pelo cliente no portal
+/// Pode vir de uma receita processada por OCR ou criada manualmente
+/// 
+/// ATENÇÃO: Esta é a ÚNICA classe CustomerFormula do projeto.
+/// Se existir outra em Models/, ela deve ser REMOVIDA.
+/// </summary>
 [Table("CustomerFormulas")]
 public class CustomerFormula
 {
@@ -16,7 +23,10 @@ public class CustomerFormula
     [Column("Code")]
     public string Code { get; set; } = default!;
 
+    // ══════════════════════════════════════════════════════════════════════════
     // VÍNCULOS
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Required]
     [Column("EstablishmentId")]
     public Guid EstablishmentId { get; set; }
@@ -24,7 +34,10 @@ public class CustomerFormula
     [Column("CustomerId")]
     public Guid? CustomerId { get; set; }
 
-    // Dados do Cliente (mesmo sem cadastro)
+    // ══════════════════════════════════════════════════════════════════════════
+    // DADOS DO CLIENTE (mesmo sem cadastro)
+    // ══════════════════════════════════════════════════════════════════════════
+
     [MaxLength(200)]
     [Column("CustomerName")]
     public string? CustomerName { get; set; }
@@ -37,7 +50,10 @@ public class CustomerFormula
     [Column("CustomerEmail")]
     public string? CustomerEmail { get; set; }
 
-    // Configuração do Produto
+    // ══════════════════════════════════════════════════════════════════════════
+    // CONFIGURAÇÃO DO PRODUTO
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Required]
     [Column("ProductTypeId")]
     public Guid ProductTypeId { get; set; }
@@ -61,20 +77,35 @@ public class CustomerFormula
     [Column("Unit")]
     public string Unit { get; set; } = default!;
 
-    // Componentes Adicionais (JSON)
+    // ══════════════════════════════════════════════════════════════════════════
+    // COMPONENTES E NOTAS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Ingredientes adicionais em formato JSON
+    /// </summary>
     [Column("AdditionalIngredients", TypeName = "jsonb")]
     public string? AdditionalIngredients { get; set; }
 
     [Column("CustomerNotes")]
     public string? CustomerNotes { get; set; }
 
+    // ══════════════════════════════════════════════════════════════════════════
     // FLUXO DE APROVAÇÃO
+    // Status válidos: DRAFT, PENDING, ANALYZING, APPROVED, REJECTED, 
+    //                 PROCESSING, READY, DELIVERED, CANCELLED
+    // Também aceito para compatibilidade: AGUARDANDO_COMPRA, IN_CART, ORDERED, COMPLETED
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Required]
     [MaxLength(30)]
     [Column("Status")]
     public string Status { get; set; } = "AGUARDANDO_COMPRA";
 
-    // Análise Farmacêutica
+    // ══════════════════════════════════════════════════════════════════════════
+    // ANÁLISE FARMACÊUTICA
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Column("PharmacistId")]
     public Guid? PharmacistId { get; set; }
 
@@ -96,7 +127,10 @@ public class CustomerFormula
     [Column("AdjustmentRequest")]
     public string? AdjustmentRequest { get; set; }
 
-    // Validações Técnicas
+    // ══════════════════════════════════════════════════════════════════════════
+    // VALIDAÇÕES TÉCNICAS
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Column("RequiresPrescription")]
     public bool RequiresPrescription { get; set; } = false;
 
@@ -112,7 +146,10 @@ public class CustomerFormula
     [Column("EstimatedShelfLifeDays")]
     public int? EstimatedShelfLifeDays { get; set; }
 
-    // Precificação
+    // ══════════════════════════════════════════════════════════════════════════
+    // PRECIFICAÇÃO
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Column("EstimatedPrice")]
     public decimal? EstimatedPrice { get; set; }
 
@@ -122,7 +159,10 @@ public class CustomerFormula
     [Column("DiscountApplied")]
     public decimal DiscountApplied { get; set; } = 0;
 
-    // Relacionamentos
+    // ══════════════════════════════════════════════════════════════════════════
+    // RELACIONAMENTOS
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Column("PrescriptionQuoteId")]
     public Guid? PrescriptionQuoteId { get; set; }
 
@@ -132,7 +172,10 @@ public class CustomerFormula
     [Column("OnlineOrderId")]
     public Guid? OnlineOrderId { get; set; }
 
-    // Pagamento
+    // ══════════════════════════════════════════════════════════════════════════
+    // PAGAMENTO
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Column("PaidAt")]
     public DateTime? PaidAt { get; set; }
 
@@ -148,7 +191,10 @@ public class CustomerFormula
     [Column("RefundAmount")]
     public decimal? RefundAmount { get; set; }
 
-    // Token para Sessão
+    // ══════════════════════════════════════════════════════════════════════════
+    // TOKEN PARA SESSÃO
+    // ══════════════════════════════════════════════════════════════════════════
+
     [MaxLength(100)]
     [Column("SessionToken")]
     public string? SessionToken { get; set; }
@@ -156,7 +202,10 @@ public class CustomerFormula
     [Column("SessionExpiresAt")]
     public DateTime? SessionExpiresAt { get; set; }
 
-    // Auditoria
+    // ══════════════════════════════════════════════════════════════════════════
+    // AUDITORIA
+    // ══════════════════════════════════════════════════════════════════════════
+
     [Column("CreatedAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -166,7 +215,95 @@ public class CustomerFormula
     [Column("CreatedByEmployeeId")]
     public Guid? CreatedByEmployeeId { get; set; }
 
-    // Navigation Properties
+    // ══════════════════════════════════════════════════════════════════════════
+    // NAVIGATION PROPERTIES
+    // ══════════════════════════════════════════════════════════════════════════
+
+    [ForeignKey("EstablishmentId")]
+    public virtual Establishment? Establishment { get; set; }
+
+    [ForeignKey("CustomerId")]
+    public virtual Customer? Customer { get; set; }
+
+    [ForeignKey("PrescriptionQuoteId")]
+    public virtual PrescriptionQuote? PrescriptionQuote { get; set; }
+
     public ICollection<PharmaceuticalAnalysisLog>? AnalysisLogs { get; set; }
     public ICollection<Refund>? Refunds { get; set; }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // COMPUTED PROPERTIES (para compatibilidade e conveniência)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Preço atual (final se disponível, senão estimado)
+    /// </summary>
+    [NotMapped]
+    public decimal CurrentPrice => FinalPrice ?? EstimatedPrice ?? 0;
+
+    /// <summary>
+    /// Indica se foi pago
+    /// </summary>
+    [NotMapped]
+    public bool IsPaid => PaidAt.HasValue;
+
+    /// <summary>
+    /// Nome para exibição
+    /// </summary>
+    [NotMapped]
+    public string DisplayName => 
+        $"Fórmula {ProductType?.Name ?? "Personalizada"} - {Quantity} {Unit}";
+
+    /// <summary>
+    /// Forma farmacêutica (via ProductType)
+    /// Mantido para compatibilidade com código legado
+    /// </summary>
+    [NotMapped]
+    public string PharmaceuticalForm => ProductType?.Name ?? "Manipulado";
+
+    /// <summary>
+    /// Quantidade total formatada
+    /// Mantido para compatibilidade com código legado
+    /// </summary>
+    [NotMapped]
+    public string TotalQuantity => $"{Quantity} {Unit}";
+
+    /// <summary>
+    /// Preço total (alias para CurrentPrice)
+    /// Mantido para compatibilidade com código legado
+    /// </summary>
+    [NotMapped]
+    public decimal TotalPrice => CurrentPrice;
+
+    /// <summary>
+    /// Composição em JSON (alias para AdditionalIngredients)
+    /// Mantido para compatibilidade com código legado
+    /// </summary>
+    [NotMapped]
+    public string? Composition => AdditionalIngredients;
+
+    /// <summary>
+    /// Instruções (alias para CustomerNotes)
+    /// Mantido para compatibilidade com código legado
+    /// </summary>
+    [NotMapped]
+    public string? Instructions => CustomerNotes;
+
+    /// <summary>
+    /// Status formatado para exibição
+    /// </summary>
+    [NotMapped]
+    public string StatusDisplay => Status switch
+    {
+        "DRAFT" or "AGUARDANDO_COMPRA" => "Aguardando Compra",
+        "PENDING" or "IN_CART" => "No Carrinho",
+        "ANALYZING" => "Em Análise",
+        "APPROVED" => "Aprovado",
+        "REJECTED" => "Rejeitado",
+        "PROCESSING" or "ORDERED" => "Em Produção",
+        "READY" => "Pronto para Retirada",
+        "DELIVERED" or "COMPLETED" => "Entregue",
+        "CANCELLED" => "Cancelado",
+        _ => Status
+    };
 }

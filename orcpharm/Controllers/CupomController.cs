@@ -1,360 +1,278 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
+using Models;
 using Models.Employees;
-using System.Text;
+using Models.Pharmacy;
 
-namespace Controllers.Api;
+namespace Controllers;
 
 /// <summary>
-/// API de Geração de Cupom Não-Fiscal
-/// Prepara dados para impressão térmica ou PDF
+/// Controller MVC para gerenciamento de Cupons pela Farmácia
+/// Rota: /Cupons/*
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
-public class CupomController : ControllerBase
+[Route("Cupons")]
+public class CupomController : Controller
 {
-    private readonly AppDbContext _db;
+    private readonly AppDbContext _context;
     private readonly ILogger<CupomController> _logger;
 
-    public CupomController(AppDbContext db, ILogger<CupomController> logger)
+    public CupomController(AppDbContext context, ILogger<CupomController> logger)
     {
-        _db = db;
+        _context = context;
         _logger = logger;
     }
 
-    private Guid GetEstablishmentId()
+    private Employee? GetCurrentEmployee()
     {
-        if (HttpContext.Items.TryGetValue("EstablishmentId", out var estId) && estId is Guid id)
-            return id;
-        return Guid.Parse("e0000000-0000-0000-0000-000000000001");
+        return HttpContext.Items["Employee"] as Employee;
     }
 
     /// <summary>
-    /// Gera cupom não-fiscal para uma venda
-    /// GET /api/cupom/venda/{saleId}
+    /// Lista de cupons
+    /// GET /Cupons
     /// </summary>
-    [HttpGet("venda/{saleId:guid}")]
-    public async Task<IActionResult> GerarCupomVenda(Guid saleId)
+    [HttpGet("")]
+    public async Task<IActionResult> Index()
     {
-        try
-        {
-            var establishmentId = GetEstablishmentId();
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
 
-            var venda = await _db.Sales
-                .Include(s => s.Customer)
-                .Include(s => s.Payments)
-                .Include(s => s.Items)
-                .FirstOrDefaultAsync(s => s.Id == saleId && s.EstablishmentId == establishmentId);
+        var coupons = await _context.Coupons
+            .Where(c => c.EstablishmentId == null || c.EstablishmentId == employee.EstablishmentId)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
 
-            if (venda == null)
-                return NotFound(new { error = "Venda não encontrada" });
-
-            var estabelecimento = await _db.Establishments.FindAsync(establishmentId);
-
-            // Montar endereço completo
-            var endereco = estabelecimento != null 
-                ? $"{estabelecimento.Street}, {estabelecimento.Number} - {estabelecimento.Neighborhood}, {estabelecimento.City}/{estabelecimento.State}"
-                : null;
-
-            var cupom = new CupomDto
-            {
-                Tipo = "VENDA",
-                Numero = venda.Code ?? venda.Id.ToString()[..8].ToUpper(),
-                Data = venda.CreatedAt,
-                
-                Estabelecimento = new EstabelecimentoCupomDto
-                {
-                    Nome = estabelecimento?.NomeFantasia ?? estabelecimento?.RazaoSocial ?? "OrcPharm",
-                    RazaoSocial = estabelecimento?.RazaoSocial,
-                    CNPJ = estabelecimento?.Cnpj,
-                    Endereco = endereco,
-                    Telefone = estabelecimento?.Phone
-                },
-                
-                Cliente = venda.Customer != null ? new ClienteCupomDto
-                {
-                    Nome = venda.Customer.FullName ?? "Cliente",
-                    CPF = venda.Customer.Cpf,
-                    Telefone = venda.Customer.Phone ?? venda.Customer.WhatsApp
-                } : null,
-                
-                Itens = venda.Items?.Select(i => new ItemCupomDto
-                {
-                    Descricao = i.Description ?? "Item",
-                    Quantidade = i.Quantity,
-                    Unidade = "UN",
-                    ValorUnitario = i.UnitPrice,
-                    ValorTotal = i.TotalPrice
-                }).ToList() ?? new List<ItemCupomDto>(),
-                
-                Subtotal = venda.Subtotal,
-                Desconto = venda.DiscountAmount,  // CORRIGIDO: DiscountAmount ao invés de DiscountValue
-                Total = venda.TotalAmount,
-                
-                Pagamentos = venda.Payments?.Select(p => new PagamentoCupomDto
-                {
-                    Forma = FormatarFormaPagamento(p.PaymentMethod),
-                    Valor = p.Amount
-                }).ToList() ?? new List<PagamentoCupomDto>(),
-                
-                Observacoes = venda.Observations,  // CORRIGIDO: Observations ao invés de Notes
-                Rodape = "CUPOM NÃO FISCAL - NÃO TEM VALOR FISCAL\n" +
-                         "Obrigado pela preferência!"
-            };
-
-            return Ok(cupom);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao gerar cupom para venda {SaleId}", saleId);
-            return StatusCode(500, new { error = "Erro ao gerar cupom" });
-        }
+        ViewData["Employee"] = employee;
+        ViewBag.Coupons = coupons;
+        return View("Index");
     }
 
     /// <summary>
-    /// Gera cupom para ordem de manipulação
-    /// GET /api/cupom/ordem/{orderId}
+    /// Criar novo cupom
+    /// GET /Cupons/Criar
     /// </summary>
-    [HttpGet("ordem/{orderId:guid}")]
-    public async Task<IActionResult> GerarCupomOrdem(Guid orderId)
+    [HttpGet("Criar")]
+    public IActionResult Criar()
     {
-        try
-        {
-            var establishmentId = GetEstablishmentId();
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
 
-            // ManipulationOrder NÃO tem CustomerId - usa CustomerName diretamente
-            var ordem = await _db.ManipulationOrders
-                .Include(o => o.Formula)
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.EstablishmentId == establishmentId);
-
-            if (ordem == null)
-                return NotFound(new { error = "Ordem não encontrada" });
-
-            var estabelecimento = await _db.Establishments.FindAsync(establishmentId);
-            
-            // Buscar preço do orçamento aprovado (ManipulationOrder não tem FinalPrice/EstimatedPrice)
-            var quote = await _db.PrescriptionQuotes
-                .Where(q => q.ManipulationOrderId == orderId && 
-                           (q.Status == "APROVADO" || q.Status == "CONVERTIDO"))
-                .FirstOrDefaultAsync();
-            
-            var valorTotal = quote?.FinalPrice ?? 0;
-
-            // Montar endereço completo
-            var endereco = estabelecimento != null 
-                ? $"{estabelecimento.Street}, {estabelecimento.Number} - {estabelecimento.Neighborhood}, {estabelecimento.City}/{estabelecimento.State}"
-                : null;
-
-            var cupom = new CupomDto
-            {
-                Tipo = "ORDEM_MANIPULACAO",
-                Numero = ordem.OrderNumber,
-                Data = ordem.CreatedAt,
-                
-                Estabelecimento = new EstabelecimentoCupomDto
-                {
-                    // CORRIGIDO: NomeFantasia e RazaoSocial (não TradeName/LegalName)
-                    Nome = estabelecimento?.NomeFantasia ?? estabelecimento?.RazaoSocial ?? "OrcPharm",
-                    RazaoSocial = estabelecimento?.RazaoSocial,
-                    CNPJ = estabelecimento?.Cnpj,
-                    Endereco = endereco,
-                    Telefone = estabelecimento?.Phone
-                },
-                
-                // CORRIGIDO: ManipulationOrder tem CustomerName diretamente (não CustomerId)
-                Cliente = new ClienteCupomDto 
-                { 
-                    Nome = ordem.CustomerName ?? "Cliente",
-                    Telefone = ordem.CustomerPhone
-                },
-                
-                Itens = new List<ItemCupomDto>
-                {
-                    new ItemCupomDto
-                    {
-                        // CORRIGIDO: Usa Formula.Name (não ProductDescription)
-                        Descricao = ordem.Formula?.Name ?? "Fórmula Manipulada",
-                        // CORRIGIDO: QuantityToProduce (não Quantity)
-                        Quantidade = ordem.QuantityToProduce,
-                        Unidade = ordem.Unit ?? "UN",
-                        ValorUnitario = ordem.QuantityToProduce > 0 ? valorTotal / ordem.QuantityToProduce : valorTotal,
-                        ValorTotal = valorTotal
-                    }
-                },
-                
-                Total = valorTotal,
-                
-                DadosAdicionais = new Dictionary<string, string>
-                {
-                    { "Status", ordem.Status },
-                    // CORRIGIDO: ExpectedDate (não DueDate)
-                    { "Previsão de Entrega", ordem.ExpectedDate.ToString("dd/MM/yyyy") }
-                },
-                
-                // CORRIGIDO: SpecialInstructions (não Notes)
-                Observacoes = ordem.SpecialInstructions,
-                Rodape = "COMPROVANTE DE PEDIDO - NÃO TEM VALOR FISCAL\n" +
-                         $"Previsão de entrega: {ordem.ExpectedDate:dd/MM/yyyy}"
-            };
-
-            return Ok(cupom);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao gerar cupom para ordem {OrderId}", orderId);
-            return StatusCode(500, new { error = "Erro ao gerar cupom" });
-        }
+        ViewData["Employee"] = employee;
+        return View("Criar");
     }
 
     /// <summary>
-    /// Gera texto formatado para impressora térmica (80mm)
-    /// GET /api/cupom/venda/{saleId}/texto
+    /// Salvar novo cupom
+    /// POST /Cupons/Criar
     /// </summary>
-    [HttpGet("venda/{saleId:guid}/texto")]
-    public async Task<IActionResult> GerarTextoTermico(Guid saleId)
+    [HttpPost("Criar")]
+    public async Task<IActionResult> Criar([FromForm] CriarCupomDto dto)
     {
-        try
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
+
+        if (!ModelState.IsValid)
         {
-            var result = await GerarCupomVenda(saleId);
-            if (result is NotFoundObjectResult)
-                return result;
-
-            var okResult = result as OkObjectResult;
-            var cupom = okResult?.Value as CupomDto;
-            if (cupom == null)
-                return StatusCode(500, new { error = "Erro ao processar cupom" });
-
-            var texto = GerarTextoTermico80mm(cupom);
-            return Content(texto, "text/plain", Encoding.UTF8);
+            ViewData["Employee"] = employee;
+            TempData["Error"] = "Preencha todos os campos obrigatórios";
+            return View("Criar");
         }
-        catch (Exception ex)
+
+        // Verificar se código já existe
+        var existingCode = await _context.Coupons
+            .AnyAsync(c => c.Code == dto.Code.ToUpper());
+        
+        if (existingCode)
         {
-            _logger.LogError(ex, "Erro ao gerar texto térmico");
-            return StatusCode(500, new { error = "Erro ao gerar texto" });
+            TempData["Error"] = "Já existe um cupom com este código";
+            ViewData["Employee"] = employee;
+            return View("Criar");
         }
-    }
 
-    #region Helpers
-
-    private string FormatarFormaPagamento(string? metodo)
-    {
-        return metodo?.ToUpper() switch
+        var coupon = new Coupon
         {
-            "DINHEIRO" => "Dinheiro",
-            "CARTAO_CREDITO" => "Cartão de Crédito",
-            "CARTAO_DEBITO" => "Cartão de Débito",
-            "PIX" => "PIX",
-            "BOLETO" => "Boleto",
-            "TRANSFERENCIA" => "Transferência",
-            _ => metodo ?? "Outros"
+            Id = Guid.NewGuid(),
+            EstablishmentId = employee.EstablishmentId,
+            Code = dto.Code.ToUpper(),
+            Description = dto.Description,
+            DiscountType = dto.DiscountType,
+            DiscountPercentage = dto.DiscountType == "PERCENTAGE" ? dto.DiscountValue : null,
+            DiscountValue = dto.DiscountType == "FIXED_VALUE" ? dto.DiscountValue : null,
+            MinOrderValue = dto.MinOrderValue,
+            MaxDiscountValue = dto.MaxDiscountValue,
+            ValidFrom = dto.ValidFrom,
+            ValidUntil = dto.ValidUntil,
+            MaxUses = dto.MaxUses,
+            MaxUsesPerCustomer = dto.MaxUsesPerCustomer,
+            FirstPurchaseOnly = dto.FirstPurchaseOnly,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedByEmployeeId = employee.Id
         };
+
+        _context.Coupons.Add(coupon);
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Cupom criado com sucesso!";
+        return RedirectToAction("Index");
     }
 
-    private string GerarTextoTermico80mm(CupomDto cupom)
+    /// <summary>
+    /// Editar cupom
+    /// GET /Cupons/Editar/{id}
+    /// </summary>
+    [HttpGet("Editar/{id}")]
+    public async Task<IActionResult> Editar(Guid id)
     {
-        const int LARGURA = 48;
-        var sb = new StringBuilder();
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
 
-        sb.AppendLine(Centralizar(cupom.Estabelecimento.Nome?.ToUpper() ?? "ORCPHARM", LARGURA));
-        if (!string.IsNullOrEmpty(cupom.Estabelecimento.CNPJ))
-            sb.AppendLine(Centralizar($"CNPJ: {cupom.Estabelecimento.CNPJ}", LARGURA));
-        
-        sb.AppendLine(new string('-', LARGURA));
-        sb.AppendLine(Centralizar("CUPOM NÃO FISCAL", LARGURA));
-        sb.AppendLine(new string('-', LARGURA));
+        var coupon = await _context.Coupons
+            .FirstOrDefaultAsync(c => c.Id == id);
 
-        sb.AppendLine($"Nº: {cupom.Numero}");
-        sb.AppendLine($"Data: {cupom.Data:dd/MM/yyyy HH:mm}");
-        
-        if (cupom.Cliente != null)
-            sb.AppendLine($"Cliente: {cupom.Cliente.Nome}");
+        if (coupon == null)
+            return NotFound();
 
-        sb.AppendLine(new string('-', LARGURA));
+        ViewData["Employee"] = employee;
+        ViewBag.Coupon = coupon;
+        return View("Editar");
+    }
 
-        foreach (var item in cupom.Itens)
+    /// <summary>
+    /// Salvar edição
+    /// POST /Cupons/Editar/{id}
+    /// </summary>
+    [HttpPost("Editar/{id}")]
+    public async Task<IActionResult> Editar(Guid id, [FromForm] CriarCupomDto dto)
+    {
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
+
+        var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == id);
+        if (coupon == null)
+            return NotFound();
+
+        coupon.Description = dto.Description;
+        coupon.DiscountType = dto.DiscountType;
+        coupon.DiscountPercentage = dto.DiscountType == "PERCENTAGE" ? dto.DiscountValue : null;
+        coupon.DiscountValue = dto.DiscountType == "FIXED_VALUE" ? dto.DiscountValue : null;
+        coupon.MinOrderValue = dto.MinOrderValue;
+        coupon.MaxDiscountValue = dto.MaxDiscountValue;
+        coupon.ValidFrom = dto.ValidFrom;
+        coupon.ValidUntil = dto.ValidUntil;
+        coupon.MaxUses = dto.MaxUses;
+        coupon.MaxUsesPerCustomer = dto.MaxUsesPerCustomer;
+        coupon.FirstPurchaseOnly = dto.FirstPurchaseOnly;
+        coupon.UpdatedAt = DateTime.UtcNow;
+        coupon.UpdatedByEmployeeId = employee.Id;
+
+        await _context.SaveChangesAsync();
+
+        TempData["Success"] = "Cupom atualizado com sucesso!";
+        return RedirectToAction("Index");
+    }
+
+    /// <summary>
+    /// Ativar/Desativar cupom
+    /// POST /Cupons/Toggle/{id}
+    /// </summary>
+    [HttpPost("Toggle/{id}")]
+    public async Task<IActionResult> Toggle(Guid id)
+    {
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return Unauthorized();
+
+        var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == id);
+        if (coupon == null)
+            return NotFound();
+
+        coupon.IsActive = !coupon.IsActive;
+        coupon.UpdatedAt = DateTime.UtcNow;
+        coupon.UpdatedByEmployeeId = employee.Id;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, isActive = coupon.IsActive });
+    }
+
+    /// <summary>
+    /// Excluir cupom
+    /// POST /Cupons/Excluir/{id}
+    /// </summary>
+    [HttpPost("Excluir/{id}")]
+    public async Task<IActionResult> Excluir(Guid id)
+    {
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return Unauthorized();
+
+        var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == id);
+        if (coupon == null)
+            return NotFound();
+
+        // Verificar se foi usado
+        if (coupon.UsedCount > 0)
         {
-            sb.AppendLine(item.Descricao);
-            sb.AppendLine($"  {item.Quantidade:N2} x R$ {item.ValorUnitario:N2} = R$ {item.ValorTotal:N2}");
+            // Apenas desativar se já foi usado
+            coupon.IsActive = false;
+            coupon.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            _context.Coupons.Remove(coupon);
         }
 
-        sb.AppendLine(new string('-', LARGURA));
-        sb.AppendLine(AlinharDireita($"TOTAL: R$ {cupom.Total:N2}", LARGURA));
+        await _context.SaveChangesAsync();
 
-        if (cupom.Pagamentos.Any())
-        {
-            sb.AppendLine(new string('-', LARGURA));
-            foreach (var pag in cupom.Pagamentos)
-                sb.AppendLine($"  {pag.Forma}: R$ {pag.Valor:N2}");
-        }
-
-        sb.AppendLine(new string('-', LARGURA));
-        sb.AppendLine(Centralizar(cupom.Rodape ?? "", LARGURA));
-
-        return sb.ToString();
+        TempData["Success"] = "Cupom removido com sucesso!";
+        return RedirectToAction("Index");
     }
 
-    private string Centralizar(string texto, int largura)
+    /// <summary>
+    /// Relatório de uso
+    /// GET /Cupons/Relatorio/{id}
+    /// </summary>
+    [HttpGet("Relatorio/{id}")]
+    public async Task<IActionResult> Relatorio(Guid id)
     {
-        if (texto.Length >= largura) return texto[..largura];
-        var espacos = (largura - texto.Length) / 2;
-        return new string(' ', espacos) + texto;
+        var employee = GetCurrentEmployee();
+        if (employee == null)
+            return RedirectToAction("Login", "Account");
+
+        var coupon = await _context.Coupons
+            .Include(c => c.Usages!)
+                .ThenInclude(u => u.Customer)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (coupon == null)
+            return NotFound();
+
+        ViewData["Employee"] = employee;
+        ViewBag.Coupon = coupon;
+        ViewBag.Usages = coupon.Usages?.OrderByDescending(u => u.UsedAt).ToList();
+        return View("Relatorio");
     }
-
-    private string AlinharDireita(string texto, int largura)
-    {
-        if (texto.Length >= largura) return texto[..largura];
-        return new string(' ', largura - texto.Length) + texto;
-    }
-
-    #endregion
 }
 
-// DTOs
-public class CupomDto
+// DTO para criar/editar cupom
+public class CriarCupomDto
 {
-    public string Tipo { get; set; } = "";
-    public string Numero { get; set; } = "";
-    public DateTime Data { get; set; }
-    public EstabelecimentoCupomDto Estabelecimento { get; set; } = new();
-    public ClienteCupomDto? Cliente { get; set; }
-    public List<ItemCupomDto> Itens { get; set; } = new();
-    public decimal Subtotal { get; set; }
-    public decimal Desconto { get; set; }
-    public decimal Total { get; set; }
-    public List<PagamentoCupomDto> Pagamentos { get; set; } = new();
-    public Dictionary<string, string>? DadosAdicionais { get; set; }
-    public string? Observacoes { get; set; }
-    public string? Rodape { get; set; }
-}
-
-public class EstabelecimentoCupomDto
-{
-    public string? Nome { get; set; }
-    public string? RazaoSocial { get; set; }
-    public string? CNPJ { get; set; }
-    public string? Endereco { get; set; }
-    public string? Telefone { get; set; }
-}
-
-public class ClienteCupomDto
-{
-    public string? Nome { get; set; }
-    public string? CPF { get; set; }
-    public string? Telefone { get; set; }
-}
-
-public class ItemCupomDto
-{
-    public string Descricao { get; set; } = "";
-    public decimal Quantidade { get; set; }
-    public string Unidade { get; set; } = "UN";
-    public decimal ValorUnitario { get; set; }
-    public decimal ValorTotal { get; set; }
-}
-
-public class PagamentoCupomDto
-{
-    public string Forma { get; set; } = "";
-    public decimal Valor { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string DiscountType { get; set; } = "PERCENTAGE";
+    public decimal DiscountValue { get; set; }
+    public decimal? MinOrderValue { get; set; }
+    public decimal? MaxDiscountValue { get; set; }
+    public DateTime ValidFrom { get; set; } = DateTime.UtcNow;
+    public DateTime ValidUntil { get; set; } = DateTime.UtcNow.AddDays(30);
+    public int? MaxUses { get; set; }
+    public int? MaxUsesPerCustomer { get; set; }
+    public bool FirstPurchaseOnly { get; set; }
 }
