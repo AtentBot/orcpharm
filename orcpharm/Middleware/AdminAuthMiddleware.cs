@@ -108,6 +108,7 @@ public class AdminAuthMiddleware
         var publicRoutes = new[]
         {
             "/",
+            "/landing",
             "/pricing",
             "/features",
             "/about",

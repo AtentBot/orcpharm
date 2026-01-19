@@ -23,6 +23,12 @@ public class PublicController : Controller
         return View();
     }
 
+    [HttpGet("/landing")]
+    public IActionResult Landing()
+    {
+        return View();
+    }
+
     [HttpGet("/pricing")]
     public async Task<IActionResult> Pricing()
     {

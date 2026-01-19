@@ -54,6 +54,14 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
+            "ClaudeAgentSdk": {
+              "target": "Package",
+              "version": "[0.2.1, )"
+            },
+            "ClaudeCodeSdk": {
+              "target": "Package",
+              "version": "[0.0.1, )"
+            },
             "EFCore.NamingConventions": {
               "target": "Package",
               "version": "[9.0.0, )"

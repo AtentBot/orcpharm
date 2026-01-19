@@ -24,6 +24,14 @@
             },
             "Patterns": null
           },
+          "landing.css": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "css/landing.css"
+            },
+            "Patterns": null
+          },
           "pricing-indicators.css": {
             "Children": null,
             "Asset": {
@@ -85,6 +93,14 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "ofpng2l96d-mt0ck4zlm8.gz"
+            },
+            "Patterns": null
+          },
+          "landing.css.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "gvzukf0zis-8gltgk1fbc.gz"
             },
             "Patterns": null
           },
@@ -203,6 +219,14 @@
             "Asset": {
               "ContentRootIndex": 0,
               "SubPath": "js/Index_loadData.js"
+            },
+            "Patterns": null
+          },
+          "landing.js": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 0,
+              "SubPath": "js/landing.js"
             },
             "Patterns": null
           },
@@ -379,6 +403,14 @@
             "Asset": {
               "ContentRootIndex": 2,
               "SubPath": "6viq24p44z-oxr62w29mq.gz"
+            },
+            "Patterns": null
+          },
+          "landing.js.gz": {
+            "Children": null,
+            "Asset": {
+              "ContentRootIndex": 2,
+              "SubPath": "aw5e260k1z-8pu9sc019p.gz"
             },
             "Patterns": null
           },

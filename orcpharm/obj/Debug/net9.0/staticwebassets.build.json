@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "yFE9Upf9qP+41MixTKW77A9ooWUAvME0G84BqnilIY0=",
+  "Hash": "EV/uR0Hho1IYHvmH9P8MYXwhTqxGnmVrgxebzfGlYRo=",
   "Source": "orcpharm",
   "BasePath": "_content/orcpharm",
   "Mode": "Default",
@@ -435,6 +435,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\purchase-orders-details.js"
+    },
+    {
+      "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\aw5e260k1z-8pu9sc019p.gz",
+      "SourceId": "orcpharm",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/orcpharm",
+      "RelativePath": "js/landing#[.{fingerprint=8pu9sc019p}]?.js.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\landing.js",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "nu4x0zzpnk",
+      "Integrity": "z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\landing.js"
     },
     {
       "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\b4r7dfx30r-fsbi9cje9m.gz",
@@ -876,6 +897,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\lib\\jquery\\dist\\jquery.slim.min.map"
+    },
+    {
+      "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\gvzukf0zis-8gltgk1fbc.gz",
+      "SourceId": "orcpharm",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/orcpharm",
+      "RelativePath": "css/landing#[.{fingerprint=8gltgk1fbc}]?.css.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\landing.css",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "bpxtnov05a",
+      "Integrity": "3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\landing.css"
     },
     {
       "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\gzaf4omj0n-0j3bgjxly4.gz",
@@ -2033,6 +2075,27 @@
       "OriginalItemSpec": "wwwroot\\css\\employees-shared.css"
     },
     {
+      "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\landing.css",
+      "SourceId": "orcpharm",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\",
+      "BasePath": "_content/orcpharm",
+      "RelativePath": "css/landing#[.{fingerprint}]?.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "8gltgk1fbc",
+      "Integrity": "KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\landing.css"
+    },
+    {
       "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\pricing.css",
       "SourceId": "orcpharm",
       "SourceType": "Discovered",
@@ -2346,6 +2409,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\js\\Index_loadData.js"
+    },
+    {
+      "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\landing.js",
+      "SourceId": "orcpharm",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\",
+      "BasePath": "_content/orcpharm",
+      "RelativePath": "js/landing#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "8pu9sc019p",
+      "Integrity": "VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\landing.js"
     },
     {
       "Identity": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\manipulation-weighing.js",
@@ -4517,6 +4601,304 @@
         {
           "Name": "integrity",
           "Value": "sha256-YMqWiwzyojyIwVVda6eJvTBrtK8oOF3p/tTIXzUarog="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing.8gltgk1fbc.css",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\gvzukf0zis-8gltgk1fbc.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000553709856"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1805"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "8gltgk1fbc"
+        },
+        {
+          "Name": "label",
+          "Value": "css/landing.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing.8gltgk1fbc.css",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\landing.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "7477"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "8gltgk1fbc"
+        },
+        {
+          "Name": "label",
+          "Value": "css/landing.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing.8gltgk1fbc.css.gz",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\gvzukf0zis-8gltgk1fbc.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1805"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "8gltgk1fbc"
+        },
+        {
+          "Name": "label",
+          "Value": "css/landing.css.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing.css",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\gvzukf0zis-8gltgk1fbc.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000553709856"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1805"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing.css",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\landing.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "7477"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-KD6cs8J8uR/Y3Y9iNK9WF/z/tDQvnFNNhxw1Op4q/B0="
+        }
+      ]
+    },
+    {
+      "Route": "css/landing.css.gz",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\gvzukf0zis-8gltgk1fbc.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1805"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:40 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-3xZyXip/3VFKuiPi8RpXnvUb+Uzn9YgnvwyOqGi/wgA="
         }
       ]
     },
@@ -8771,6 +9153,304 @@
         {
           "Name": "integrity",
           "Value": "sha256-lfBoLMYGCXHux1auVG0ZV0jb6TBuoxYYTc5zx5v24/U="
+        }
+      ]
+    },
+    {
+      "Route": "js/landing.8pu9sc019p.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\aw5e260k1z-8pu9sc019p.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000400160064"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2498"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:43 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "8pu9sc019p"
+        },
+        {
+          "Name": "label",
+          "Value": "js/landing.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA="
+        }
+      ]
+    },
+    {
+      "Route": "js/landing.8pu9sc019p.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\landing.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "8176"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:43 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "8pu9sc019p"
+        },
+        {
+          "Name": "label",
+          "Value": "js/landing.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA="
+        }
+      ]
+    },
+    {
+      "Route": "js/landing.8pu9sc019p.js.gz",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\aw5e260k1z-8pu9sc019p.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2498"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:43 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "8pu9sc019p"
+        },
+        {
+          "Name": "label",
+          "Value": "js/landing.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA="
+        }
+      ]
+    },
+    {
+      "Route": "js/landing.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\aw5e260k1z-8pu9sc019p.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000400160064"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2498"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:43 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA="
+        }
+      ]
+    },
+    {
+      "Route": "js/landing.js",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\landing.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "8176"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:43 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-VHBw9DLDWgnzW0LUAgJS/R7H2JdeVUoQn5QZrenyiSA="
+        }
+      ]
+    },
+    {
+      "Route": "js/landing.js.gz",
+      "AssetFile": "E:\\orcpharm\\orcpharm\\orcpharm\\obj\\Debug\\net9.0\\compressed\\aw5e260k1z-8pu9sc019p.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "2498"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Sun, 18 Jan 2026 02:30:43 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-z3JGjIN+tKRtkU0RY05jXOaKoYPGSbrdwISfxrJy5UA="
         }
       ]
     },

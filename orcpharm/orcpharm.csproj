@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="ClaudeAgentSdk" Version="0.2.1" />
+    <PackageReference Include="ClaudeCodeSdk" Version="0.0.1" />
     <PackageReference Include="FluentValidation" Version="12.1.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageReference Include="Isopoh.Cryptography.Argon2" Version="2.0.0" />

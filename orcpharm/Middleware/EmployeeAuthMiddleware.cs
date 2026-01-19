@@ -95,6 +95,7 @@ public class EmployeeAuthMiddleware
         var exactPaths = new[]
         {
             "/",
+            "/landing",
             "/health",
             "/home",
             "/home/index",

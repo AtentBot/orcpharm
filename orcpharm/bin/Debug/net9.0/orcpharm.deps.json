@@ -9,6 +9,8 @@
       "orcpharm/1.0.0": {
         "dependencies": {
           "BCrypt.Net-Next": "4.0.3",
+          "ClaudeAgentSdk": "0.2.1",
+          "ClaudeCodeSdk": "0.0.1",
           "EFCore.NamingConventions": "9.0.0",
           "FluentValidation": "12.1.0",
           "FluentValidation.AspNetCore": "11.3.1",
@@ -33,6 +35,30 @@
           "lib/net6.0/BCrypt.Net-Next.dll": {
             "assemblyVersion": "4.0.3.0",
             "fileVersion": "4.0.3.0"
+          }
+        }
+      },
+      "ClaudeAgentSdk/0.2.1": {
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "9.10.1",
+          "System.Text.Json": "9.0.10"
+        },
+        "runtime": {
+          "lib/net8.0/ClaudeAgentSdk.dll": {
+            "assemblyVersion": "0.2.1.0",
+            "fileVersion": "0.2.1.0"
+          }
+        }
+      },
+      "ClaudeCodeSdk/0.0.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "9.0.10",
+          "System.Text.Json": "9.0.10"
+        },
+        "runtime": {
+          "lib/net8.0/ClaudeCodeSdk.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
           }
         }
       },
@@ -479,6 +505,14 @@
       "Microsoft.EntityFrameworkCore.Tools/9.0.10": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Design": "9.0.10"
+        }
+      },
+      "Microsoft.Extensions.AI.Abstractions/9.10.1": {
+        "runtime": {
+          "lib/net9.0/Microsoft.Extensions.AI.Abstractions.dll": {
+            "assemblyVersion": "9.10.0.0",
+            "fileVersion": "9.1000.125.52104"
+          }
         }
       },
       "Microsoft.Extensions.ApiDescription.Server/9.0.0": {},
@@ -1130,6 +1164,20 @@
       "path": "bcrypt.net-next/4.0.3",
       "hashPath": "bcrypt.net-next.4.0.3.nupkg.sha512"
     },
+    "ClaudeAgentSdk/0.2.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-1PPQcEEXDz/W2fuDHJX8bEhyNsiZdFtl/xiEgJH9kWW3H/NHTQ/eXh5xMXXbuEXN+5lw4Ic7kEY/mUEO5jq2BQ==",
+      "path": "claudeagentsdk/0.2.1",
+      "hashPath": "claudeagentsdk.0.2.1.nupkg.sha512"
+    },
+    "ClaudeCodeSdk/0.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3bVzx9zdnyypA55Ku808jbp1/aEhQmqFvvngV6OE6TmSxANxvsa0daufBJAzn4+F9f8zbOwqn4X53kwYVVqr6g==",
+      "path": "claudecodesdk/0.0.1",
+      "hashPath": "claudecodesdk.0.0.1.nupkg.sha512"
+    },
     "EFCore.NamingConventions/9.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1290,6 +1338,13 @@
       "sha512": "sha512-lFM5KSu1CCla1+wzhjwo5Ex/idUxbdZApKD9yNUbmcCBgW1SJ8E8mz7ECOf5gaCjjjII8f5ztJAmUt5Ez8koAQ==",
       "path": "microsoft.entityframeworkcore.tools/9.0.10",
       "hashPath": "microsoft.entityframeworkcore.tools.9.0.10.nupkg.sha512"
+    },
+    "Microsoft.Extensions.AI.Abstractions/9.10.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-e31P/WT7Pgx/9P6HNBUGEO0v9XyuZj6Dbekz4XeaP6v4GQ7jK1AllBiNTu1k2zx2x6upSeAmA6sRp6C2BgmMwQ==",
+      "path": "microsoft.extensions.ai.abstractions/9.10.1",
+      "hashPath": "microsoft.extensions.ai.abstractions.9.10.1.nupkg.sha512"
     },
     "Microsoft.Extensions.ApiDescription.Server/9.0.0": {
       "type": "package",

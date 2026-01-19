@@ -1,10 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "ir0yAxJnHs4=",
+  "dgSpecHash": "fJVfUlS3gzc=",
   "success": true,
   "projectFilePath": "E:\\orcpharm\\orcpharm\\orcpharm\\orcpharm.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\T-GAMER\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
+    "C:\\Users\\T-GAMER\\.nuget\\packages\\claudeagentsdk\\0.2.1\\claudeagentsdk.0.2.1.nupkg.sha512",
+    "C:\\Users\\T-GAMER\\.nuget\\packages\\claudecodesdk\\0.0.1\\claudecodesdk.0.0.1.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\efcore.namingconventions\\9.0.0\\efcore.namingconventions.9.0.0.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\fluentvalidation\\12.1.0\\fluentvalidation.12.1.0.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\fluentvalidation.aspnetcore\\11.3.1\\fluentvalidation.aspnetcore.11.3.1.nupkg.sha512",
@@ -28,6 +30,7 @@
     "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.entityframeworkcore.design\\9.0.10\\microsoft.entityframeworkcore.design.9.0.10.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\9.0.10\\microsoft.entityframeworkcore.relational.9.0.10.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.entityframeworkcore.tools\\9.0.10\\microsoft.entityframeworkcore.tools.9.0.10.nupkg.sha512",
+    "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.extensions.ai.abstractions\\9.10.1\\microsoft.extensions.ai.abstractions.9.10.1.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.extensions.apidescription.server\\9.0.0\\microsoft.extensions.apidescription.server.9.0.0.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\9.0.10\\microsoft.extensions.caching.abstractions.9.0.10.nupkg.sha512",
     "C:\\Users\\T-GAMER\\.nuget\\packages\\microsoft.extensions.caching.memory\\9.0.10\\microsoft.extensions.caching.memory.9.0.10.nupkg.sha512",

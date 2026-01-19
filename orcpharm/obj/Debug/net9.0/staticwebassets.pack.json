@@ -17,6 +17,10 @@
       "PackagePath": "staticwebassets\\css\\employees-shared.css"
     },
     {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\landing.css",
+      "PackagePath": "staticwebassets\\css\\landing.css"
+    },
+    {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\css\\pricing-indicators.css",
       "PackagePath": "staticwebassets\\css\\pricing-indicators.css"
     },
@@ -71,6 +75,10 @@
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\gateway-configuration.js",
       "PackagePath": "staticwebassets\\js\\gateway-configuration.js"
+    },
+    {
+      "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\landing.js",
+      "PackagePath": "staticwebassets\\js\\landing.js"
     },
     {
       "Id": "E:\\orcpharm\\orcpharm\\orcpharm\\wwwroot\\js\\manipulation-weighing.js",

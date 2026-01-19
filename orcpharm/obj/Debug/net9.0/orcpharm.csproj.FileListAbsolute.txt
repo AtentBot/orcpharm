@@ -296,7 +296,6 @@ E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.build.orc
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.buildMultiTargeting.orcpharm.props
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets\msbuild.buildTransitive.orcpharm.props
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.pack.json
-E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.csproj.Up2Date
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.dll
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\refint\orcpharm.dll
@@ -304,3 +303,9 @@ E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.pdb
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\orcpharm.genruntimeconfig.cache
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\ref\orcpharm.dll
 E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\6viq24p44z-oxr62w29mq.gz
+E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\ClaudeAgentSdk.dll
+E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\ClaudeCodeSdk.dll
+E:\orcpharm\orcpharm\orcpharm\bin\Debug\net9.0\Microsoft.Extensions.AI.Abstractions.dll
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\gvzukf0zis-8gltgk1fbc.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\compressed\aw5e260k1z-8pu9sc019p.gz
+E:\orcpharm\orcpharm\orcpharm\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
