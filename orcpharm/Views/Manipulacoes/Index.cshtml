@@ -4,42 +4,19 @@
 }
 
 <style>
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.65rem;
-    }
-    .order-row {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .order-row:hover {
-        background-color: #f8f9fa;
-    }
-    .overdue {
-        border-left: 4px solid #dc3545;
-    }
-    .filter-card {
-        border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .quick-stats {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
+    .status-badge { font-size: 11px; padding: 3px 10px; border-radius: var(--r-pill); }
+    .order-row { cursor: pointer; transition: background-color var(--t-fast); }
+    .order-row:hover { background-color: var(--bg-subtle); }
+    .overdue { border-left: 3px solid var(--danger); }
+    .filter-card { border: 1px solid var(--rule); box-shadow: var(--shadow-1); border-radius: var(--r-md); }
+    .quick-stats { display: flex; gap: 12px; flex-wrap: wrap; }
     .quick-stat {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: #f8f9fa;
-        border-radius: 20px;
-        font-size: 0.9rem;
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 16px; background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-pill); font-size: 13px;
     }
-    .quick-stat .count {
-        font-weight: 600;
-        color: #0d6efd;
-    }
+    .quick-stat .count { font-weight: 600; color: var(--petrol-500); font-variant-numeric: tabular-nums; }
 </style>
 
 <div class="container-fluid py-4">

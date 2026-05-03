@@ -6,83 +6,52 @@
 
 <style>
     .weighing-header {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
+        background: var(--ink); color: #fff;
+        padding: 20px 24px;
+        border-radius: var(--r-md);
+        margin-bottom: 20px;
+        position: relative; overflow: hidden;
     }
+    .weighing-header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(700px 300px at 90% 100%, color-mix(in srgb, var(--petrol-500) 35%, transparent), transparent 70%); pointer-events: none; }
+    .weighing-header > * { position: relative; z-index: 1; }
     .component-card {
-        border: 2px solid #dee2e6;
-        border-radius: 12px;
-        margin-bottom: 1rem;
-        transition: all 0.3s;
+        border: 1px solid var(--rule); background: var(--surface);
+        border-radius: var(--r-md);
+        margin-bottom: 12px; transition: all var(--t-base);
     }
-    .component-card.weighed {
-        border-color: #28a745;
-        background: #f8fff8;
-    }
-    .component-card.controlled {
-        border-left: 4px solid #6f42c1;
-    }
+    .component-card.weighed { border-color: var(--ok); background: var(--ok-soft); }
+    .component-card.controlled { border-left: 3px solid var(--controlled-black); }
     .component-header {
-        padding: 1rem;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        padding: 14px 18px; border-bottom: 1px solid var(--rule);
+        display: flex; justify-content: space-between; align-items: center;
     }
-    .component-body {
-        padding: 1rem;
-    }
+    .component-body { padding: 14px 18px; }
     .batch-option {
-        padding: 0.75rem;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s;
+        padding: 12px; border: 1px solid var(--rule);
+        border-radius: var(--r-sm); margin-bottom: 6px;
+        cursor: pointer; transition: all var(--t-fast);
     }
-    .batch-option:hover {
-        border-color: #007bff;
-        background: #f8f9fa;
-    }
-    .batch-option.selected {
-        border-color: #007bff;
-        background: #e7f1ff;
-    }
-    .batch-option.expiring {
-        border-color: #ffc107;
-    }
+    .batch-option:hover { border-color: var(--petrol-500); background: var(--bg-subtle); }
+    .batch-option.selected { border-color: var(--petrol-500); background: var(--petrol-50); }
+    .batch-option.expiring { border-color: var(--amber-500); background: var(--warn-soft); }
     .weight-input {
-        font-size: 1.5rem;
-        text-align: center;
-        font-weight: bold;
+        font-size: 24px; text-align: center; font-weight: 600;
+        font-family: var(--font-mono); font-variant-numeric: tabular-nums;
     }
     .deviation-indicator {
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
+        padding: 6px 14px; border-radius: var(--r-sm); font-weight: 500; font-size: 13px;
     }
-    .deviation-ok { background: #d1e7dd; color: #0a3622; }
-    .deviation-warning { background: #fff3cd; color: #664d03; }
-    .deviation-error { background: #f8d7da; color: #58151c; }
+    .deviation-ok { background: var(--ok-soft); color: var(--ok); }
+    .deviation-warning { background: var(--warn-soft); color: var(--warn); }
+    .deviation-error { background: var(--danger-soft); color: var(--danger); }
     .scale-simulation {
-        background: #1a1a2e;
-        color: #00ff00;
-        font-family: 'Courier New', monospace;
-        padding: 1rem;
-        border-radius: 8px;
+        background: var(--ink); color: var(--ok);
+        font-family: var(--font-mono);
+        padding: 16px; border-radius: var(--r-md);
         text-align: center;
     }
-    .scale-display {
-        font-size: 2.5rem;
-        letter-spacing: 2px;
-    }
-    .touch-btn {
-        min-height: 50px;
-        font-size: 1.1rem;
-    }
+    .scale-display { font-size: 36px; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+    .touch-btn { min-height: 50px; font-size: 16px; }
 </style>
 
 <div class="container-fluid py-3">

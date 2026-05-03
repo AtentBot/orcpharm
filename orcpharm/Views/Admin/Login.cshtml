@@ -1,228 +1,135 @@
 @{
-    ViewData["Title"] = "Admin Login";
+    ViewData["Title"] = "Admin — Entrar";
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - OrcPharm</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <title>OrcPharm Admin — Entrar</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>@@import url('https://api.fontshare.com/v2/css?f[]=general-sans@@400,500,600&display=swap');</style>
+
+    <link rel="stylesheet" href="~/css/design-system/tokens.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/design-system/components.css" asp-append-version="true">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@@1.11.2/font/bootstrap-icons.min.css">
+
     <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        body { background: var(--ink); color: #fff; min-height: 100vh; display: grid; place-items: center; padding: 32px; position: relative; overflow: hidden; }
+        body::before { content: ''; position: absolute; inset: 0; background: radial-gradient(900px 500px at 70% 100%, color-mix(in srgb, var(--petrol-500) 35%, transparent), transparent 70%); pointer-events: none; }
+        .login-card { width: 100%; max-width: 420px; position: relative; z-index: 1; }
+        .login-card .brand-block { text-align: center; margin-bottom: 28px; }
+        .login-card h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin: 0 0 6px; text-align: center; color: #fff; }
+        .login-card .sub { color: rgba(255,255,255,.6); font-size: 13px; margin: 0 0 28px; text-align: center; }
+        .login-form { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-md); padding: 28px; box-shadow: var(--shadow-3); display: flex; flex-direction: column; gap: 14px; }
+        .admin-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--font-mono); font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            background: rgba(255,255,255,.06); padding: 4px 10px;
+            border-radius: var(--r-pill); color: var(--petrol-300);
+            border: 1px solid rgba(255,255,255,.1);
+            margin-top: 14px;
         }
-        .login-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            width: 100%;
-            max-width: 420px;
+        .brand-lg { font-size: 22px; color: #fff; text-decoration: none; }
+        .brand-lg .brand-glyph { width: 40px; height: 40px; font-size: 20px; }
+        .brand-lg .brand-name { color: #fff; }
+        .pwd-wrap { position: relative; }
+        .pwd-toggle {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: transparent; border: none; color: var(--ink-3); cursor: pointer;
+            padding: 4px; font-size: 14px;
         }
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .login-header h1 {
-            color: #1a1a2e;
-            font-weight: 700;
-            font-size: 1.8rem;
-        }
-        .login-header p {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        .form-control {
-            border-radius: 10px;
-            padding: 12px 16px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s;
-        }
-        .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
-        }
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-        }
-        .alert {
-            border-radius: 10px;
-        }
-        .logo-icon {
-            font-size: 3rem;
-            color: #0d6efd;
-            margin-bottom: 10px;
-        }
-        .forgot-password-link {
-            color: #0d6efd;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.2s;
-        }
-        .forgot-password-link:hover {
-            color: #0a58ca;
-            text-decoration: underline;
-        }
+        .pwd-toggle:hover { color: var(--ink); }
+        .login-form .input { color: var(--ink); }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <div class="login-header">
-            <i class="bi bi-shield-lock-fill logo-icon"></i>
-            <h1>Admin Login</h1>
-            <p>Painel Administrativo OrcPharm</p>
+        <div class="brand-block">
+            <a href="/" class="brand brand-lg">
+                <span class="brand-glyph">o</span>
+                <span class="brand-name">orcpharm</span>
+            </a>
+            <div class="admin-pill"><i class="bi bi-shield-lock"></i>Admin Panel</div>
         </div>
+        <h1>Acesso administrativo</h1>
+        <p class="sub">Entre com suas credenciais de admin SaaS.</p>
 
-        <div id="alertContainer"></div>
+        <div id="alertContainer" style="margin-bottom:8px;"></div>
 
-        <form id="loginForm">
-            <div class="mb-3">
-                <label for="email" class="form-label">E-mail</label>
-                <input type="email" 
-                       class="form-control" 
-                       id="email" 
-                       name="email"
-                       placeholder="admin&#64;orcpharm.com.br" 
-                       required 
-                       autofocus />
+        <form id="loginForm" class="login-form">
+            <div>
+                <label class="input-label" for="email">E-mail</label>
+                <input class="input" type="email" id="email" name="email" placeholder="admin@@orcpharm.com.br" required autocomplete="username" />
             </div>
-
-            <div class="mb-3">
-                <label for="password" class="form-label">Senha</label>
-                <div class="input-group">
-                    <input type="password" 
-                           class="form-control" 
-                           id="password" 
-                           name="password"
-                           placeholder="••••••••" 
-                           required />
-                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                        <i class="bi bi-eye"></i>
+            <div>
+                <label class="input-label" for="password">Senha</label>
+                <div class="pwd-wrap">
+                    <input class="input" type="password" id="password" name="password" placeholder="••••••••••" required autocomplete="current-password" />
+                    <button type="button" class="pwd-toggle" id="togglePassword" aria-label="Mostrar senha">
+                        <i class="bi bi-eye" id="togglePasswordIcon"></i>
                     </button>
                 </div>
             </div>
-
-            <div class="mb-4 text-end">
-                <a href="/admin/forgot-password" class="forgot-password-link">
-                    <i class="bi bi-key me-1"></i>Esqueci minha senha
-                </a>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-login" id="btnLogin">
+            <button type="submit" class="btn btn-primary btn-lg" id="btnLogin" style="justify-content:center;margin-top:6px;">
                 <span id="btnText">Entrar</span>
-                <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                <span id="btnSpinner" style="display:none;"><span class="spinner-border spinner-border-sm me-2"></span>Entrando...</span>
+                <i class="bi bi-arrow-right"></i>
             </button>
         </form>
 
-        <div class="text-center mt-4">
-            <a href="/" class="text-decoration-none text-muted">
-                <i class="bi bi-arrow-left me-1"></i>
-                Voltar ao site
-            </a>
+        <div style="text-align:center; margin-top:24px;">
+            <a href="/admin/forgot-password" style="color:rgba(255,255,255,.55);font-size:13px;text-decoration:none;">Esqueci minha senha</a>
         </div>
     </div>
 
     <script>
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const pwd = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (pwd.type === 'password') { pwd.type = 'text'; icon.classList.replace('bi-eye', 'bi-eye-slash'); }
+            else { pwd.type = 'password'; icon.classList.replace('bi-eye-slash', 'bi-eye'); }
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            var email = document.getElementById('email').value.trim();
-            var password = document.getElementById('password').value;
-            var btnText = document.getElementById('btnText');
-            var btnSpinner = document.getElementById('btnSpinner');
-            var btnLogin = document.getElementById('btnLogin');
-            var alertContainer = document.getElementById('alertContainer');
-            
-            alertContainer.innerHTML = '';
-            
-            if (!email || !password) {
-                showAlert('Preencha todos os campos', 'warning');
-                return;
-            }
-            
-            btnLogin.disabled = true;
-            btnText.textContent = 'Entrando...';
-            btnSpinner.classList.remove('d-none');
-            
+            const btn = document.getElementById('btnLogin');
+            const txt = document.getElementById('btnText');
+            const spin = document.getElementById('btnSpinner');
+            const alertBox = document.getElementById('alertContainer');
+            alertBox.innerHTML = '';
+            btn.disabled = true; txt.style.display = 'none'; spin.style.display = 'inline-flex';
             try {
-                var response = await fetch('/api/admin/auth/login', {
+                const r = await fetch('/api/admin/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
-                        email: email,
-                        password: password
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
                     })
                 });
-                
-                var data = await response.json();
-                
-                if (response.ok) {
-                    showAlert('Login realizado com sucesso! Redirecionando...', 'success');
-                    setTimeout(function() {
-                        window.location.href = '/admin/dashboard';
-                    }, 1000);
+                const d = await r.json().catch(() => ({}));
+                if (r.ok) {
+                    window.location.href = '/admin/dashboard';
                 } else {
-                    showAlert(data.message || 'Credenciais inválidas', 'danger');
+                    showAlert(d.error || d.message || 'Credenciais inválidas');
                 }
-            } catch (error) {
-                console.error('Erro no login:', error);
-                showAlert('Erro ao conectar com o servidor. Tente novamente.', 'danger');
+            } catch (err) {
+                showAlert('Erro de conexão. Tente novamente.');
             } finally {
-                btnLogin.disabled = false;
-                btnText.textContent = 'Entrar';
-                btnSpinner.classList.add('d-none');
+                btn.disabled = false; txt.style.display = ''; spin.style.display = 'none';
             }
         });
-        
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            var passwordInput = document.getElementById('password');
-            var icon = this.querySelector('i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('bi-eye');
-                icon.classList.add('bi-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('bi-eye-slash');
-                icon.classList.add('bi-eye');
-            }
-        });
-        
-        function showAlert(message, type) {
-            var alertContainer = document.getElementById('alertContainer');
-            var icon = type === 'success' ? 'check-circle' : 
-                       type === 'danger' ? 'exclamation-circle' : 'info-circle';
-            
-            alertContainer.innerHTML = 
-                '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
-                    '<i class="bi bi-' + icon + ' me-2"></i>' +
-                    message +
-                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-                '</div>';
+
+        function showAlert(message) {
+            document.getElementById('alertContainer').innerHTML = `<div style="background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger-border);padding:10px 14px;border-radius:var(--r-sm);font-size:13px;display:flex;align-items:center;gap:8px;"><i class="bi bi-exclamation-triangle-fill"></i>${message}</div>`;
         }
-        
-        document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-            }
-        });
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

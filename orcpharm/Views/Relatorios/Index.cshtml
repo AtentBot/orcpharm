@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Relatórios de Produção";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -693,35 +693,35 @@
         // Chart Ordens 30 dias
         chartOrders = new Chart(document.getElementById('chartOrders'), {
             type: 'line',
-            data: { labels: [], datasets: [{ label: 'Ordens', data: [], borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', fill: true, tension: 0.4 }] },
+            data: { labels: [], datasets: [{ label: 'Ordens', data: [], borderColor: 'var(--info)', backgroundColor: 'rgba(13,110,253,0.1)', fill: true, tension: 0.4 }] },
             options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
         // Chart Status
         chartStatus = new Chart(document.getElementById('chartStatus'), {
             type: 'doughnut',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ffc107', '#0d6efd', '#198754', '#6c757d', '#dc3545'] }] },
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['var(--amber-500)', 'var(--info)', 'var(--ok)', 'var(--ink-3)', 'var(--danger)'] }] },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
 
         // Chart Orders by Day
         chartOrdersByDay = new Chart(document.getElementById('chartOrdersByDay'), {
             type: 'bar',
-            data: { labels: [], datasets: [{ label: 'Criadas', data: [], backgroundColor: '#0d6efd' }, { label: 'Concluídas', data: [], backgroundColor: '#198754' }] },
+            data: { labels: [], datasets: [{ label: 'Criadas', data: [], backgroundColor: 'var(--info)' }, { label: 'Concluídas', data: [], backgroundColor: 'var(--ok)' }] },
             options: { responsive: true, scales: { y: { beginAtZero: true } } }
         });
 
         // Chart Loss Types
         chartLossTypes = new Chart(document.getElementById('chartLossTypes'), {
             type: 'doughnut',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#dc3545', '#ffc107', '#17a2b8', '#6c757d', '#28a745'] }] },
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['var(--danger)', 'var(--amber-500)', 'var(--info)', 'var(--ink-3)', 'var(--ok)'] }] },
             options: { responsive: true, plugins: { legend: { position: 'right' } } }
         });
 
         // Chart Loss by Month
         chartLossByMonth = new Chart(document.getElementById('chartLossByMonth'), {
             type: 'bar',
-            data: { labels: [], datasets: [{ label: 'Valor Perdido', data: [], backgroundColor: '#dc3545' }] },
+            data: { labels: [], datasets: [{ label: 'Valor Perdido', data: [], backgroundColor: 'var(--danger)' }] },
             options: { responsive: true, scales: { y: { beginAtZero: true } } }
         });
 
@@ -729,9 +729,9 @@
         chartCostByMonth = new Chart(document.getElementById('chartCostByMonth'), {
             type: 'bar',
             data: { labels: [], datasets: [
-                { label: 'Material', data: [], backgroundColor: '#0d6efd' },
-                { label: 'Mão de Obra', data: [], backgroundColor: '#17a2b8' },
-                { label: 'Overhead', data: [], backgroundColor: '#6c757d' }
+                { label: 'Material', data: [], backgroundColor: 'var(--info)' },
+                { label: 'Mão de Obra', data: [], backgroundColor: 'var(--info)' },
+                { label: 'Overhead', data: [], backgroundColor: 'var(--ink-3)' }
             ]},
             options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
         });
@@ -739,7 +739,7 @@
         // Chart Productivity by Day
         chartProdByDay = new Chart(document.getElementById('chartProdByDay'), {
             type: 'bar',
-            data: { labels: [], datasets: [{ label: 'Ordens', data: [], backgroundColor: '#198754' }] },
+            data: { labels: [], datasets: [{ label: 'Ordens', data: [], backgroundColor: 'var(--ok)' }] },
             options: { responsive: true, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
         });
     }

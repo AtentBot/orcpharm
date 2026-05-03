@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     var expired = ViewBag.Expired ?? false;
     var token = ViewBag.Token;
@@ -19,7 +19,7 @@
             --danger-color: #e63757;
         }
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            background: var(--bg-subtle);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
@@ -54,7 +54,7 @@
             padding: 30px;
         }
         .info-section {
-            background: #f8f9fa;
+            background: var(--bg-subtle);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
@@ -68,19 +68,19 @@
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
-            border-bottom: 1px dashed #dee2e6;
+            border-bottom: 1px dashed var(--rule);
         }
         .info-row:last-child {
             border-bottom: none;
         }
         .info-label {
-            color: #6c757d;
+            color: var(--ink-3);
         }
         .info-value {
             font-weight: 500;
         }
         .price-section {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            background: var(--ok-soft);
             border-radius: 12px;
             padding: 25px;
             text-align: center;
@@ -94,11 +94,11 @@
         .price-value {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #2e7d32;
+            color: var(--ok);
         }
         .price-details {
             font-size: 0.85rem;
-            color: #666;
+            color: var(--ink-3);
             margin-top: 10px;
         }
         .action-buttons {
@@ -142,8 +142,8 @@
             font-weight: 500;
         }
         .validity-valid {
-            background: #e8f5e9;
-            color: #2e7d32;
+            background: var(--ok-soft);
+            color: var(--ok);
         }
         .validity-expired {
             background: #ffebee;
@@ -161,8 +161,8 @@
             color: #e65100;
         }
         .status-APROVADO {
-            background: #e8f5e9;
-            color: #2e7d32;
+            background: var(--ok-soft);
+            color: var(--ok);
         }
         .status-RECUSADO {
             background: #ffebee;
@@ -175,7 +175,7 @@
         .footer-info {
             text-align: center;
             padding: 20px;
-            color: #6c757d;
+            color: var(--ink-3);
             font-size: 0.9rem;
         }
         .component-list {
@@ -185,7 +185,7 @@
         }
         .component-item {
             padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--rule);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -197,11 +197,11 @@
             font-weight: 500;
         }
         .component-qty {
-            color: #6c757d;
+            color: var(--ink-3);
             font-size: 0.9rem;
         }
         .whatsapp-btn {
-            background: #25D366;
+            background: var(--ok);
             color: white;
             border: none;
             padding: 12px 25px;
@@ -382,7 +382,7 @@
         </div>
 
         <div class="text-center mt-3 text-muted small">
-            Powered by OrcPharm
+            Powered by D&W Consultoria em Ltda
         </div>
     </div>
 

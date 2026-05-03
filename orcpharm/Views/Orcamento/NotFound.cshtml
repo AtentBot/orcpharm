@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     ViewData["Title"] = "Orçamento não encontrado";
 }
@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg-subtle) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -28,19 +28,19 @@
         
         .error-icon {
             font-size: 80px;
-            color: #dc3545;
+            color: var(--danger);
             margin-bottom: 20px;
         }
         
         .error-title {
             font-size: 24px;
             font-weight: 600;
-            color: #333;
+            color: var(--ink-2);
             margin-bottom: 15px;
         }
         
         .error-message {
-            color: #666;
+            color: var(--ink-3);
             margin-bottom: 30px;
         }
     </style>

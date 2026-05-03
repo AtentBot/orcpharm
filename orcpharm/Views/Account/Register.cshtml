@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Criar Conta";
     Layout = null;
 }
@@ -8,19 +8,19 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - OrcPharm</title>
+    <title>@ViewData["Title"] - Formula Clear</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1d4ed8;
+            --primary-color: var(--info);
+            --primary-dark: var(--info);
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--ink);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -43,7 +43,7 @@
         }
 
         .register-header {
-            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, var(--info) 0%, var(--info) 100%);
             color: white;
             padding: 2rem;
             text-align: center;
@@ -61,14 +61,14 @@
 
         .form-label {
             font-weight: 600;
-            color: #334155;
+            color: var(--ink-2);
             margin-bottom: 0.5rem;
             font-size: 0.875rem;
         }
 
         .form-control, .form-select {
             border-radius: 0.5rem;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--rule);
             padding: 0.75rem 1rem;
             transition: all 0.2s;
         }
@@ -94,8 +94,8 @@
         }
 
         .input-group-text {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
+            background: var(--bg);
+            border: 2px solid var(--rule);
             border-right: none;
         }
 
@@ -119,7 +119,7 @@
 
         .password-strength {
             height: 4px;
-            background: #e2e8f0;
+            background: var(--rule);
             border-radius: 2px;
             margin-top: 0.5rem;
             overflow: hidden;
@@ -131,9 +131,9 @@
             transition: all 0.3s;
         }
 
-        .strength-weak { background: #ef4444; width: 33%; }
-        .strength-medium { background: #f59e0b; width: 66%; }
-        .strength-strong { background: #10b981; width: 100%; }
+        .strength-weak { background: var(--danger); width: 33%; }
+        .strength-medium { background: var(--amber-500); width: 66%; }
+        .strength-strong { background: var(--ok); width: 100%; }
     </style>
 </head>
 <body>
@@ -141,7 +141,7 @@
         <div class="register-card">
             <div class="register-header">
                 <i class="bi bi-person-plus" style="font-size: 2.5rem;"></i>
-                <h1>Criar Conta no OrcPharm</h1>
+                <h1>Criar Conta no Formula Clear</h1>
                 <p>Preencha seus dados para começar</p>
             </div>
 

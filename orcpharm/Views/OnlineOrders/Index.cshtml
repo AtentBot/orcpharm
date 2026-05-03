@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Pedidos Online";
     Layout = "_Layout";
     
@@ -33,7 +33,7 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .status-card.active {
-        border-color: #4361ee;
+        border-color: var(--petrol-500);
     }
     .status-card .count {
         font-size: 28px;
@@ -42,15 +42,15 @@
     }
     .status-card .label {
         font-size: 12px;
-        color: #666;
+        color: var(--ink-3);
         text-transform: uppercase;
     }
-    .status-card.pending .count { color: #f59e0b; }
-    .status-card.confirmed .count { color: #3b82f6; }
-    .status-card.preparing .count { color: #8b5cf6; }
-    .status-card.ready .count { color: #10b981; }
-    .status-card.delivered .count { color: #6b7280; }
-    .status-card.cancelled .count { color: #ef4444; }
+    .status-card.pending .count { color: var(--amber-500); }
+    .status-card.confirmed .count { color: var(--info); }
+    .status-card.preparing .count { color: var(--petrol-500); }
+    .status-card.ready .count { color: var(--ok); }
+    .status-card.delivered .count { color: var(--ink-3); }
+    .status-card.cancelled .count { color: var(--danger); }
     
     .order-card {
         background: white;
@@ -72,11 +72,11 @@
     .order-number {
         font-weight: 600;
         font-size: 16px;
-        color: #1a1a2e;
+        color: var(--ink);
     }
     .order-time {
         font-size: 12px;
-        color: #888;
+        color: var(--ink-3);
     }
     .order-customer {
         display: flex;
@@ -85,19 +85,19 @@
         margin-bottom: 12px;
     }
     .order-customer i {
-        color: #4361ee;
+        color: var(--petrol-500);
     }
     .order-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding-top: 12px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid var(--rule);
     }
     .order-total {
         font-weight: 600;
         font-size: 18px;
-        color: #10b981;
+        color: var(--ok);
     }
     .order-actions {
         display: flex;
@@ -110,12 +110,12 @@
         font-size: 12px;
         font-weight: 500;
     }
-    .badge-pending { background: #fef3c7; color: #92400e; }
-    .badge-confirmed { background: #dbeafe; color: #1e40af; }
+    .badge-pending { background: var(--warn-soft); color: var(--amber-700); }
+    .badge-confirmed { background: var(--info-soft); color: #1e40af; }
     .badge-preparing { background: #ede9fe; color: #5b21b6; }
-    .badge-ready { background: #d1fae5; color: #065f46; }
-    .badge-delivered { background: #f3f4f6; color: #374151; }
-    .badge-cancelled { background: #fee2e2; color: #991b1b; }
+    .badge-ready { background: var(--ok-soft); color: #065f46; }
+    .badge-delivered { background: var(--bg-subtle); color: var(--ink-2); }
+    .badge-cancelled { background: var(--danger-soft); color: var(--danger); }
     
     .search-box {
         background: white;
@@ -133,7 +133,7 @@
     }
     .empty-state i {
         font-size: 48px;
-        color: #ddd;
+        color: var(--rule);
         margin-bottom: 16px;
     }
     
@@ -148,11 +148,11 @@
     .action-btn:hover {
         transform: scale(1.05);
     }
-    .btn-confirm { background: #3b82f6; color: white; }
-    .btn-prepare { background: #8b5cf6; color: white; }
-    .btn-ready { background: #10b981; color: white; }
-    .btn-deliver { background: #059669; color: white; }
-    .btn-cancel { background: #fee2e2; color: #991b1b; }
+    .btn-confirm { background: var(--info); color: white; }
+    .btn-prepare { background: var(--petrol-500); color: white; }
+    .btn-ready { background: var(--ok); color: white; }
+    .btn-deliver { background: var(--ok); color: white; }
+    .btn-cancel { background: var(--danger-soft); color: var(--danger); }
     
     .pagination-wrapper {
         display: flex;

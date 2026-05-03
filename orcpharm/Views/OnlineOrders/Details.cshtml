@@ -1,4 +1,4 @@
-@model Models.OnlineOrder
+﻿@model Models.OnlineOrder
 @{
     ViewData["Title"] = $"Pedido {Model.OrderNumber}";
     Layout = "_Layout";
@@ -25,13 +25,13 @@
         margin-bottom: 20px;
     }
     .order-detail-card h6 {
-        color: #666;
+        color: var(--ink-3);
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 16px;
         padding-bottom: 8px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--rule);
     }
     
     .status-badge-lg {
@@ -43,12 +43,12 @@
         font-weight: 600;
         font-size: 14px;
     }
-    .status-badge-lg.pending { background: #fef3c7; color: #92400e; }
-    .status-badge-lg.confirmed { background: #dbeafe; color: #1e40af; }
+    .status-badge-lg.pending { background: var(--warn-soft); color: var(--amber-700); }
+    .status-badge-lg.confirmed { background: var(--info-soft); color: #1e40af; }
     .status-badge-lg.preparing { background: #ede9fe; color: #5b21b6; }
-    .status-badge-lg.ready { background: #d1fae5; color: #065f46; }
-    .status-badge-lg.delivered { background: #f3f4f6; color: #374151; }
-    .status-badge-lg.cancelled { background: #fee2e2; color: #991b1b; }
+    .status-badge-lg.ready { background: var(--ok-soft); color: #065f46; }
+    .status-badge-lg.delivered { background: var(--bg-subtle); color: var(--ink-2); }
+    .status-badge-lg.cancelled { background: var(--danger-soft); color: var(--danger); }
     
     .timeline {
         position: relative;
@@ -61,7 +61,7 @@
         top: 0;
         bottom: 0;
         width: 2px;
-        background: #e5e7eb;
+        background: var(--rule);
     }
     .timeline-item {
         position: relative;
@@ -75,21 +75,21 @@
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background: #e5e7eb;
+        background: var(--rule);
     }
     .timeline-item.active::before {
-        background: #4361ee;
+        background: var(--petrol-500);
     }
     .timeline-item.completed::before {
-        background: #10b981;
+        background: var(--ok);
     }
     .timeline-time {
         font-size: 12px;
-        color: #888;
+        color: var(--ink-3);
     }
     .timeline-title {
         font-weight: 500;
-        color: #333;
+        color: var(--ink-2);
     }
     
     .item-row {
@@ -97,7 +97,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 12px 0;
-        border-bottom: 1px solid #f3f4f6;
+        border-bottom: 1px solid var(--bg-subtle);
     }
     .item-row:last-child {
         border-bottom: none;
@@ -106,12 +106,12 @@
         font-weight: 500;
     }
     .item-qty {
-        color: #666;
+        color: var(--ink-3);
         font-size: 14px;
     }
     .item-price {
         font-weight: 600;
-        color: #10b981;
+        color: var(--ok);
     }
     
     .total-row {
@@ -122,8 +122,8 @@
     .total-row.final {
         font-size: 20px;
         font-weight: bold;
-        color: #1a1a2e;
-        border-top: 2px solid #e5e7eb;
+        color: var(--ink);
+        border-top: 2px solid var(--rule);
         padding-top: 16px;
         margin-top: 8px;
     }
@@ -147,7 +147,7 @@
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #4361ee, #7c3aed);
+        background: var(--petrol-500);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -164,7 +164,7 @@
         margin-top: 8px;
     }
     .customer-contact a {
-        color: #4361ee;
+        color: var(--petrol-500);
         text-decoration: none;
     }
     .customer-contact a:hover {
@@ -172,12 +172,12 @@
     }
     
     .btn-pdv {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
+        background: linear-gradient(135deg, var(--amber-500), var(--amber-700));
         border: none;
         color: white;
     }
     .btn-pdv:hover {
-        background: linear-gradient(135deg, #d97706, #b45309);
+        background: linear-gradient(135deg, var(--amber-700), #b45309);
         color: white;
     }
 </style>
@@ -432,7 +432,7 @@
                     
                     @if (Model.Status == "CANCELLED")
                     {
-                        <div class="timeline-item" style="--color: #ef4444;">
+                        <div class="timeline-item" style="--color: var(--danger);">
                             <div class="timeline-time">
                                 @(Model.CancelledAt?.ToString("dd/MM HH:mm") ?? "-")
                             </div>
@@ -628,19 +628,19 @@
 </script>
 <style>
     .btn-purple {
-        background: #8b5cf6;
-        border-color: #8b5cf6;
+        background: var(--petrol-500);
+        border-color: var(--petrol-500);
         color: white;
     }
     .btn-purple:hover {
-        background: #7c3aed;
-        border-color: #7c3aed;
+        background: var(--controlled-black);
+        border-color: var(--controlled-black);
         color: white;
     }
     
     @@media print {
         .action-buttons, .btn, nav, .sidebar { display: none !important; }
-        .order-detail-card { box-shadow: none; border: 1px solid #ddd; }
+        .order-detail-card { box-shadow: none; border: 1px solid var(--rule); }
     }
 </style>
 }

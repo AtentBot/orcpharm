@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Dashboard Executivo";
     Layout = "_Layout";
 }
@@ -33,7 +33,7 @@
         line-height: 1.2;
     }
     .kpi-label {
-        color: #6c757d;
+        color: var(--ink-3);
         font-size: 0.85rem;
     }
     .chart-container {
@@ -44,7 +44,7 @@
         display: flex;
         align-items: center;
         padding: 12px;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid var(--bg-subtle);
     }
     .alert-item:last-child {
         border-bottom: none;
@@ -162,7 +162,7 @@
         <div class="col-6 col-lg-3">
             <div class="kpi-card">
                 <div class="d-flex align-items-center">
-                    <div class="kpi-icon bg-purple bg-opacity-10 text-purple me-3" style="background: rgba(111,66,193,0.1); color: #6f42c1;">
+                    <div class="kpi-icon bg-purple bg-opacity-10 text-purple me-3" style="background: rgba(111,66,193,0.1); color: var(--controlled-black);">
                         <i class="bi bi-file-text"></i>
                     </div>
                     <div>
@@ -407,14 +407,14 @@
             if (chartProducao) chartProducao.destroy();
 
             const cores = {
-                'PENDENTE': '#6c757d',
-                'AGUARDANDO_APROVACAO': '#ffc107',
-                'EM_SEPARACAO': '#17a2b8',
+                'PENDENTE': 'var(--ink-3)',
+                'AGUARDANDO_APROVACAO': 'var(--amber-500)',
+                'EM_SEPARACAO': 'var(--info)',
                 'EM_MANIPULACAO': '#007bff',
-                'CONTROLE_QUALIDADE': '#6f42c1',
-                'PRONTA': '#28a745',
-                'CONCLUIDA': '#20c997',
-                'ENTREGUE': '#198754'
+                'CONTROLE_QUALIDADE': 'var(--controlled-black)',
+                'PRONTA': 'var(--ok)',
+                'CONCLUIDA': 'var(--ok)',
+                'ENTREGUE': 'var(--ok)'
             };
 
             chartProducao = new Chart(ctx, {
@@ -423,7 +423,7 @@
                     labels: data.map(d => d.status.replace(/_/g, ' ')),
                     datasets: [{
                         data: data.map(d => d.quantidade),
-                        backgroundColor: data.map(d => cores[d.status] || '#6c757d')
+                        backgroundColor: data.map(d => cores[d.status] || 'var(--ink-3)')
                     }]
                 },
                 options: {

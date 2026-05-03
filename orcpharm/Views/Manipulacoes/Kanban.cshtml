@@ -1,114 +1,86 @@
-@{
+﻿@{
     ViewData["Title"] = "Kanban de Produção";
     Layout = "_Layout";
 }
 
 <style>
     .kanban-container {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        padding-bottom: 1rem;
+        display: flex; gap: 14px;
+        overflow-x: auto; padding-bottom: 16px;
         min-height: calc(100vh - 200px);
     }
     .kanban-column {
-        min-width: 280px;
-        max-width: 280px;
-        background: #f8f9fa;
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
+        min-width: 280px; max-width: 280px;
+        background: var(--bg-subtle);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-md);
+        display: flex; flex-direction: column;
     }
     .kanban-header {
         padding: 12px 16px;
         font-weight: 600;
-        border-radius: 12px 12px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
+        border-radius: var(--r-md) var(--r-md) 0 0;
+        display: flex; justify-content: space-between; align-items: center;
+        color: #fff;
+        font-size: 13px; letter-spacing: -0.005em;
     }
     .kanban-header .badge {
-        background: rgba(255,255,255,0.3);
-        font-size: 0.9rem;
+        background: rgba(255,255,255,0.22) !important;
+        color: #fff !important;
+        font-size: 11px;
+        padding: 3px 8px;
     }
     .kanban-body {
-        flex: 1;
-        padding: 8px;
+        flex: 1; padding: 8px;
         overflow-y: auto;
         max-height: calc(100vh - 280px);
     }
     .kanban-card {
-        background: white;
-        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-sm);
         padding: 12px;
         margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-1);
         cursor: pointer;
-        transition: all 0.2s;
-        border-left: 4px solid transparent;
+        transition: all var(--t-fast);
+        border-left: 3px solid transparent;
     }
     .kanban-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: var(--shadow-2);
         transform: translateY(-2px);
+        border-color: var(--rule);
+        border-left-color: var(--petrol-500);
     }
-    .kanban-card.urgent {
-        border-left-color: #dc3545;
-    }
-    .kanban-card.controlled {
-        border-left-color: #6f42c1;
-    }
-    .kanban-card-title {
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin-bottom: 4px;
-    }
-    .kanban-card-meta {
-        font-size: 0.75rem;
-        color: #6c757d;
-    }
+    .kanban-card.urgent { border-left-color: var(--danger); }
+    .kanban-card.controlled { border-left-color: var(--controlled-black); }
+    .kanban-card-title { font-weight: 500; font-size: 13px; margin-bottom: 4px; color: var(--ink); }
+    .kanban-card-meta { font-size: 11px; color: var(--ink-3); font-family: var(--font-mono); }
     .kanban-card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid #eee;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 10px; padding-top: 10px;
+        border-top: 1px solid var(--rule);
     }
     .step-icon {
-        width: 24px;
-        height: 24px;
+        width: 22px; height: 22px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: white;
+        display: grid; place-items: center;
+        font-size: 11px; color: #fff;
     }
-    /* Cores por etapa */
-    .bg-pendente { background: #6c757d; }
-    .bg-separacao { background: #17a2b8; }
-    .bg-pesagem { background: #007bff; }
-    .bg-mistura { background: #6610f2; }
-    .bg-envase { background: #e83e8c; }
-    .bg-rotulagem { background: #fd7e14; }
-    .bg-conferencia { background: #20c997; }
-    .bg-aprovacao { background: #28a745; }
-    .bg-finalizado { background: #198754; }
-    
-    .progress-mini {
-        height: 4px;
-        border-radius: 2px;
-        margin-top: 8px;
-    }
-    .timer-badge {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-    }
-    .quick-action-btn {
-        padding: 4px 8px;
-        font-size: 0.75rem;
-    }
+    /* Cores por etapa - design system */
+    .bg-pendente   { background: var(--ink-3) !important; }
+    .bg-separacao  { background: var(--info) !important; }
+    .bg-pesagem    { background: var(--petrol-400) !important; }
+    .bg-mistura    { background: var(--petrol-500) !important; }
+    .bg-envase     { background: var(--amber-500) !important; }
+    .bg-rotulagem  { background: var(--amber-700) !important; }
+    .bg-conferencia { background: var(--petrol-600) !important; }
+    .bg-aprovacao  { background: var(--ok) !important; }
+    .bg-finalizado { background: var(--ink) !important; }
+
+    .progress-mini { height: 4px; border-radius: 2px; margin-top: 8px; background: var(--bg-subtle); }
+    .timer-badge { font-size: 11px; padding: 2px 8px; font-family: var(--font-mono); }
+    .quick-action-btn { padding: 4px 10px; font-size: 12px; }
 </style>
 
 <div class="container-fluid py-3">

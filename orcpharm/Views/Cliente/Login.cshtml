@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Entrar";
     ViewData["HideNav"] = true;
     Layout = "_LayoutCliente";
@@ -8,76 +8,37 @@
 
 <style>
     .auth-container {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        min-height: 100vh; display: flex; align-items: center; justify-content: center;
         padding: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--petrol-700) 0%, var(--petrol-500) 60%, var(--petrol-400) 100%);
+        position: relative; overflow: hidden;
     }
+    .auth-container::before { content: ''; position: absolute; inset: 0; background: radial-gradient(900px 500px at 80% 100%, rgba(255,255,255,.10), transparent 60%); pointer-events: none; }
     .auth-card {
-        background: white;
-        border-radius: 20px;
-        padding: 40px 30px;
-        width: 100%;
-        max-width: 400px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        background: var(--surface);
+        border-radius: var(--r-lg);
+        padding: 36px 30px;
+        width: 100%; max-width: 420px;
+        box-shadow: var(--shadow-3);
+        position: relative; z-index: 1;
     }
-    .auth-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-    .auth-header h1 {
-        color: #4361ee;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    .auth-header p {
-        color: #6c757d;
-        font-size: 14px;
-    }
-    .form-floating label {
-        color: #6c757d;
-    }
-    .form-control:focus {
-        border-color: #4361ee;
-        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-    }
-    .btn-primary {
-        background: #4361ee;
-        border: none;
-        padding: 12px;
-        font-weight: 600;
-        border-radius: 10px;
-    }
-    .btn-primary:hover {
-        background: #3651d4;
-    }
-    .btn-outline-primary {
-        border-color: #4361ee;
-        color: #4361ee;
-        padding: 12px;
-        font-weight: 600;
-        border-radius: 10px;
-    }
-    .btn-outline-primary:hover {
-        background: #4361ee;
-        color: white;
-    }
-    .password-toggle {
-        cursor: pointer;
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-    }
+    .auth-header { text-align: center; margin-bottom: 26px; }
+    .auth-header h1 { color: var(--ink); font-weight: 600; letter-spacing: -0.025em; font-size: 22px; margin-bottom: 6px; display: inline-flex; align-items: center; gap: 8px; }
+    .auth-header h1 .brand-glyph { width: 36px; height: 36px; font-size: 18px; }
+    .auth-header p { color: var(--ink-3); font-size: 14px; margin: 0; }
+    .form-floating > label { color: var(--ink-3); }
+    .form-control { border-radius: var(--r-sm); border-color: var(--rule); }
+    .form-control:focus { border-color: var(--petrol-500); box-shadow: var(--ring-focus); }
+    .btn-primary { padding: 12px; font-weight: 500; border-radius: var(--r-sm); }
+    .btn-outline-primary { border-color: var(--petrol-500); color: var(--petrol-500); padding: 12px; font-weight: 500; border-radius: var(--r-sm); }
+    .btn-outline-primary:hover { background: var(--petrol-500); color: #fff; }
+    .password-toggle { cursor: pointer; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
 </style>
 
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <h1><i class="bi bi-capsule me-2"></i>OrcPharm</h1>
+            <h1><img src="/images/logoFormulaClear.png" alt="Formula Clear" style="height: 50px;" class="me-2">Formula Clear</h1>
             <p>Portal do Cliente</p>
         </div>
 

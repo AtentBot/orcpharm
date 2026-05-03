@@ -1,4 +1,4 @@
-@using Models.Pharmacy
+﻿@using Models.Pharmacy
 @model List<RawMaterial>
 @{
     ViewData["Title"] = "Inventário de Substâncias Controladas";
@@ -17,7 +17,7 @@
     <a href="/Controlled" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
 </div>
 
-<div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid @(existingCheck != null ? "#10b981" : "#f59e0b") !important;">
+<div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid @(existingCheck != null ? "var(--ok)" : "var(--amber-500)") !important;">
     <div class="card-body">
         <div class="row align-items-center">
             <div class="col-md-8">

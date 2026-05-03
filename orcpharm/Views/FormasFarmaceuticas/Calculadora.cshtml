@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Calculadora de Cápsulas";
     Layout = "_Layout";
 }
@@ -10,22 +10,22 @@
         border-radius: 12px;
     }
     .ingredient-row {
-        background: #f8f9fa;
+        background: var(--bg-subtle);
         border-radius: 8px;
         padding: 1rem;
         margin-bottom: 0.75rem;
     }
     .result-box {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        background: linear-gradient(135deg, var(--ok) 0%, var(--ok) 100%);
         color: white;
         border-radius: 12px;
         padding: 2rem;
     }
     .result-box.warning {
-        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        background: linear-gradient(135deg, var(--amber-500) 0%, var(--amber-500) 100%);
     }
     .result-box.error {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
     }
     .capsule-visual {
         display: inline-flex;
@@ -33,7 +33,7 @@
         justify-content: center;
         width: 80px;
         height: 35px;
-        background: linear-gradient(90deg, #e9ecef 50%, #ced4da 50%);
+        background: linear-gradient(90deg, var(--bg-subtle) 50%, #ced4da 50%);
         border-radius: 17px;
         font-weight: bold;
         font-size: 0.9rem;
@@ -51,8 +51,8 @@
         opacity: 0.8;
     }
     .warning-box {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
+        background: var(--warn-soft);
+        border: 1px solid var(--amber-500);
         border-radius: 8px;
         padding: 1rem;
         margin-top: 1rem;

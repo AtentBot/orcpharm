@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Logo · Farmly / OrcPharm</title>
+<style>@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=cabinet-grotesk@500,700,800&f[]=excon@500,700&display=swap');</style>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0A1814;
+    --ink-2: #364946;
+    --ink-3: #6B7B78;
+    --rule: #E5E8E5;
+    --bg: #FAF9F5;
+    --surface: #FFFFFF;
+    --petrol: #0F6E78;
+    --petrol-2: #095861;
+    --petrol-soft: #E6F2F1;
+    --amber: #D88B2C;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: 'General Sans', system-ui, sans-serif; color: var(--ink); padding: 48px 64px; }
+  .head { max-width: 1200px; margin: 0 auto 48px; }
+  .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 12px; }
+  h1 { font-family: 'Fraunces', serif; font-size: 44px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 12px; }
+  .lede { font-size: 16px; color: var(--ink-2); max-width: 720px; line-height: 1.6; margin: 0; }
+  .lede b { color: var(--ink); font-weight: 500; }
+
+  .name-strip { max-width: 1200px; margin: 0 auto 56px; padding: 24px 28px; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; display: flex; gap: 16px; align-items: center; }
+  .name-strip svg { flex-shrink: 0; }
+  .name-strip .body { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+  .name-strip .body b { color: var(--ink); font-weight: 600; }
+
+  .grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
+  .card-head { padding: 18px 24px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: baseline; }
+  .card-head .id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-3); letter-spacing: 0.06em; }
+  .card-head h2 { margin: 4px 0 0; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+  .card-head .vibe { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+  .card-stage { background: var(--bg); padding: 60px 32px; display: grid; place-items: center; min-height: 200px; border-bottom: 1px solid var(--rule); }
+  .card-stage.dark { background: var(--ink); }
+  .card-mini { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+  .mini-cell { padding: 28px 16px; display: grid; place-items: center; border-right: 1px solid var(--rule); min-height: 140px; }
+  .mini-cell:last-child { border-right: none; }
+  .mini-cell.dark { background: var(--ink); }
+  .mini-cell.brand { background: var(--petrol); }
+  .mini-cell .lbl { position: absolute; top: 8px; left: 12px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,255,255,.5); letter-spacing: 0.08em; text-transform: uppercase; }
+  .mini-cell { position: relative; }
+  .mini-cell.light .lbl { color: var(--ink-3); }
+
+  .notes { padding: 18px 24px; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+  .notes b { color: var(--ink); font-weight: 600; }
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule); }
+  .pros-cons .col h4 { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); margin: 0 0 6px; font-weight: 500; }
+  .pros-cons li { font-size: 12px; line-height: 1.5; color: var(--ink-2); }
+  .pros-cons ul { margin: 0; padding-left: 16px; }
+
+  .legend { max-width: 1200px; margin: 56px auto 0; padding: 20px 28px; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+  .legend b { color: var(--ink); font-weight: 600; }
+  .legend .row { display: flex; gap: 32px; flex-wrap: wrap; margin-top: 10px; }
+  .legend .row > div { flex: 1; min-width: 240px; }
+
+  /* Wordmark fonts */
+  .wm { font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+  .wm-sans { font-family: 'General Sans', sans-serif; }
+  .wm-grotesk { font-family: 'Cabinet Grotesk', sans-serif; }
+  .wm-excon { font-family: 'Excon', sans-serif; }
+  .wm-serif { font-family: 'Fraunces', serif; font-weight: 600; }
+
+  .lockup { display: inline-flex; align-items: center; gap: 14px; }
+  .lockup.col { flex-direction: column; gap: 8px; }
+  .lockup .wm { font-size: 36px; }
+  .lockup.large .wm { font-size: 56px; }
+  .lockup.small .wm { font-size: 22px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="eyebrow">PROPOSTA · IDENTIDADE</div>
+  <h1>Naming + logo · 6 direções</h1>
+  <p class="lede">Antes de qualquer arte: <b>"OrcPharm" pesa em mercados anglófonos</b> — "orc" é criatura de fantasia em inglês. Mantemos o radical <b>"Farm"</b> (do latim, e também presente em <i>pharmacy/pharmakon</i>) com um nome que funcione idêntico em PT/EN/ES. Recomendação principal: <b>Farmly</b>. Abaixo, 6 direções visuais aplicadas a esse wordmark.</p>
+</div>
+
+<div class="name-strip">
+  <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+    <circle cx="18" cy="18" r="17" stroke="#0F6E78" stroke-width="1.5"/>
+    <path d="M12 24V12h10M12 18h7" stroke="#0F6E78" stroke-width="2.4" stroke-linecap="square"/>
+  </svg>
+  <div class="body"><b>Farmly</b> — radical "Farm" (fazer, cultivar, manipular) + sufixo "-ly" que sugere proximidade/cuidado em inglês ("warmly", "kindly"). Curto, .com checável, fácil em qualquer idioma. <b>Alternativas:</b> Farmcraft, Farmae, Farmary, Farmo.</div>
+</div>
+
+<div class="grid">
+
+  <!-- 01: Cápsula-F -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="id">DIREÇÃO 01</div>
+        <h2>Cápsula-F</h2>
+        <div class="vibe">Letra F formada por uma cápsula gelatinosa partida</div>
+      </div>
+      <span style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;">monograma</span>
+    </div>
+    <div class="card-stage">
+      <div class="lockup">
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <!-- top half of capsule (forms vertical stem of F) -->
+          <path d="M14 14 H30 a14 14 0 0 1 14 14 V44 H30 a14 14 0 0 1 -14 -14 V14 Z" fill="#0F6E78"/>
+          <!-- horizontal arm (forms F top bar) -->
+          <rect x="44" y="14" width="20" height="10" rx="5" fill="#0F6E78"/>
+          <!-- horizontal short arm -->
+          <rect x="44" y="30" width="14" height="9" rx="4.5" fill="#0F6E78"/>
+          <!-- highlight on capsule -->
+          <rect x="18" y="18" width="3" height="14" rx="1.5" fill="rgba(255,255,255,.35)"/>
+        </svg>
+        <span class="wm wm-sans">farmly</span>
+      </div>
+    </div>
+    <div class="card-mini">
+      <div class="mini-cell light"><span class="lbl">Light</span>
+        <svg width="36" height="36" viewBox="0 0 72 72" fill="none">
+          <path d="M14 14 H30 a14 14 0 0 1 14 14 V44 H30 a14 14 0 0 1 -14 -14 V14 Z" fill="#0F6E78"/>
+          <rect x="44" y="14" width="20" height="10" rx="5" fill="#0F6E78"/>
+          <rect x="44" y="30" width="14" height="9" rx="4.5" fill="#0F6E78"/>
+        </svg>
+      </div>
+      <div class="mini-cell dark"><span class="lbl">Dark</span>
+        <svg width="36" height="36" viewBox="0 0 72 72" fill="none">
+          <path d="M14 14 H30 a14 14 0 0 1 14 14 V44 H30 a14 14 0 0 1 -14 -14 V14 Z" fill="#fff"/>
+          <rect x="44" y="14" width="20" height="10" rx="5" fill="#fff"/>
+          <rect x="44" y="30" width="14" height="9" rx="4.5" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="mini-cell brand"><span class="lbl">Brand</span>
+        <svg width="36" height="36" viewBox="0 0 72 72" fill="none">
+          <path d="M14 14 H30 a14 14 0 0 1 14 14 V44 H30 a14 14 0 0 1 -14 -14 V14 Z" fill="#fff"/>
+          <rect x="44" y="14" width="20" height="10" rx="5" fill="#fff"/>
+          <rect x="44" y="30" width="14" height="9" rx="4.5" fill="#fff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Conceito.</b> A letra F é construída a partir de uma cápsula gelatinosa — referência direta ao produto principal de uma farmácia de manipulação. Lê como F mesmo em escala pequena.
+      <div class="pros-cons">
+        <div class="col"><h4>A favor</h4><ul><li>Específico de manipulação</li><li>Memorável, único</li><li>Funciona como ícone solto (favicon, app)</li></ul></div>
+        <div class="col"><h4>Contra</h4><ul><li>Pode soar "de loja", menos SaaS</li><li>Fica datado se a empresa expandir além de cápsulas</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02: Pilão moderno -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="id">DIREÇÃO 02</div>
+        <h2>Pilão geométrico</h2>
+        <div class="vibe">Mortar &amp; pestle reduzido a formas primárias</div>
+      </div>
+      <span style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;">símbolo</span>
+    </div>
+    <div class="card-stage">
+      <div class="lockup">
+        <svg width="76" height="76" viewBox="0 0 80 80" fill="none">
+          <!-- mortar (semicircle bowl) -->
+          <path d="M14 38 a26 26 0 0 0 52 0 Z" fill="#0F6E78"/>
+          <rect x="10" y="38" width="60" height="6" rx="2" fill="#0F6E78"/>
+          <!-- pestle, leaning -->
+          <rect x="48" y="10" width="9" height="38" rx="4.5" transform="rotate(20 52.5 29)" fill="#0F6E78"/>
+          <circle cx="59" cy="14" r="6" fill="#0F6E78"/>
+        </svg>
+        <span class="wm wm-grotesk">Farmly</span>
+      </div>
+    </div>
+    <div class="card-mini">
+      <div class="mini-cell light"><span class="lbl">Light</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <path d="M14 38 a26 26 0 0 0 52 0 Z" fill="#0F6E78"/>
+          <rect x="10" y="38" width="60" height="6" rx="2" fill="#0F6E78"/>
+          <rect x="48" y="10" width="9" height="38" rx="4.5" transform="rotate(20 52.5 29)" fill="#0F6E78"/>
+          <circle cx="59" cy="14" r="6" fill="#0F6E78"/>
+        </svg>
+      </div>
+      <div class="mini-cell dark"><span class="lbl">Dark</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <path d="M14 38 a26 26 0 0 0 52 0 Z" fill="#fff"/>
+          <rect x="10" y="38" width="60" height="6" rx="2" fill="#fff"/>
+          <rect x="48" y="10" width="9" height="38" rx="4.5" transform="rotate(20 52.5 29)" fill="#fff"/>
+          <circle cx="59" cy="14" r="6" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="mini-cell brand"><span class="lbl">Brand</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <path d="M14 38 a26 26 0 0 0 52 0 Z" fill="#fff"/>
+          <rect x="10" y="38" width="60" height="6" rx="2" fill="#fff"/>
+          <rect x="48" y="10" width="9" height="38" rx="4.5" transform="rotate(20 52.5 29)" fill="#fff"/>
+          <circle cx="59" cy="14" r="6" fill="#fff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Conceito.</b> O pilão é o símbolo universal de farmácia de manipulação — desde a Idade Média. Aqui ele é geometrizado: arco simples + cilindro inclinado. Sem detalhes barrocos.
+      <div class="pros-cons">
+        <div class="col"><h4>A favor</h4><ul><li>Linguagem universal — funciona globalmente</li><li>Identidade imediata: "isso é manipulação"</li><li>Atemporal</li></ul></div>
+        <div class="col"><h4>Contra</h4><ul><li>Categoria saturada — muitos usam pilão</li><li>Risco de soar tradicional demais</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03: Gota + monograma -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="id">DIREÇÃO 03</div>
+        <h2>Gota de fórmula</h2>
+        <div class="vibe">F minúsculo onde o ponto vira gota</div>
+      </div>
+      <span style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;">monograma · sutil</span>
+    </div>
+    <div class="card-stage">
+      <div class="lockup">
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <!-- f letter -->
+          <path d="M30 20 Q30 12 38 12 H46" stroke="#0F6E78" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <line x1="30" y1="22" x2="30" y2="58" stroke="#0F6E78" stroke-width="7" stroke-linecap="round"/>
+          <line x1="22" y1="32" x2="40" y2="32" stroke="#0F6E78" stroke-width="6" stroke-linecap="round"/>
+          <!-- droplet -->
+          <path d="M52 30 C 52 36, 46 38, 46 44 C 46 49, 50 52, 54 52 C 58 52, 62 49, 62 44 C 62 38, 56 36, 56 30 Z M54 30 Q53 36 58 38" fill="#0F6E78"/>
+        </svg>
+        <span class="wm wm-sans">farmly</span>
+      </div>
+    </div>
+    <div class="card-mini">
+      <div class="mini-cell light"><span class="lbl">Light</span>
+        <svg width="36" height="36" viewBox="0 0 72 72" fill="none">
+          <path d="M30 20 Q30 12 38 12 H46" stroke="#0F6E78" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <line x1="30" y1="22" x2="30" y2="58" stroke="#0F6E78" stroke-width="7" stroke-linecap="round"/>
+          <line x1="22" y1="32" x2="40" y2="32" stroke="#0F6E78" stroke-width="6" stroke-linecap="round"/>
+          <path d="M52 30 C 52 36, 46 38, 46 44 C 46 49, 50 52, 54 52 C 58 52, 62 49, 62 44 C 62 38, 56 36, 56 30 Z" fill="#0F6E78"/>
+        </svg>
+      </div>
+      <div class="mini-cell dark"><span class="lbl">Dark</span>
+        <svg width="36" height="36" viewBox="0 0 72 72" fill="none">
+          <path d="M30 20 Q30 12 38 12 H46" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <line x1="30" y1="22" x2="30" y2="58" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+          <line x1="22" y1="32" x2="40" y2="32" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+          <path d="M52 30 C 52 36, 46 38, 46 44 C 46 49, 50 52, 54 52 C 58 52, 62 49, 62 44 C 62 38, 56 36, 56 30 Z" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="mini-cell brand"><span class="lbl">Brand</span>
+        <svg width="36" height="36" viewBox="0 0 72 72" fill="none">
+          <path d="M30 20 Q30 12 38 12 H46" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <line x1="30" y1="22" x2="30" y2="58" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+          <line x1="22" y1="32" x2="40" y2="32" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+          <path d="M52 30 C 52 36, 46 38, 46 44 C 46 49, 50 52, 54 52 C 58 52, 62 49, 62 44 C 62 38, 56 36, 56 30 Z" fill="#fff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Conceito.</b> F minúsculo desenhado em traço, com uma gota ao lado representando a fórmula líquida. Gota também é símbolo universal de produto farmacêutico/cosmético.
+      <div class="pros-cons">
+        <div class="col"><h4>A favor</h4><ul><li>Versátil — serve manipulação, dermo, sérum</li><li>Tom suave/cuidadoso</li><li>Funciona em mercados internacionais</li></ul></div>
+        <div class="col"><h4>Contra</h4><ul><li>Gota é genérica em farmácia/saúde</li><li>Menos disruptivo</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04: Molécula F -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="id">DIREÇÃO 04</div>
+        <h2>Molécula-F</h2>
+        <div class="vibe">F construído com nós e ligações químicas</div>
+      </div>
+      <span style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;">monograma · técnico</span>
+    </div>
+    <div class="card-stage">
+      <div class="lockup">
+        <svg width="76" height="76" viewBox="0 0 80 80" fill="none">
+          <!-- F skeleton via nodes & bonds -->
+          <line x1="20" y1="16" x2="20" y2="64" stroke="#0F6E78" stroke-width="2.5"/>
+          <line x1="20" y1="16" x2="60" y2="16" stroke="#0F6E78" stroke-width="2.5"/>
+          <line x1="20" y1="40" x2="48" y2="40" stroke="#0F6E78" stroke-width="2.5"/>
+          <circle cx="20" cy="16" r="6" fill="#0F6E78"/>
+          <circle cx="60" cy="16" r="6" fill="#0F6E78"/>
+          <circle cx="20" cy="40" r="6" fill="#0F6E78"/>
+          <circle cx="48" cy="40" r="6" fill="#0F6E78"/>
+          <circle cx="20" cy="64" r="6" fill="#0F6E78"/>
+          <!-- accent node -->
+          <circle cx="60" cy="16" r="3" fill="#D88B2C"/>
+        </svg>
+        <span class="wm wm-excon">FARMLY</span>
+      </div>
+    </div>
+    <div class="card-mini">
+      <div class="mini-cell light"><span class="lbl">Light</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <line x1="20" y1="16" x2="20" y2="64" stroke="#0F6E78" stroke-width="2.5"/>
+          <line x1="20" y1="16" x2="60" y2="16" stroke="#0F6E78" stroke-width="2.5"/>
+          <line x1="20" y1="40" x2="48" y2="40" stroke="#0F6E78" stroke-width="2.5"/>
+          <circle cx="20" cy="16" r="6" fill="#0F6E78"/><circle cx="60" cy="16" r="6" fill="#0F6E78"/><circle cx="20" cy="40" r="6" fill="#0F6E78"/><circle cx="48" cy="40" r="6" fill="#0F6E78"/><circle cx="20" cy="64" r="6" fill="#0F6E78"/>
+        </svg>
+      </div>
+      <div class="mini-cell dark"><span class="lbl">Dark</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <line x1="20" y1="16" x2="20" y2="64" stroke="#fff" stroke-width="2.5"/>
+          <line x1="20" y1="16" x2="60" y2="16" stroke="#fff" stroke-width="2.5"/>
+          <line x1="20" y1="40" x2="48" y2="40" stroke="#fff" stroke-width="2.5"/>
+          <circle cx="20" cy="16" r="6" fill="#fff"/><circle cx="60" cy="16" r="6" fill="#fff"/><circle cx="20" cy="40" r="6" fill="#fff"/><circle cx="48" cy="40" r="6" fill="#fff"/><circle cx="20" cy="64" r="6" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="mini-cell brand"><span class="lbl">Brand</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <line x1="20" y1="16" x2="20" y2="64" stroke="#fff" stroke-width="2.5"/>
+          <line x1="20" y1="16" x2="60" y2="16" stroke="#fff" stroke-width="2.5"/>
+          <line x1="20" y1="40" x2="48" y2="40" stroke="#fff" stroke-width="2.5"/>
+          <circle cx="20" cy="16" r="6" fill="#fff"/><circle cx="60" cy="16" r="6" fill="#fff"/><circle cx="20" cy="40" r="6" fill="#fff"/><circle cx="48" cy="40" r="6" fill="#fff"/><circle cx="20" cy="64" r="6" fill="#fff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Conceito.</b> F construído como uma estrutura molecular — átomos (círculos) ligados por covalentes. Tom técnico/científico. Wordmark em "Excon" caixa-alta para reforçar rigor.
+      <div class="pros-cons">
+        <div class="col"><h4>A favor</h4><ul><li>Comunica ciência/precisão</li><li>Atrai farmacêuticos e médicos</li><li>Diferenciado em farmácia</li></ul></div>
+        <div class="col"><h4>Contra</h4><ul><li>Pode parecer frio para o consumidor final</li><li>Risco de soar "pharma corporate"</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05: Selo apothecary -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="id">DIREÇÃO 05</div>
+        <h2>Selo apothecary</h2>
+        <div class="vibe">Emblema circular tradicional, atualizado</div>
+      </div>
+      <span style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;">selo</span>
+    </div>
+    <div class="card-stage">
+      <div class="lockup">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="36" stroke="#0F6E78" stroke-width="2"/>
+          <circle cx="40" cy="40" r="30" stroke="#0F6E78" stroke-width="0.5"/>
+          <text x="40" y="50" text-anchor="middle" font-family="Fraunces, serif" font-weight="700" font-size="34" fill="#0F6E78" font-style="italic">F</text>
+          <!-- arc text marks -->
+          <circle cx="40" cy="8" r="1.5" fill="#0F6E78"/>
+          <circle cx="40" cy="72" r="1.5" fill="#0F6E78"/>
+          <circle cx="8" cy="40" r="1.5" fill="#0F6E78"/>
+          <circle cx="72" cy="40" r="1.5" fill="#0F6E78"/>
+          <!-- est. year -->
+          <text x="40" y="68" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="500" font-size="5" fill="#0F6E78" letter-spacing="1">EST · 2026</text>
+        </svg>
+        <div class="lockup col" style="gap: 2px; align-items: flex-start;">
+          <span class="wm wm-serif" style="font-style: italic; font-size: 36px;">Farmly</span>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-3); letter-spacing: 0.18em; text-transform: uppercase;">Compounding · Brasil</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-mini">
+      <div class="mini-cell light"><span class="lbl">Light</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="36" stroke="#0F6E78" stroke-width="2"/>
+          <text x="40" y="50" text-anchor="middle" font-family="Fraunces, serif" font-weight="700" font-size="34" fill="#0F6E78" font-style="italic">F</text>
+        </svg>
+      </div>
+      <div class="mini-cell dark"><span class="lbl">Dark</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="36" stroke="#fff" stroke-width="2"/>
+          <text x="40" y="50" text-anchor="middle" font-family="Fraunces, serif" font-weight="700" font-size="34" fill="#fff" font-style="italic">F</text>
+        </svg>
+      </div>
+      <div class="mini-cell brand"><span class="lbl">Brand</span>
+        <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="36" stroke="#fff" stroke-width="2"/>
+          <text x="40" y="50" text-anchor="middle" font-family="Fraunces, serif" font-weight="700" font-size="34" fill="#fff" font-style="italic">F</text>
+        </svg>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Conceito.</b> Selo circular como em apothecary clássico (à la Aesop, Le Labo, Malin+Goetz). Wordmark serif itálico evoca tradição farmacêutica europeia. Tagline em mono.
+      <div class="pros-cons">
+        <div class="col"><h4>A favor</h4><ul><li>Sofisticado, maduro</li><li>Boa para retail/embalagem</li><li>Diferencia de farmácias populares</li></ul></div>
+        <div class="col"><h4>Contra</h4><ul><li>Menos escalável em UI digital pequena</li><li>Pode parecer "boutique" demais para SaaS</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06: Wordmark puro -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="id">DIREÇÃO 06</div>
+        <h2>Wordmark puro</h2>
+        <div class="vibe">Só tipografia, sem ícone — caminho SaaS maduro</div>
+      </div>
+      <span style="font-family:'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase;">wordmark</span>
+    </div>
+    <div class="card-stage">
+      <div class="lockup large">
+        <span class="wm wm-grotesk" style="font-weight: 800;">farmly<span style="color: #0F6E78;">.</span></span>
+      </div>
+    </div>
+    <div class="card-mini">
+      <div class="mini-cell light"><span class="lbl">Reduzido</span>
+        <span class="wm wm-grotesk" style="font-weight: 800; font-size: 22px;">farmly<span style="color: #0F6E78;">.</span></span>
+      </div>
+      <div class="mini-cell dark"><span class="lbl">Inverso</span>
+        <span class="wm wm-grotesk" style="font-weight: 800; font-size: 22px; color: #fff;">farmly<span style="color: #0F6E78;">.</span></span>
+      </div>
+      <div class="mini-cell brand"><span class="lbl">Brand</span>
+        <span class="wm wm-grotesk" style="font-weight: 800; font-size: 22px; color: #fff;">farmly<span style="color: #fff; opacity: .55;">.</span></span>
+      </div>
+    </div>
+    <div class="notes">
+      <b>Conceito.</b> Sem símbolo. Cabinet Grotesk Extra-Bold em caixa baixa + ponto petrol no fim — referência à fórmula, à precisão e ao "fim de instrução". Caminho de marcas SaaS maduras (Linear, Vercel, Resend).
+      <div class="pros-cons">
+        <div class="col"><h4>A favor</h4><ul><li>Mais limpo, mais SaaS, mais "software"</li><li>Escala perfeita em UI</li><li>Tendência atual em B2B</li></ul></div>
+        <div class="col"><h4>Contra</h4><ul><li>Sem ícone para favicon/app — precisa de variação reduzida</li><li>Menos conexão emocional</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <b>Como decidir.</b>
+  <div class="row">
+    <div><b>Se priorizar identidade de manipulação</b> → 01 (Cápsula-F) ou 02 (Pilão).</div>
+    <div><b>Se priorizar mercado internacional/SaaS</b> → 03 (Gota), 04 (Molécula) ou 06 (Wordmark).</div>
+    <div><b>Se priorizar premium/embalagem</b> → 05 (Selo).</div>
+  </div>
+  <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule);"><b>Minha recomendação:</b> <b>04 (Molécula-F)</b> ou <b>06 (Wordmark)</b>. Os dois funcionam igual em PT/EN/ES, escalam bem em UI, e o "F" molécula resolve o ponto de "fabricar/criar" sem virar cliché de farmácia.</div>
+</div>
+
+</body>
+</html>

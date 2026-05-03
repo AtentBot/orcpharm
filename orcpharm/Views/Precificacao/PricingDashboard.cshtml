@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Dashboard de Precificação";
     Layout = "_Layout";
 }
@@ -7,31 +7,31 @@
     <style>
         .settings-form .form-label {
             font-weight: 500;
-            color: #495057;
+            color: var(--ink-2);
         }
         .settings-form .form-text {
             font-size: 0.8rem;
         }
         .settings-card {
             background: white;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--rule);
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
         }
         .settings-card h6 {
-            color: #495057;
+            color: var(--ink-2);
             font-weight: 600;
             margin-bottom: 16px;
             padding-bottom: 8px;
-            border-bottom: 2px solid #e9ecef;
+            border-bottom: 2px solid var(--bg-subtle);
         }
         .legend-item {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px;
-            background: #f8f9fa;
+            background: var(--bg-subtle);
             border-radius: 8px;
             margin-bottom: 8px;
         }
@@ -43,18 +43,18 @@
         }
         .legend-item .title {
             font-weight: 600;
-            color: #212529;
+            color: var(--ink);
         }
         .legend-item .description {
             font-size: 0.85rem;
-            color: #6c757d;
+            color: var(--ink-3);
         }
         /* Stats Cards */
         .stat-card {
             background: white;
             border-radius: 12px;
             padding: 20px;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--bg-subtle);
             transition: all 0.2s ease;
         }
         .stat-card:hover {
@@ -67,20 +67,20 @@
         .stat-card .value {
             font-size: 1.75rem;
             font-weight: 700;
-            color: #212529;
+            color: var(--ink);
         }
         .stat-card .label {
             font-size: 0.85rem;
-            color: #6c757d;
+            color: var(--ink-3);
         }
-        .stat-card.stock { border-left: 4px solid #28a745; }
-        .stat-card.historical { border-left: 4px solid #ffc107; }
-        .stat-card.base { border-left: 4px solid #dc3545; }
+        .stat-card.stock { border-left: 4px solid var(--ok); }
+        .stat-card.historical { border-left: 4px solid var(--amber-500); }
+        .stat-card.base { border-left: 4px solid var(--danger); }
         .stat-card.total { border-left: 4px solid #007bff; }
         /* Price result card */
         .price-result-card {
             background: white;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--bg-subtle);
             border-radius: 12px;
             padding: 20px;
         }
@@ -94,30 +94,30 @@
             font-weight: 500;
         }
         .price-result-card .price-source.stock {
-            background: #d4edda;
-            color: #155724;
+            background: var(--ok-soft);
+            color: var(--ok);
         }
         .price-result-card .price-source.historical {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--warn-soft);
+            color: var(--warn);
         }
         .price-result-card .price-source.base {
-            background: #f8d7da;
-            color: #721c24;
+            background: var(--danger-soft);
+            color: var(--danger);
         }
         .price-result-card .price-value {
             font-size: 2rem;
             font-weight: 700;
-            color: #212529;
+            color: var(--ink);
         }
         .price-result-card .price-unit {
             font-size: 0.9rem;
-            color: #6c757d;
+            color: var(--ink-3);
         }
         /* Confidence bar */
         .confidence-bar {
             height: 8px;
-            background: #e9ecef;
+            background: var(--bg-subtle);
             border-radius: 4px;
             overflow: hidden;
         }
@@ -126,9 +126,9 @@
             border-radius: 4px;
             transition: width 0.3s ease;
         }
-        .confidence-bar-fill.high { background: #28a745; }
-        .confidence-bar-fill.medium { background: #ffc107; }
-        .confidence-bar-fill.low { background: #dc3545; }
+        .confidence-bar-fill.high { background: var(--ok); }
+        .confidence-bar-fill.medium { background: var(--amber-500); }
+        .confidence-bar-fill.low { background: var(--danger); }
         
         /* ═══════════════════════════════════════════════════════════════════ */
         /* AUTOCOMPLETE STYLES */
@@ -142,7 +142,7 @@
             left: 0;
             right: 0;
             background: white;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--rule);
             border-top: none;
             border-radius: 0 0 8px 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -157,7 +157,7 @@
         .autocomplete-item {
             padding: 10px 15px;
             cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--bg-subtle);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -168,7 +168,7 @@
         }
         .autocomplete-item:hover,
         .autocomplete-item.active {
-            background-color: #f8f9fa;
+            background-color: var(--bg-subtle);
         }
         .autocomplete-item .item-icon {
             width: 36px;
@@ -181,13 +181,13 @@
             flex-shrink: 0;
         }
         .autocomplete-item .item-icon.stock {
-            background: #d4edda;
+            background: var(--ok-soft);
         }
         .autocomplete-item .item-icon.historical {
-            background: #fff3cd;
+            background: var(--warn-soft);
         }
         .autocomplete-item .item-icon.base {
-            background: #f8d7da;
+            background: var(--danger-soft);
         }
         .autocomplete-item .item-info {
             flex: 1;
@@ -195,37 +195,37 @@
         }
         .autocomplete-item .item-name {
             font-weight: 600;
-            color: #212529;
+            color: var(--ink);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .autocomplete-item .item-details {
             font-size: 0.8rem;
-            color: #6c757d;
+            color: var(--ink-3);
             display: flex;
             gap: 10px;
         }
         .autocomplete-item .item-price {
             font-weight: 600;
-            color: #28a745;
+            color: var(--ok);
             white-space: nowrap;
         }
         .autocomplete-loading {
             padding: 15px;
             text-align: center;
-            color: #6c757d;
+            color: var(--ink-3);
         }
         .autocomplete-empty {
             padding: 15px;
             text-align: center;
-            color: #6c757d;
+            color: var(--ink-3);
         }
         .autocomplete-input {
             border-radius: 8px;
         }
         .autocomplete-input:focus {
-            border-color: #2563eb;
+            border-color: var(--info);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
         .search-input-group {
@@ -236,14 +236,14 @@
             left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: #6c757d;
+            color: var(--ink-3);
             z-index: 5;
         }
         .search-input-group input {
             padding-left: 40px;
         }
         .highlight {
-            background-color: #fff3cd;
+            background-color: var(--warn-soft);
             font-weight: 600;
         }
     </style>

@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Kanban de Produção";
     Layout = "_Layout";
 }
@@ -143,13 +143,13 @@
         min-height: 400px;
         max-height: calc(100vh - 280px);
         overflow-y: auto;
-        background: #f8f9fa;
+        background: var(--bg-subtle);
     }
     
     .kanban-card {
         cursor: grab;
         transition: all 0.2s;
-        border-left: 4px solid #6c757d;
+        border-left: 4px solid var(--ink-3);
     }
     
     .kanban-card:hover {
@@ -162,9 +162,9 @@
         cursor: grabbing;
     }
     
-    .kanban-card.priority-URGENTE { border-left-color: #dc3545; }
-    .kanban-card.priority-ALTA { border-left-color: #ffc107; }
-    .kanban-card.priority-NORMAL { border-left-color: #6c757d; }
+    .kanban-card.priority-URGENTE { border-left-color: var(--danger); }
+    .kanban-card.priority-ALTA { border-left-color: var(--amber-500); }
+    .kanban-card.priority-NORMAL { border-left-color: var(--ink-3); }
     .kanban-card.priority-BAIXA { border-left-color: #adb5bd; }
     
     .kanban-column.drag-over {

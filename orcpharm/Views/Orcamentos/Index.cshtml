@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Orçamentos de Manipulação";
     Layout = "_Layout";
 }
@@ -13,7 +13,7 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     }
     .card-stat.active {
-        border: 2px solid #0d6efd;
+        border: 2px solid var(--info);
     }
     .table-hover tbody tr {
         cursor: pointer;
@@ -23,8 +23,8 @@
         padding: 0.4em 0.8em;
     }
     .btn-whatsapp {
-        background-color: #25D366;
-        border-color: #25D366;
+        background-color: var(--ok);
+        border-color: var(--ok);
         color: white;
     }
     .btn-whatsapp:hover {
@@ -34,20 +34,20 @@
     }
     .quote-value {
         font-weight: 600;
-        color: #198754;
+        color: var(--ok);
     }
     .expired-row {
         opacity: 0.7;
-        background-color: #f8f9fa;
+        background-color: var(--bg-subtle);
     }
     .filter-active {
-        background-color: #e7f1ff;
+        background-color: var(--petrol-50);
     }
     .copy-btn {
         cursor: pointer;
     }
     .copy-btn:hover {
-        color: #0d6efd;
+        color: var(--info);
     }
     .loading-overlay {
         position: fixed;
@@ -67,7 +67,7 @@
     }
     .empty-state i {
         font-size: 4rem;
-        color: #dee2e6;
+        color: var(--rule);
         margin-bottom: 1rem;
     }
 </style>
@@ -346,7 +346,7 @@
 <div class="modal fade" id="whatsappModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header" style="background-color: #25D366; color: white;">
+            <div class="modal-header" style="background-color: var(--ok); color: white;">
                 <h5 class="modal-title"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>

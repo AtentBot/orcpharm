@@ -699,77 +699,48 @@
 </div>
 
 <style>
-    .workflow-timeline {
-        padding: 20px 0;
-    }
+    .workflow-timeline { padding: 20px 0; }
     .workflow-line {
-        position: absolute;
-        top: 20px;
-        left: 5%;
-        right: 5%;
-        height: 3px;
-        background: #e0e0e0;
+        position: absolute; top: 20px;
+        left: 5%; right: 5%;
+        height: 2px;
+        background: var(--rule);
         z-index: 0;
     }
-    .workflow-step {
-        text-align: center;
-        z-index: 1;
-        cursor: pointer;
-    }
+    .workflow-step { text-align: center; z-index: 1; cursor: pointer; }
     .workflow-step .step-icon {
-        width: 40px;
-        height: 40px;
+        width: 40px; height: 40px;
         border-radius: 50%;
-        background: #e0e0e0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 5px;
-        transition: all 0.3s;
+        background: var(--bg-subtle);
+        display: grid; place-items: center;
+        margin: 0 auto 6px;
+        transition: all var(--t-base);
+        border: 1px solid var(--rule);
     }
-    .workflow-step .step-icon i {
-        color: #666;
-    }
-    .workflow-step small {
-        font-size: 0.7rem;
-        color: #666;
-    }
-    .workflow-step.completed .step-icon {
-        background: #198754;
-    }
-    .workflow-step.completed .step-icon i {
-        color: white;
-    }
+    .workflow-step .step-icon i { color: var(--ink-3); }
+    .workflow-step small { font-size: 11px; color: var(--ink-3); font-weight: 500; }
+    .workflow-step.completed .step-icon { background: var(--ok); border-color: var(--ok); }
+    .workflow-step.completed .step-icon i { color: #fff; }
     .workflow-step.active .step-icon {
-        background: #0d6efd;
-        animation: pulse 1.5s infinite;
+        background: var(--petrol-500); border-color: var(--petrol-500);
+        animation: pulse 1.6s infinite;
     }
-    .workflow-step.active .step-icon i {
-        color: white;
-    }
-    .workflow-step.pending .step-icon {
-        background: #e0e0e0;
-    }
+    .workflow-step.active .step-icon i { color: #fff; }
+    .workflow-step.pending .step-icon { background: var(--bg-subtle); }
     @@keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+        0%   { box-shadow: 0 0 0 0   color-mix(in srgb, var(--petrol-500) 35%, transparent); }
+        70%  { box-shadow: 0 0 0 12px color-mix(in srgb, var(--petrol-500) 0%,  transparent); }
+        100% { box-shadow: 0 0 0 0   color-mix(in srgb, var(--petrol-500) 0%,  transparent); }
     }
-    .order-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: pointer;
-    }
-    .order-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-    }
+    .order-card { transition: transform var(--t-fast), box-shadow var(--t-fast); cursor: pointer; }
+    .order-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2) !important; }
     .btn-outline-purple {
-        color: #6f42c1;
-        border-color: #6f42c1;
+        color: var(--controlled-black);
+        border-color: var(--controlled-black);
     }
     .btn-check:checked + .btn-outline-purple {
-        background-color: #6f42c1;
-        color: white;
+        background-color: var(--controlled-black);
+        color: #fff;
     }
 </style>
 

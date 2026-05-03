@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Dashboard";
     ViewData["Subtitle"] = "Visão geral do sistema";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
@@ -305,7 +305,7 @@
 
         const labels = Object.keys(subscriptionsByPlan);
         const values = Object.values(subscriptionsByPlan);
-        const colors = ['#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+        const colors = ['var(--controlled-black)', 'var(--ok)', 'var(--amber-500)', 'var(--danger)', 'var(--info)'];
 
         plansChart = new Chart(ctx, {
             type: 'doughnut',

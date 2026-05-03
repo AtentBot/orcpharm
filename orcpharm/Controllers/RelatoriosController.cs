@@ -5,11 +5,11 @@ using Models.Employees;
 namespace Controllers;
 
 /// <summary>
-/// Controller MVC para páginas de Relatórios
-/// Rotas: /Relatorios/*, /Reports/*
+/// Controller MVC para páginas de Relatórios (área legada / stubs em português).
+/// As rotas /Reports/* canônicas ficam em ReportsViewController; este controller
+/// só responde em /Relatorios/* para não criar AmbiguousMatchException.
 /// </summary>
 [Route("[controller]")]
-[Route("Reports")]
 public class RelatoriosController : Controller
 {
     private readonly AppDbContext _context;

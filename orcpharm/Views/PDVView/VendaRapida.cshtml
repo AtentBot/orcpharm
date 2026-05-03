@@ -1,4 +1,4 @@
-@model Models.Pharmacy.ManipulationOrder
+﻿@model Models.Pharmacy.ManipulationOrder
 @{
     ViewData["Title"] = "Venda Rápida";
     Layout = "_Layout";
@@ -6,14 +6,14 @@
 
 <style>
     .price-source-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
-    .price-source-badge.estoque { background: #d4edda; color: #155724; }
-    .price-source-badge.historico { background: #fff3cd; color: #856404; }
-    .price-source-badge.base { background: #f8d7da; color: #721c24; }
-    .confidence-bar { height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; }
+    .price-source-badge.estoque { background: var(--ok-soft); color: var(--ok); }
+    .price-source-badge.historico { background: var(--warn-soft); color: var(--warn); }
+    .price-source-badge.base { background: var(--danger-soft); color: var(--danger); }
+    .confidence-bar { height: 6px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden; }
     .confidence-fill { height: 100%; border-radius: 3px; }
-    .confidence-fill.high { background: #28a745; }
-    .confidence-fill.medium { background: #ffc107; }
-    .confidence-fill.low { background: #dc3545; }
+    .confidence-fill.high { background: var(--ok); }
+    .confidence-fill.medium { background: var(--amber-500); }
+    .confidence-fill.low { background: var(--danger); }
     .payment-btn { height: 70px; font-size: 0.95rem; border-width: 2px; transition: all 0.2s; }
     .payment-btn.selected { box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5); transform: scale(1.02); }
     .payment-btn i { font-size: 1.3rem; }
@@ -98,7 +98,7 @@
         <!-- Coluna Direita: Pagamento -->
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm sticky-top" style="top: 80px;">
-                <div class="card-header text-white" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="card-header text-white" style="background: linear-gradient(135deg, var(--ok) 0%, var(--ok) 100%);">
                     <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Finalizar Venda</h5>
                 </div>
                 <div class="card-body">
@@ -150,14 +150,14 @@
                             <div class="col-6">
                                 <button type="button" class="btn btn-outline-purple payment-btn w-100" 
                                         onclick="selecionarPagamento('CARTAO_CREDITO')" id="btnCredito"
-                                        style="border-color: #8b5cf6; color: #8b5cf6;">
+                                        style="border-color: var(--petrol-500); color: var(--petrol-500);">
                                     <i class="bi bi-credit-card d-block"></i>Crédito
                                 </button>
                             </div>
                             <div class="col-6">
                                 <button type="button" class="btn btn-outline-secondary payment-btn w-100" 
                                         onclick="selecionarPagamento('PIX')" id="btnPix"
-                                        style="border-color: #00b894; color: #00b894;">
+                                        style="border-color: var(--ok); color: var(--ok);">
                                     <i class="bi bi-qr-code d-block"></i>PIX
                                 </button>
                             </div>

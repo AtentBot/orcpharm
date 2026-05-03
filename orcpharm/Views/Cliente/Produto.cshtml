@@ -1,4 +1,4 @@
-@using Models
+﻿@using Models
 @model CatalogProduct
 @{
     ViewData["Title"] = Model.Name;
@@ -10,88 +10,48 @@
 
 <style>
     .product-hero {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background: var(--bg-subtle);
         height: 250px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: grid; place-items: center;
         position: relative;
     }
-    .product-hero i {
-        font-size: 80px;
-        color: #adb5bd;
-    }
+    .product-hero i { font-size: 80px; color: var(--ink-4); }
     .product-badge {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 13px;
+        position: absolute; top: 14px; right: 14px;
+        padding: 4px 12px;
+        border-radius: var(--r-pill);
+        font-size: 12px; font-weight: 500;
     }
-    .price-box {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 16px;
-    }
-    .current-price {
-        font-size: 28px;
-        font-weight: 700;
-        color: #198754;
-    }
-    .old-price {
-        font-size: 16px;
-        color: #adb5bd;
-        text-decoration: line-through;
-    }
+    .price-box { background: var(--bg-subtle); border-radius: var(--r-md); padding: 16px; }
+    .current-price { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ok); }
+    .old-price { font-size: 14px; color: var(--ink-4); text-decoration: line-through; }
     .info-section {
-        background: white;
-        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-md);
         padding: 16px;
         margin-bottom: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        box-shadow: var(--shadow-1);
     }
-    .info-section h6 {
-        color: #495057;
-        margin-bottom: 8px;
-    }
-    .qty-control {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+    .info-section h6 { color: var(--ink-2); margin-bottom: 8px; font-weight: 600; letter-spacing: -0.005em; }
+    .qty-control { display: flex; align-items: center; gap: 12px; }
     .qty-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: 1px solid #dee2e6;
-        background: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 40px; height: 40px; border-radius: 50%;
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        display: grid; place-items: center;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all var(--t-fast);
     }
-    .qty-btn:hover {
-        background: #4361ee;
-        color: white;
-        border-color: #4361ee;
-    }
-    .qty-value {
-        font-size: 20px;
-        font-weight: 600;
-        min-width: 40px;
-        text-align: center;
-    }
+    .qty-btn:hover { background: var(--petrol-500); color: #fff; border-color: var(--petrol-500); }
+    .qty-value { font-size: 20px; font-weight: 600; min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
     .bottom-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: var(--surface);
         padding: 12px 20px;
-        box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-        z-index: 1000;
+        border-top: 1px solid var(--rule);
+        box-shadow: 0 -4px 20px rgba(11,18,32,.06);
+        z-index: 50;
     }
 </style>
 

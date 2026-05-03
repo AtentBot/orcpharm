@@ -1,5 +1,5 @@
-@{
-    ViewData["Title"] = "OrcPharm - Home";
+﻿@{
+    ViewData["Title"] = "Formula Clear - Home";
 }
 
 <style>
@@ -10,7 +10,7 @@
         justify-content: center;
         align-items: center;
         padding: 2rem;
-        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        background: var(--bg-subtle);
     }
     
     .welcome-title {
@@ -60,11 +60,11 @@
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     }
     
-    .access-card.dashboard { border-top: 4px solid #28a745; }
-    .access-card.signup { border-top: 4px solid #6f42c1; }
-    .access-card.admin { border-top: 4px solid #fd7e14; }
-    .access-card.api { border-top: 4px solid #17a2b8; }
-    .access-card.portal { border-top: 4px solid #e91e63; }
+    .access-card.dashboard { border-top: 4px solid var(--ok); }
+    .access-card.signup { border-top: 4px solid var(--controlled-black); }
+    .access-card.admin { border-top: 4px solid var(--amber-500); }
+    .access-card.api { border-top: 4px solid var(--info); }
+    .access-card.portal { border-top: 4px solid var(--danger); }
     
     .card-icon {
         width: 80px;
@@ -77,11 +77,11 @@
         font-size: 2.5rem;
     }
     
-    .card-icon.dashboard { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
-    .card-icon.signup { background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%); color: white; }
-    .card-icon.admin { background: linear-gradient(135deg, #fd7e14 0%, #e67e22 100%); color: white; }
-    .card-icon.api { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; }
-    .card-icon.portal { background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%); color: white; }
+    .card-icon.dashboard { background: linear-gradient(135deg, var(--ok) 0%, var(--ok) 100%); color: white; }
+    .card-icon.signup { background: linear-gradient(135deg, var(--controlled-black) 0%, var(--controlled-black) 100%); color: white; }
+    .card-icon.admin { background: linear-gradient(135deg, var(--amber-500) 0%, var(--amber-500) 100%); color: white; }
+    .card-icon.api { background: linear-gradient(135deg, var(--info) 0%, var(--info) 100%); color: white; }
+    .card-icon.portal { background: var(--danger); color: white; }
     
     .card-title {
         font-size: 1.5rem;
@@ -92,7 +92,7 @@
     
     .card-description {
         font-size: 0.95rem;
-        color: #6c757d;
+        color: var(--ink-3);
         text-align: center;
         margin-bottom: 1.2rem;
         flex-grow: 1;
@@ -115,11 +115,11 @@
         filter: brightness(0.9);
     }
     
-    .access-card.dashboard .card-button { background: #28a745; }
-    .access-card.signup .card-button { background: #6f42c1; }
-    .access-card.admin .card-button { background: #fd7e14; }
-    .access-card.api .card-button { background: #17a2b8; }
-    .access-card.portal .card-button { background: #e91e63; }
+    .access-card.dashboard .card-button { background: var(--ok); }
+    .access-card.signup .card-button { background: var(--controlled-black); }
+    .access-card.admin .card-button { background: var(--amber-500); }
+    .access-card.api .card-button { background: var(--info); }
+    .access-card.portal .card-button { background: var(--danger); }
     
     .card-badge {
         font-size: 0.7rem;
@@ -130,11 +130,11 @@
         text-transform: uppercase;
     }
     
-    .badge-client { background: #e8f5e9; color: #2e7d32; }
+    .badge-client { background: var(--ok-soft); color: var(--ok); }
     .badge-new { background: #f3e5f5; color: #7b1fa2; }
     .badge-owner { background: #fff3e0; color: #e65100; }
     .badge-dev { background: #e0f7fa; color: #00838f; }
-    .badge-consumer { background: #fce4ec; color: #c2185b; }
+    .badge-consumer { background: #fce4ec; color: var(--danger); }
 
     @@media (max-width: 768px) {
         .welcome-title { font-size: 2rem; }
@@ -150,7 +150,7 @@
 
 <div class="welcome-container">
     <h1 class="welcome-title">
-        <i class="bi bi-capsule me-2"></i>OrcPharm
+        <i class="bi bi-capsule me-2"></i>Formula Clear
     </h1>
     <p class="welcome-subtitle">Sistema de Gestão para Farmácias de Manipulação</p>
     

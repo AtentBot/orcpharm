@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Novo Funcionário";
 }
 
@@ -547,7 +547,7 @@
     left: 50px;
     right: 50px;
     height: 2px;
-    background: #e5e7eb;
+    background: var(--rule);
     z-index: 0;
 }
 
@@ -564,43 +564,43 @@
     height: 60px;
     border-radius: 50%;
     background: white;
-    border: 3px solid #e5e7eb;
+    border: 3px solid var(--rule);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: #9ca3af;
+    color: var(--ink-4);
     margin-bottom: 10px;
     transition: all 0.3s ease;
 }
 
 .step-label {
     font-size: 0.85rem;
-    color: #6b7280;
+    color: var(--ink-3);
     text-align: center;
     font-weight: 500;
 }
 
 .step.active .step-icon {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-color: #667eea;
+    background: var(--ink);
+    border-color: var(--ink);
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .step.active .step-label {
-    color: #4f46e5;
+    color: var(--petrol-700);
     font-weight: 600;
 }
 
 .step.completed .step-icon {
-    background: #10b981;
-    border-color: #10b981;
+    background: var(--ok);
+    border-color: var(--ok);
     color: white;
 }
 
 .step.completed .step-label {
-    color: #059669;
+    color: var(--ok);
 }
 
 .form-step {
@@ -625,7 +625,7 @@
 
 .required::after {
     content: ' *';
-    color: #dc2626;
+    color: var(--danger);
 }
 
 .card-header {
@@ -633,14 +633,14 @@
 }
 
 .form-control:focus, .form-select:focus {
-    border-color: #4f46e5;
+    border-color: var(--petrol-700);
     box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
 }
 
 .review-section {
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--rule);
 }
 
 .review-section:last-child {
@@ -648,7 +648,7 @@
 }
 
 .review-section h6 {
-    color: #4f46e5;
+    color: var(--petrol-700);
     font-weight: 600;
     margin-bottom: 15px;
 }
@@ -660,12 +660,12 @@
 
 .review-label {
     font-weight: 600;
-    color: #4b5563;
+    color: var(--ink-2);
     min-width: 200px;
 }
 
 .review-value {
-    color: #1f2937;
+    color: var(--ink);
 }
 </style>
 

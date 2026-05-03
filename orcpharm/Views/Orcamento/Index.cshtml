@@ -1,4 +1,4 @@
-@model DTOs.Prescriptions.PrescriptionQuoteDto
+﻿@model DTOs.Prescriptions.PrescriptionQuoteDto
 @{
     Layout = null;
     ViewData["Title"] = $"Orçamento {Model.Code}";
@@ -19,9 +19,9 @@
             --primary-color: #2C5F2D;
             --secondary-color: #97BC62;
             --accent-color: #F1F1E6;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
+            --success-color: var(--ok);
+            --danger-color: var(--danger);
+            --warning-color: var(--amber-500);
         }
 
         * {
@@ -29,7 +29,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg-subtle) 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 0;
@@ -96,18 +96,18 @@
         }
 
         .status-pendente {
-            background: #fff3cd;
-            color: #856404;
+            background: var(--warn-soft);
+            color: var(--warn);
         }
 
         .status-aprovado {
-            background: #d4edda;
-            color: #155724;
+            background: var(--ok-soft);
+            color: var(--ok);
         }
 
         .status-recusado {
-            background: #f8d7da;
-            color: #721c24;
+            background: var(--danger-soft);
+            color: var(--danger);
         }
 
         .status-expirado {
@@ -121,7 +121,7 @@
         }
 
         .info-section {
-            background: #f8f9fa;
+            background: var(--bg-subtle);
             border-radius: 12px;
             padding: 18px;
             margin-bottom: 18px;
@@ -150,7 +150,7 @@
 
         .info-label {
             font-size: 0.75rem;
-            color: #6c757d;
+            color: var(--ink-3);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -158,7 +158,7 @@
         .info-value {
             font-size: 0.95rem;
             font-weight: 500;
-            color: #212529;
+            color: var(--ink);
         }
 
         .component-table-wrapper {
@@ -193,7 +193,7 @@
 
         .component-table td {
             padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--rule);
             font-size: 0.9rem;
         }
 
@@ -210,7 +210,7 @@
         }
 
         .controlled-badge {
-            background: #dc3545;
+            background: var(--danger);
             color: white;
             font-size: 9px;
             padding: 2px 5px;
@@ -221,7 +221,7 @@
         }
 
         .pricing-summary {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            background: linear-gradient(135deg, var(--bg-subtle), var(--bg-subtle));
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
@@ -231,7 +231,7 @@
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
-            border-bottom: 1px dashed #dee2e6;
+            border-bottom: 1px dashed var(--rule);
             font-size: 0.95rem;
         }
 
@@ -283,29 +283,29 @@
 
         .deadline-box {
             background: #d1ecf1;
-            border-left: 4px solid #0dcaf0;
+            border-left: 4px solid var(--info);
         }
 
         .deadline-box i {
-            color: #0dcaf0;
+            color: var(--info);
         }
 
         .validity-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
+            background: var(--warn-soft);
+            border-left: 4px solid var(--amber-500);
         }
 
         .validity-box i {
-            color: #ffc107;
+            color: var(--amber-500);
         }
 
         .expired-box {
-            background: #f8d7da;
-            border-left: 4px solid #dc3545;
+            background: var(--danger-soft);
+            border-left: 4px solid var(--danger);
         }
 
         .expired-box i {
-            color: #dc3545;
+            color: var(--danger);
         }
 
         .action-buttons {
@@ -316,7 +316,7 @@
 
         .btn-approve {
             flex: 1;
-            background: linear-gradient(135deg, var(--success-color), #20c997);
+            background: linear-gradient(135deg, var(--success-color), var(--ok));
             border: none;
             color: white;
             padding: 16px 25px;
@@ -343,8 +343,8 @@
 
         .btn-reject {
             background: white;
-            border: 2px solid #dc3545;
-            color: #dc3545;
+            border: 2px solid var(--danger);
+            color: var(--danger);
             padding: 16px 25px;
             border-radius: 12px;
             font-size: 1rem;
@@ -354,7 +354,7 @@
         }
 
         .btn-reject:hover {
-            background: #dc3545;
+            background: var(--danger);
             color: white;
         }
 
@@ -362,12 +362,12 @@
             text-align: center;
             margin-top: 30px;
             padding-top: 25px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--rule);
         }
 
         .contact-footer p {
             margin-bottom: 15px;
-            color: #495057;
+            color: var(--ink-2);
         }
 
         .contact-btn {
@@ -394,8 +394,8 @@
         }
 
         .contact-btn-whatsapp {
-            background: #25D366;
-            border: 1px solid #25D366;
+            background: var(--ok);
+            border: 1px solid var(--ok);
             color: white;
         }
 
@@ -429,15 +429,15 @@
         }
 
         .alert-success-custom {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+            background: var(--ok-soft);
+            border: 1px solid var(--ok-border);
+            color: var(--ok);
         }
 
         .alert-danger-custom {
-            background: #f8d7da;
+            background: var(--danger-soft);
             border: 1px solid #f5c6cb;
-            color: #721c24;
+            color: var(--danger);
         }
 
         .alert-info-custom {
@@ -833,7 +833,7 @@
         <!-- Rodapé -->
         <div class="text-center text-muted mt-3 mb-4" style="font-size: 0.8rem;">
             <p class="mb-1">@(Model.PharmacyName ?? "Farmácia de Manipulação")</p>
-            <p class="mb-0">Powered by OrcPharm</p>
+            <p class="mb-0">Powered by D&W Consultoria em Ltda</p>
         </div>
     </div>
 

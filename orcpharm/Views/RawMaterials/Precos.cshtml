@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Dashboard de Preços";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -400,7 +400,7 @@
                 labels: ['Estoque Real', 'Histórico', 'Preço Base'],
                 datasets: [{
                     data: [stats.priceFromStock, stats.priceFromHistory, stats.priceFromBase],
-                    backgroundColor: ['#198754', '#ffc107', '#dc3545'],
+                    backgroundColor: ['var(--ok)', 'var(--amber-500)', 'var(--danger)'],
                     borderWidth: 0
                 }]
             },
@@ -432,12 +432,12 @@
                         stats.outdatedPrice
                     ],
                     backgroundColor: [
-                        '#198754',
-                        '#6c757d',
-                        '#0dcaf0',
-                        '#0d6efd',
-                        '#dc3545',
-                        '#ffc107'
+                        'var(--ok)',
+                        'var(--ink-3)',
+                        'var(--info)',
+                        'var(--info)',
+                        'var(--danger)',
+                        'var(--amber-500)'
                     ]
                 }]
             },

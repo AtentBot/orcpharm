@@ -1,11 +1,11 @@
-@{
+﻿@{
     ViewData["Title"] = "Formas Farmacêuticas";
     Layout = "_Layout";
 }
 
 <style>
     .ff-header {
-        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        background: linear-gradient(135deg, var(--controlled-black) 0%, var(--danger) 100%);
         color: white;
         border-radius: 16px;
         padding: 2rem;
@@ -17,24 +17,24 @@
         border-radius: 12px;
         padding: 1.25rem;
         text-align: center;
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--bg-subtle);
         transition: transform 0.2s;
     }
     .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .stat-card .value { font-size: 2rem; font-weight: 700; }
-    .stat-card .label { font-size: 0.8rem; color: #6c757d; }
+    .stat-card .label { font-size: 0.8rem; color: var(--ink-3); }
 
     .form-card {
         background: white;
         border-radius: 12px;
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--bg-subtle);
         padding: 1.25rem;
         margin-bottom: 1rem;
         transition: all 0.2s;
         cursor: pointer;
     }
     .form-card:hover { 
-        border-color: #6f42c1; 
+        border-color: var(--controlled-black); 
         box-shadow: 0 4px 12px rgba(111, 66, 193, 0.15);
     }
     .form-card.inactive { opacity: 0.6; }
@@ -46,9 +46,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f8f9fa;
+        background: var(--bg-subtle);
         border-radius: 10px;
-        color: #6f42c1;
+        color: var(--controlled-black);
     }
     .form-icon i {
         font-size: 1.75rem;
@@ -57,7 +57,7 @@
     .form-name { font-weight: 600; font-size: 1.1rem; }
     .form-code { 
         font-size: 0.75rem; 
-        background: #e9ecef; 
+        background: var(--bg-subtle); 
         padding: 0.2rem 0.5rem; 
         border-radius: 4px;
         font-family: monospace;
@@ -68,12 +68,12 @@
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
     }
-    .badge-usage.oral { background: #d1e7dd; color: #0f5132; }
-    .badge-usage.topical { background: #cfe2ff; color: #084298; }
-    .badge-usage.both { background: #fff3cd; color: #664d03; }
+    .badge-usage.oral { background: var(--ok-soft); color: var(--ok); }
+    .badge-usage.topical { background: var(--petrol-50); color: #084298; }
+    .badge-usage.both { background: var(--warn-soft); color: var(--warn); }
 
     .subtypes-count {
-        background: #6f42c1;
+        background: var(--controlled-black);
         color: white;
         font-size: 0.75rem;
         padding: 0.2rem 0.5rem;
@@ -82,7 +82,7 @@
 
     .filters-bar {
         background: white;
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--bg-subtle);
         border-radius: 12px;
         padding: 1rem;
         margin-bottom: 1.5rem;
@@ -91,7 +91,7 @@
     .empty-state {
         text-align: center;
         padding: 3rem;
-        color: #6c757d;
+        color: var(--ink-3);
     }
     .empty-state i { font-size: 4rem; opacity: 0.3; }
 </style>

@@ -1,152 +1,91 @@
-@{
+﻿@{
     ViewData["Title"] = "Novo Orçamento - Processar Receita";
     Layout = "_Layout";
 }
 
 <style>
     .upload-zone {
-        border: 3px dashed #dee2e6;
-        border-radius: 12px;
+        border: 2px dashed var(--rule);
+        border-radius: var(--r-md);
         padding: 60px 40px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        text-align: center; cursor: pointer;
+        transition: all var(--t-base);
+        background: var(--bg-subtle);
     }
     .upload-zone:hover, .upload-zone.dragover {
-        border-color: #0d6efd;
-        background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+        border-color: var(--petrol-500); border-style: solid;
+        background: var(--petrol-50);
     }
     .upload-zone.has-file {
-        border-color: #198754;
-        background: linear-gradient(135deg, #d1e7dd 0%, #badbcc 100%);
+        border-color: var(--ok); border-style: solid;
+        background: var(--ok-soft);
     }
-    .upload-zone i {
-        font-size: 4rem;
-        color: #6c757d;
-        margin-bottom: 1rem;
-    }
-    .upload-zone.has-file i {
-        color: #198754;
-    }
-    .preview-image {
-        max-width: 100%;
-        max-height: 400px;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    }
-    .step-indicator {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 2rem;
-    }
-    .step {
-        display: flex;
-        align-items: center;
-        padding: 0 1.5rem;
-    }
+    .upload-zone i { font-size: 56px; color: var(--ink-3); margin-bottom: 16px; }
+    .upload-zone.has-file i { color: var(--ok); }
+    .preview-image { max-width: 100%; max-height: 400px; border-radius: var(--r-sm); box-shadow: var(--shadow-2); }
+
+    .step-indicator { display: flex; justify-content: center; margin-bottom: 32px; }
+    .step { display: flex; align-items: center; padding: 0 22px; }
     .step-number {
-        width: 40px;
-        height: 40px;
+        width: 40px; height: 40px;
         border-radius: 50%;
-        background: #e9ecef;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 0.5rem;
-        transition: all 0.3s;
+        background: var(--bg-subtle); color: var(--ink-3);
+        display: grid; place-items: center;
+        font-weight: 600; margin-right: 8px;
+        transition: all var(--t-base);
+        font-family: var(--font-mono);
     }
-    .step.active .step-number {
-        background: #0d6efd;
-        color: white;
-    }
-    .step.completed .step-number {
-        background: #198754;
-        color: white;
-    }
-    .step-connector {
-        width: 60px;
-        height: 3px;
-        background: #e9ecef;
-    }
-    .step.completed + .step-connector,
-    .step-connector.completed {
-        background: #198754;
-    }
+    .step.active .step-number { background: var(--petrol-500); color: #fff; box-shadow: 0 0 0 4px var(--petrol-50); }
+    .step.completed .step-number { background: var(--ok); color: #fff; }
+    .step-connector { width: 60px; height: 2px; background: var(--rule); }
+    .step.completed + .step-connector, .step-connector.completed { background: var(--ok); }
+
     .ingredient-card {
-        border-left: 4px solid #0d6efd;
-        transition: all 0.2s;
+        border-left: 3px solid var(--petrol-500);
+        transition: all var(--t-fast);
     }
-    .ingredient-card:hover {
-        transform: translateX(5px);
-    }
-    .ingredient-card.matched {
-        border-left-color: #198754;
-    }
-    .ingredient-card.unmatched {
-        border-left-color: #dc3545;
-    }
-    .confidence-badge {
-        font-size: 0.75rem;
-    }
-    .match-select {
-        max-width: 100%;
-    }
+    .ingredient-card:hover { transform: translateX(3px); box-shadow: var(--shadow-1); }
+    .ingredient-card.matched { border-left-color: var(--ok); }
+    .ingredient-card.unmatched { border-left-color: var(--danger); }
+    .confidence-badge { font-size: 11px; font-family: var(--font-mono); }
+    .match-select { max-width: 100%; }
+
     .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255,255,255,0.9);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        position: fixed; inset: 0;
+        background: rgba(246,247,249,0.95);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
         z-index: 9999;
     }
-    .loading-text {
-        margin-top: 1rem;
-        font-size: 1.2rem;
-        color: #495057;
-    }
+    .loading-text { margin-top: 16px; font-size: 16px; color: var(--ink-2); }
+
     .quote-summary {
-        background: linear-gradient(135deg, #198754 0%, #157347 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 2rem;
+        background: var(--ink); color: #fff;
+        border-radius: var(--r-md);
+        padding: 28px;
+        position: relative; overflow: hidden;
     }
-    .ocr-result-card {
-        max-height: 500px;
-        overflow-y: auto;
+    .quote-summary::before {
+        content: ''; position: absolute; inset: 0;
+        background: radial-gradient(700px 300px at 90% 100%, color-mix(in srgb, var(--petrol-500) 35%, transparent), transparent 70%);
+        pointer-events: none;
     }
-    .customer-card {
-        border-left: 4px solid #0d6efd;
-    }
-    .raw-material-item:hover {
-        background-color: #e7f1ff;
-    }
-    .action-btn {
-        padding: 12px 20px;
-        font-size: 0.95rem;
-    }
-    .action-btn i {
-        font-size: 1.2rem;
-    }
+    .quote-summary > * { position: relative; z-index: 1; }
+
+    .ocr-result-card { max-height: 500px; overflow-y: auto; }
+    .customer-card { border-left: 3px solid var(--petrol-500); }
+    .raw-material-item:hover { background-color: var(--petrol-50); }
+
+    .action-btn { padding: 12px 20px; font-size: 14px; }
+    .action-btn i { font-size: 16px; }
+
     .sent-badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 24px;
-        height: 24px;
+        position: absolute; top: -8px; right: -8px;
+        width: 22px; height: 22px;
         border-radius: 50%;
-        background: #198754;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
+        background: var(--ok); color: #fff;
+        display: grid; place-items: center;
+        font-size: 11px;
+        box-shadow: var(--shadow-1);
     }
 </style>
 

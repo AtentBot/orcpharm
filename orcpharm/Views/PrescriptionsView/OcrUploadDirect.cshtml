@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Processar Receita";
 }
 
@@ -24,7 +24,7 @@
                 <div class="card-body p-4">
                     <!-- Área de Upload -->
                     <div id="uploadArea" class="border border-2 border-dashed rounded p-5 text-center mb-4"
-                         style="cursor: pointer; border-color: #dee2e6; transition: all 0.3s;"
+                         style="cursor: pointer; border-color: var(--rule); transition: all 0.3s;"
                          ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" 
                          ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
                         <i class="bi bi-cloud-arrow-up text-primary" style="font-size: 4rem;"></i>
@@ -148,7 +148,7 @@
 
 <style>
     #uploadArea:hover, #uploadArea.drag-over {
-        border-color: #0d6efd !important;
+        border-color: var(--info) !important;
         background-color: rgba(13, 110, 253, 0.05);
     }
 </style>

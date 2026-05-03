@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Indicadores de Qualidade";
 }
 
@@ -395,7 +395,7 @@ function initCharts() {
             datasets: [{
                 label: 'Taxa de Aprovação (%)',
                 data: [],
-                borderColor: '#10b981',
+                borderColor: 'var(--ok)',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 fill: true,
                 tension: 0.4
@@ -421,7 +421,7 @@ function initCharts() {
             labels: ['Processo', 'Matéria-prima', 'Equipamento', 'Documentação', 'Outros'],
             datasets: [{
                 data: [0, 0, 0, 0, 0],
-                backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#6b7280']
+                backgroundColor: ['var(--danger)', 'var(--amber-500)', 'var(--info)', 'var(--petrol-500)', 'var(--ink-3)']
             }]
         },
         options: {

@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Calculadora de Tópicos";
     Layout = "_Layout";
 }
@@ -8,7 +8,7 @@
     /* HEADER */
     /* ═══════════════════════════════════════════════════════════════════════════ */
     .calc-header {
-        background: linear-gradient(135deg, #20c997 0%, #0d6efd 100%);
+        background: var(--petrol-500);
         color: white;
         border-radius: 16px;
         padding: 2rem;
@@ -23,7 +23,7 @@
     /* ═══════════════════════════════════════════════════════════════════════════ */
     .calc-card {
         background: white;
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--bg-subtle);
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 1rem;
@@ -33,10 +33,10 @@
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #6c757d;
+        color: var(--ink-3);
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid #20c997;
+        border-bottom: 2px solid var(--ok);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -56,19 +56,19 @@
         min-width: 120px;
         padding: 1rem;
         border-radius: 12px;
-        border: 2px solid #e9ecef;
+        border: 2px solid var(--bg-subtle);
         background: white;
         cursor: pointer;
         transition: all 0.2s ease;
         text-align: center;
     }
     .form-type-tab:hover {
-        border-color: #20c997;
+        border-color: var(--ok);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
     }
     .form-type-tab.active {
-        background: linear-gradient(135deg, #20c997, #0d6efd);
+        background: var(--petrol-500);
         color: white;
         border-color: transparent;
     }
@@ -92,31 +92,31 @@
     }
     .base-option {
         padding: 1rem;
-        border: 2px solid #e9ecef;
+        border: 2px solid var(--bg-subtle);
         border-radius: 10px;
         cursor: pointer;
         transition: all 0.2s;
         text-align: center;
     }
     .base-option:hover {
-        border-color: #20c997;
+        border-color: var(--ok);
         background: #f8fffe;
     }
     .base-option.selected {
-        border-color: #20c997;
+        border-color: var(--ok);
         background: linear-gradient(135deg, rgba(32, 201, 151, 0.1), rgba(13, 110, 253, 0.1));
     }
     .base-option .base-name {
         font-weight: 600;
         font-size: 0.95rem;
-        color: #212529;
+        color: var(--ink);
     }
     .base-option .base-desc {
         font-size: 0.75rem;
-        color: #6c757d;
+        color: var(--ink-3);
         margin-top: 0.25rem;
     }
-    .base-option.selected .base-name { color: #20c997; }
+    .base-option.selected .base-name { color: var(--ok); }
 
     /* ═══════════════════════════════════════════════════════════════════════════ */
     /* TABELA DE COMPONENTES */
@@ -130,20 +130,20 @@
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: #6c757d;
+        color: var(--ink-3);
         padding: 0.5rem 0.75rem;
         text-align: left;
     }
     .components-table td {
-        background: #f8f9fa;
+        background: var(--bg-subtle);
         padding: 0.75rem;
         vertical-align: middle;
     }
     .components-table tr td:first-child { border-radius: 8px 0 0 8px; }
     .components-table tr td:last-child { border-radius: 0 8px 8px 0; }
     .components-table .controlled {
-        background: linear-gradient(90deg, #fff5f5, #f8f9fa);
-        border-left: 3px solid #dc3545;
+        background: var(--danger-soft);
+        border-left: 3px solid var(--danger);
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -158,7 +158,7 @@
         left: 0;
         right: 0;
         background: white;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--rule);
         border-radius: 0 0 8px 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         max-height: 250px;
@@ -170,15 +170,15 @@
     .autocomplete-item {
         padding: 10px 12px;
         cursor: pointer;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid var(--bg-subtle);
         transition: background 0.15s;
     }
-    .autocomplete-item:hover { background: #f8f9fa; }
+    .autocomplete-item:hover { background: var(--bg-subtle); }
     .autocomplete-item:last-child { border-bottom: none; }
     .autocomplete-item .name { font-weight: 600; }
-    .autocomplete-item .info { font-size: 0.8rem; color: #6c757d; }
+    .autocomplete-item .info { font-size: 0.8rem; color: var(--ink-3); }
     .autocomplete-item .badge-controlled {
-        background: #dc3545;
+        background: var(--danger);
         color: white;
         font-size: 0.65rem;
         padding: 2px 6px;
@@ -190,7 +190,7 @@
     /* RESULTADO */
     /* ═══════════════════════════════════════════════════════════════════════════ */
     .result-card {
-        background: linear-gradient(135deg, #20c997, #0d6efd);
+        background: var(--petrol-500);
         color: white;
         border-radius: 16px;
         padding: 1.5rem;
@@ -243,14 +243,14 @@
     /* COMPOSIÇÃO DA BASE */
     /* ═══════════════════════════════════════════════════════════════════════════ */
     .base-composition {
-        background: #f8f9fa;
+        background: var(--bg-subtle);
         border-radius: 8px;
         padding: 1rem;
         margin-top: 1rem;
     }
     .base-composition h6 {
         font-size: 0.75rem;
-        color: #6c757d;
+        color: var(--ink-3);
         margin-bottom: 0.75rem;
         text-transform: uppercase;
     }
@@ -259,11 +259,11 @@
         justify-content: space-between;
         padding: 0.25rem 0;
         font-size: 0.85rem;
-        border-bottom: 1px dashed #dee2e6;
+        border-bottom: 1px dashed var(--rule);
     }
     .base-comp-item:last-child { border-bottom: none; }
     .base-comp-item .qsp-tag {
-        background: #20c997;
+        background: var(--ok);
         color: white;
         font-size: 0.65rem;
         padding: 2px 6px;
@@ -274,7 +274,7 @@
     /* BOTÕES E AÇÕES */
     /* ═══════════════════════════════════════════════════════════════════════════ */
     .btn-calculate {
-        background: linear-gradient(135deg, #20c997, #0d6efd);
+        background: var(--petrol-500);
         border: none;
         color: white;
         padding: 1rem 2rem;
@@ -297,9 +297,9 @@
         border-radius: 10px;
         border-left: 4px solid;
     }
-    .alert-pharmacy.alert-warning { border-left-color: #ffc107; }
-    .alert-pharmacy.alert-info { border-left-color: #0dcaf0; }
-    .alert-pharmacy.alert-danger { border-left-color: #dc3545; }
+    .alert-pharmacy.alert-warning { border-left-color: var(--amber-500); }
+    .alert-pharmacy.alert-info { border-left-color: var(--info); }
+    .alert-pharmacy.alert-danger { border-left-color: var(--danger); }
 
     /* ═══════════════════════════════════════════════════════════════════════════ */
     /* LOADING */

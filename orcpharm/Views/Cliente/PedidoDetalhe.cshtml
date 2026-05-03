@@ -1,4 +1,4 @@
-@using Models
+﻿@using Models
 @{
     ViewData["Title"] = "Detalhe do Pedido";
     ViewData["ActiveNav"] = "pedidos";
@@ -19,7 +19,7 @@
         top: 0;
         bottom: 0;
         width: 2px;
-        background: #e9ecef;
+        background: var(--bg-subtle);
     }
     .status-step {
         position: relative;
@@ -36,21 +36,21 @@
         width: 14px;
         height: 14px;
         border-radius: 50%;
-        background: #e9ecef;
+        background: var(--bg-subtle);
         border: 2px solid #fff;
     }
     .status-step.completed::before {
-        background: #198754;
+        background: var(--ok);
     }
     .status-step.active::before {
-        background: #0d6efd;
+        background: var(--info);
         box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
     }
     .status-step.cancelled::before {
-        background: #dc3545;
+        background: var(--danger);
     }
     .order-item {
-        background: #f8f9fa;
+        background: var(--bg-subtle);
         border-radius: 8px;
         padding: 12px;
         margin-bottom: 8px;

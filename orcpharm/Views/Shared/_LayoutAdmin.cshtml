@@ -1,659 +1,302 @@
 @{
     var admin = ViewContext.HttpContext.Items["SaasAdmin"] as Models.SaasAdmin;
     var currentPath = ViewContext.HttpContext.Request.Path.Value?.ToLower() ?? "";
+    var initials = string.IsNullOrEmpty(admin?.FullName) ? "A" : admin.FullName.Substring(0, 1).ToUpper();
 }
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - OrcPharm Admin</title>
-    
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
-    <!-- Chart.js -->
+    <title>@ViewData["Title"] · OrcPharm Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>@@import url('https://api.fontshare.com/v2/css?f[]=general-sans@@400,500,600&display=swap');</style>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@@1.11.2/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
+    <link rel="stylesheet" href="~/css/design-system/tokens.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/design-system/components.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/orcpharm-theme.css" asp-append-version="true">
+
     <style>
-        :root {
-            --admin-primary: #7c3aed;
-            --admin-primary-dark: #6d28d9;
-            --admin-secondary: #8b5cf6;
-            --admin-dark: #1e1b4b;
-            --admin-darker: #0f0d24;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --info-color: #06b6d4;
-            --light-bg: #f5f3ff;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--light-bg);
-            overflow-x: hidden;
-        }
-
-        /* ══════════════════════════════════════════════════════════════════
-           SIDEBAR
-           ══════════════════════════════════════════════════════════════════ */
-        .admin-sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .ds-admin-shell { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+        .ds-admin-sidebar {
+            background: var(--ink);
+            color: rgba(255,255,255,.75);
+            padding: 14px 12px;
             height: 100vh;
-            width: 280px;
-            background: linear-gradient(180deg, var(--admin-darker) 0%, var(--admin-dark) 100%);
-            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .sidebar-brand-icon {
-            width: 45px;
-            height: 45px;
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .sidebar-brand-text {
-            color: white;
-        }
-
-        .sidebar-brand-text h5 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-
-        .sidebar-brand-text span {
-            font-size: 0.7rem;
-            color: var(--admin-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Navigation */
-        .sidebar-nav {
-            flex: 1;
-            padding: 1.5rem 0;
+            position: sticky; top: 0;
             overflow-y: auto;
+            display: flex; flex-direction: column;
         }
+        .ds-admin-sidebar::-webkit-scrollbar { width: 4px; }
+        .ds-admin-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
 
-        .nav-section {
-            margin-bottom: 1.5rem;
+        .ds-admin-brand {
+            display: flex; align-items: center; gap: 10px;
+            padding: 6px 8px 18px; text-decoration: none; color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            margin-bottom: 14px;
         }
-
-        .nav-section-title {
-            padding: 0 1.5rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255,255,255,0.4);
-            font-weight: 600;
-        }
-
-        .admin-nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem 1.5rem;
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-            margin: 0.125rem 0;
-        }
-
-        .admin-nav-link:hover {
-            background: rgba(124, 58, 237, 0.15);
-            color: white;
-            border-left-color: var(--admin-secondary);
-        }
-
-        .admin-nav-link.active {
-            background: rgba(124, 58, 237, 0.25);
-            color: white;
-            border-left-color: var(--admin-primary);
-        }
-
-        .admin-nav-link i {
-            width: 22px;
-            font-size: 1.1rem;
-            text-align: center;
-        }
-
-        .admin-nav-link .badge {
-            margin-left: auto;
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-        }
-
-        /* Sidebar Footer */
-        .sidebar-footer {
-            padding: 1.5rem;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .admin-profile {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .admin-avatar {
-            width: 42px;
-            height: 42px;
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .admin-info h6 {
-            margin: 0;
-            color: white;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .admin-info span {
-            font-size: 0.7rem;
-            color: var(--admin-secondary);
-        }
-
-        .btn-admin-logout {
-            width: 100%;
-            padding: 0.75rem;
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .btn-admin-logout:hover {
-            background: rgba(239, 68, 68, 0.25);
-            color: #fecaca;
-        }
-
-        /* ══════════════════════════════════════════════════════════════════
-           MAIN CONTENT
-           ══════════════════════════════════════════════════════════════════ */
-        .admin-main {
-            margin-left: 280px;
-            min-height: 100vh;
-        }
-
-        /* Top Bar */
-        .admin-topbar {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .topbar-title h4 {
-            margin: 0;
-            font-weight: 700;
-            color: var(--admin-dark);
-        }
-
-        .topbar-title p {
-            margin: 0;
-            font-size: 0.8rem;
-            color: #64748b;
-        }
-
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-topbar {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Content Area */
-        .admin-content {
-            padding: 2rem;
-        }
-
-        /* Fix Chart.js infinite scroll */
-        canvas {
-            max-height: 300px !important;
-        }
-
-        .chart-container {
+        .ds-admin-brand-glyph {
+            width: 36px; height: 36px;
+            border-radius: var(--r-sm);
+            background: var(--petrol-500);
+            color: #fff;
+            display: grid; place-items: center;
+            font-weight: 600; font-size: 18px; letter-spacing: -0.04em;
             position: relative;
-            height: 280px;
+        }
+        .ds-admin-brand-glyph::after { content: "."; position: absolute; right: 5px; bottom: -2px; color: var(--amber-500); font-weight: 700; }
+        .ds-admin-brand-text { line-height: 1.15; }
+        .ds-admin-brand-text strong { display: block; font-weight: 600; font-size: 14px; letter-spacing: -0.015em; color: #fff; }
+        .ds-admin-brand-text span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--petrol-300); }
+
+        .ds-admin-section {
+            font-family: var(--font-mono);
+            font-size: 10px; text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,.35);
+            padding: 14px 12px 4px;
+            font-weight: 500;
+        }
+        .ds-admin-link {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; border-radius: var(--r-sm);
+            font-size: 13px; font-weight: 500;
+            color: rgba(255,255,255,.65);
+            text-decoration: none;
+            transition: all var(--t-fast);
+            margin: 1px 0;
+        }
+        .ds-admin-link i { font-size: 15px; opacity: .8; width: 18px; text-align: center; }
+        .ds-admin-link:hover { background: rgba(255,255,255,.06); color: #fff; }
+        .ds-admin-link.active {
+            background: color-mix(in srgb, var(--petrol-500) 28%, transparent);
+            color: #fff;
+        }
+        .ds-admin-link.active i { opacity: 1; color: var(--petrol-300); }
+
+        .ds-admin-footer { margin-top: auto; padding: 14px 4px 4px; border-top: 1px solid rgba(255,255,255,.07); }
+        .ds-admin-profile { display: flex; align-items: center; gap: 10px; padding: 4px 8px 12px; }
+        .ds-admin-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--petrol-500); color: #fff;
+            display: grid; place-items: center;
+            font-size: 13px; font-weight: 600;
+        }
+        .ds-admin-info { line-height: 1.25; font-size: 12px; }
+        .ds-admin-info strong { display: block; color: #fff; font-weight: 500; }
+        .ds-admin-info span { color: var(--petrol-300); font-size: 11px; }
+
+        .ds-admin-logout {
+            width: 100%; justify-content: center;
+            background: rgba(239,68,68,.08);
+            color: rgba(255,255,255,.7);
+            border: 1px solid rgba(239,68,68,.18);
+            font-size: 13px; padding: 8px 12px;
+            border-radius: var(--r-sm); cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all var(--t-fast);
+        }
+        .ds-admin-logout:hover { background: rgba(239,68,68,.18); color: #fca5a5; border-color: rgba(239,68,68,.35); }
+
+        .ds-admin-main { display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+        .ds-admin-topbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--rule);
+            padding: 14px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 50;
+        }
+        .ds-admin-topbar-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+        .ds-admin-topbar h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 2px; color: var(--ink); }
+        .ds-admin-topbar p { margin: 0; font-size: 12px; color: var(--ink-3); }
+        .ds-admin-topbar-actions { display: flex; gap: 8px; }
+        .ds-admin-topbar-toggle {
+            display: none; background: transparent;
+            border: 1px solid var(--rule);
+            padding: 6px 9px; border-radius: var(--r-sm);
+            cursor: pointer; color: var(--ink-2);
         }
 
-        /* ══════════════════════════════════════════════════════════════════
-           CARDS & COMPONENTS
-           ══════════════════════════════════════════════════════════════════ */
-        .admin-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
-            border: none;
-        }
+        .ds-admin-content { padding: 24px 32px; flex: 1; animation: dsFadeIn .22s ease; }
+        @@keyframes dsFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-        .admin-card .card-header {
-            background: transparent;
-            border-bottom: 1px solid #f1f5f9;
-            padding: 1.25rem 1.5rem;
-            font-weight: 600;
-            color: var(--admin-dark);
-        }
+        canvas { max-height: 300px !important; }
+        .chart-container { position: relative; height: 280px; }
 
-        .admin-card .card-body {
-            padding: 1.5rem;
-        }
-
-        /* Stat Cards */
         .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: var(--surface);
+            border-radius: var(--r-md);
+            padding: 20px;
+            border: 1px solid var(--rule);
+            box-shadow: var(--shadow-1);
+            transition: box-shadow var(--t-fast);
         }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-        }
-
+        .stat-card:hover { box-shadow: var(--shadow-2); }
         .stat-card .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            width: 44px; height: 44px;
+            border-radius: var(--r-sm);
+            display: grid; place-items: center;
+            font-size: 18px; margin-bottom: 14px;
         }
+        .stat-card .stat-icon.primary { background: var(--petrol-50); color: var(--petrol-500); }
+        .stat-card .stat-icon.success { background: var(--ok-soft); color: var(--ok); }
+        .stat-card .stat-icon.warning { background: var(--warn-soft); color: var(--warn); }
+        .stat-card .stat-icon.danger { background: var(--danger-soft); color: var(--danger); }
+        .stat-card .stat-value { font-size: 26px; font-weight: 600; color: var(--ink); line-height: 1; margin-bottom: 4px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+        .stat-card .stat-label { font-size: 12px; color: var(--ink-3); }
+        .stat-card .stat-change { font-size: 12px; margin-top: 8px; font-weight: 500; }
+        .stat-card .stat-change.positive { color: var(--ok); }
+        .stat-card .stat-change.negative { color: var(--danger); }
 
-        .stat-card .stat-icon.primary {
-            background: rgba(124, 58, 237, 0.1);
-            color: var(--admin-primary);
+        .admin-card {
+            background: var(--surface);
+            border-radius: var(--r-md);
+            box-shadow: var(--shadow-1);
+            border: 1px solid var(--rule);
+            margin-bottom: 24px;
         }
+        .admin-card .card-header { background: transparent; padding: 14px 20px; border-bottom: 1px solid var(--rule); font-weight: 600; }
+        .admin-card .card-body { padding: 20px; }
 
-        .stat-card .stat-icon.success {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-        }
+        .admin-table { width: 100%; font-size: 13px; }
+        .admin-table th { background: var(--bg-subtle); color: var(--ink-3); padding: 11px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; border-bottom: 1px solid var(--rule); }
+        .admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+        .admin-table tbody tr:hover { background: var(--bg-subtle); }
 
-        .stat-card .stat-icon.warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning-color);
-        }
-
-        .stat-card .stat-icon.danger {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
-        }
-
-        .stat-card .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--admin-dark);
-            line-height: 1;
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-card .stat-label {
-            font-size: 0.875rem;
-            color: #64748b;
-        }
-
-        .stat-card .stat-change {
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-        }
-
-        .stat-card .stat-change.positive {
-            color: var(--success-color);
-        }
-
-        .stat-card .stat-change.negative {
-            color: var(--danger-color);
-        }
-
-        /* Tables */
-        .admin-table {
-            width: 100%;
-        }
-
-        .admin-table th {
-            background: #f8fafc;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            padding: 1rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .admin-table td {
-            padding: 1rem;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .admin-table tbody tr:hover {
-            background: #faf5ff;
-        }
-
-        /* Status Badges */
         .status-badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            padding: 3px 10px; border-radius: var(--r-pill);
+            font-size: 11px; font-weight: 500; letter-spacing: 0;
         }
+        .status-badge.active { background: var(--ok-soft); color: var(--ok); }
+        .status-badge.trialing { background: var(--info-soft); color: var(--info); }
+        .status-badge.past-due { background: var(--warn-soft); color: var(--warn); }
+        .status-badge.canceled { background: var(--danger-soft); color: var(--danger); }
+        .status-badge.inactive { background: var(--bg-subtle); color: var(--ink-3); }
 
-        .status-badge.active {
-            background: rgba(16, 185, 129, 0.1);
-            color: #059669;
-        }
+        .ds-admin-overlay { display: none; position: fixed; inset: 0; background: rgba(11,18,32,.45); z-index: 90; }
+        .ds-admin-overlay.show { display: block; }
 
-        .status-badge.trialing {
-            background: rgba(6, 182, 212, 0.1);
-            color: #0891b2;
-        }
-
-        .status-badge.past-due {
-            background: rgba(245, 158, 11, 0.1);
-            color: #d97706;
-        }
-
-        .status-badge.canceled {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-        }
-
-        .status-badge.inactive {
-            background: rgba(100, 116, 139, 0.1);
-            color: #475569;
-        }
-
-        /* ══════════════════════════════════════════════════════════════════
-           RESPONSIVE
-           ══════════════════════════════════════════════════════════════════ */
         @@media (max-width: 992px) {
-            .admin-sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
+            .ds-admin-shell { grid-template-columns: 1fr; }
+            .ds-admin-sidebar {
+                position: fixed; inset: 0 auto 0 0; width: 244px; z-index: 100;
+                transform: translateX(-100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
             }
-
-            .admin-sidebar.show {
-                transform: translateX(0);
-            }
-
-            .admin-main {
-                margin-left: 0;
-            }
-
-            .sidebar-toggle {
-                display: block !important;
-            }
-        }
-
-        .sidebar-toggle {
-            display: none;
-            background: var(--admin-primary);
-            color: white;
-            border: none;
-            padding: 0.5rem 0.75rem;
-            border-radius: 8px;
-        }
-
-        /* Overlay for mobile */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-
-        .sidebar-overlay.show {
-            display: block;
+            .ds-admin-sidebar.show { transform: translateX(0); }
+            .ds-admin-topbar-toggle { display: inline-flex; align-items: center; }
+            .ds-admin-content { padding: 16px; }
+            .ds-admin-topbar { padding: 14px 16px; }
         }
     </style>
 </head>
 <body>
-    @if (admin != null)
-    {
-        <!-- Sidebar Overlay (Mobile) -->
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-        <!-- Sidebar -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-header">
-                <a href="/admin/dashboard" class="sidebar-brand">
-                    <div class="sidebar-brand-icon">
-                        <i class="bi bi-shield-lock-fill"></i>
-                    </div>
-                    <div class="sidebar-brand-text">
-                        <h5>OrcPharm</h5>
-                        <span>Admin Panel</span>
-                    </div>
-                </a>
-            </div>
-
-            <nav class="sidebar-nav">
-                <!-- Principal -->
-                <div class="nav-section">
-                    <div class="nav-section-title">Principal</div>
-                    <a href="/admin/dashboard" class="admin-nav-link @(currentPath.Contains("/admin/dashboard") ? "active" : "")">
-                        <i class="bi bi-grid-1x2-fill"></i>
-                        Dashboard
-                    </a>
+@if (admin != null)
+{
+    <div class="ds-admin-overlay" id="adminOverlay" onclick="toggleAdminSidebar()"></div>
+    <div class="ds-admin-shell">
+        <aside class="ds-admin-sidebar" id="adminSidebar">
+            <a href="/admin/dashboard" class="ds-admin-brand">
+                <div class="ds-admin-brand-glyph">o</div>
+                <div class="ds-admin-brand-text">
+                    <strong>orcpharm</strong>
+                    <span>Admin Panel</span>
                 </div>
+            </a>
 
-                <!-- Gestão -->
-                <div class="nav-section">
-                    <div class="nav-section-title">Gestão</div>
-                    <a href="/admin/establishments" class="admin-nav-link @(currentPath.Contains("/admin/establishments") ? "active" : "")">
-                        <i class="bi bi-building"></i>
-                        Estabelecimentos
-                    </a>
-                    <a href="/admin/subscriptions" class="admin-nav-link @(currentPath.Contains("/admin/subscriptions") ? "active" : "")">
-                        <i class="bi bi-credit-card-2-front"></i>
-                        Assinaturas
-                    </a>
-                    <a href="/admin/plans" class="admin-nav-link @(currentPath.Contains("/admin/plans") ? "active" : "")">
-                        <i class="bi bi-collection"></i>
-                        Planos
-                    </a>
-                </div>
+            <div class="ds-admin-section">Principal</div>
+            <a href="/admin/dashboard" class="ds-admin-link @(currentPath.Contains("/admin/dashboard") ? "active" : "")">
+                <i class="bi bi-grid-1x2-fill"></i>Dashboard
+            </a>
 
-                <!-- Financeiro -->
-                <div class="nav-section">
-                    <div class="nav-section-title">Financeiro</div>
-                    <a href="/admin/invoices" class="admin-nav-link @(currentPath.Contains("/admin/invoices") ? "active" : "")">
-                        <i class="bi bi-receipt"></i>
-                        Faturas
-                    </a>
-                    <a href="/admin/reports" class="admin-nav-link @(currentPath.Contains("/admin/reports") ? "active" : "")">
-                        <i class="bi bi-graph-up-arrow"></i>
-                        Relatórios
-                    </a>
-                </div>
+            <div class="ds-admin-section">Gestão</div>
+            <a href="/admin/establishments" class="ds-admin-link @(currentPath.Contains("/admin/establishments") ? "active" : "")">
+                <i class="bi bi-building"></i>Estabelecimentos
+            </a>
+            <a href="/admin/subscriptions" class="ds-admin-link @(currentPath.Contains("/admin/subscriptions") ? "active" : "")">
+                <i class="bi bi-credit-card-2-front"></i>Assinaturas
+            </a>
+            <a href="/admin/plans" class="ds-admin-link @(currentPath.Contains("/admin/plans") ? "active" : "")">
+                <i class="bi bi-collection"></i>Planos
+            </a>
 
-                <!-- Sistema -->
-                <div class="nav-section">
-                    <div class="nav-section-title">Sistema</div>
-                    <a href="/admin/settings" class="admin-nav-link @(currentPath.Contains("/admin/settings") ? "active" : "")">
-                        <i class="bi bi-gear-fill"></i>
-                        Configurações
-                    </a>                    
-                </div>
-            </nav>
+            <div class="ds-admin-section">Financeiro</div>
+            <a href="/admin/invoices" class="ds-admin-link @(currentPath.Contains("/admin/invoices") ? "active" : "")">
+                <i class="bi bi-receipt"></i>Faturas
+            </a>
+            <a href="/admin/reports" class="ds-admin-link @(currentPath.Contains("/admin/reports") ? "active" : "")">
+                <i class="bi bi-graph-up-arrow"></i>Relatórios
+            </a>
 
-            <div class="sidebar-footer">
-                <div class="admin-profile">
-                    <div class="admin-avatar">
-                        @(admin.FullName?.Length > 0 ? admin.FullName.Substring(0, 1).ToUpper() : "A")
-                    </div>
-                    <div class="admin-info">
-                        <h6>@admin.FullName</h6>
+            <div class="ds-admin-section">Sistema</div>
+            <a href="/admin/settings" class="ds-admin-link @(currentPath.Contains("/admin/settings") ? "active" : "")">
+                <i class="bi bi-gear-fill"></i>Configurações
+            </a>
+
+            <div class="ds-admin-footer">
+                <div class="ds-admin-profile">
+                    <div class="ds-admin-avatar">@initials</div>
+                    <div class="ds-admin-info">
+                        <strong>@admin.FullName</strong>
                         <span>@admin.Role</span>
                     </div>
                 </div>
-                <button class="btn-admin-logout" onclick="logout()">
-                    <i class="bi bi-box-arrow-right me-2"></i>
-                    Sair do Sistema
+                <button class="ds-admin-logout" onclick="adminLogout()">
+                    <i class="bi bi-box-arrow-right"></i>Sair
                 </button>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="admin-main">
-            <!-- Top Bar -->
-            <div class="admin-topbar">
-                <div class="d-flex align-items-center gap-3">
-                    <button class="sidebar-toggle" onclick="toggleSidebar()">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div class="topbar-title">
-                        <h4>@ViewData["Title"]</h4>
-                        <p>@ViewData["Subtitle"]</p>
+        <main class="ds-admin-main">
+            <header class="ds-admin-topbar">
+                <div class="ds-admin-topbar-left">
+                    <button class="ds-admin-topbar-toggle" onclick="toggleAdminSidebar()"><i class="bi bi-list"></i></button>
+                    <div>
+                        <h1>@ViewData["Title"]</h1>
+                        @if (ViewData["Subtitle"] != null) { <p>@ViewData["Subtitle"]</p> }
                     </div>
                 </div>
-                <div class="topbar-actions">
-                    <button class="btn btn-light btn-topbar" onclick="location.reload()">
-                        <i class="bi bi-arrow-clockwise"></i>
-                        Atualizar
-                    </button>
-                    <a href="/" class="btn btn-outline-secondary btn-topbar" target="_blank">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                        Ver Site
-                    </a>
+                <div class="ds-admin-topbar-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="location.reload()"><i class="bi bi-arrow-clockwise me-1"></i>Atualizar</button>
+                    <a href="/" class="btn btn-secondary btn-sm" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>Ver site</a>
                 </div>
-            </div>
+            </header>
 
-            <!-- Content -->
-            <div class="admin-content">
+            <div class="ds-admin-content">
                 @RenderBody()
             </div>
         </main>
+    </div>
+}
+else
+{
+    @RenderBody()
+}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleAdminSidebar() {
+        document.getElementById('adminSidebar')?.classList.toggle('show');
+        document.getElementById('adminOverlay')?.classList.toggle('show');
     }
-    else
-    {
-        <!-- Sem Admin logado - renderiza apenas o body (login) -->
-        @RenderBody()
+    async function adminLogout() {
+        try {
+            const r = await fetch('/api/admin/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            window.location.href = '/admin/login';
+        } catch (e) { window.location.href = '/admin/login'; }
     }
+    function formatCurrency(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v); }
+    function formatDate(d) { return d ? new Date(d).toLocaleDateString('pt-BR') : '-'; }
+    function formatDateTime(d) { return d ? new Date(d).toLocaleString('pt-BR') : '-'; }
+</script>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Toggle Sidebar (Mobile)
-        function toggleSidebar() {
-            document.getElementById('adminSidebar').classList.toggle('show');
-            document.getElementById('sidebarOverlay').classList.toggle('show');
-        }
-
-        // Logout
-        async function logout() {
-            try {
-                const response = await fetch('/api/admin/auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    window.location.href = '/admin/login';
-                } else {
-                    alert('Erro ao fazer logout');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                window.location.href = '/admin/login';
-            }
-        }
-
-        // Format currency
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(value);
-        }
-
-        // Format date
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            return new Date(dateString).toLocaleDateString('pt-BR');
-        }
-
-        // Format datetime
-        function formatDateTime(dateString) {
-            if (!dateString) return '-';
-            return new Date(dateString).toLocaleString('pt-BR');
-        }
-    </script>
-    
-    @await RenderSectionAsync("Scripts", required: false)
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,4 +1,4 @@
-@using Models.Pharmacy
+﻿@using Models.Pharmacy
 
 @{
     ViewData["Title"] = "Relatório do Cupom";
@@ -214,7 +214,7 @@ if (ctx) {
             datasets: [{
                 label: 'Usos',
                 data: [@(usages.Count > 0 ? usages.Count / 4 : 0), @(usages.Count > 0 ? usages.Count / 3 : 0), @(usages.Count > 0 ? usages.Count / 2 : 0), @usages.Count],
-                borderColor: '#6366f1',
+                borderColor: 'var(--petrol-500)',
                 backgroundColor: 'rgba(99, 102, 241, 0.1)',
                 fill: true,
                 tension: 0.4

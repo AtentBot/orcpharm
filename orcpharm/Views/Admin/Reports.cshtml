@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Relatórios";
     ViewData["Subtitle"] = "Análises e métricas do sistema";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
@@ -166,7 +166,7 @@
                         datasets: [{
                             label: 'Receita',
                             data: data.map(d => d.value),
-                            borderColor: '#7c3aed',
+                            borderColor: 'var(--controlled-black)',
                             backgroundColor: 'rgba(124, 58, 237, 0.1)',
                             fill: true,
                             tension: 0.4
@@ -208,7 +208,7 @@
 
                 const labels = Object.keys(data.subscriptionsByPlan);
                 const values = Object.values(data.subscriptionsByPlan);
-                const colors = ['#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+                const colors = ['var(--controlled-black)', 'var(--ok)', 'var(--amber-500)', 'var(--danger)', 'var(--info)'];
 
                 plansChart = new Chart(ctx, {
                     type: 'doughnut',
@@ -255,7 +255,7 @@
                         datasets: [{
                             label: 'Cadastros',
                             data: Object.values(grouped),
-                            backgroundColor: '#7c3aed',
+                            backgroundColor: 'var(--controlled-black)',
                             borderRadius: 4
                         }]
                     },

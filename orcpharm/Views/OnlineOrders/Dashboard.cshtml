@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Dashboard de Pedidos";
     Layout = "_Layout";
 }
@@ -26,7 +26,7 @@
         line-height: 1;
     }
     .pedido-pronto-card {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        background: var(--ok-soft);
         border-radius: 12px;
         transition: all 0.2s;
         cursor: pointer;
@@ -37,7 +37,7 @@
     }
     .pedido-pendente-card {
         background: #fff;
-        border: 1px solid #ffc107;
+        border: 1px solid var(--amber-500);
         border-radius: 12px;
     }
     .badge-aguardando {

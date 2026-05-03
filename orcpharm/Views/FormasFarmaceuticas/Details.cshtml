@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Detalhes da Forma Farmacêutica";
     Layout = "_Layout";
     var formId = ViewData["FormId"];
@@ -6,7 +6,7 @@
 
 <style>
     .detail-header {
-        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        background: linear-gradient(135deg, var(--controlled-black) 0%, var(--danger) 100%);
         color: white;
         border-radius: 16px;
         padding: 2rem;
@@ -31,41 +31,41 @@
     .info-card {
         background: white;
         border-radius: 12px;
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--bg-subtle);
         padding: 1.5rem;
         height: 100%;
     }
 
     .info-card h6 {
-        color: #6c757d;
+        color: var(--ink-3);
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 1px solid var(--bg-subtle);
     }
 
     .info-item {
         display: flex;
         justify-content: space-between;
         padding: 0.5rem 0;
-        border-bottom: 1px solid #f8f9fa;
+        border-bottom: 1px solid var(--bg-subtle);
     }
     .info-item:last-child { border-bottom: none; }
-    .info-label { color: #6c757d; }
+    .info-label { color: var(--ink-3); }
     .info-value { font-weight: 600; }
 
     .subtype-card {
         background: white;
         border-radius: 12px;
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--bg-subtle);
         padding: 1.25rem;
         margin-bottom: 1rem;
         transition: all 0.2s;
     }
     .subtype-card:hover { 
-        border-color: #6f42c1;
+        border-color: var(--controlled-black);
         box-shadow: 0 4px 12px rgba(111, 66, 193, 0.1);
     }
     .subtype-card.inactive { opacity: 0.6; }
@@ -74,14 +74,14 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: #f8f9fa;
+        background: var(--bg-subtle);
         padding: 0.5rem 1rem;
         border-radius: 8px;
         font-weight: 600;
     }
     .capsule-size {
         font-size: 1.25rem;
-        color: #6f42c1;
+        color: var(--controlled-black);
     }
 </style>
 

@@ -1,4 +1,4 @@
-@model Models.Pharmacy.ManipulationOrder
+﻿@model Models.Pharmacy.ManipulationOrder
 @{
     ViewData["Title"] = $"Produção - {Model.OrderNumber}";
     Layout = "_Layout";
@@ -6,7 +6,7 @@
 
 <style>
     .production-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--ink);
         color: white;
         padding: 1.5rem;
         border-radius: 12px;
@@ -26,7 +26,7 @@
         left: 40px;
         right: 40px;
         height: 4px;
-        background: #e9ecef;
+        background: var(--bg-subtle);
         z-index: 0;
     }
     .step-item {
@@ -49,13 +49,13 @@
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        background: #e9ecef;
-        color: #6c757d;
+        background: var(--bg-subtle);
+        color: var(--ink-3);
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     .step-circle.completed {
-        background: #28a745;
+        background: var(--ok);
         color: white;
     }
     .step-circle.current {
@@ -64,7 +64,7 @@
         animation: pulse 2s infinite;
     }
     .step-circle.pending {
-        background: #e9ecef;
+        background: var(--bg-subtle);
         color: #adb5bd;
     }
     @@keyframes pulse {
@@ -107,7 +107,7 @@
     }
     .component-item {
         padding: 0.75rem;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--rule);
         display: flex;
         justify-content: space-between;
         align-items: center;

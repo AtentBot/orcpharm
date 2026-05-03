@@ -306,49 +306,35 @@
 
 <style>
     .step-circle {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: #e9ecef;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        color: #6c757d;
-        margin: 0 auto;
-        transition: all 0.3s ease;
+        width: 50px; height: 50px; border-radius: 50%;
+        background: var(--bg-subtle); color: var(--ink-3);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; font-weight: 600; margin: 0 auto;
+        transition: all var(--t-base);
+        font-family: var(--font-mono);
     }
-    
-    .step-circle.active {
-        background: #0d6efd;
-        color: white;
-    }
-    
-    .step-circle.completed {
-        background: #198754;
-        color: white;
-    }
-    
+    .step-circle.active { background: var(--petrol-500); color: #fff; box-shadow: 0 0 0 4px var(--petrol-50); }
+    .step-circle.completed { background: var(--ok); color: #fff; }
+
     .upload-zone {
-        border: 3px dashed #dee2e6;
-        border-radius: 12px;
-        background: #f8f9fa;
+        border: 2px dashed var(--rule);
+        border-radius: var(--r-md);
+        background: var(--bg-subtle);
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all var(--t-base);
     }
-    
     .upload-zone:hover, .upload-zone.dragover {
-        border-color: #0d6efd;
-        background: #e7f1ff;
+        border-color: var(--petrol-500); border-style: solid;
+        background: var(--petrol-50);
     }
-    
-    .confidence-high { color: #198754; }
-    .confidence-medium { color: #ffc107; }
-    .confidence-low { color: #dc3545; }
-    
-    .stock-ok { background: #d4edda; }
-    .stock-low { background: #fff3cd; }
-    .stock-empty { background: #f8d7da; }
+
+    .confidence-high { color: var(--ok); }
+    .confidence-medium { color: var(--warn); }
+    .confidence-low { color: var(--danger); }
+
+    .stock-ok { background: var(--ok-soft); }
+    .stock-low { background: var(--warn-soft); }
+    .stock-empty { background: var(--danger-soft); }
 </style>
 
 <script>
