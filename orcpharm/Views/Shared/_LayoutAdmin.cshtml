@@ -45,16 +45,15 @@
         }
         .ds-admin-brand-glyph {
             width: 36px; height: 36px;
-            border-radius: var(--r-sm);
-            background: var(--petrol-500);
-            color: #fff;
+            border-radius: 10px;
+            background: rgba(255,255,255,.08);
             display: grid; place-items: center;
-            font-weight: 600; font-size: 18px; letter-spacing: -0.04em;
-            position: relative;
+            flex-shrink: 0;
         }
-        .ds-admin-brand-glyph::after { content: "."; position: absolute; right: 5px; bottom: -2px; color: var(--amber-500); font-weight: 700; }
+        .ds-admin-brand-glyph svg { width: 24px; height: 24px; }
         .ds-admin-brand-text { line-height: 1.15; }
-        .ds-admin-brand-text strong { display: block; font-weight: 600; font-size: 14px; letter-spacing: -0.015em; color: #fff; }
+        .ds-admin-brand-text strong { display: block; font-family: var(--font-display); font-weight: 800; font-size: 16px; letter-spacing: -0.025em; color: #fff; }
+        .ds-admin-brand-text strong .accent { color: var(--amber-300); }
         .ds-admin-brand-text span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--petrol-300); }
 
         .ds-admin-section {
@@ -204,9 +203,15 @@
     <div class="ds-admin-shell">
         <aside class="ds-admin-sidebar" id="adminSidebar">
             <a href="/admin/dashboard" class="ds-admin-brand">
-                <div class="ds-admin-brand-glyph">o</div>
+                <div class="ds-admin-brand-glyph">
+                    <svg viewBox="0 0 88 88" fill="none" aria-hidden="true">
+                        <path d="M18 18 H36 a16 16 0 0 1 16 16 V52 H36 a16 16 0 0 1 -16 -16 V18 Z" fill="#fff"/>
+                        <rect x="52" y="18" width="22" height="11" rx="5.5" fill="#fff"/>
+                        <rect x="52" y="35" width="16" height="10" rx="5" fill="#fff"/>
+                    </svg>
+                </div>
                 <div class="ds-admin-brand-text">
-                    <strong>orcpharm</strong>
+                    <strong>farmify<span class="accent">.</span></strong>
                     <span>Admin Panel</span>
                 </div>
             </a>

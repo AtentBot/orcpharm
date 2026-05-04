@@ -28,11 +28,11 @@
   --fc-shadow-lg: var(--shadow-3);
   --fc-transition: var(--t-fast);
 
-  /* Bootstrap 5 custom properties */
-  --bs-primary: #14706B;
-  --bs-primary-rgb: 20, 112, 107;
-  --bs-secondary: #5C6878;
-  --bs-secondary-rgb: 92, 104, 120;
+  /* Bootstrap 5 custom properties — paleta Farmify (bone + petrol + âmbar) */
+  --bs-primary: #0F6E78;
+  --bs-primary-rgb: 15, 110, 120;
+  --bs-secondary: #6B7B78;
+  --bs-secondary-rgb: 107, 123, 120;
   --bs-success: #15803D;
   --bs-success-rgb: 21, 128, 61;
   --bs-danger: #B91C1C;
@@ -41,16 +41,16 @@
   --bs-warning-rgb: 180, 83, 9;
   --bs-info: #1D4ED8;
   --bs-info-rgb: 29, 78, 216;
-  --bs-light: #F0F3F7;
-  --bs-light-rgb: 240, 243, 247;
-  --bs-dark: #0B1220;
-  --bs-dark-rgb: 11, 18, 32;
-  --bs-body-color: #2C3645;
-  --bs-body-bg: #F6F7F9;
-  --bs-border-color: #E5E9EF;
-  --bs-link-color: #14706B;
-  --bs-link-hover-color: #0F5C58;
-  --bs-link-color-rgb: 20, 112, 107;
+  --bs-light: #F2F1EC;
+  --bs-light-rgb: 242, 241, 236;
+  --bs-dark: #0A1814;
+  --bs-dark-rgb: 10, 24, 20;
+  --bs-body-color: #364946;
+  --bs-body-bg: #FAF9F5;
+  --bs-border-color: #E5E8E5;
+  --bs-link-color: #0F6E78;
+  --bs-link-hover-color: #0A5C66;
+  --bs-link-color-rgb: 15, 110, 120;
   --bs-font-sans-serif: "General Sans", "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --bs-font-monospace: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
