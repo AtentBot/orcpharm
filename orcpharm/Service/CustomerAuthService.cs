@@ -107,7 +107,7 @@ public class CustomerAuthService
                 }
                 await _context.SaveChangesAsync();
 
-                _logger.LogWarning("Tentativa de login com senha inválida para telefone {Phone}", phone);
+                _logger.LogWarning("Tentativa de login com senha inválida para telefone {Phone}", phone?.Length > 6 ? phone[..4] + "****" + phone[^2..] : "***");
                 return new CustomerLoginResponseDto
                 {
                     Success = false,
@@ -269,7 +269,7 @@ public class CustomerAuthService
                     }
 
                     _logger.LogWarning("Conflito de código na tentativa {Attempt}, tentando novamente...", attempt);
-                    await Task.Delay(100 * attempt);
+                    await Task.Delay(100 * attempt + Random.Shared.Next(0, 50));
                 }
             }
 
@@ -569,10 +569,10 @@ public class CustomerAuthService
         auth.LastVerificationSentAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        var message = $"🔐 *OrcPharm*\n\nSeu código de verificação é: *{code}*\n\nVálido por {VERIFICATION_CODE_EXPIRY_MINUTES} minutos.";
+        var message = $"🔐 *Formula Clear*\n\nSeu código de verificação é: *{code}*\n\nVálido por {VERIFICATION_CODE_EXPIRY_MINUTES} minutos.";
         await _whatsAppService.SendMessageAsync(auth.Phone, message);
 
-        _logger.LogInformation("Código de verificação enviado para {Phone}", auth.Phone);
+        _logger.LogInformation("Código de verificação enviado para {Phone}", auth.Phone?.Length > 6 ? auth.Phone[..4] + "****" + auth.Phone[^2..] : "***");
     }
 
     private async Task<CustomerSession> CreateSessionAsync(CustomerAuth auth, string ipAddress, string userAgent)

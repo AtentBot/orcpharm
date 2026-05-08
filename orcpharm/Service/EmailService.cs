@@ -66,24 +66,24 @@ public class EmailService : IEmailService
 
             await client.SendMailAsync(message);
 
-            _logger.LogInformation("Email enviado com sucesso para {ToEmail}: {Subject}", toEmail, subject);
+            _logger.LogInformation("Email enviado com sucesso para {ToEmail}: {Subject}", toEmail?.Length > 5 ? toEmail[..2] + "***" + toEmail[toEmail.IndexOf('@')..] : "***", subject);
             return true;
         }
         catch (SmtpException ex)
         {
-            _logger.LogError(ex, "Erro SMTP ao enviar email para {ToEmail}: {Message}", toEmail, ex.Message);
+            _logger.LogError(ex, "Erro SMTP ao enviar email para {ToEmail}: {Message}", toEmail?.Length > 5 ? toEmail[..2] + "***" + toEmail[toEmail.IndexOf('@')..] : "***", ex.Message);
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao enviar email para {ToEmail}", toEmail);
+            _logger.LogError(ex, "Erro ao enviar email para {ToEmail}", toEmail?.Length > 5 ? toEmail[..2] + "***" + toEmail[toEmail.IndexOf('@')..] : "***");
             return false;
         }
     }
 
     public async Task<bool> SendPasswordResetEmailAsync(string toEmail, string toName, string resetUrl)
     {
-        var subject = "OrcPharm - Recuperação de Senha";
+        var subject = "Formula Clear - Recuperação de Senha";
 
         var htmlBody = $@"<!DOCTYPE html>
 <html lang=""pt-BR"">
@@ -98,7 +98,7 @@ public class EmailService : IEmailService
                 <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" width=""600"" style=""margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"">
                     <tr>
                         <td style=""background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 30px 40px; border-radius: 8px 8px 0 0; text-align: center;"">
-                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;"">OrcPharm</h1>
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;"">Formula Clear</h1>
                             <p style=""color: #a0a0a0; margin: 10px 0 0 0; font-size: 14px;"">Painel Administrativo</p>
                         </td>
                     </tr>
@@ -106,7 +106,7 @@ public class EmailService : IEmailService
                         <td style=""padding: 40px;"">
                             <h2 style=""color: #1a1a2e; margin: 0 0 20px 0; font-size: 22px;"">Recuperação de Senha</h2>
                             <p style=""color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;"">Olá <strong>{toName}</strong>,</p>
-                            <p style=""color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;"">Recebemos uma solicitação para redefinir a senha da sua conta de administrador no OrcPharm.</p>
+                            <p style=""color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;"">Recebemos uma solicitação para redefinir a senha da sua conta de administrador no Formula Clear.</p>
                             <p style=""color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;"">Clique no botão abaixo para criar uma nova senha:</p>
                             <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" style=""margin: 0 auto 30px auto;"">
                                 <tr>
@@ -124,8 +124,8 @@ public class EmailService : IEmailService
                     </tr>
                     <tr>
                         <td style=""background-color: #f8f9fa; padding: 25px 40px; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;"">
-                            <p style=""color: #888888; font-size: 12px; margin: 0 0 10px 0; text-align: center;"">Este email foi enviado automaticamente pelo sistema OrcPharm.</p>
-                            <p style=""color: #888888; font-size: 12px; margin: 0; text-align: center;"">© {DateTime.Now.Year} OrcPharm - Sistema de Gestão para Farmácias de Manipulação</p>
+                            <p style=""color: #888888; font-size: 12px; margin: 0 0 10px 0; text-align: center;"">Este email foi enviado automaticamente pelo sistema Formula Clear.</p>
+                            <p style=""color: #888888; font-size: 12px; margin: 0; text-align: center;"">© {DateTime.Now.Year} Formula Clear - D&W Consultoria em Ltda</p>
                         </td>
                     </tr>
                 </table>
@@ -135,11 +135,11 @@ public class EmailService : IEmailService
 </body>
 </html>";
 
-        var textBody = $@"OrcPharm - Recuperação de Senha
+        var textBody = $@"Formula Clear - Recuperação de Senha
 
 Olá {toName},
 
-Recebemos uma solicitação para redefinir a senha da sua conta de administrador no OrcPharm.
+Recebemos uma solicitação para redefinir a senha da sua conta de administrador no Formula Clear.
 
 Para criar uma nova senha, acesse o link abaixo:
 {resetUrl}
@@ -147,15 +147,15 @@ Para criar uma nova senha, acesse o link abaixo:
 ATENÇÃO: Este link expira em 1 hora. Se você não solicitou esta redefinição, ignore este email.
 
 ---
-Este email foi enviado automaticamente pelo sistema OrcPharm.
-© {DateTime.Now.Year} OrcPharm - Sistema de Gestão para Farmácias de Manipulação";
+Este email foi enviado automaticamente pelo sistema Formula Clear.
+© {DateTime.Now.Year} Formula Clear - D&W Consultoria em Ltda";
 
         return await SendEmailAsync(toEmail, toName, subject, htmlBody, textBody);
     }
 
     public async Task<bool> SendWelcomeEmailAsync(string toEmail, string toName, string loginUrl)
     {
-        var subject = "Bem-vindo ao OrcPharm!";
+        var subject = "Bem-vindo ao Formula Clear!";
 
         var htmlBody = $@"<!DOCTYPE html>
 <html lang=""pt-BR"">
@@ -169,13 +169,13 @@ Este email foi enviado automaticamente pelo sistema OrcPharm.
                 <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" width=""600"" style=""margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"">
                     <tr>
                         <td style=""background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 30px 40px; border-radius: 8px 8px 0 0; text-align: center;"">
-                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px;"">Bem-vindo ao OrcPharm!</h1>
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px;"">Bem-vindo ao Formula Clear!</h1>
                         </td>
                     </tr>
                     <tr>
                         <td style=""padding: 40px;"">
                             <p style=""color: #555555; font-size: 16px; line-height: 1.6;"">Olá <strong>{toName}</strong>,</p>
-                            <p style=""color: #555555; font-size: 16px; line-height: 1.6;"">Sua conta de administrador foi criada com sucesso no OrcPharm.</p>
+                            <p style=""color: #555555; font-size: 16px; line-height: 1.6;"">Sua conta de administrador foi criada com sucesso no Formula Clear.</p>
                             <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" style=""margin: 30px auto;"">
                                 <tr>
                                     <td style=""border-radius: 8px; background-color: #198754;"">
@@ -187,7 +187,7 @@ Este email foi enviado automaticamente pelo sistema OrcPharm.
                     </tr>
                     <tr>
                         <td style=""background-color: #f8f9fa; padding: 25px 40px; border-radius: 0 0 8px 8px; text-align: center;"">
-                            <p style=""color: #888888; font-size: 12px; margin: 0;"">© {DateTime.Now.Year} OrcPharm</p>
+                            <p style=""color: #888888; font-size: 12px; margin: 0;"">© {DateTime.Now.Year} Formula Clear</p>
                         </td>
                     </tr>
                 </table>
@@ -197,22 +197,22 @@ Este email foi enviado automaticamente pelo sistema OrcPharm.
 </body>
 </html>";
 
-        var textBody = $@"Bem-vindo ao OrcPharm!
+        var textBody = $@"Bem-vindo ao Formula Clear!
 
 Olá {toName},
 
-Sua conta de administrador foi criada com sucesso no OrcPharm.
+Sua conta de administrador foi criada com sucesso no Formula Clear.
 
 Acesse o painel em: {loginUrl}
 
-© {DateTime.Now.Year} OrcPharm";
+© {DateTime.Now.Year} Formula Clear";
 
         return await SendEmailAsync(toEmail, toName, subject, htmlBody, textBody);
     }
 
     public async Task<bool> SendPasswordChangedNotificationAsync(string toEmail, string toName)
     {
-        var subject = "OrcPharm - Sua senha foi alterada";
+        var subject = "Formula Clear - Sua senha foi alterada";
 
         var htmlBody = $@"<!DOCTYPE html>
 <html lang=""pt-BR"">
@@ -226,14 +226,14 @@ Acesse o painel em: {loginUrl}
                 <table role=""presentation"" cellspacing=""0"" cellpadding=""0"" border=""0"" width=""600"" style=""margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"">
                     <tr>
                         <td style=""background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 30px 40px; border-radius: 8px 8px 0 0; text-align: center;"">
-                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px;"">OrcPharm</h1>
+                            <h1 style=""color: #ffffff; margin: 0; font-size: 28px;"">Formula Clear</h1>
                         </td>
                     </tr>
                     <tr>
                         <td style=""padding: 40px;"">
                             <h2 style=""color: #1a1a2e; margin: 0 0 20px 0;"">Senha Alterada com Sucesso</h2>
                             <p style=""color: #555555; font-size: 16px; line-height: 1.6;"">Olá <strong>{toName}</strong>,</p>
-                            <p style=""color: #555555; font-size: 16px; line-height: 1.6;"">A senha da sua conta de administrador no OrcPharm foi alterada em <strong>{DateTime.Now:dd/MM/yyyy HH:mm}</strong>.</p>
+                            <p style=""color: #555555; font-size: 16px; line-height: 1.6;"">A senha da sua conta de administrador no Formula Clear foi alterada em <strong>{DateTime.Now:dd/MM/yyyy HH:mm}</strong>.</p>
                             <div style=""background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 15px; margin: 20px 0;"">
                                 <p style=""color: #721c24; font-size: 14px; margin: 0;""><strong>Atenção:</strong> Se você não realizou esta alteração, entre em contato imediatamente com o suporte.</p>
                             </div>
@@ -241,7 +241,7 @@ Acesse o painel em: {loginUrl}
                     </tr>
                     <tr>
                         <td style=""background-color: #f8f9fa; padding: 25px 40px; border-radius: 0 0 8px 8px; text-align: center;"">
-                            <p style=""color: #888888; font-size: 12px; margin: 0;"">© {DateTime.Now.Year} OrcPharm</p>
+                            <p style=""color: #888888; font-size: 12px; margin: 0;"">© {DateTime.Now.Year} Formula Clear</p>
                         </td>
                     </tr>
                 </table>
@@ -251,15 +251,15 @@ Acesse o painel em: {loginUrl}
 </body>
 </html>";
 
-        var textBody = $@"OrcPharm - Sua senha foi alterada
+        var textBody = $@"Formula Clear - Sua senha foi alterada
 
 Olá {toName},
 
-A senha da sua conta de administrador no OrcPharm foi alterada em {DateTime.Now:dd/MM/yyyy HH:mm}.
+A senha da sua conta de administrador no Formula Clear foi alterada em {DateTime.Now:dd/MM/yyyy HH:mm}.
 
 ATENÇÃO: Se você não realizou esta alteração, entre em contato imediatamente com o suporte.
 
-© {DateTime.Now.Year} OrcPharm";
+© {DateTime.Now.Year} Formula Clear";
 
         return await SendEmailAsync(toEmail, toName, subject, htmlBody, textBody);
     }

@@ -68,7 +68,7 @@ public class QuoteEmailService
             quote.EmailSentTo = toEmail;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("E-mail do orçamento {QuoteCode} enviado para {Email}", quote.Code, toEmail);
+            _logger.LogInformation("E-mail do orçamento {QuoteCode} enviado para {Email}", quote.Code, toEmail?.Length > 5 ? toEmail[..2] + "***" + toEmail[toEmail.IndexOf('@')..] : "***");
 
             return (true, "E-mail enviado com sucesso");
         }
@@ -158,8 +158,8 @@ public class QuoteEmailService
                     <!-- Footer -->
                     <tr>
                         <td style=""background-color: #f8f9fa; padding: 25px 40px; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;"">
-                            <p style=""color: #888888; font-size: 12px; margin: 0; text-align: center;"">Este e-mail foi enviado automaticamente pelo sistema OrcPharm.</p>
-                            <p style=""color: #888888; font-size: 12px; margin: 10px 0 0 0; text-align: center;"">© {DateTime.Now.Year} OrcPharm - Sistema de Gestão para Farmácias de Manipulação</p>
+                            <p style=""color: #888888; font-size: 12px; margin: 0; text-align: center;"">Este e-mail foi enviado automaticamente pelo sistema Formula Clear.</p>
+                            <p style=""color: #888888; font-size: 12px; margin: 10px 0 0 0; text-align: center;"">© {DateTime.Now.Year} Formula Clear - Sistema de Gestão para Farmácias de Manipulação</p>
                         </td>
                     </tr>
                 </table>
@@ -190,7 +190,7 @@ Acesse o link abaixo para ver o orçamento completo e aprovar ou recusar:
 {quoteLink}
 
 ---
-Este e-mail foi enviado automaticamente pelo sistema OrcPharm.
-© {DateTime.Now.Year} OrcPharm - Sistema de Gestão para Farmácias de Manipulação";
+Este e-mail foi enviado automaticamente pelo sistema Formula Clear.
+© {DateTime.Now.Year} Formula Clear - Sistema de Gestão para Farmácias de Manipulação";
     }
 }

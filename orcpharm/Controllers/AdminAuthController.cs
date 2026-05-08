@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
@@ -17,19 +18,23 @@ public class AdminAuthController : ControllerBase
     private readonly ILogger<AdminAuthController> _logger;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly AuditService _audit;
 
     public AdminAuthController(
-        AppDbContext context, 
+        AppDbContext context,
         ILogger<AdminAuthController> logger,
         IConfiguration configuration,
-        IEmailService emailService)
+        IEmailService emailService,
+        AuditService audit)
     {
         _context = context;
         _logger = logger;
         _configuration = configuration;
         _emailService = emailService;
+        _audit = audit;
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] AdminLoginDto dto)
     {
@@ -70,6 +75,8 @@ public class AdminAuthController : ControllerBase
 
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(HttpContext, "ADMIN_LOGIN", "Admin", admin.Id.ToString());
+
             // Definir cookie
             Response.Cookies.Append("AdminSessionId", token, new CookieOptions
             {
@@ -97,13 +104,6 @@ public class AdminAuthController : ControllerBase
             _logger.LogError(ex, "Erro ao fazer login de admin");
             return StatusCode(500, new { message = "Erro ao processar login" });
         }
-    }
-
-    [HttpGet("generate-hash")]
-    public IActionResult GenerateHash([FromQuery] string password = "OrcPharm@2024")
-    {
-        var hash = Argon2.Hash(password);
-        return Ok(new { password, hash });
     }
 
     [HttpPost("logout")]
@@ -194,7 +194,7 @@ public class AdminAuthController : ControllerBase
 
             if (admin == null)
             {
-                _logger.LogWarning("Tentativa de recuperação de senha para email não encontrado: {Email}", dto.Email);
+                _logger.LogWarning("Tentativa de recuperação de senha para email não encontrado: {Email}", dto.Email?.Length > 5 ? dto.Email[..2] + "***" + dto.Email[dto.Email.IndexOf('@')..] : "***");
                 // Delay para evitar timing attack
                 await Task.Delay(Random.Shared.Next(500, 1500));
                 return Ok(new { message = successMessage });

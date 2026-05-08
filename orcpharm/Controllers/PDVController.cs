@@ -1052,7 +1052,7 @@ public class PDVController : ControllerBase
             PaymentMethod = sale.PaymentMethod,
             PaidAmount = sale.PaidAmount ?? 0,
             ChangeAmount = sale.ChangeAmount ?? 0,
-            EstablishmentName = establishment?.NomeFantasia ?? "OrcPharm",
+            EstablishmentName = establishment?.NomeFantasia ?? "Formula Clear",
             EstablishmentAddress = establishment != null ?
                 $"{establishment.Street}, {establishment.Number} - {establishment.Neighborhood}, {establishment.City}/{establishment.State}" : "",
             EstablishmentCnpj = establishment?.Cnpj ?? ""

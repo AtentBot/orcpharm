@@ -36,9 +36,10 @@ public class AesEncryptionService : IEncryptionService
         }
         else
         {
-            // Deriva uma chave de 256 bits usando SHA-256
+            // Deriva uma chave de 256 bits usando SHA-256 (compativel com dados existentes)
+            // RECOMENDADO: Gerar chave Base64 de 32 bytes e configurar diretamente para evitar derivacao
             _key = SHA256.HashData(Encoding.UTF8.GetBytes(keyString));
-            _logger.LogWarning("Usando derivação de chave via SHA-256. Para maior segurança, forneça uma chave Base64 de 32 bytes.");
+            _logger.LogWarning("Usando derivacao de chave via SHA-256. Gere uma chave Base64 de 32 bytes para maior seguranca: openssl rand -base64 32");
         }
     }
 
@@ -82,8 +83,8 @@ public class AesEncryptionService : IEncryptionService
         // Verifica se está criptografado
         if (!cipherText.StartsWith(EncryptedPrefix))
         {
-            _logger.LogWarning("Tentativa de descriptografar dados não criptografados");
-            return cipherText; // Retorna como está se não estiver criptografado
+            _logger.LogError("Tentativa de descriptografar dados sem prefixo ENC: - dados podem nao estar criptografados");
+            throw new CryptographicException("Dados nao estao no formato criptografado esperado (prefixo ENC: ausente).");
         }
 
         try

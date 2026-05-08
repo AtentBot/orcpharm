@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Admin Establishments Management JavaScript
+ * Formula Clear - Admin Establishments Management JavaScript
  * Handles establishment listing, filtering, blocking, and details
  */
 

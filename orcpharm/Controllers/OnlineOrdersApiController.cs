@@ -274,7 +274,7 @@ public class OnlineOrdersApiController : ControllerBase
             {
                 await _whatsAppService.SendMessageAsync(order.Customer.Phone, message);
                 _logger.LogInformation("Notificação enviada para {Phone} - Pedido {OrderNumber}",
-                    order.Customer.Phone, order.OrderNumber);
+                    order.Customer.Phone?.Length > 6 ? order.Customer.Phone[..4] + "****" + order.Customer.Phone[^2..] : "***", order.OrderNumber);
             }
             catch (Exception ex)
             {

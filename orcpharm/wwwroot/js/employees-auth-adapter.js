@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Employees Auth Adapter
+ * Formula Clear - Employees Auth Adapter
  * Adapta as views de Employees para trabalhar com o sistema de autenticação existente
  * que usa cookies em vez de localStorage
  */
@@ -34,16 +34,14 @@
     // Override Auth Module
     // ============================================
     
-    if (window.OrcPharm && window.OrcPharm.Auth) {
-        console.log('🔄 Adaptando OrcPharm.Auth para usar cookies...');
-
+    if (window.FormulaClear && window.FormulaClear.Auth) {
         // Sobrescrever getToken para usar cookie SessionId
-        window.OrcPharm.Auth.getToken = function() {
+        window.FormulaClear.Auth.getToken = function() {
             return getCookie('SessionId');
         };
 
         // Sobrescrever saveAuth para usar cookies
-        window.OrcPharm.Auth.saveAuth = function(token, expiry, employeeData) {
+        window.FormulaClear.Auth.saveAuth = function(token, expiry, employeeData) {
             // O cookie SessionId é gerenciado pelo servidor
             // Apenas salvar dados do employee no sessionStorage para uso local
             if (employeeData) {
@@ -52,7 +50,7 @@
         };
 
         // Sobrescrever clearAuth para fazer logout via servidor
-        window.OrcPharm.Auth.clearAuth = function() {
+        window.FormulaClear.Auth.clearAuth = function() {
             return fetch('/Account/Logout', {
                 method: 'POST',
                 headers: {
@@ -70,44 +68,41 @@
         };
 
         // Sobrescrever isAuthenticated para verificar cookie
-        window.OrcPharm.Auth.isAuthenticated = function() {
+        window.FormulaClear.Auth.isAuthenticated = function() {
             const sessionId = getCookie('SessionId');
             return sessionId !== null && sessionId !== '';
         };
 
         // Sobrescrever getEmployee para usar sessionStorage em vez de localStorage
-        window.OrcPharm.Auth.getEmployee = function() {
+        window.FormulaClear.Auth.getEmployee = function() {
             const data = sessionStorage.getItem('currentEmployee');
             return data ? JSON.parse(data) : null;
         };
 
         // Sobrescrever getEstablishmentId
-        window.OrcPharm.Auth.getEstablishmentId = function() {
+        window.FormulaClear.Auth.getEstablishmentId = function() {
             const employee = this.getEmployee();
             return employee?.establishment?.id || null;
         };
 
-        console.log('✅ OrcPharm.Auth adaptado com sucesso');
     }
 
     // ============================================
     // Override API Module
     // ============================================
     
-    if (window.OrcPharm && window.OrcPharm.API) {
-        console.log('🔄 Adaptando OrcPharm.API para usar cookies...');
-
+    if (window.FormulaClear && window.FormulaClear.API) {
         // Sobrescrever getHeaders para não incluir Authorization
         // O cookie é enviado automaticamente pelo browser
-        window.OrcPharm.API.getHeaders = function() {
+        window.FormulaClear.API.getHeaders = function() {
             return {
                 'Content-Type': 'application/json'
             };
         };
 
         // Sobrescrever métodos HTTP para incluir credentials
-        const originalGet = window.OrcPharm.API.get;
-        window.OrcPharm.API.get = async function(endpoint) {
+        const originalGet = window.FormulaClear.API.get;
+        window.FormulaClear.API.get = async function(endpoint) {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
                 method: 'GET',
                 headers: this.getHeaders(),
@@ -125,8 +120,8 @@
             return await response.json();
         };
 
-        const originalPost = window.OrcPharm.API.post;
-        window.OrcPharm.API.post = async function(endpoint, data) {
+        const originalPost = window.FormulaClear.API.post;
+        window.FormulaClear.API.post = async function(endpoint, data) {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
                 method: 'POST',
                 headers: this.getHeaders(),
@@ -146,8 +141,8 @@
             return await response.json();
         };
 
-        const originalPut = window.OrcPharm.API.put;
-        window.OrcPharm.API.put = async function(endpoint, data) {
+        const originalPut = window.FormulaClear.API.put;
+        window.FormulaClear.API.put = async function(endpoint, data) {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
                 method: 'PUT',
                 headers: this.getHeaders(),
@@ -167,8 +162,8 @@
             return await response.json();
         };
 
-        const originalDelete = window.OrcPharm.API.delete;
-        window.OrcPharm.API.delete = async function(endpoint) {
+        const originalDelete = window.FormulaClear.API.delete;
+        window.FormulaClear.API.delete = async function(endpoint) {
             const response = await fetch(`${this.baseURL}${endpoint}`, {
                 method: 'DELETE',
                 headers: this.getHeaders(),
@@ -186,7 +181,6 @@
             return await response.json();
         };
 
-        console.log('✅ OrcPharm.API adaptado com sucesso');
     }
 
     // ============================================
@@ -242,7 +236,7 @@
     // Adicionar handler global para botões de logout
     window.handleLogout = function() {
         if (confirm('Deseja realmente sair?')) {
-            window.OrcPharm.Auth.clearAuth();
+            window.FormulaClear.Auth.clearAuth();
         }
     };
 
@@ -284,19 +278,15 @@
     // ============================================
     
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window.OrcPharmDebug = {
+        window.FormulaClearDebug = {
             getSessionId: () => getCookie('SessionId'),
             getCurrentEmployee: () => sessionStorage.getItem('currentEmployee'),
-            isAuthenticated: () => window.OrcPharm.Auth.isAuthenticated(),
+            isAuthenticated: () => window.FormulaClear.Auth.isAuthenticated(),
             clearSession: () => {
                 deleteCookie('SessionId');
                 sessionStorage.clear();
-                console.log('🗑️ Sessão limpa');
             }
         };
         
-        console.log('🐛 Debug helpers disponíveis em window.OrcPharmDebug');
     }
-
-    console.log('✅ Employees Auth Adapter carregado com sucesso');
 })();

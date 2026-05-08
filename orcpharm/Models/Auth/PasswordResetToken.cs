@@ -5,7 +5,7 @@ using Models.Employees;
 namespace Models.Auth;
 
 /// <summary>
-/// Token de recuperação de senha para funcionários (via WhatsApp/SMS)
+/// Token de recuperaï¿½ï¿½o de senha para funcionï¿½rios (via WhatsApp/SMS)
 /// </summary>
 [Table("password_reset_tokens")]
 public class PasswordResetToken
@@ -44,10 +44,13 @@ public class PasswordResetToken
     [StringLength(20)]
     public string Type { get; set; } = "WHATSAPP";
 
+    [Column("Attempts")]
+    public int Attempts { get; set; }
+
     [Column("CreatedAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navegação
+    // Navegacao
     [ForeignKey("EmployeeId")]
     public virtual Employee? Employee { get; set; }
 }

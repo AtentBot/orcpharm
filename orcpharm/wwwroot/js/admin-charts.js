@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Admin Charts JavaScript
+ * Formula Clear - Admin Charts JavaScript
  * Handles all chart visualizations for admin dashboard and reports
  */
 

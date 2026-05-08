@@ -13,7 +13,10 @@ public class CustomerCart
     public Guid CustomerId { get; set; }
     
     public Guid EstablishmentId { get; set; }
-    
+
+    [StringLength(20)]
+    public string Status { get; set; } = "ACTIVE"; // ACTIVE, CONVERTED, ABANDONED
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public DateTime? UpdatedAt { get; set; }

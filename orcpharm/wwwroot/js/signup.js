@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Signup Process JavaScript
+ * Formula Clear - Signup Process JavaScript
  * Handles registration, verification, and payment flow
  */
 
@@ -92,11 +92,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     }, 1500);
                 } else {
                     showAlert('danger', data.message || 'Erro ao processar cadastro.');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                 }
             } catch (error) {
                 console.error('Signup error:', error);
                 showAlert('danger', 'Erro ao conectar com o servidor. Tente novamente.');
-            } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
@@ -225,33 +226,24 @@ async function submitVerificationCode(code) {
 
         if (response.ok) {
             showAlert('success', 'Código verificado com sucesso!');
+            sessionStorage.setItem('signupEstablishmentId', data.establishmentId);
 
-            // Store establishment ID
-            if (data.establishmentId) {
-                sessionStorage.setItem('signupEstablishmentId', data.establishmentId);
-            }
-
-            // Redirect to payment
             setTimeout(() => {
-                window.location.href = data.redirectTo || '/signup/payment';
+                window.location.href = data.redirectTo || `/signup/complete-profile?establishmentId=${data.establishmentId}`;
             }, 1000);
         } else {
             showAlert('danger', data.message || 'Código inválido. Tente novamente.');
-
-            // Clear inputs
-            const codeInputs = document.querySelectorAll('.code-input');
-            codeInputs.forEach(input => input.value = '');
-            if (codeInputs.length > 0) {
-                codeInputs[0].focus();
+            if (verifyBtn) {
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = 'Verificar';
             }
         }
     } catch (error) {
         console.error('Verification error:', error);
-        showAlert('danger', 'Erro ao conectar com o servidor. Tente novamente.');
-    } finally {
+        showAlert('danger', 'Erro ao verificar código. Tente novamente.');
         if (verifyBtn) {
             verifyBtn.disabled = false;
-            verifyBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Verificar';
+            verifyBtn.innerHTML = 'Verificar';
         }
     }
 }
@@ -262,12 +254,13 @@ function startResendCooldown() {
 
     let seconds = 60;
     resendBtn.disabled = true;
+    resendBtn.textContent = `Reenviar em ${seconds}s`;
 
     const interval = setInterval(() => {
-        resendBtn.textContent = `Reenviar código (${seconds}s)`;
         seconds--;
+        resendBtn.textContent = `Reenviar em ${seconds}s`;
 
-        if (seconds < 0) {
+        if (seconds <= 0) {
             clearInterval(interval);
             resendBtn.disabled = false;
             resendBtn.textContent = 'Reenviar código';
@@ -276,62 +269,87 @@ function startResendCooldown() {
 }
 
 // ============================================
-// PAYMENT PAGE - STEP 3
+// COMPLETE PROFILE FORM - STEP 3
 // ============================================
 document.addEventListener('DOMContentLoaded', function () {
-    const paymentForm = document.getElementById('paymentForm');
+    const profileForm = document.getElementById('completeProfileForm');
 
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', async function (e) {
+    if (profileForm) {
+        const cpfInput = document.getElementById('cpf');
+        if (cpfInput) {
+            cpfInput.addEventListener('input', function () {
+                this.value = formatCPF(this.value);
+            });
+        }
+
+        profileForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
-            submitBtn.disabled = true;
+            const establishmentId = new URLSearchParams(window.location.search).get('establishmentId')
+                || sessionStorage.getItem('signupEstablishmentId');
 
-            const establishmentId = sessionStorage.getItem('signupEstablishmentId') ||
-                document.getElementById('establishmentId')?.value;
-            const planId = document.getElementById('planId')?.value;
-            const billingCycle = document.querySelector('input[name="billingCycle"]:checked')?.value || 'MONTHLY';
-
-            if (!establishmentId || !planId) {
-                showAlert('danger', 'Dados incompletos. Por favor, reinicie o cadastro.');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+            if (!establishmentId) {
+                showAlert('danger', 'Sessão expirada. Por favor, reinicie o cadastro.');
                 return;
             }
 
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+            submitBtn.disabled = true;
+
+            const formData = {
+                establishmentId: establishmentId,
+                fullName: document.getElementById('fullName').value.trim(),
+                cpf: document.getElementById('cpf').value.replace(/\D/g, '')
+            };
+
             try {
-                const response = await fetch('/api/stripe/create-checkout', {
+                const response = await fetch('/api/signup/complete-profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        establishmentId: establishmentId,
-                        planId: planId,
-                        billingCycle: billingCycle
-                    })
+                    body: JSON.stringify(formData)
                 });
 
                 const data = await response.json();
 
-                if (response.ok && data.checkoutUrl) {
-                    // Redirect to Stripe Checkout
-                    window.location.href = data.checkoutUrl;
+                if (response.ok) {
+                    showAlert('success', 'Perfil completado com sucesso!');
+                    sessionStorage.removeItem('signupEstablishmentId');
+                    sessionStorage.removeItem('signupWhatsApp');
+
+                    setTimeout(() => {
+                        window.location.href = data.redirectTo || '/login';
+                    }, 1500);
                 } else {
-                    showAlert('danger', data.message || 'Erro ao criar sessão de pagamento.');
+                    showAlert('danger', data.message || 'Erro ao completar perfil.');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                console.error('Payment error:', error);
-                showAlert('danger', 'Erro ao conectar com o servidor. Tente novamente.');
+                console.error('Profile error:', error);
+                showAlert('danger', 'Erro ao conectar com o servidor.');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }
         });
     }
 });
+
+function formatCPF(value) {
+    value = value.replace(/\D/g, '');
+    value = value.substring(0, 11);
+
+    if (value.length > 9) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (value.length > 6) {
+        value = value.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+    } else if (value.length > 3) {
+        value = value.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
+    }
+
+    return value;
+}
 
 // ============================================
 // VALIDATION FUNCTIONS
@@ -342,8 +360,8 @@ function validateSignupForm() {
 
     // Nome Fantasia
     const nomeFantasia = document.getElementById('nomeFantasia');
-    if (nomeFantasia && nomeFantasia.value.trim().length < 3) {
-        setFieldError(nomeFantasia, 'Nome fantasia deve ter pelo menos 3 caracteres');
+    if (nomeFantasia && !nomeFantasia.value.trim()) {
+        setFieldError(nomeFantasia, 'Nome fantasia é obrigatório');
         isValid = false;
     } else if (nomeFantasia) {
         clearFieldError(nomeFantasia);
@@ -351,8 +369,8 @@ function validateSignupForm() {
 
     // Razão Social
     const razaoSocial = document.getElementById('razaoSocial');
-    if (razaoSocial && razaoSocial.value.trim().length < 3) {
-        setFieldError(razaoSocial, 'Razão social deve ter pelo menos 3 caracteres');
+    if (razaoSocial && !razaoSocial.value.trim()) {
+        setFieldError(razaoSocial, 'Razão social é obrigatória');
         isValid = false;
     } else if (razaoSocial) {
         clearFieldError(razaoSocial);
@@ -369,12 +387,15 @@ function validateSignupForm() {
 
     // WhatsApp
     const whatsapp = document.getElementById('whatsapp');
-    const whatsappClean = whatsapp ? whatsapp.value.replace(/\D/g, '') : '';
-    if (whatsappClean.length < 10 || whatsappClean.length > 11) {
-        setFieldError(whatsapp, 'WhatsApp inválido');
-        isValid = false;
-    } else if (whatsapp) {
-        clearFieldError(whatsapp);
+    if (whatsapp) {
+        const cleanedPhone = whatsapp.value.replace(/\D/g, '');
+        const whatsappValidation = isValidWhatsApp(cleanedPhone);
+        if (!whatsappValidation.valid) {
+            setFieldError(whatsapp, whatsappValidation.message);
+            isValid = false;
+        } else {
+            clearFieldError(whatsapp);
+        }
     }
 
     // Email
@@ -389,8 +410,11 @@ function validateSignupForm() {
 
     // Password
     const password = document.getElementById('password');
-    if (password && password.value.length < 6) {
-        setFieldError(password, 'Senha deve ter pelo menos 6 caracteres');
+    if (password && password.value.length < 8) {
+        setFieldError(password, 'Senha deve ter pelo menos 8 caracteres');
+        isValid = false;
+    } else if (password && (!/[A-Z]/.test(password.value) || !/\d/.test(password.value))) {
+        setFieldError(password, 'Senha deve conter letra maiúscula e número');
         isValid = false;
     } else if (password) {
         clearFieldError(password);
@@ -475,8 +499,8 @@ function updatePasswordStrength(password) {
 
     let strength = 0;
 
-    if (password.length >= 6) strength++;
     if (password.length >= 8) strength++;
+    if (password.length >= 10) strength++;
     if (password.length >= 12) strength++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
@@ -514,15 +538,72 @@ function validateCNPJField(field) {
 
 function validatePhoneField(field) {
     const cleaned = field.value.replace(/\D/g, '');
-    if (cleaned.length === 10 || cleaned.length === 11) {
+    const validation = isValidWhatsApp(cleaned);
+    
+    if (validation.valid) {
         field.classList.remove('is-invalid');
         field.classList.add('is-valid');
+        clearFieldError(field);
     } else {
         field.classList.remove('is-valid');
-        if (cleaned.length > 0) {
+        if (cleaned.length >= 2) {
             field.classList.add('is-invalid');
+            setFieldError(field, validation.message);
         }
     }
+}
+
+function isValidWhatsApp(phone) {
+    phone = phone.replace(/\D/g, '');
+    
+    // Deve ter 10 ou 11 dígitos
+    if (phone.length < 10 || phone.length > 11) {
+        return { valid: false, message: 'WhatsApp deve ter 10 ou 11 dígitos' };
+    }
+    
+    // Não pode ser número repetido
+    if (/^(\d)\1+$/.test(phone)) {
+        return { valid: false, message: 'Número de WhatsApp inválido' };
+    }
+    
+    // Validar DDD (11-99, exceto inválidos)
+    const ddd = parseInt(phone.substring(0, 2));
+    const dddsValidos = [
+        11, 12, 13, 14, 15, 16, 17, 18, 19, // SP
+        21, 22, 24, // RJ
+        27, 28, // ES
+        31, 32, 33, 34, 35, 37, 38, // MG
+        41, 42, 43, 44, 45, 46, // PR
+        47, 48, 49, // SC
+        51, 53, 54, 55, // RS
+        61, // DF
+        62, 64, // GO
+        63, // TO
+        65, 66, // MT
+        67, // MS
+        68, // AC
+        69, // RO
+        71, 73, 74, 75, 77, // BA
+        79, // SE
+        81, 82, 83, 84, 85, 86, 87, 88, 89, // PE, AL, PB, RN, CE, PI
+        91, 92, 93, 94, 95, 96, 97, 98, 99  // PA, AM, MA
+    ];
+    
+    if (!dddsValidos.includes(ddd)) {
+        return { valid: false, message: `DDD ${ddd} inválido` };
+    }
+    
+    // Celular com 11 dígitos deve começar com 9 após o DDD
+    if (phone.length === 11 && phone.charAt(2) !== '9') {
+        return { valid: false, message: 'Celular deve começar com 9' };
+    }
+    
+    // Não pode começar com 0 após o DDD
+    if (phone.charAt(2) === '0') {
+        return { valid: false, message: 'Número inválido após o DDD' };
+    }
+    
+    return { valid: true, message: '' };
 }
 
 // ============================================
@@ -587,20 +668,51 @@ function clearFieldError(field) {
 }
 
 function showAlert(type, message) {
-    const existingAlerts = document.querySelectorAll('.alert-floating');
+    // Remove alertas existentes
+    const existingAlerts = document.querySelectorAll('.signup-alert');
     existingAlerts.forEach(alert => alert.remove());
 
+    // Criar novo alerta
     const alert = document.createElement('div');
-    alert.className = `alert alert-${type} alert-floating alert-dismissible fade show`;
+    alert.className = `alert alert-${type} signup-alert alert-dismissible fade show`;
+    alert.style.cssText = 'margin-bottom: 1rem; border-radius: 8px;';
+    
+    const icon = type === 'success' ? 'check-circle' : 
+                 type === 'danger' ? 'exclamation-circle' : 
+                 type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
     alert.innerHTML = `
-        ${message}
+        <i class="bi bi-${icon}-fill me-2"></i>${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
 
-    document.body.appendChild(alert);
+    // Inserir no início do formulário ativo
+    const form = document.getElementById('signupForm') || 
+                 document.getElementById('verifyForm') || 
+                 document.getElementById('completeProfileForm');
+    
+    if (form) {
+        form.insertBefore(alert, form.firstChild);
+        // Scroll para o alerta
+        alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        // Fallback: adicionar ao body como flutuante
+        alert.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 90%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        document.body.appendChild(alert);
+    }
 
+    // Auto-remover após 6 segundos
     setTimeout(() => {
         alert.classList.remove('show');
         setTimeout(() => alert.remove(), 300);
-    }, 5000);
+    }, 6000);
 }

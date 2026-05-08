@@ -63,10 +63,30 @@ public class OnlineOrder
     public DateTime? DeliveredAt { get; set; }
     
     public DateTime? CancelledAt { get; set; }
-    
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
+
     public DateTime? UpdatedAt { get; set; }
+
+    // ========== MARKETPLACE COMMISSION ==========
+    [Column("platform_commission_rate", TypeName = "decimal(5,4)")]
+    public decimal? PlatformCommissionRate { get; set; }
+
+    [Column("platform_commission_amount", TypeName = "decimal(10,2)")]
+    public decimal? PlatformCommissionAmount { get; set; }
+
+    [Column("net_amount_to_pharmacy", TypeName = "decimal(10,2)")]
+    public decimal? NetAmountToPharmacy { get; set; }
+
+    [Column("stripe_payment_intent_id")]
+    [StringLength(200)]
+    public string? StripePaymentIntentId { get; set; }
+
+    [Column("delivery_latitude")]
+    public double? DeliveryLatitude { get; set; }
+
+    [Column("delivery_longitude")]
+    public double? DeliveryLongitude { get; set; }
     
     // Navigation
     [ForeignKey("CustomerId")]

@@ -15,6 +15,14 @@ public class CustomersController : ControllerBase
     private readonly AppDbContext _context;
     private readonly CustomerService _service;
 
+    private static string MaskCpf(string? cpf)
+    {
+        if (string.IsNullOrEmpty(cpf)) return "";
+        var digits = cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
+        if (digits.Length < 4) return "***";
+        return $"***.***.*{digits[^4..^2]}-{digits[^2..]}";
+    }
+
     public CustomersController(AppDbContext context, CustomerService service)
     {
         _context = context;
@@ -28,11 +36,11 @@ public class CustomersController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var query = _context.Set<Customer>()
             .Where(c => c.EstablishmentId == establishmentId.Value);
@@ -40,7 +48,7 @@ public class CustomersController : ControllerBase
         if (!string.IsNullOrWhiteSpace(status))
             query = query.Where(c => c.Status.ToUpper() == status.ToUpper());
 
-        // CORREÇÃO: Usar ILike para busca case-insensitive no PostgreSQL
+        // CORREï¿½ï¿½O: Usar ILike para busca case-insensitive no PostgreSQL
         if (!string.IsNullOrWhiteSpace(search))
         {
             var searchPattern = $"%{search}%";
@@ -67,6 +75,10 @@ public class CustomersController : ControllerBase
             })
             .ToListAsync();
 
+        // Mascarar CPF em listagens
+        foreach (var c in customers)
+            c.Cpf = MaskCpf(c.Cpf);
+
         return Ok(customers);
     }
 
@@ -75,11 +87,11 @@ public class CustomersController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var customer = await _context.Set<Customer>()
             .Include(c => c.CreatedByEmployee)
@@ -123,7 +135,7 @@ public class CustomersController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (customer == null)
-            return NotFound(new { message = "Cliente não encontrado" });
+            return NotFound(new { message = "Cliente nï¿½o encontrado" });
 
         return Ok(customer);
     }
@@ -139,11 +151,11 @@ public class CustomersController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var (success, message, customer) = await _service.CreateCustomerAsync(
             dto, establishmentId.Value, employeeId.Value);
@@ -168,11 +180,11 @@ public class CustomersController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var (success, message) = await _service.UpdateCustomerAsync(
             id, dto, establishmentId.Value, employeeId.Value);
@@ -188,17 +200,17 @@ public class CustomersController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var customer = await _context.Set<Customer>()
             .FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId.Value);
 
         if (customer == null)
-            return NotFound(new { message = "Cliente não encontrado" });
+            return NotFound(new { message = "Cliente nï¿½o encontrado" });
 
         customer.Status = "INATIVO";
         customer.UpdatedAt = DateTime.UtcNow;
@@ -219,11 +231,11 @@ public class CustomersController : ControllerBase
 
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var (success, message) = await _service.BlockCustomerAsync(
             id, dto.Reason, establishmentId.Value, employeeId.Value);
@@ -239,11 +251,11 @@ public class CustomersController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var (success, message) = await _service.UnblockCustomerAsync(
             id, establishmentId.Value, employeeId.Value);
@@ -259,14 +271,14 @@ public class CustomersController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         if (string.IsNullOrWhiteSpace(query))
-            return BadRequest(new { message = "Termo de busca é obrigatório" });
+            return BadRequest(new { message = "Termo de busca ï¿½ obrigatï¿½rio" });
 
         query = query.ToUpper().Replace(".", "").Replace("-", "");
 
@@ -281,13 +293,20 @@ public class CustomersController : ControllerBase
                 c.Id,
                 c.Code,
                 c.FullName,
-                c.Cpf,
+                Cpf = c.Cpf,
                 c.Phone,
                 c.Status
             })
             .ToListAsync();
 
-        return Ok(customers);
+        var masked = customers.Select(c => new
+        {
+            c.Id, c.Code, c.FullName,
+            Cpf = MaskCpf(c.Cpf),
+            c.Phone, c.Status
+        });
+
+        return Ok(masked);
     }
 
     [HttpGet("{id}/history")]
@@ -295,19 +314,19 @@ public class CustomersController : ControllerBase
     {
         var employeeId = GetEmployeeId();
         if (!employeeId.HasValue)
-            return Unauthorized(new { message = "Sessão inválida" });
+            return Unauthorized(new { message = "Sessï¿½o invï¿½lida" });
 
         var establishmentId = await GetEstablishmentId(employeeId.Value);
         if (!establishmentId.HasValue)
-            return NotFound(new { message = "Estabelecimento não encontrado" });
+            return NotFound(new { message = "Estabelecimento nï¿½o encontrado" });
 
         var customer = await _context.Set<Customer>()
             .FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId.Value);
 
         if (customer == null)
-            return NotFound(new { message = "Cliente não encontrado" });
+            return NotFound(new { message = "Cliente nï¿½o encontrado" });
 
-        // TODO: Implementar quando tiver módulo de vendas
+        // TODO: Implementar quando tiver mï¿½dulo de vendas
         var history = new CustomerHistoryDto
         {
             CustomerId = customer.Id,

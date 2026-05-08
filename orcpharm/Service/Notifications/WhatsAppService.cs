@@ -1,17 +1,21 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace Service.Notifications;
 
 public class WhatsAppService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _apiKey = "33B2682CFAFB-4184-966E-71A3028B7A37";
-    private readonly string _baseUrl = "https://api.atentbot.com/message/sendText/pharm";
+    private readonly string _apiKey;
+    private readonly string _baseUrl;
 
-    public WhatsAppService(HttpClient httpClient)
+    public WhatsAppService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _apiKey = configuration["AtentBot:ApiKey"]
+            ?? throw new InvalidOperationException("AtentBot:ApiKey não configurada. Defina via env var ou appsettings.");
+        _baseUrl = configuration["AtentBot:ApiUrl"] ?? "https://api.atentbot.com/message/sendText/pharm";
     }
 
     public async Task<(bool Success, string Message)> SendMessageAsync(string phoneNumber, string message)
@@ -50,7 +54,7 @@ public class WhatsAppService
 
     public async Task<(bool Success, string Message)> SendPasswordResetCodeAsync(string phoneNumber, string code, string employeeName)
     {
-        var message = $"🔐 OrcPharm - Recuperação de Senha\n\n" +
+        var message = $"🔐 Formula Clear - Recuperação de Senha\n\n" +
                       $"Olá {employeeName}!\n\n" +
                       $"Seu código de recuperação é: *{code}*\n\n" +
                       $"Este código expira em 15 minutos.\n" +
@@ -68,7 +72,7 @@ public class WhatsAppService
             _ => "verificação"
         };
 
-        var message = $"🔐 OrcPharm - Código de Verificação\n\n" +
+        var message = $"🔐 Formula Clear - Código de Verificação\n\n" +
                       $"Código para {purposeText}: *{code}*\n\n" +
                       $"Este código expira em 5 minutos.\n" +
                       $"Nunca compartilhe este código.";
@@ -78,7 +82,7 @@ public class WhatsAppService
 
     public async Task<(bool Success, string Message)> SendPasswordChangedNotificationAsync(string phoneNumber, string employeeName)
     {
-        var message = $"🔐 OrcPharm - Senha Alterada\n\n" +
+        var message = $"🔐 Formula Clear - Senha Alterada\n\n" +
                       $"Olá {employeeName}!\n\n" +
                       $"Sua senha foi alterada com sucesso.\n\n" +
                       $"Se você não realizou esta alteração, entre em contato com o administrador imediatamente.";

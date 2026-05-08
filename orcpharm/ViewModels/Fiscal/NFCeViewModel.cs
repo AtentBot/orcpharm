@@ -147,7 +147,7 @@ public static class NFCeViewModelFactory
             Emitente = new NFCeEmitenteViewModel
             {
                 RazaoSocial = razaoSocial ?? "Farmácia Teste LTDA",
-                NomeFantasia = nomeFantasia ?? "Farmácia OrcPharm",
+                NomeFantasia = nomeFantasia ?? "Farmácia Formula Clear",
                 CNPJ = FormatCNPJ(cnpj ?? "12345678000190"),
                 IE = "123.456.789.012",
                 Endereco = "Rua Principal, 100",

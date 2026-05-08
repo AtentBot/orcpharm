@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Public Homepage JavaScript
+ * Formula Clear - Public Homepage JavaScript
  * Handles homepage interactivity, animations, and contact form
  */
 

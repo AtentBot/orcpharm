@@ -18,6 +18,15 @@ public class ReportsController : ControllerBase
         _context = context;
     }
 
+    private static string SanitizeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        var trimmed = value.Replace(";", ",").Replace("\n", " ").Replace("\r", " ");
+        if (trimmed.StartsWith("=") || trimmed.StartsWith("+") || trimmed.StartsWith("-") || trimmed.StartsWith("@") || trimmed.StartsWith("\t"))
+            trimmed = "'" + trimmed;
+        return trimmed;
+    }
+
     private Guid GetEstablishmentId()
     {
         var employee = HttpContext.Items["Employee"] as Employee;
@@ -778,7 +787,7 @@ public class ReportsController : ControllerBase
 
         var csv = "Numero;Formula;Cliente;Quantidade;Unidade;Status;Data Pedido;Data Prevista;Data Conclusao\n";
         foreach (var o in orders)
-            csv += $"{o.OrderNumber};{o.Formula?.Name};{o.CustomerName};{o.QuantityToProduce};{o.Unit};{o.Status};{o.OrderDate:dd/MM/yyyy};{o.ExpectedDate:dd/MM/yyyy};{o.CompletionDate:dd/MM/yyyy}\n";
+            csv += $"{SanitizeCsv(o.OrderNumber)};{SanitizeCsv(o.Formula?.Name)};{SanitizeCsv(o.CustomerName)};{o.QuantityToProduce};{SanitizeCsv(o.Unit)};{SanitizeCsv(o.Status)};{o.OrderDate:dd/MM/yyyy};{o.ExpectedDate:dd/MM/yyyy};{o.CompletionDate:dd/MM/yyyy}\n";
 
         return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", $"ordens_{start:yyyyMMdd}_{end:yyyyMMdd}.csv");
     }
@@ -798,7 +807,7 @@ public class ReportsController : ControllerBase
 
         var csv = "Ordem;Materia Prima;Quantidade;Unidade;Tipo;Motivo;Valor;Registrado Por;Data\n";
         foreach (var l in losses)
-            csv += $"{l.ManipulationOrder?.OrderNumber};{l.RawMaterial?.Name};{l.Quantity};{l.Unit};{l.LossType};{l.Reason};{l.ValueLost};{l.RegisteredByEmployee?.FullName};{l.RegisteredAt:dd/MM/yyyy HH:mm}\n";
+            csv += $"{SanitizeCsv(l.ManipulationOrder?.OrderNumber)};{SanitizeCsv(l.RawMaterial?.Name)};{l.Quantity};{SanitizeCsv(l.Unit)};{SanitizeCsv(l.LossType)};{SanitizeCsv(l.Reason)};{l.ValueLost};{SanitizeCsv(l.RegisteredByEmployee?.FullName)};{l.RegisteredAt:dd/MM/yyyy HH:mm}\n";
 
         return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", $"perdas_{start:yyyyMMdd}_{end:yyyyMMdd}.csv");
     }

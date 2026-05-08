@@ -1,4 +1,12 @@
 // ===== PDV - Ponto de Venda JavaScript =====
+(function() {
+'use strict';
+
+// Helper para escapar HTML e prevenir XSS
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 // Estado do PDV
 let cart = [];
@@ -282,7 +290,7 @@ function renderCart() {
     container.innerHTML = cart.map((item, index) => `
         <div class="d-flex justify-content-between align-items-center border-bottom py-2">
             <div class="flex-grow-1">
-                <strong>${item.description}</strong>
+                <strong>${escapeHtml(item.description)}</strong>
                 <div class="small text-muted">
                     R$ ${formatMoney(item.unitPrice)} x ${item.quantity} = 
                     <strong>R$ ${formatMoney(item.unitPrice * item.quantity)}</strong>
@@ -939,13 +947,13 @@ async function loadCustomers(query) {
         }
         
         container.innerHTML = data.data.map(c => `
-            <div class="list-group-item list-group-item-action" 
-                 onclick="selectCustomer('${c.id}', '${c.fullName}', '${c.cpf || ''}')">
+            <div class="list-group-item list-group-item-action"
+                 onclick="selectCustomer('${escapeHtml(c.id)}', '${escapeHtml(c.fullName)}', '${escapeHtml(c.cpf || '')}')">
                 <div class="d-flex justify-content-between">
-                    <strong>${c.fullName}</strong>
-                    <span class="text-muted">${c.cpf || 'Sem CPF'}</span>
+                    <strong>${escapeHtml(c.fullName)}</strong>
+                    <span class="text-muted">${escapeHtml(c.cpf || 'Sem CPF')}</span>
                 </div>
-                <small class="text-muted">${c.phone || ''} ${c.email || ''}</small>
+                <small class="text-muted">${escapeHtml(c.phone || '')} ${escapeHtml(c.email || '')}</small>
             </div>
         `).join('');
     } catch (error) {
@@ -1029,3 +1037,25 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// Expor funções necessárias para onclick handlers no HTML
+window.showOnlineOrdersModal = showOnlineOrdersModal;
+window.openCashRegister = openCashRegister;
+window.closePDV = closePDV;
+window.showProductsModal = showProductsModal;
+window.clearOnlineOrder = clearOnlineOrder;
+window.clearCart = clearCart;
+window.searchCustomer = searchCustomer;
+window.clearCustomer = clearCustomer;
+window.calculateTotal = calculateTotal;
+window.showPaymentModal = showPaymentModal;
+window.finishSale = finishSale;
+window.loadOnlineOrders = loadOnlineOrders;
+window.setRemainingAmount = setRemainingAmount;
+window.addPayment = addPayment;
+window.printReceipt = printReceipt;
+window.selectOnlineOrder = selectOnlineOrder;
+window.removeFromCart = removeFromCart;
+window.removePayment = removePayment;
+window.searchProduct = searchProduct;
+})();

@@ -88,7 +88,7 @@ public class StripePaymentService : IPaymentGatewayService
     // FASE 3+: MÉTODOS DE PAGAMENTO (PLACEHOLDERS - IMPLEMENTAR DEPOIS)
     // ══════════════════════════════════════════════════════════════════════════════
     // Estes métodos serão implementados na Fase 3 quando integrar com o fluxo
-    // de pagamento existente do OrcPharm (StripeService)
+    // de pagamento existente do Formula Clear (StripeService)
 
     public Task<CustomerResult> CreateCustomerAsync(CreateCustomerRequest request)
     {

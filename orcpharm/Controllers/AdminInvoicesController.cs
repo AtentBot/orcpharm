@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
+using Service;
 
 namespace Controllers.Api;
 
@@ -10,11 +11,22 @@ public class AdminInvoicesController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<AdminInvoicesController> _logger;
+    private readonly AuditService _audit;
 
-    public AdminInvoicesController(AppDbContext context, ILogger<AdminInvoicesController> logger)
+    private static string SanitizeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        var trimmed = value.Replace(";", ",").Replace("\n", " ").Replace("\r", " ");
+        if (trimmed.StartsWith("=") || trimmed.StartsWith("+") || trimmed.StartsWith("-") || trimmed.StartsWith("@") || trimmed.StartsWith("\t"))
+            trimmed = "'" + trimmed;
+        return trimmed;
+    }
+
+    public AdminInvoicesController(AppDbContext context, ILogger<AdminInvoicesController> logger, AuditService audit)
     {
         _context = context;
         _logger = logger;
+        _audit = audit;
     }
 
     [HttpGet("stats")]
@@ -209,6 +221,8 @@ public class AdminInvoicesController : ControllerBase
 
             await _context.SaveChangesAsync();
 
+            await _audit.LogAsync(HttpContext, "INVOICE_MARKED_PAID", "Invoice", id.ToString());
+
             _logger.LogInformation("Fatura {Id} marcada como paga manualmente", id);
 
             return Ok(new { message = "Fatura marcada como paga" });
@@ -267,7 +281,7 @@ public class AdminInvoicesController : ControllerBase
             var csv = "ID;Estabelecimento;CNPJ;Plano;Valor;Status;Vencimento;Pago Em;Criado Em\n";
             foreach (var inv in invoices)
             {
-                csv += $"{inv.Id};{inv.Estabelecimento};{inv.CNPJ};{inv.Plano};{inv.Valor:F2};{inv.Status};{inv.Vencimento:dd/MM/yyyy};{inv.PagoEm:dd/MM/yyyy HH:mm};{inv.CriadoEm:dd/MM/yyyy HH:mm}\n";
+                csv += $"{inv.Id};{SanitizeCsv(inv.Estabelecimento)};{SanitizeCsv(inv.CNPJ)};{SanitizeCsv(inv.Plano)};{inv.Valor:F2};{SanitizeCsv(inv.Status)};{inv.Vencimento:dd/MM/yyyy};{inv.PagoEm:dd/MM/yyyy HH:mm};{inv.CriadoEm:dd/MM/yyyy HH:mm}\n";
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv);

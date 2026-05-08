@@ -45,7 +45,7 @@ public class IngredientsController : ControllerBase
 
         var establishmentId = GetEstablishmentId();
         if (establishmentId == Guid.Empty)
-            establishmentId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
+            return Unauthorized(new { message = "Sessao invalida" });
 
         limit = Math.Clamp(limit, 1, 50);
         var searchTerm = q.ToLower().Trim();
@@ -121,7 +121,7 @@ public class IngredientsController : ControllerBase
     {
         var establishmentId = GetEstablishmentId();
         if (establishmentId == Guid.Empty)
-            establishmentId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
+            return Unauthorized(new { message = "Sessao invalida" });
 
         limit = Math.Clamp(limit, 1, 20);
 
@@ -162,7 +162,7 @@ public class IngredientsController : ControllerBase
     {
         var establishmentId = GetEstablishmentId();
         if (establishmentId == Guid.Empty)
-            establishmentId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
+            return Unauthorized(new { message = "Sessao invalida" });
 
         var categories = await _context.RawMaterials
             .Where(rm => rm.EstablishmentId == establishmentId && rm.IsActive && rm.Category != null)
@@ -184,7 +184,7 @@ public class IngredientsController : ControllerBase
     {
         var establishmentId = GetEstablishmentId();
         if (establishmentId == Guid.Empty)
-            establishmentId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
+            return Unauthorized(new { message = "Sessao invalida" });
 
         var ingredient = await _context.RawMaterials
             .FirstOrDefaultAsync(rm => rm.Id == id && rm.EstablishmentId == establishmentId);
@@ -229,7 +229,7 @@ public class IngredientsController : ControllerBase
 
         var establishmentId = GetEstablishmentId();
         if (establishmentId == Guid.Empty)
-            establishmentId = Guid.Parse("e0000000-0000-0000-0000-000000000001");
+            return Unauthorized(new { message = "Sessao invalida" });
 
         var ingredients = await _context.RawMaterials
             .Where(rm => request.Ids.Contains(rm.Id) && rm.EstablishmentId == establishmentId)

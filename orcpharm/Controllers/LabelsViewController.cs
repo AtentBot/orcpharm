@@ -368,7 +368,7 @@ public class LabelsViewController : Controller
         // Substituir placeholders com dados de exemplo
         var html = template.HtmlTemplate
             .Replace("{{CSS_STYLES}}", template.CssStyles ?? "")
-            .Replace("{{PHARMACY_NAME}}", "Farmácia OrcPharm")
+            .Replace("{{PHARMACY_NAME}}", "Farmácia Formula Clear")
             .Replace("{{PHARMACY_CNPJ}}", "12.345.678/0001-90")
             .Replace("{{PHARMACY_ADDRESS}}", "Rua Exemplo, 123 - Centro")
             .Replace("{{PHARMACY_PHONE}}", "(11) 3333-4444")

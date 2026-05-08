@@ -25,7 +25,9 @@ public class AlertasController : ControllerBase
     {
         if (HttpContext.Items.TryGetValue("EstablishmentId", out var estId) && estId is Guid id)
             return id;
-        return Guid.Parse("e0000000-0000-0000-0000-000000000001");
+
+        _logger.LogWarning("EstablishmentId não encontrado no HttpContext - requisição sem autenticação?");
+        throw new UnauthorizedAccessException("EstablishmentId não disponível. Faça login novamente.");
     }
 
     /// <summary>

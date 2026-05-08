@@ -52,7 +52,23 @@ public class CatalogProduct
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public DateTime? UpdatedAt { get; set; }
-    
+
+    // ========== MARKETPLACE ==========
+    [Column("average_rating", TypeName = "decimal(3,2)")]
+    public decimal AverageRating { get; set; } = 0;
+
+    public int TotalRatings { get; set; } = 0;
+
+    public int TotalSold { get; set; } = 0;
+
+    public bool IsMarketplaceVisible { get; set; } = true;
+
+    [MaxLength(500)]
+    public string? SearchKeywords { get; set; }
+
+    [MaxLength(500)]
+    public string? ImageUrl { get; set; }
+
     // Navigation
     [ForeignKey("EstablishmentId")]
     public virtual Establishment? Establishment { get; set; }

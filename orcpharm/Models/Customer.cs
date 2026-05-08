@@ -49,7 +49,7 @@ public class Customer
     [MaxLength(200)]
     public string? Email { get; set; }
 
-    // Endereço
+    // Endereï¿½o
     [Column("zip_code")]
     [MaxLength(8)]
     public string? ZipCode { get; set; }
@@ -78,7 +78,7 @@ public class Customer
     [MaxLength(2)]
     public string? State { get; set; }
 
-    // Informações médicas
+    // Informaï¿½ï¿½es mï¿½dicas
     [Column("allergies")]
     public string? Allergies { get; set; }
 
@@ -116,7 +116,38 @@ public class Customer
     [Column("updated_by_employee_id")]
     public Guid? UpdatedByEmployeeId { get; set; }
 
-    // Navegação
+    // ==================== MARKETPLACE ====================
+
+    [Column("default_latitude")]
+    public double? DefaultLatitude { get; set; }
+
+    [Column("default_longitude")]
+    public double? DefaultLongitude { get; set; }
+
+    [Column("profile_image_url")]
+    [MaxLength(500)]
+    public string? ProfileImageUrl { get; set; }
+
+    [Column("firebase_fcm_token")]
+    [MaxLength(500)]
+    public string? FirebaseFcmToken { get; set; }
+
+    [Column("preferred_payment_method")]
+    [MaxLength(30)]
+    public string? PreferredPaymentMethod { get; set; }
+
+    /// <summary>
+    /// EMAIL, GOOGLE, APPLE
+    /// </summary>
+    [Column("login_provider")]
+    [MaxLength(10)]
+    public string LoginProvider { get; set; } = "EMAIL";
+
+    [Column("external_provider_id")]
+    [MaxLength(200)]
+    public string? ExternalProviderId { get; set; }
+
+    // Navegaï¿½ï¿½o
     [ForeignKey("EstablishmentId")]
     public virtual Establishment? Establishment { get; set; }
 

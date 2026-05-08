@@ -33,6 +33,7 @@
     <PackageReference Include="QRCoder" Version="1.5.1" />
     <PackageReference Include="QuestPDF" Version="2025.12.1" />
     <PackageReference Include="Stripe.net" Version="49.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="System.IO.Ports" Version="10.0.1" />
   </ItemGroup>

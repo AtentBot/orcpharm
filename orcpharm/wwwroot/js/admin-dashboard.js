@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Admin Dashboard JavaScript
+ * Formula Clear - Admin Dashboard JavaScript
  * Handles admin dashboard metrics, charts, and real-time updates
  */
 

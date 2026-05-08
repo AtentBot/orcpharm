@@ -1,5 +1,5 @@
 /**
- * OrcPharm Pricing Client v2.0
+ * Formula Clear Pricing Client v2.0
  * Integração frontend com PricingController API
  * Hierarquia: ESTOQUE (🟢 100%) > HISTÓRICO (🟡 50-95%) > BASE (🔴 30%)
  * 
@@ -14,7 +14,7 @@
  * - GET  /api/pricing/statistics                - Estatísticas
  */
 
-const OrcPharmPricing = (function() {
+const FormulaClearPricing = (function() {
     'use strict';
 
     // ═══════════════════════════════════════════════════════════════
@@ -84,7 +84,7 @@ const OrcPharmPricing = (function() {
             
             return await response.json();
         } catch (error) {
-            console.error(`[OrcPharmPricing] API Error:`, error);
+            console.error(`[FormulaClearPricing] API Error:`, error);
             throw error;
         }
     }
@@ -213,7 +213,7 @@ const OrcPharmPricing = (function() {
      * @returns {Promise<FormulaCalculationResult|null>}
      * 
      * @example
-     * const result = await OrcPharmPricing.calculateFormulaPrice({
+     * const result = await FormulaClearPricing.calculateFormulaPrice({
      *     productType: 'Cápsula',
      *     productQuantity: 60,
      *     ingredients: [
@@ -603,4 +603,4 @@ const OrcPharmPricing = (function() {
 })();
 
 // Alias para compatibilidade
-window.OrcPharmPricing = OrcPharmPricing;
+window.FormulaClearPricing = FormulaClearPricing;

@@ -19,6 +19,10 @@ public class CustomerAuth
     [StringLength(20)]
     public string Phone { get; set; } = string.Empty;
 
+    [Column("Email")]
+    [StringLength(200)]
+    public string? Email { get; set; }
+
     [Required]
     [Column("Cpf")]
     [StringLength(11)]

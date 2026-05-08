@@ -12,7 +12,6 @@ const PurchaseOrders = {
 
     async loadSuppliers() {
         try {
-            console.log('Carregando fornecedores...');
             const response = await fetch('/api/Suppliers', {
                 method: 'GET',
                 headers: {
@@ -27,8 +26,7 @@ const PurchaseOrders = {
             }
 
             const suppliers = await response.json();
-            console.log('Fornecedores carregados:', suppliers.length);
-            
+
             const select = $('#filterSupplier');
             suppliers.forEach(supplier => {
                 select.append(`<option value="${supplier.id}">${supplier.companyName}</option>`);
@@ -58,8 +56,6 @@ const PurchaseOrders = {
             const endDate = $('#filterEndDate').val();
             if (endDate) params.append('endDate', endDate);
 
-            console.log('Carregando pedidos...', params.toString());
-            
             const response = await fetch(`/api/PurchaseOrders?${params}`, {
                 method: 'GET',
                 headers: {
@@ -68,8 +64,6 @@ const PurchaseOrders = {
                 credentials: 'include'
             });
 
-            console.log('Response status:', response.status);
-
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Erro na API:', errorText);
@@ -77,7 +71,6 @@ const PurchaseOrders = {
             }
 
             const orders = await response.json();
-            console.log('Pedidos carregados:', orders.length);
 
             this.updateStats(orders);
             this.renderOrders(orders);

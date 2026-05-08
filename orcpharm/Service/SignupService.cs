@@ -3,6 +3,7 @@ using Models;
 using Models.Employees;
 using DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Isopoh.Cryptography.Argon2;
 using System.Security.Cryptography;
 using Service.Notifications;
@@ -15,6 +16,7 @@ public class SignupService
     private readonly SubscriptionService _subscriptionService;
     private readonly WhatsAppService _whatsAppService;
     private readonly ILogger<SignupService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     // IDs padrão para novos cadastros
     private static readonly Guid OwnerAccessLevelId = Guid.Parse("b0000000-0000-0000-0000-000000000001");  // OWNER - Proprietário
@@ -25,21 +27,65 @@ public class SignupService
         AppDbContext context,
         SubscriptionService subscriptionService,
         WhatsAppService whatsAppService,
-        ILogger<SignupService> logger)
+        ILogger<SignupService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _subscriptionService = subscriptionService;
         _whatsAppService = whatsAppService;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    /// <summary>
+    /// Obtém a URL base atual (ex: http://localhost:8080 ou https://app.orcpharm.com.br)
+    /// </summary>
+    private string GetBaseUrl()
+    {
+        var request = _httpContextAccessor.HttpContext?.Request;
+        if (request == null)
+            return "https://app.orcpharm.com.br"; // fallback
+        
+        return $"{request.Scheme}://{request.Host}";
+    }
+
+    /// <summary>
+    /// Valida CPF usando algoritmo oficial (digitos verificadores)
+    /// </summary>
+    private static bool ValidarCpf(string cpf)
+    {
+        if (cpf.Length != 11) return false;
+        if (cpf.Distinct().Count() == 1) return false; // todos iguais (111.111.111-11)
+
+        var soma = 0;
+        for (var i = 0; i < 9; i++)
+            soma += (cpf[i] - '0') * (10 - i);
+        var resto = soma % 11;
+        var digito1 = resto < 2 ? 0 : 11 - resto;
+        if ((cpf[9] - '0') != digito1) return false;
+
+        soma = 0;
+        for (var i = 0; i < 10; i++)
+            soma += (cpf[i] - '0') * (11 - i);
+        resto = soma % 11;
+        var digito2 = resto < 2 ? 0 : 11 - resto;
+        return (cpf[10] - '0') == digito2;
     }
 
     public async Task<(bool success, string message, Guid? establishmentId)> RegisterAsync(SignupRequestDto dto)
     {
         try
         {
+            // Validar senha no backend (minimo 8 caracteres, complexidade)
+            if (string.IsNullOrEmpty(dto.Password) || dto.Password.Length < 8)
+                return (false, "A senha deve ter no mínimo 8 caracteres", null);
+
+            if (!dto.Password.Any(char.IsUpper) || !dto.Password.Any(char.IsDigit))
+                return (false, "A senha deve conter pelo menos uma letra maiúscula e um número", null);
+
             // Limpar CNPJ - remover formatação (pontos, barras, hífens)
-            var cnpjLimpo = string.IsNullOrWhiteSpace(dto.Cnpj) 
-                ? null 
+            var cnpjLimpo = string.IsNullOrWhiteSpace(dto.Cnpj)
+                ? null
                 : new string(dto.Cnpj.Where(char.IsDigit).ToArray());
 
             // Limpar WhatsApp - remover formatação (parênteses, espaços, hífens)
@@ -142,9 +188,9 @@ public class SignupService
             await _context.SaveChangesAsync();
 
             // Enviar código via WhatsApp
-            var message = $"🔐 OrcPharm - Verificação de Cadastro\n\n" +
+            var message = $"🔐 Formula Clear - Verificação de Cadastro\n\n" +
                           $"Olá {dto.NomeFantasia}!\n\n" +
-                          $"Bem-vindo ao OrcPharm! Seu código de verificação é: *{code}*\n\n" +
+                          $"Bem-vindo ao Formula Clear! Seu código de verificação é: *{code}*\n\n" +
                           $"Este código expira em 10 minutos.\n" +
                           $"Se você não solicitou este cadastro, ignore esta mensagem.";
             
@@ -178,6 +224,19 @@ public class SignupService
             var whatsappLimpo = string.IsNullOrWhiteSpace(dto.WhatsApp)
                 ? null
                 : new string(dto.WhatsApp.Where(char.IsDigit).ToArray());
+
+            // Limitar tentativas: max 5 tentativas por WhatsApp nos ultimos 15 min
+            var recentAttempts = await _context.ClientOnboardings
+                .Where(o => o.WhatsApp == whatsappLimpo
+                         && o.CreatedAt > DateTime.UtcNow.AddMinutes(-15)
+                         && !o.OnboardingCompleted)
+                .CountAsync();
+
+            if (recentAttempts > 5)
+            {
+                _logger.LogWarning("Limite de tentativas de verificação excedido para WhatsApp: {WhatsApp}", whatsappLimpo);
+                return (false, "Limite de tentativas excedido. Aguarde 15 minutos.", null);
+            }
 
             var onboarding = await _context.ClientOnboardings
                 .Include(o => o.Establishment)
@@ -242,11 +301,11 @@ public class SignupService
             if (existingOwner)
                 return (false, "Já existe um proprietário cadastrado para este estabelecimento", null);
 
-            // Limpar CPF
+            // Limpar e validar CPF
             var cpfLimpo = new string(dto.Cpf.Where(char.IsDigit).ToArray());
 
-            if (cpfLimpo.Length != 11)
-                return (false, "CPF inválido. Deve conter 11 dígitos.", null);
+            if (!ValidarCpf(cpfLimpo))
+                return (false, "CPF inválido.", null);
 
             // Verificar se CPF já está em uso
             var cpfExists = await _context.Set<Employee>()
@@ -289,14 +348,17 @@ public class SignupService
 
             await _context.SaveChangesAsync();
 
+            // Obter URL base dinâmica
+            var baseUrl = GetBaseUrl();
+
             // Enviar mensagem de boas-vindas
-            var welcomeMessage = $"✅ OrcPharm - Cadastro Completo!\n\n" +
+            var welcomeMessage = $"✅ Formula Clear - Cadastro Completo!\n\n" +
                                  $"Parabéns {dto.FullName}!\n\n" +
                                  $"Seu cadastro no {establishment.NomeFantasia} foi finalizado com sucesso.\n\n" +
                                  $"🔑 Acesse o sistema com:\n" +
                                  $"CPF: {FormatCpf(cpfLimpo)}\n" +
                                  $"Senha: a mesma que você cadastrou\n\n" +
-                                 $"URL: https://app.orcpharm.com.br/login\n\n" +
+                                 $"URL: {baseUrl}/login\n\n" +
                                  $"Boas manipulações! 💊";
             
             await _whatsAppService.SendMessageAsync(establishment.WhatsApp!, welcomeMessage);
@@ -365,7 +427,7 @@ public class SignupService
             await _context.SaveChangesAsync();
 
             // Enviar novo código via WhatsApp
-            var message = $"🔐 OrcPharm - Novo Código de Verificação\n\n" +
+            var message = $"🔐 Formula Clear - Novo Código de Verificação\n\n" +
                           $"Olá {onboarding.Establishment?.NomeFantasia}!\n\n" +
                           $"Seu novo código de verificação é: *{code}*\n\n" +
                           $"Este código expira em 10 minutos.";

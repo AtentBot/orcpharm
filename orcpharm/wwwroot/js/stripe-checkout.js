@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Stripe Integration JavaScript
+ * Formula Clear - Stripe Integration JavaScript
  * Handles Stripe Checkout and Customer Portal
  */
 
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show success message
     if (urlParams.get('success') === 'true') {
-        showAlert('success', 'Pagamento processado com sucesso! Bem-vindo ao OrcPharm.');
+        showAlert('success', 'Pagamento processado com sucesso! Bem-vindo ao Formula Clear.');
     }
 });
 

@@ -1,3 +1,8 @@
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // Estado global da aplicação
 const appState = {
     selectedPrescription: null,
@@ -237,9 +242,9 @@ function displayOCRResults() {
         const div = document.createElement('div');
         div.className = 'ocr-result';
         div.innerHTML = `
-            <strong>${index + 1}. ${item.component}</strong><br>
-            <small class="text-muted">Quantidade: ${item.quantity} ${item.unit}</small><br>
-            <small class="text-muted">Texto original: "${item.rawText}"</small>
+            <strong>${index + 1}. ${escapeHtml(item.component)}</strong><br>
+            <small class="text-muted">Quantidade: ${escapeHtml(item.quantity)} ${escapeHtml(item.unit)}</small><br>
+            <small class="text-muted">Texto original: "${escapeHtml(item.rawText)}"</small>
         `;
         itemsList.appendChild(div);
     });
@@ -305,10 +310,10 @@ function displayMatchResults() {
         let html = `
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                    <h6 class="mb-1">${match.ocrText}</h6>
+                    <h6 class="mb-1">${escapeHtml(match.ocrText)}</h6>
                     <small class="text-muted">
-                        Quantidade: ${match.quantity} ${match.unit}<br>
-                        Original: "${match.rawText}"
+                        Quantidade: ${escapeHtml(match.quantity)} ${escapeHtml(match.unit)}<br>
+                        Original: "${escapeHtml(match.rawText)}"
                     </small>
                 </div>
             </div>
@@ -325,21 +330,21 @@ function displayMatchResults() {
                     : 'Sem estoque';
                 
                 html += `
-                    <div class="suggestion" 
-                         data-match="${matchIndex}" 
+                    <div class="suggestion"
+                         data-match="${matchIndex}"
                          data-suggestion="${suggIndex}"
                          onclick="selectSuggestion(${matchIndex}, ${suggIndex})">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>${suggestion.name}</strong>
-                                ${suggestion.dciName ? `<br><small class="text-muted">DCI: ${suggestion.dciName}</small>` : ''}
+                                <strong>${escapeHtml(suggestion.name)}</strong>
+                                ${suggestion.dciName ? `<br><small class="text-muted">DCI: ${escapeHtml(suggestion.dciName)}</small>` : ''}
                             </div>
                             <div class="text-end">
                                 <span class="confidence-badge ${getConfidenceClass(suggestion.confidence)}">
                                     ${(suggestion.confidence * 100).toFixed(0)}%
                                 </span>
                                 <br>
-                                <span class="stock-badge ${stockClass}">${stockText}</span>
+                                <span class="stock-badge ${stockClass}">${escapeHtml(stockText)}</span>
                             </div>
                         </div>
                     </div>
@@ -421,17 +426,17 @@ function displayReview() {
             <div class="info-section">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <strong>${index + 1}. ${ing.name}</strong><br>
+                        <strong>${index + 1}. ${escapeHtml(ing.name)}</strong><br>
                         <small class="text-muted">
-                            OCR detectou: "${ing.ocrText}"<br>
-                            Quantidade: ${ing.quantity} ${ing.unit}
+                            OCR detectou: "${escapeHtml(ing.ocrText)}"<br>
+                            Quantidade: ${escapeHtml(ing.quantity)} ${escapeHtml(ing.unit)}
                         </small>
                     </div>
                     <div class="text-end">
                         <span class="confidence-badge ${confidenceClass}">
                             ${(ing.confidence * 100).toFixed(0)}%
                         </span><br>
-                        <small class="${ing.inStock ? 'text-success' : 'text-warning'}">${stockText}</small>
+                        <small class="${ing.inStock ? 'text-success' : 'text-warning'}">${escapeHtml(stockText)}</small>
                     </div>
                 </div>
             </div>
@@ -448,13 +453,6 @@ function displayReview() {
 async function createOrder() {
     if (confirm('Criar ordem de manipulação com os componentes selecionados?')) {
         showSuccess('Funcionalidade em desenvolvimento. Os dados foram processados com sucesso!');
-        
-        // Aqui você pode adicionar a chamada API para criar a ordem
-        console.log('Dados para criar ordem:', {
-            prescriptionId: appState.selectedPrescription,
-            ocrResult: appState.ocrResult,
-            selectedIngredients: appState.selectedIngredients
-        });
     }
 }
 

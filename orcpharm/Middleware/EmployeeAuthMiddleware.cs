@@ -77,6 +77,7 @@ public class EmployeeAuthMiddleware
             "/cliente",                 // CustomerAuthMiddleware cuida
             "/api/cliente",             // CustomerAuthMiddleware cuida
             "/api/customer-portal/",    // APIs Portal Cliente
+            "/api/mobile/",             // JwtAuthMiddleware cuida
             "/c/",                      // QR Code redirect (Portal Cliente)
             "/signup",                  // Cadastro (todas as rotas)
             "/orcamento/",              // Orçamentos públicos

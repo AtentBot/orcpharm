@@ -31,7 +31,7 @@ public class CaixaController : ControllerBase
     {
         if (HttpContext.Items.TryGetValue("EstablishmentId", out var estId) && estId is Guid establishmentId)
             return establishmentId;
-        return Guid.Parse("e0000000-0000-0000-0000-000000000001");
+        throw new UnauthorizedAccessException("EstablishmentId nao encontrado na sessao");
     }
 
     private bool CanOperateCaixa()

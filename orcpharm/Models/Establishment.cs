@@ -18,7 +18,7 @@ public class Establishment
     [Required]
     public Guid CategoryId { get; set; }
 
-    // Razão social / Nome fantasia / CNPJ
+    // Razï¿½o social / Nome fantasia / CNPJ
     [Required, MaxLength(200)]
     public string RazaoSocial { get; set; } = default!;
 
@@ -28,11 +28,11 @@ public class Establishment
     [MaxLength(20)]
     public string? InscricaoEstadual { get; set; }    
 
-    // CNPJ apenas dígitos (formatação fica para o front/DTO)
+    // CNPJ apenas dï¿½gitos (formataï¿½ï¿½o fica para o front/DTO)
     [MaxLength(14)]
     public string? Cnpj { get; set; }  // Nullable para permitir cadastro sem CNPJ inicialmente
 
-    // Endereço (Brasil) - Todos opcionais para signup inicial
+    // Endereï¿½o (Brasil) - Todos opcionais para signup inicial
     [MaxLength(200)]
     public string? Street { get; set; }      // Logradouro
 
@@ -52,12 +52,12 @@ public class Establishment
     public string? State { get; set; } // UF (ex.: SP)
 
     [MaxLength(8)]
-    public string? PostalCode { get; set; } // CEP (só dígitos)
+    public string? PostalCode { get; set; } // CEP (sï¿½ dï¿½gitos)
 
     [MaxLength(60)]
     public string Country { get; set; } = "Brasil";
 
-    // Geolocalização (opcional)
+    // Geolocalizaï¿½ï¿½o (opcional)
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
 
@@ -81,7 +81,7 @@ public class Establishment
     [MaxLength(200)]
     public string? TikTok { get; set; }
 
-    // Segurança de senha (armazenar apenas hash e metadados)
+    // Seguranï¿½a de senha (armazenar apenas hash e metadados)
     [Required]
     public string PasswordHash { get; set; } = default!;
 
@@ -95,14 +95,14 @@ public class Establishment
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
-    // ==================== NAVEGAÇÃO ====================
+    // ==================== NAVEGAï¿½ï¿½O ====================
     [Required]
     public Guid AccessLevelId { get; set; }
 
     [ForeignKey(nameof(AccessLevelId))]
     public AccessLevel? AccessLevel { get; set; }
 
-    // Navegação para Category
+    // Navegaï¿½ï¿½o para Category
     [ForeignKey(nameof(CategoryId))]
     public Category? Category { get; set; }
 
@@ -128,4 +128,46 @@ public class Establishment
 
     [Column("FeaturesEnabled", TypeName = "jsonb")]
     public string? FeaturesEnabled { get; set; }
+
+    // ==================== MARKETPLACE ====================
+
+    [Column("IsMarketplaceActive")]
+    public bool IsMarketplaceActive { get; set; } = false;
+
+    [Column("MarketplaceDescription")]
+    [MaxLength(2000)]
+    public string? MarketplaceDescription { get; set; }
+
+    [Column("LogoUrl")]
+    [MaxLength(500)]
+    public string? LogoUrl { get; set; }
+
+    [Column("BannerUrl")]
+    [MaxLength(500)]
+    public string? BannerUrl { get; set; }
+
+    [Column("AverageRating", TypeName = "decimal(3,2)")]
+    public decimal AverageRating { get; set; } = 0;
+
+    [Column("TotalRatings")]
+    public int TotalRatings { get; set; } = 0;
+
+    [Column("DeliveryRadiusKm", TypeName = "decimal(5,1)")]
+    public decimal DeliveryRadiusKm { get; set; } = 10;
+
+    [Column("MinOrderAmount", TypeName = "decimal(10,2)")]
+    public decimal MinOrderAmount { get; set; } = 0;
+
+    [Column("AverageDeliveryMinutes")]
+    public int AverageDeliveryMinutes { get; set; } = 60;
+
+    [Column("StripeConnectAccountId")]
+    [MaxLength(200)]
+    public string? StripeConnectAccountId { get; set; }
+
+    [Column("MarketplaceOpeningHours", TypeName = "jsonb")]
+    public string? MarketplaceOpeningHours { get; set; }
+
+    [Column("AcceptingOrders")]
+    public bool AcceptingOrders { get; set; } = true;
 }

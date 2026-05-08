@@ -68,8 +68,8 @@ public class PricingController : ControllerBase
         if (HttpContext.Items.TryGetValue("CurrentEstablishmentId", out var custEstId) && custEstId is Guid customerEstId)
             return customerEstId;
 
-        // 3. Fallback para estabelecimento padrão (rotas públicas)
-        return Guid.Parse("e0000000-0000-0000-0000-000000000001");
+        // 3. Sem fallback - exigir autenticação
+        throw new UnauthorizedAccessException("EstablishmentId nao encontrado na sessao");
     }
 
     /// <summary>

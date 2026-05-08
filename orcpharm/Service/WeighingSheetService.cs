@@ -330,7 +330,7 @@ public class WeighingSheetService
         // Rodapé
         sb.AppendLine("<div class='footer'>");
         sb.AppendLine($"    <p>Documento gerado em: {DateTime.Now:dd/MM/yyyy HH:mm:ss}</p>");
-        sb.AppendLine($"    <p>Sistema OrcPharm - Gestão de Farmácia de Manipulação</p>");
+        sb.AppendLine($"    <p>Sistema Formula Clear - Gestão de Farmácia de Manipulação</p>");
         sb.AppendLine("</div>");
 
         // Script para impressão automática

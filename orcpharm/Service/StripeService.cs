@@ -3,7 +3,7 @@ using Data;
 using Models;
 using Microsoft.EntityFrameworkCore;
 
-// Aliases explícitos para evitar ambiguidades
+// Aliases explï¿½citos para evitar ambiguidades
 using StripeCustomer = Stripe.Customer;
 using StripeCustomerService = Stripe.CustomerService;
 using StripeCustomerCreateOptions = Stripe.CustomerCreateOptions;
@@ -30,20 +30,51 @@ public class StripeService
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _config;
+    private readonly IEncryptionService _encryption;
     private readonly ILogger<StripeService> _logger;
 
-    public StripeService(AppDbContext context, IConfiguration config, ILogger<StripeService> logger)
+    public StripeService(AppDbContext context, IConfiguration config, IEncryptionService encryption, ILogger<StripeService> logger)
     {
         _context = context;
         _config = config;
+        _encryption = encryption;
         _logger = logger;
-        StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
+    }
+
+    /// <summary>
+    /// Configura a API key do Stripe a partir do banco de dados (PaymentGatewayConfig)
+    /// </summary>
+    private async Task EnsureStripeConfiguredAsync()
+    {
+        var stripeConfig = await _context.Set<PaymentGatewayConfig>()
+            .FirstOrDefaultAsync(g => g.GatewayType == PaymentGatewayType.Stripe && g.IsActive);
+
+        if (stripeConfig != null)
+        {
+            var secretKey = _encryption.Decrypt(stripeConfig.SecretKeyEncrypted ?? "");
+            if (!string.IsNullOrEmpty(secretKey))
+            {
+                StripeConfiguration.ApiKey = secretKey;
+                return;
+            }
+        }
+
+        // Fallback para config (dev/teste)
+        var configKey = _config["Stripe:SecretKey"];
+        if (!string.IsNullOrEmpty(configKey))
+        {
+            StripeConfiguration.ApiKey = configKey;
+            return;
+        }
+
+        throw new InvalidOperationException("Stripe API Key nÃ£o configurada. Configure via PaymentGatewayConfig no banco ou Stripe:SecretKey no appsettings.");
     }
 
     public async Task<StripeCustomer> CreateCustomerAsync(Establishment establishment)
     {
         try
         {
+            await EnsureStripeConfiguredAsync();
             var options = new StripeCustomerCreateOptions
             {
                 Email = establishment.Email,
@@ -73,6 +104,7 @@ public class StripeService
     {
         try
         {
+            await EnsureStripeConfiguredAsync();
             var options = new StripeSubscriptionCreateOptions
             {
                 Customer = customerId,
@@ -114,6 +146,8 @@ public class StripeService
             var plan = await _context.Set<SubscriptionPlan>().FindAsync(planId);
             if (plan == null)
                 throw new ArgumentException("Plan not found");
+
+            await EnsureStripeConfiguredAsync();
 
             var priceId = billingCycle == "YEARLY" ? plan.StripePriceIdYearly : plan.StripePriceIdMonthly;
             if (string.IsNullOrEmpty(priceId))
@@ -182,6 +216,7 @@ public class StripeService
     {
         try
         {
+            await EnsureStripeConfiguredAsync();
             var subscription = await _context.Set<Models.Subscription>()
                 .FirstOrDefaultAsync(s => s.EstablishmentId == establishmentId);
 
@@ -208,6 +243,7 @@ public class StripeService
     {
         try
         {
+            await EnsureStripeConfiguredAsync();
             var service = new StripeSubscriptionService();
 
             if (cancelImmediately)
@@ -234,6 +270,7 @@ public class StripeService
     {
         try
         {
+            await EnsureStripeConfiguredAsync();
             var service = new StripeSubscriptionService();
             var subscription = await service.GetAsync(subscriptionId);
 
@@ -263,6 +300,7 @@ public class StripeService
     {
         try
         {
+            await EnsureStripeConfiguredAsync();
             var service = new StripeInvoiceService();
             var options = new StripeInvoiceListOptions
             {

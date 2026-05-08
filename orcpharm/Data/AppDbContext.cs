@@ -15,7 +15,7 @@ using Models.Cart;
 namespace Data;
 
 /// <summary>
-/// DbContext principal do OrcPharm - Sistema de Gestão para Farmácias de Manipulação
+/// DbContext principal do Formula Clear - Sistema de Gestão para Farmácias de Manipulação
 /// </summary>
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
@@ -90,7 +90,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Subscription> Subscriptions { get; set; } = null!;
 
     /// <summary>
-    /// Faturas de cobrança da assinatura SaaS (Farmácia → OrcPharm via Stripe)
+    /// Faturas de cobrança da assinatura SaaS (Farmácia → Formula Clear via Stripe)
     /// </summary>
     public DbSet<SubscriptionInvoice> SubscriptionInvoices { get; set; } = null!;
 
@@ -132,6 +132,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<AccessProfile> AccessProfiles => Set<AccessProfile>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     // ════════════════════════════════════════════════════════════════════════
     // AUTENTICAÇÃO & SEGURANÇA
@@ -366,6 +367,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public DbSet<CouponUsage> CouponUsages { get; set; } = null!;
 
+    // ════════════════════════════════════════════════════════════════════════
+    // MARKETPLACE
+    // ════════════════════════════════════════════════════════════════════════
+
+    public DbSet<Models.Marketplace.PlatformCommission> PlatformCommissions { get; set; } = null!;
+    public DbSet<Models.Marketplace.PlatformTransaction> PlatformTransactions { get; set; } = null!;
+    public DbSet<Models.Marketplace.PharmacyRating> PharmacyRatings { get; set; } = null!;
+    public DbSet<Models.Marketplace.ProductRating> ProductRatings { get; set; } = null!;
+    public DbSet<Models.Marketplace.DeliveryEstimate> DeliveryEstimates { get; set; } = null!;
+    public DbSet<Models.Marketplace.CustomerDevice> CustomerDevices { get; set; } = null!;
+    public DbSet<Models.Marketplace.CustomerAddress> CustomerAddresses { get; set; } = null!;
+    public DbSet<Models.Marketplace.PharmacyPayoutAccount> PharmacyPayoutAccounts { get; set; } = null!;
+    public DbSet<Models.Marketplace.SearchHistory> SearchHistories { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -556,6 +570,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         ConfigurePortalClienteEntities(modelBuilder);
         ConfigureCatalogoEntities(modelBuilder);
         ConfigureControladosEntities(modelBuilder);
+        ConfigureMarketplaceEntities(modelBuilder);
 
         // ──────────────────────────────────────────────────────────────────
         // SEED DE DADOS INICIAIS
@@ -1223,7 +1238,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     }
 
     /// <summary>
-    /// Configura SubscriptionInvoices (Faturas SaaS - Farmácia → OrcPharm)
+    /// Configura SubscriptionInvoices (Faturas SaaS - Farmácia → Formula Clear)
     /// </summary>
     private void ConfigureSubscriptionInvoices(ModelBuilder modelBuilder)
     {
@@ -2228,6 +2243,184 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                   .WithMany()
                   .HasForeignKey(e => e.CustomerId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private void ConfigureMarketplaceEntities(ModelBuilder modelBuilder)
+    {
+        // ──────────────────────────────────────────────────────────────────
+        // PLATFORM COMMISSION
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.PlatformCommission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.EstablishmentId, e.WeekStartDate });
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PLATFORM TRANSACTION
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.PlatformTransaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.OrderId, e.Status });
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.StripePaymentIntentId);
+
+            entity.HasOne(e => e.Order)
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PHARMACY RATING
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.PharmacyRating>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.CustomerId);
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Order)
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PRODUCT RATING
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.ProductRating>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.CatalogProductId);
+            entity.HasIndex(e => e.CustomerId);
+
+            entity.HasOne(e => e.Product)
+                .WithMany()
+                .HasForeignKey(e => e.CatalogProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Order)
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // DELIVERY ESTIMATE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.DeliveryEstimate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.OrderId);
+            entity.HasIndex(e => e.Status);
+
+            entity.HasOne(e => e.Order)
+                .WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CUSTOMER DEVICE
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.CustomerDevice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.DeviceToken);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // CUSTOMER ADDRESS
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.CustomerAddress>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.CustomerId);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // PHARMACY PAYOUT ACCOUNT
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.PharmacyPayoutAccount>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.EstablishmentId).IsUnique();
+            entity.HasIndex(e => e.StripeConnectAccountId);
+
+            entity.HasOne(e => e.Establishment)
+                .WithMany()
+                .HasForeignKey(e => e.EstablishmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // SEARCH HISTORY
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<Models.Marketplace.SearchHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.SearchTerm);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

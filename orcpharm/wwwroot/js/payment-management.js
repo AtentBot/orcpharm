@@ -1,5 +1,10 @@
 // payment-management.js
 
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 let paymentsChart = null;
 let methodsChart = null;
 
@@ -222,9 +227,9 @@ function createTransactionRow(sale, payment) {
     
     tr.innerHTML = `
         <td>${formatDateTime(payment.paymentDate)}</td>
-        <td><a href="/Sales/Details/${sale.id}">${sale.code}</a></td>
-        <td>${sale.customerName || 'Não identificado'}</td>
-        <td>${methodIcon} ${formatPaymentMethod(payment.paymentMethod)}</td>
+        <td><a href="/Sales/Details/${sale.id}">${escapeHtml(sale.code)}</a></td>
+        <td>${escapeHtml(sale.customerName) || 'Não identificado'}</td>
+        <td>${methodIcon} ${escapeHtml(formatPaymentMethod(payment.paymentMethod))}</td>
         <td>${formatCurrency(payment.amount)}</td>
         <td>${statusBadge}</td>
         <td>
@@ -306,7 +311,7 @@ async function viewPaymentDetails(paymentId) {
             const payment = result.data;
             
             let detailsHtml = `
-                <div class="mb-3"><strong>Método:</strong> ${formatPaymentMethod(payment.paymentMethod)}</div>
+                <div class="mb-3"><strong>Método:</strong> ${escapeHtml(formatPaymentMethod(payment.paymentMethod))}</div>
                 <div class="mb-3"><strong>Valor:</strong> ${formatCurrency(payment.amount)}</div>
                 <div class="mb-3"><strong>Status:</strong> ${getStatusBadge(payment.paymentStatus)}</div>
                 <div class="mb-3"><strong>Data:</strong> ${formatDateTime(payment.paymentDate)}</div>
@@ -322,17 +327,17 @@ async function viewPaymentDetails(paymentId) {
             
             if (payment.paymentMethod.includes('CARTAO')) {
                 detailsHtml += `
-                    <div class="mb-3"><strong>Bandeira:</strong> ${payment.cardBrand}</div>
-                    <div class="mb-3"><strong>Últimos Dígitos:</strong> **** ${payment.cardLastDigits}</div>
+                    <div class="mb-3"><strong>Bandeira:</strong> ${escapeHtml(payment.cardBrand)}</div>
+                    <div class="mb-3"><strong>Últimos Dígitos:</strong> **** ${escapeHtml(payment.cardLastDigits)}</div>
                     <div class="mb-3"><strong>Parcelas:</strong> ${payment.installments}x</div>
-                    <div class="mb-3"><strong>NSU:</strong> ${payment.nsu}</div>
+                    <div class="mb-3"><strong>NSU:</strong> ${escapeHtml(payment.nsu)}</div>
                 `;
             }
             
             if (payment.paymentMethod === 'PIX' && payment.pixTransactionId) {
                 detailsHtml += `
-                    <div class="mb-3"><strong>Chave PIX:</strong> ${payment.pixKey}</div>
-                    <div class="mb-3"><strong>ID Transação:</strong> ${payment.pixTransactionId}</div>
+                    <div class="mb-3"><strong>Chave PIX:</strong> ${escapeHtml(payment.pixKey)}</div>
+                    <div class="mb-3"><strong>ID Transação:</strong> ${escapeHtml(payment.pixTransactionId)}</div>
                 `;
             }
             
@@ -462,7 +467,7 @@ function getStatusBadge(status) {
         'CANCELLED': '<span class="badge bg-secondary">Cancelado</span>',
         'REFUNDED': '<span class="badge bg-danger">Estornado</span>'
     };
-    return badges[status] || `<span class="badge bg-secondary">${status}</span>`;
+    return badges[status] || `<span class="badge bg-secondary">${escapeHtml(status)}</span>`;
 }
 
 function showToast(message, type = 'info') {
@@ -473,7 +478,7 @@ function showToast(message, type = 'info') {
     toast.setAttribute('role', 'alert');
     toast.innerHTML = `
         <div class="d-flex">
-            <div class="toast-body">${message}</div>
+            <div class="toast-body">${escapeHtml(message)}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     `;

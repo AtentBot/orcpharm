@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using DTOs.Auth;
 using Service.Auth;
 using Validators.Auth;
+using Service;
 
 namespace Controllers;
 
@@ -14,15 +16,18 @@ public class AuthController : ControllerBase
     private readonly AppDbContext _context;
     private readonly AuthService _authService;
     private readonly ILogger<AuthController> _logger;
+    private readonly AuditService _audit;
 
-    public AuthController(AppDbContext context, AuthService authService, ILogger<AuthController> logger)
+    public AuthController(AppDbContext context, AuthService authService, ILogger<AuthController> logger, AuditService audit)
     {
         _context = context;
         _authService = authService;
         _logger = logger;
+        _audit = audit;
     }
 
     // ==================== LOGIN ====================
+    [EnableRateLimiting("auth")]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] EmployeeLoginDto dto)
     {
@@ -71,6 +76,9 @@ public class AuthController : ControllerBase
 
             _logger.LogInformation("Login bem-sucedido: {EmployeeName} (ID: {EmployeeId})",
                 result.Employee?.Name, result.Employee?.Id);
+
+            if (result.Employee?.Id != null)
+                await _audit.LogAsync(HttpContext, "EMPLOYEE_LOGIN", "Employee", result.Employee.Id.ToString());
 
             return Ok(result);
         }
@@ -193,6 +201,7 @@ public class AuthController : ControllerBase
     }
 
     // ==================== RECUPERAÇÃO DE SENHA - PASSO 1: SOLICITAR CÓDIGO ====================
+    [EnableRateLimiting("password-reset")]
     [HttpPost("password/request-reset")]
     public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto)
     {
@@ -268,6 +277,8 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message });
 
             _logger.LogInformation("Senha redefinida com sucesso para: {Identifier}", dto.Identifier);
+
+            await _audit.LogAsync(HttpContext, "PASSWORD_RESET", "Employee", null, "Password reset completed");
 
             return Ok(new { message });
         }

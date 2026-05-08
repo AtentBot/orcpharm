@@ -10,7 +10,7 @@
 async function searchIngredients(query) {
     try {
         // USAR API DE PRICING (inclui preço e confiança)
-        const results = await OrcPharmPricing.searchIngredients(query, { limit: 10 });
+        const results = await FormulaClearPricing.searchIngredients(query, { limit: 10 });
         autocompleteLoading.style.display = 'none';
         
         if (results && results.length > 0) {
@@ -48,10 +48,10 @@ function showAutocompleteResults(results) {
         let priceDisplay = '';
         
         if (source) {
-            const sourceInfo = OrcPharmPricing.getPriceSourceInfo(source);
+            const sourceInfo = FormulaClearPricing.getPriceSourceInfo(source);
             priceIndicator = `<span class="price-dot ${sourceInfo.class}" 
                                     title="${sourceInfo.text} - ${confidence}%"></span>`;
-            priceDisplay = price ? `<small class="text-success">${OrcPharmPricing.formatPrice(price)}/${item.unit || 'un'}</small>` : '';
+            priceDisplay = price ? `<small class="text-success">${FormulaClearPricing.formatPrice(price)}/${item.unit || 'un'}</small>` : '';
         }
         
         return `
@@ -85,7 +85,7 @@ function showAutocompleteResults(results) {
                     ${confidence > 0 ? `
                         <small class="text-muted">
                             <span class="confidence-bar-mini" style="width: 30px;">
-                                <span class="confidence-bar-mini-fill ${OrcPharmPricing.getConfidenceLevel(confidence)}" 
+                                <span class="confidence-bar-mini-fill ${FormulaClearPricing.getConfidenceLevel(confidence)}" 
                                       style="width: ${confidence}%"></span>
                             </span>
                         </small>
@@ -131,8 +131,8 @@ function selectIngredient(element) {
     let priceInfo = '';
     
     if (data.price && data.priceSource) {
-        const sourceInfo = OrcPharmPricing.getPriceSourceInfo(data.priceSource);
-        priceInfo = ` • ${sourceInfo.icon} ${OrcPharmPricing.formatPrice(data.price)}/${data.defaultUnit}`;
+        const sourceInfo = FormulaClearPricing.getPriceSourceInfo(data.priceSource);
+        priceInfo = ` • ${sourceInfo.icon} ${FormulaClearPricing.formatPrice(data.price)}/${data.defaultUnit}`;
     }
     
     document.getElementById('ingredientCategory').textContent = categoryInfo + priceInfo;
@@ -168,7 +168,7 @@ async function updateCurrentFormulaPrice() {
     priceEl.textContent = formatCurrency(localPrice);
     
     // Depois: API de pricing (mais preciso)
-    if (typeof OrcPharmPricing !== 'undefined' && selectedProductType) {
+    if (typeof FormulaClearPricing !== 'undefined' && selectedProductType) {
         try {
             priceEl.innerHTML = `${formatCurrency(localPrice)} <small class="text-muted"><i class="bi bi-hourglass-split"></i></small>`;
             
@@ -183,7 +183,7 @@ async function updateCurrentFormulaPrice() {
                 }))
             };
             
-            const result = await OrcPharmPricing.calculateFormulaPrice(request);
+            const result = await FormulaClearPricing.calculateFormulaPrice(request);
             
             if (result) {
                 lastPricingResult = result;
@@ -191,14 +191,14 @@ async function updateCurrentFormulaPrice() {
                 
                 // Indicador de confiança
                 const confidence = result.averageConfidence || 0;
-                const sourceInfo = OrcPharmPricing.getPriceSourceInfo(
+                const sourceInfo = FormulaClearPricing.getPriceSourceInfo(
                     confidence >= 80 ? 1 : confidence >= 50 ? 2 : 3
                 );
                 
                 confidenceEl.innerHTML = `
                     <span title="Confiança: ${confidence}%">${sourceInfo.icon} ${confidence}%</span>
                     <span class="confidence-bar-mini">
-                        <span class="confidence-bar-mini-fill ${OrcPharmPricing.getConfidenceLevel(confidence)}" 
+                        <span class="confidence-bar-mini-fill ${FormulaClearPricing.getConfidenceLevel(confidence)}" 
                               style="width: ${confidence}%"></span>
                     </span>
                     ${result.inStockCount > 0 ? `<small class="text-success ms-2">${result.inStockCount} em estoque</small>` : ''}

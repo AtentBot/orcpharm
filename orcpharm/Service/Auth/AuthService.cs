@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Data;
 using DTOs.Auth;
 using Models.Auth;
 using Models.Employees;
 using Service.Notifications;
 using System.Security.Cryptography;
-using Isopoh.Cryptography.Argon2; // ✅ CORRIGIDO: Usar Argon2
+using Isopoh.Cryptography.Argon2;
 
 namespace Service.Auth;
 
@@ -13,11 +14,13 @@ public class AuthService
 {
     private readonly AppDbContext _context;
     private readonly WhatsAppService _whatsAppService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(AppDbContext context, WhatsAppService whatsAppService)
+    public AuthService(AppDbContext context, WhatsAppService whatsAppService, ILogger<AuthService> logger)
     {
         _context = context;
         _whatsAppService = whatsAppService;
+        _logger = logger;
     }
 
     public async Task<LoginResponseDto> LoginAsync(EmployeeLoginDto dto, string ipAddress, string? userAgent)
@@ -132,37 +135,31 @@ public class AuthService
 
     public async Task<(bool Success, string Message)> RequestPasswordResetAsync(RequestPasswordResetDto dto)
     {
-        Console.WriteLine($"🔵 [RequestPasswordResetAsync] INICIANDO para: {dto.Identifier}");
+        _logger.LogInformation("RequestPasswordResetAsync iniciado para: {Identifier}", dto.Identifier);
 
         var employee = await _context.Employees
             .FirstOrDefaultAsync(e => e.Cpf == dto.Identifier || e.WhatsApp == dto.Identifier);
 
         if (employee == null)
         {
-            Console.WriteLine($"⚠️ [RequestPasswordResetAsync] Employee não encontrado");
+            _logger.LogDebug("Employee não encontrado para identificador informado");
             await Task.Delay(Random.Shared.Next(1000, 3000));
             return (true, "Se o CPF/WhatsApp existir, você receberá o código de recuperação");
         }
-
-        Console.WriteLine($"✅ [RequestPasswordResetAsync] Employee: {employee.Id}, WhatsApp: '{employee.WhatsApp}'");
 
         var recentTokens = await _context.PasswordResetTokens
             .Where(t => t.EmployeeId == employee.Id &&
                        t.CreatedAt > DateTime.UtcNow.AddHours(-1))
             .CountAsync();
 
-        Console.WriteLine($"📊 [RequestPasswordResetAsync] Tokens recentes: {recentTokens}");
-
         if (recentTokens >= 3)
         {
-            Console.WriteLine($"❌ [RequestPasswordResetAsync] Rate limit excedido");
+            _logger.LogWarning("Rate limit excedido para employee {EmployeeId}", employee.Id);
             return (false, "Limite de tentativas excedido. Aguarde 1 hora");
         }
 
         var code = GenerateNumericCode(6);
         var token = GenerateSecureToken();
-
-        Console.WriteLine($"🔑 [RequestPasswordResetAsync] Código gerado: {code}");
 
         var resetToken = new PasswordResetToken
         {
@@ -179,36 +176,28 @@ public class AuthService
             _context.PasswordResetTokens.Add(resetToken);
             await _context.SaveChangesAsync();
 
-            Console.WriteLine($"✅ [RequestPasswordResetAsync] Token salvo no banco");
-
             if (dto.Method.ToUpper() == "WHATSAPP" && !string.IsNullOrEmpty(employee.WhatsApp))
             {
-                Console.WriteLine($"📱 [RequestPasswordResetAsync] CONDIÇÕES OK! Enviando WhatsApp...");
-
                 var (whatsappSuccess, whatsappMessage) = await _whatsAppService.SendPasswordResetCodeAsync(
                     employee.WhatsApp,
                     code,
                     employee.FullName
                 );
 
-                Console.WriteLine($"📱 [RequestPasswordResetAsync] WhatsApp retornou:");
-                Console.WriteLine($"   - Success: {whatsappSuccess}");
-                Console.WriteLine($"   - Message: {whatsappMessage}");
-
                 if (!whatsappSuccess)
                 {
-                    Console.WriteLine($"❌ [RequestPasswordResetAsync] WhatsApp FALHOU!");
+                    _logger.LogWarning("Falha ao enviar WhatsApp para employee {EmployeeId}", employee.Id);
                     return (false, $"Erro ao enviar código: {whatsappMessage}");
                 }
 
-                Console.WriteLine($"✅ [RequestPasswordResetAsync] WhatsApp ENVIADO COM SUCESSO!");
+                _logger.LogInformation("Código de reset enviado via WhatsApp para employee {EmployeeId}", employee.Id);
             }
 
             return (true, "Código de recuperação enviado");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ [RequestPasswordResetAsync] EXCEPTION: {ex.Message}");
+            _logger.LogError(ex, "Erro ao processar password reset para employee {EmployeeId}", employee.Id);
             return (false, $"Erro ao processar solicitação: {ex.Message}");
         }
     }
@@ -242,6 +231,19 @@ public class AuthService
         if (employee == null)
             return (false, "Código inválido ou expirado");
 
+        // Verificar tentativas falhas recentes (brute-force protection)
+        var recentFailedAttempts = await _context.PasswordResetTokens
+            .Where(t => t.EmployeeId == employee.Id &&
+                       !t.IsUsed &&
+                       t.ExpiresAt > DateTime.UtcNow)
+            .SumAsync(t => t.Attempts);
+
+        if (recentFailedAttempts >= 5)
+        {
+            _logger.LogWarning("Muitas tentativas de reset para employee {EmployeeId}", employee.Id);
+            return (false, "Muitas tentativas incorretas. Solicite um novo código.");
+        }
+
         var token = await _context.PasswordResetTokens
             .Where(t => t.EmployeeId == employee.Id &&
                        t.Code == dto.Code &&
@@ -250,7 +252,19 @@ public class AuthService
             .FirstOrDefaultAsync();
 
         if (token == null)
+        {
+            // Incrementar tentativas no token mais recente
+            var latestToken = await _context.PasswordResetTokens
+                .Where(t => t.EmployeeId == employee.Id && !t.IsUsed && t.ExpiresAt > DateTime.UtcNow)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefaultAsync();
+            if (latestToken != null)
+            {
+                latestToken.Attempts++;
+                await _context.SaveChangesAsync();
+            }
             return (false, "Código inválido ou expirado");
+        }
 
         // ✅ CORRIGIDO: Usar Argon2 em vez de BCrypt
         employee.PasswordHash = HashPassword(dto.NewPassword);

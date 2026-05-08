@@ -36,6 +36,20 @@ public class PaymentService
         if (dto.Amount > remainingAmount)
             return (false, $"Valor do pagamento (R$ {dto.Amount:F2}) excede o valor restante (R$ {remainingAmount:F2})", null);
 
+        // Verificar pagamento duplicado por identificadores externos
+        if (!string.IsNullOrEmpty(dto.Nsu))
+        {
+            var duplicateNsu = await _context.SalePayments.AnyAsync(p => p.Nsu == dto.Nsu);
+            if (duplicateNsu)
+                return (false, $"Pagamento com NSU {dto.Nsu} já registrado", null);
+        }
+        if (!string.IsNullOrEmpty(dto.PixTransactionId))
+        {
+            var duplicatePix = await _context.SalePayments.AnyAsync(p => p.PixTransactionId == dto.PixTransactionId);
+            if (duplicatePix)
+                return (false, $"Pagamento com transação PIX {dto.PixTransactionId} já registrado", null);
+        }
+
         var payment = new SalePayment
         {
             SaleId = saleId,

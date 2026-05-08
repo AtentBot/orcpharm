@@ -27,7 +27,7 @@ public class DashboardApiController : ControllerBase
     {
         if (HttpContext.Items.TryGetValue("EstablishmentId", out var estId) && estId is Guid id)
             return id;
-        return Guid.Parse("e0000000-0000-0000-0000-000000000001");
+        throw new UnauthorizedAccessException("EstablishmentId nao encontrado na sessao");
     }
 
     /// <summary>

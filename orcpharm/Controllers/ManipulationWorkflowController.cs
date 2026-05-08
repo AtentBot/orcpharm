@@ -38,19 +38,16 @@ public class ManipulationWorkflowController : ControllerBase
         if (Guid.TryParse(establishmentIdStr, out var establishmentId))
             return establishmentId;
 
-        // Se não encontrar, retorna o primeiro establishment (desenvolvimento)
-        return _context.Establishments.Select(e => e.Id).FirstOrDefault();
+        throw new UnauthorizedAccessException("EstablishmentId nao encontrado na sessao");
     }
 
     private Guid GetEmployeeId()
     {
-        // Pega do cookie/claim/header - ajuste conforme sua implementação
         var employeeIdStr = _httpContextAccessor.HttpContext?.Request.Cookies["EmployeeId"];
         if (Guid.TryParse(employeeIdStr, out var employeeId))
             return employeeId;
 
-        // Se não encontrar, retorna o primeiro employee (desenvolvimento)
-        return _context.Employees.Select(e => e.Id).FirstOrDefault();
+        throw new UnauthorizedAccessException("EmployeeId nao encontrado na sessao");
     }
 
     /// <summary>

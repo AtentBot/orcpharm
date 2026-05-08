@@ -5,7 +5,7 @@ namespace Models.Billing;
 
 /// <summary>
 /// Representa uma fatura de cobrança da assinatura SaaS
-/// (A farmácia PAGA ao OrcPharm para usar o sistema)
+/// (A farmácia PAGA ao Formula Clear para usar o sistema)
 /// </summary>
 [Table("subscription_invoices")]
 public class SubscriptionInvoice

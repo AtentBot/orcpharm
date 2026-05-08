@@ -426,7 +426,7 @@ public class CustomerPortalController : ControllerBase
     /// Adiciona fórmula ao carrinho (usando CartItem baseado em sessão)
     /// </summary>
     [HttpPost("cart/add")]
-    public async Task<IActionResult> AddToCart([FromBody] AddToCartRequest request)
+    public async Task<IActionResult> AddToCart([FromBody] PortalAddToCartRequest request)
     {
         var (customerId, establishmentId) = await GetCustomerContext();
         
@@ -607,7 +607,7 @@ public class CustomerPortalController : ControllerBase
     /// Atualiza quantidade de um item no carrinho
     /// </summary>
     [HttpPut("cart/items/{itemId}")]
-    public async Task<IActionResult> UpdateCartItem(Guid itemId, [FromBody] UpdateCartItemRequest request)
+    public async Task<IActionResult> UpdateCartItem(Guid itemId, [FromBody] PortalUpdateCartItemRequest request)
     {
         var sessionToken = HttpContext.Request.Cookies["CartSession"];
 
@@ -671,12 +671,12 @@ public class PortalIngredientDto
     public string? Notes { get; set; }
 }
 
-public class AddToCartRequest
+public class PortalAddToCartRequest
 {
     public List<Guid> FormulaIds { get; set; } = new();
 }
 
-public class UpdateCartItemRequest
+public class PortalUpdateCartItemRequest
 {
     public int Quantity { get; set; }
 }

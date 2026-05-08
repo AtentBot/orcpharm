@@ -1,5 +1,5 @@
 /**
- * OrcPharm - Employees Module Shared JavaScript
+ * Formula Clear - Employees Module Shared JavaScript
  * Utility functions and helpers for employee management
  */
 
@@ -666,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 
 // Make utilities available globally
-window.OrcPharm = {
+window.FormulaClear = {
     Auth,
     Format,
     Validate,

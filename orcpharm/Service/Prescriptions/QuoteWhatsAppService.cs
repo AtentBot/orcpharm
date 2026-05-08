@@ -30,8 +30,8 @@ public class QuoteWhatsAppService
         _httpClient = new HttpClient();
         _logger = logger;
 
-        // Usar credenciais da configuração ou fallback para valores padrão
-        _apiKey = configuration["AtentBot:ApiKey"] ?? "33B2682CFAFB-4184-966E-71A3028B7A37";
+        _apiKey = configuration["AtentBot:ApiKey"]
+            ?? throw new InvalidOperationException("AtentBot:ApiKey não configurada.");
         _apiUrl = configuration["AtentBot:ApiUrl"] ?? "https://api.atentbot.com/message/sendText/pharm";
         _baseUrl = configuration["App:BaseUrl"] ?? "https://orcpharm.atentbot.com";
     }
@@ -80,7 +80,7 @@ public class QuoteWhatsAppService
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Orçamento {Code} enviado por WhatsApp para {Phone}",
-                    quote.Code, phone);
+                    quote.Code, phone?.Length > 6 ? phone[..4] + "****" + phone[^2..] : "***");
             }
 
             return (result.Success, result.Message);
@@ -289,7 +289,7 @@ Qualquer dúvida, estamos à disposição!";
 
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogInformation("WhatsApp enviado com sucesso para {Phone}", phone);
+                _logger.LogInformation("WhatsApp enviado com sucesso para {Phone}", phone?.Length > 6 ? phone[..4] + "****" + phone[^2..] : "***");
                 return (true, "Mensagem enviada com sucesso", null);
             }
             else

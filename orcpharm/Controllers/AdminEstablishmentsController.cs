@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Data;
+using Service;
 
 namespace Controllers.Api;
 
@@ -10,11 +11,23 @@ public class AdminEstablishmentsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<AdminEstablishmentsController> _logger;
+    private readonly AuditService _audit;
 
-    public AdminEstablishmentsController(AppDbContext context, ILogger<AdminEstablishmentsController> logger)
+    /// <summary>Sanitiza campo CSV contra formula injection (=, +, -, @, tab, carriage return)</summary>
+    private static string SanitizeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        var trimmed = value.Replace(";", ",").Replace("\n", " ").Replace("\r", " ");
+        if (trimmed.StartsWith("=") || trimmed.StartsWith("+") || trimmed.StartsWith("-") || trimmed.StartsWith("@") || trimmed.StartsWith("\t"))
+            trimmed = "'" + trimmed;
+        return trimmed;
+    }
+
+    public AdminEstablishmentsController(AppDbContext context, ILogger<AdminEstablishmentsController> logger, AuditService audit)
     {
         _context = context;
         _logger = logger;
+        _audit = audit;
     }
 
     [HttpGet]
@@ -237,6 +250,7 @@ public class AdminEstablishmentsController : ControllerBase
             await _context.SaveChangesAsync();
 
             _logger.LogWarning("Estabelecimento {Id} bloqueado. Motivo: {Reason}", id, dto.Reason);
+            await _audit.LogAsync(HttpContext, "ESTABLISHMENT_BLOCKED", "Establishment", id.ToString(), dto.Reason);
 
             return Ok(new { message = "Estabelecimento bloqueado" });
         }
@@ -262,6 +276,7 @@ public class AdminEstablishmentsController : ControllerBase
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Estabelecimento {Id} desbloqueado", id);
+            await _audit.LogAsync(HttpContext, "ESTABLISHMENT_UNBLOCKED", "Establishment", id.ToString());
 
             return Ok(new { message = "Estabelecimento desbloqueado" });
         }
@@ -297,7 +312,7 @@ public class AdminEstablishmentsController : ControllerBase
             var csv = "Nome Fantasia;Razão Social;CNPJ;Email;WhatsApp;Cidade;UF;Ativo;Assinatura;Cadastro\n";
             foreach (var e in establishments)
             {
-                csv += $"{e.NomeFantasia};{e.RazaoSocial};{e.Cnpj};{e.Email};{e.WhatsApp};{e.City};{e.State};{(e.IsActive ? "Sim" : "Não")};{e.SubscriptionStatus};{e.CreatedAt:dd/MM/yyyy}\n";
+                csv += $"{SanitizeCsv(e.NomeFantasia)};{SanitizeCsv(e.RazaoSocial)};{SanitizeCsv(e.Cnpj)};{SanitizeCsv(e.Email)};{SanitizeCsv(e.WhatsApp)};{SanitizeCsv(e.City)};{SanitizeCsv(e.State)};{(e.IsActive ? "Sim" : "Não")};{e.SubscriptionStatus};{e.CreatedAt:dd/MM/yyyy}\n";
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv);

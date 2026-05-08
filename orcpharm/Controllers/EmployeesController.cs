@@ -17,27 +17,44 @@ public class EmployeesController : ControllerBase
     private readonly AppDbContext _db;
     private readonly ILogger<EmployeesController> _logger;
 
+    /// <summary>Mascara CPF: exibe apenas Ãºltimos 4 dÃ­gitos (***.***.***-XX)</summary>
+    private static string MaskCpf(string? cpf)
+    {
+        if (string.IsNullOrEmpty(cpf)) return "";
+        var digits = cpf.Replace(".", "").Replace("-", "").Replace(" ", "");
+        if (digits.Length < 4) return "***";
+        return $"***.***.*{digits[^4..^2]}-{digits[^2..]}";
+    }
+
+    /// <summary>Mascara conta bancÃ¡ria: exibe apenas Ãºltimos 3 dÃ­gitos</summary>
+    private static string MaskBankAccount(string? account)
+    {
+        if (string.IsNullOrEmpty(account)) return "";
+        if (account.Length <= 3) return "***";
+        return new string('*', account.Length - 3) + account[^3..];
+    }
+
     public EmployeesController(AppDbContext db, ILogger<EmployeesController> logger)
     {
         _db = db;
         _logger = logger;
     }
 
-    // ==================== LOGIN DO FUNCIONÁRIO ====================
+    // ==================== LOGIN DO FUNCIONï¿½RIO ====================
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        // Remover formatação do CPF
+        // Remover formataï¿½ï¿½o do CPF
         var cpf = DocumentValidator.RemoveFormatting(dto.Cpf);
 
         // Validar CPF
         if (!DocumentValidator.IsValidCpf(cpf))
 
-            return BadRequest(new { error = "CPF inválido" });
+            return BadRequest(new { error = "CPF invï¿½lido" });
 
         try
         {
-            // Buscar funcionário
+            // Buscar funcionï¿½rio
             var employee = await _db.Employees
                 .Include(e => e.Establishment)
                 .Include(e => e.JobPosition)
@@ -45,13 +62,13 @@ public class EmployeesController : ControllerBase
 
 
             if (employee == null)
-                return Unauthorized(new { error = "Credenciais inválidas" });
+                return Unauthorized(new { error = "Credenciais invï¿½lidas" });
 
-            // Verificar status do funcionário
+            // Verificar status do funcionï¿½rio
             if (employee.Status != "Ativo")
-                return Unauthorized(new { error = $"Funcionário {employee.Status.ToLower()}" });
+                return Unauthorized(new { error = $"Funcionï¿½rio {employee.Status.ToLower()}" });
 
-            // Verificar se está bloqueado
+            // Verificar se estï¿½ bloqueado
             if (employee.LockedUntil.HasValue && employee.LockedUntil.Value > DateTime.UtcNow)
             {
                 var remainingMinutes = (employee.LockedUntil.Value - DateTime.UtcNow).TotalMinutes;
@@ -68,14 +85,14 @@ public class EmployeesController : ControllerBase
                 {
                     employee.LockedUntil = DateTime.UtcNow.AddMinutes(30);
                     await _db.SaveChangesAsync();
-                    return Unauthorized(new { error = "Conta bloqueada por 30 minutos devido a múltiplas tentativas falhas" });
+                    return Unauthorized(new { error = "Conta bloqueada por 30 minutos devido a mï¿½ltiplas tentativas falhas" });
                 }
 
                 await _db.SaveChangesAsync();
-                return Unauthorized(new { error = "Credenciais inválidas" });
+                return Unauthorized(new { error = "Credenciais invï¿½lidas" });
             }
 
-            // Verificar se estabelecimento está ativo
+            // Verificar se estabelecimento estï¿½ ativo
             if (!employee.Establishment!.IsActive)
                 return Unauthorized(new { error = "Estabelecimento inativo" });
 
@@ -83,7 +100,7 @@ public class EmployeesController : ControllerBase
             employee.FailedLoginAttempts = 0;
             employee.LockedUntil = null;
 
-            // Criar sessão
+            // Criar sessï¿½o
             var session = new EmployeeSession
             {
                 Id = Guid.NewGuid(),
@@ -101,23 +118,23 @@ public class EmployeesController : ControllerBase
                 LastActivityAt = DateTime.UtcNow,
                 IsActive = true,
                 RequiresTwoFactor = employee.TwoFactorEnabled,
-                TwoFactorVerified = !employee.TwoFactorEnabled, // Se não tem 2FA, já está verificado
+                TwoFactorVerified = !employee.TwoFactorEnabled, // Se nï¿½o tem 2FA, jï¿½ estï¿½ verificado
                 SessionName = $"{GetBrowser(Request.Headers["User-Agent"].ToString())} - {employee.City}/{employee.State}"
             };
 
             _db.EmployeeSessions.Add(session);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation("Funcionário {FullName} (ID: {Id}) fez login com sucesso",
+            _logger.LogInformation("Funcionï¿½rio {FullName} (ID: {Id}) fez login com sucesso",
                 employee.FullName, employee.Id);
 
             Response.Cookies.Append("SessionId", session.Token, new CookieOptions
             {
-                HttpOnly = true,              // Proteção contra XSS
+                HttpOnly = true,              // Proteï¿½ï¿½o contra XSS
                 Secure = Request.IsHttps,     // true apenas em HTTPS
-                SameSite = SameSiteMode.Lax,  // Permite navegação normal
-                Expires = session.ExpiresAt,  // Mesmo tempo da sessão (8h)
-                Path = "/",                   // Válido para todo o site
+                SameSite = SameSiteMode.Lax,  // Permite navegaï¿½ï¿½o normal
+                Expires = session.ExpiresAt,  // Mesmo tempo da sessï¿½o (8h)
+                Path = "/",                   // Vï¿½lido para todo o site
                 IsEssential = true            // Cookie essencial para funcionamento
             });
 
@@ -157,49 +174,49 @@ public class EmployeesController : ControllerBase
         }
     }
 
-    // ==================== CRIAR FUNCIONÁRIO ====================
+    // ==================== CRIAR FUNCIONï¿½RIO ====================
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeDto dto)
     {
-        // TODO: Verificar permissões do token (implementar na Fase 2)
+        // TODO: Verificar permissï¿½es do token (implementar na Fase 2)
         // if (!await HasPermission("employees.create")) return Forbid();
 
         // Validar e limpar CPF
         var cpf = DocumentValidator.RemoveFormatting(dto.Cpf);
         if (!DocumentValidator.IsValidCpf(cpf))
-            return BadRequest(new { error = "CPF inválido" });
+            return BadRequest(new { error = "CPF invï¿½lido" });
 
         // Verificar CPF duplicado
         if (await _db.Employees.AnyAsync(e => e.Cpf == cpf))
-            return Conflict(new { error = "CPF já cadastrado" });
+            return Conflict(new { error = "CPF jï¿½ cadastrado" });
 
         // Validar PIS/PASEP se fornecido
         if (!string.IsNullOrEmpty(dto.PisPasep))
         {
             var pis = DocumentValidator.RemoveFormatting(dto.PisPasep);
             if (!DocumentValidator.IsValidPis(pis))
-                return BadRequest(new { error = "PIS/PASEP inválido" });
+                return BadRequest(new { error = "PIS/PASEP invï¿½lido" });
             dto.PisPasep = pis;
         }
 
         // Validar senha
         var (isPasswordValid, passwordErrors) = PasswordValidator.ValidatePassword(dto.Password);
         if (!isPasswordValid)
-            return BadRequest(new { error = "Senha inválida", details = passwordErrors });
+            return BadRequest(new { error = "Senha invï¿½lida", details = passwordErrors });
 
         // Verificar se cargo existe
         var jobPosition = await _db.JobPositions
             .FirstOrDefaultAsync(jp => jp.Id == dto.JobPositionId && jp.IsActive);
 
         if (jobPosition == null)
-            return BadRequest(new { error = "Cargo não encontrado ou inativo" });
+            return BadRequest(new { error = "Cargo nï¿½o encontrado ou inativo" });
 
         // Verificar se estabelecimento existe
         var establishment = await _db.Establishments
             .FirstOrDefaultAsync(e => e.Id == dto.EstablishmentId && e.IsActive);
 
         if (establishment == null)
-            return BadRequest(new { error = "Estabelecimento não encontrado ou inativo" });
+            return BadRequest(new { error = "Estabelecimento nï¿½o encontrado ou inativo" });
 
         var employee = new Employee
         {
@@ -225,7 +242,7 @@ public class EmployeesController : ControllerBase
             WhatsApp = dto.WhatsApp,
             Email = dto.Email,
 
-            // Endereço
+            // Endereï¿½o
             Street = dto.Street,
             Number = dto.Number,
             Complement = dto.Complement,
@@ -253,7 +270,7 @@ public class EmployeesController : ControllerBase
             DriverLicenseCategory = dto.DriverLicenseCategory,
             DriverLicenseExpiry = dto.DriverLicenseExpiry,
 
-            // Dados Bancários
+            // Dados Bancï¿½rios
             BankCode = dto.BankCode,
             BankName = dto.BankName,
             BankBranch = dto.BankBranch,
@@ -261,7 +278,7 @@ public class EmployeesController : ControllerBase
             BankAccountType = dto.BankAccountType,
             BankAccountDigit = dto.BankAccountDigit,
 
-            // Contato de Emergência
+            // Contato de Emergï¿½ncia
             EmergencyContactName = dto.EmergencyContactName,
             EmergencyContactRelationship = dto.EmergencyContactRelationship,
             EmergencyContactPhone = dto.EmergencyContactPhone,
@@ -273,11 +290,11 @@ public class EmployeesController : ControllerBase
             Status = "Ativo",
             ProbationEndDate = dto.HireDate.AddDays(dto.ProbationDays ?? 90),
 
-            // Segurança
+            // Seguranï¿½a
             PasswordHash = Argon2.Hash(dto.Password),
             PasswordAlgorithm = "argon2id-v1",
             PasswordCreatedAt = DateTime.UtcNow,
-            RequirePasswordChange = true, // Primeira senha é temporária
+            RequirePasswordChange = true, // Primeira senha ï¿½ temporï¿½ria
             TwoFactorEnabled = false,
             FailedLoginAttempts = 0,
 
@@ -289,7 +306,7 @@ public class EmployeesController : ControllerBase
 
         _db.Employees.Add(employee);
 
-        // Criar histórico inicial de cargo
+        // Criar histï¿½rico inicial de cargo
         var jobHistory = new EmployeeJobHistory
         {
             Id = Guid.NewGuid(),
@@ -298,8 +315,8 @@ public class EmployeesController : ControllerBase
             StartDate = employee.HireDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
             IsCurrent = true,
             SalaryAtTime = employee.Salary ?? 0,
-            ChangeReason = "Contratação",
-            Notes = "Admissão inicial",
+            ChangeReason = "Contrataï¿½ï¿½o",
+            Notes = "Admissï¿½o inicial",
             CreatedAt = DateTime.UtcNow,
             CreatedBy = employee.CreatedBy
         };
@@ -307,8 +324,8 @@ public class EmployeesController : ControllerBase
         _db.EmployeeJobHistories.Add(jobHistory);
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Funcionário {FullName} (CPF: {Cpf}) cadastrado com sucesso",
-            employee.FullName, DocumentValidator.FormatCpf(employee.Cpf));
+        _logger.LogInformation("FuncionÃ¡rio {FullName} cadastrado com sucesso (ID: {EmployeeId})",
+            employee.FullName, employee.Id);
 
         return CreatedAtAction(nameof(GetById), new { id = employee.Id }, new
         {
@@ -322,7 +339,7 @@ public class EmployeesController : ControllerBase
         });
     }
 
-    // ==================== BUSCAR FUNCIONÁRIO POR ID ====================
+    // ==================== BUSCAR FUNCIONï¿½RIO POR ID ====================
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -332,9 +349,9 @@ public class EmployeesController : ControllerBase
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (employee == null)
-            return NotFound(new { error = "Funcionário não encontrado" });
+            return NotFound(new { error = "Funcionï¿½rio nï¿½o encontrado" });
 
-        // TODO: Verificar permissões (se pode ver dados de outros funcionários)
+        // TODO: Verificar permissï¿½es (se pode ver dados de outros funcionï¿½rios)
 
         // Retornar no formato que a view Details.cshtml espera
         return Ok(new
@@ -360,10 +377,10 @@ public class EmployeesController : ControllerBase
                 hierarchyLevel = employee.JobPosition?.HierarchyLevel
             },
 
-            // Dados Pessoais (no nível raiz para a view)
+            // Dados Pessoais (no nï¿½vel raiz para a view)
             fullName = employee.FullName,
             socialName = employee.SocialName,
-            cpf = employee.Cpf, // Sem formatação para permitir formatação no frontend
+            cpf = employee.Cpf, // Sem formataï¿½ï¿½o para permitir formataï¿½ï¿½o no frontend
             rg = employee.Rg,
             rgIssuer = employee.RgIssuer,
             rgIssueDate = employee.RgIssueDate,
@@ -378,7 +395,7 @@ public class EmployeesController : ControllerBase
             whatsApp = employee.WhatsApp,
             email = employee.Email,
 
-            // Endereço (no nível raiz para a view)
+            // Endereï¿½o (no nï¿½vel raiz para a view)
             street = employee.Street,
             number = employee.Number,
             complement = employee.Complement,
@@ -395,11 +412,11 @@ public class EmployeesController : ControllerBase
             salary = employee.Salary,
             department = employee.Department,
 
-            // Dados Bancários
+            // Dados BancÃ¡rios (mascarados)
             bankCode = employee.BankCode,
             bankName = employee.BankName,
             bankBranch = employee.BankBranch,
-            bankAccount = employee.BankAccount,
+            bankAccount = MaskBankAccount(employee.BankAccount),
             bankAccountType = employee.BankAccountType,
             bankAccountDigit = employee.BankAccountDigit,
 
@@ -408,12 +425,12 @@ public class EmployeesController : ControllerBase
             statusNotes = employee.StatusNotes,
             probationEndDate = employee.ProbationEndDate,
 
-            // Contato de Emergência
+            // Contato de Emergï¿½ncia
             emergencyContactName = employee.EmergencyContactName,
             emergencyContactPhone = employee.EmergencyContactPhone,
             emergencyContactRelationship = employee.EmergencyContactRelationship,
 
-            // Segurança
+            // Seguranï¿½a
             twoFactorEnabled = employee.TwoFactorEnabled,
             requirePasswordChange = employee.RequirePasswordChange,
 
@@ -421,7 +438,7 @@ public class EmployeesController : ControllerBase
             createdAt = employee.CreatedAt,
             updatedAt = employee.UpdatedAt,
 
-            // Dados adicionais para as tabs (serão preenchidos depois se necessário)
+            // Dados adicionais para as tabs (serï¿½o preenchidos depois se necessï¿½rio)
             documents = new object[] { },
             benefits = new object[] { },
             sessions = new object[] { },
@@ -429,7 +446,7 @@ public class EmployeesController : ControllerBase
         });
     }
 
-    // ==================== LISTAR FUNCIONÁRIOS ====================
+    // ==================== LISTAR FUNCIONï¿½RIOS ====================
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] Guid? establishmentId,
@@ -438,12 +455,12 @@ public class EmployeesController : ControllerBase
         [FromQuery] int skip = 0,
         [FromQuery] int take = 50)
     {
-        // Verificar autenticação via middleware
+        // Verificar autenticaï¿½ï¿½o via middleware
         var currentEmployee = HttpContext.Items["Employee"] as Employee;
         if (currentEmployee == null)
-            return Unauthorized(new { error = "Não autenticado" });
+            return Unauthorized(new { error = "Nï¿½o autenticado" });
 
-        // Se não especificou estabelecimento, usa o do funcionário logado
+        // Se nï¿½o especificou estabelecimento, usa o do funcionï¿½rio logado
         var estId = establishmentId ?? currentEmployee.EstablishmentId;
 
         var query = _db.Employees
@@ -460,7 +477,7 @@ public class EmployeesController : ControllerBase
             query = query.Where(e => e.JobPositionId == jobPositionId);
 
         var total = await query.CountAsync();
-        var employees = await query
+        var rawEmployees = await query
             .OrderBy(e => e.FullName)
             .Skip(skip)
             .Take(take)
@@ -488,6 +505,14 @@ public class EmployeesController : ControllerBase
             })
             .ToListAsync();
 
+        var employees = rawEmployees.Select(e => new
+        {
+            e.id, e.fullName, e.socialName,
+            cpf = MaskCpf(e.cpf),
+            e.email, e.phone, e.status, e.hireDate,
+            e.jobPosition, e.establishment
+        });
+
         return Ok(new
         {
             items = employees,
@@ -497,7 +522,7 @@ public class EmployeesController : ControllerBase
         });
     }
 
-    // ==================== ATUALIZAR FUNCIONÁRIO ====================
+    // ==================== ATUALIZAR FUNCIONï¿½RIO ====================
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployeeDto dto)
     {
@@ -506,7 +531,7 @@ public class EmployeesController : ControllerBase
             .FirstOrDefaultAsync(e => e.Id == id);
 
         if (employee == null)
-            return NotFound(new { error = "Funcionário não encontrado" });
+            return NotFound(new { error = "Funcionï¿½rio nï¿½o encontrado" });
 
         // Atualizar campos permitidos
         if (!string.IsNullOrEmpty(dto.FullName))
@@ -524,7 +549,7 @@ public class EmployeesController : ControllerBase
         if (dto.WhatsApp != null)
             employee.WhatsApp = dto.WhatsApp;
 
-        // Endereço
+        // Endereï¿½o
         if (dto.Street != null) employee.Street = dto.Street;
         if (dto.Number != null) employee.Number = dto.Number;
         if (dto.Complement != null) employee.Complement = dto.Complement;
@@ -537,7 +562,7 @@ public class EmployeesController : ControllerBase
         if (dto.Gender != null) employee.Gender = dto.Gender;
         if (dto.MaritalStatus != null) employee.MaritalStatus = dto.MaritalStatus;
 
-        // Dados bancários
+        // Dados bancï¿½rios
         if (dto.BankCode != null) employee.BankCode = dto.BankCode;
         if (dto.BankName != null) employee.BankName = dto.BankName;
         if (dto.BankBranch != null) employee.BankBranch = dto.BankBranch;
@@ -545,7 +570,7 @@ public class EmployeesController : ControllerBase
         if (dto.BankAccountType != null) employee.BankAccountType = dto.BankAccountType;
         if (dto.BankAccountDigit != null) employee.BankAccountDigit = dto.BankAccountDigit;
 
-        // Contato de emergência
+        // Contato de emergï¿½ncia
         if (dto.EmergencyContactName != null) employee.EmergencyContactName = dto.EmergencyContactName;
         if (dto.EmergencyContactPhone != null) employee.EmergencyContactPhone = dto.EmergencyContactPhone;
         if (dto.EmergencyContactRelationship != null) employee.EmergencyContactRelationship = dto.EmergencyContactRelationship;
@@ -561,14 +586,14 @@ public class EmployeesController : ControllerBase
         if (dto.StatusNotes != null)
             employee.StatusNotes = dto.StatusNotes;
 
-        // Mudança de cargo
+        // Mudanï¿½a de cargo
         if (dto.JobPositionId.HasValue && dto.JobPositionId != employee.JobPositionId)
         {
             var newJobPosition = await _db.JobPositions.FindAsync(dto.JobPositionId);
             if (newJobPosition == null || !newJobPosition.IsActive)
-                return BadRequest(new { error = "Cargo não encontrado ou inativo" });
+                return BadRequest(new { error = "Cargo nï¿½o encontrado ou inativo" });
 
-            // Fechar histórico anterior
+            // Fechar histï¿½rico anterior
             var currentHistory = await _db.EmployeeJobHistories
                 .FirstOrDefaultAsync(h => h.EmployeeId == id && h.IsCurrent);
 
@@ -578,7 +603,7 @@ public class EmployeesController : ControllerBase
                 currentHistory.EndDate = DateOnly.FromDateTime(DateTime.UtcNow);
             }
 
-            // Criar novo histórico
+            // Criar novo histï¿½rico
             var newHistory = new EmployeeJobHistory
             {
                 Id = Guid.NewGuid(),
@@ -587,7 +612,7 @@ public class EmployeesController : ControllerBase
                 StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
                 IsCurrent = true,
                 SalaryAtTime = dto.Salary ?? employee.Salary ?? 0,
-                ChangeReason = dto.ChangeReason ?? "Alteração de cargo",
+                ChangeReason = dto.ChangeReason ?? "Alteraï¿½ï¿½o de cargo",
                 Notes = dto.Notes,
                 CreatedAt = DateTime.UtcNow
             };
@@ -596,7 +621,7 @@ public class EmployeesController : ControllerBase
             employee.JobPositionId = dto.JobPositionId.Value;
         }
 
-        // Salário
+        // Salï¿½rio
         if (dto.Salary.HasValue)
             employee.Salary = dto.Salary.Value;
 
@@ -604,10 +629,10 @@ public class EmployeesController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Funcionário {FullName} (ID: {Id}) atualizado com sucesso",
+        _logger.LogInformation("Funcionï¿½rio {FullName} (ID: {Id}) atualizado com sucesso",
             employee.FullName, employee.Id);
 
-        return Ok(new { message = "Funcionário atualizado com sucesso" });
+        return Ok(new { message = "Funcionï¿½rio atualizado com sucesso" });
     }
 
     // ==================== ALTERAR SENHA ====================
@@ -616,13 +641,13 @@ public class EmployeesController : ControllerBase
     {
         var employee = await _db.Employees.FindAsync(id);
         if (employee == null)
-            return NotFound(new { error = "Funcionário não encontrado" });
+            return NotFound(new { error = "Funcionï¿½rio nï¿½o encontrado" });
 
-        // Verificar senha atual (se não for reset administrativo)
+        // Verificar senha atual (se nï¿½o for reset administrativo)
         if (!dto.IsAdminReset)
         {
             if (string.IsNullOrEmpty(dto.CurrentPassword))
-                return BadRequest(new { error = "Senha atual é obrigatória" });
+                return BadRequest(new { error = "Senha atual ï¿½ obrigatï¿½ria" });
 
             if (!Argon2.Verify(employee.PasswordHash, dto.CurrentPassword))
                 return BadRequest(new { error = "Senha atual incorreta" });
@@ -631,7 +656,7 @@ public class EmployeesController : ControllerBase
         // Validar nova senha
         var (isValid, errors) = PasswordValidator.ValidatePassword(dto.NewPassword);
         if (!isValid)
-            return BadRequest(new { error = "Nova senha inválida", details = errors });
+            return BadRequest(new { error = "Nova senha invï¿½lida", details = errors });
 
         // Atualizar senha
         employee.PasswordHash = Argon2.Hash(dto.NewPassword);
@@ -642,25 +667,25 @@ public class EmployeesController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Senha do funcionário {Id} alterada com sucesso", id);
+        _logger.LogInformation("Senha do funcionï¿½rio {Id} alterada com sucesso", id);
 
         return Ok(new { message = "Senha alterada com sucesso" });
     }
 
-    // ==================== DESATIVAR FUNCIONÁRIO ====================
+    // ==================== DESATIVAR FUNCIONï¿½RIO ====================
     [HttpPost("{id}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id, [FromBody] DeactivateEmployeeDto dto)
     {
         var employee = await _db.Employees.FindAsync(id);
         if (employee == null)
-            return NotFound(new { error = "Funcionário não encontrado" });
+            return NotFound(new { error = "Funcionï¿½rio nï¿½o encontrado" });
 
         employee.Status = "Demitido";
         employee.StatusNotes = dto.Reason;
         employee.TerminationDate = dto.TerminationDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
         employee.UpdatedAt = DateTime.UtcNow;
 
-        // Revogar todas as sessões
+        // Revogar todas as sessï¿½es
         var sessions = await _db.EmployeeSessions
             .Where(s => s.EmployeeId == id && s.IsActive)
             .ToListAsync();
@@ -669,23 +694,23 @@ public class EmployeesController : ControllerBase
         {
             session.IsActive = false;
             session.RevokedAt = DateTime.UtcNow;
-            session.RevocationReason = "Funcionário desativado";
+            session.RevocationReason = "Funcionï¿½rio desativado";
         }
 
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Funcionário {Id} desativado. Motivo: {Reason}", id, dto.Reason);
+        _logger.LogInformation("Funcionï¿½rio {Id} desativado. Motivo: {Reason}", id, dto.Reason);
 
-        return Ok(new { message = "Funcionário desativado com sucesso" });
+        return Ok(new { message = "Funcionï¿½rio desativado com sucesso" });
     }
 
-    // ==================== REATIVAR FUNCIONÁRIO ====================
+    // ==================== REATIVAR FUNCIONï¿½RIO ====================
     [HttpPost("{id}/reactivate")]
     public async Task<IActionResult> Reactivate(Guid id)
     {
         var employee = await _db.Employees.FindAsync(id);
         if (employee == null)
-            return NotFound(new { error = "Funcionário não encontrado" });
+            return NotFound(new { error = "Funcionï¿½rio nï¿½o encontrado" });
 
         employee.Status = "Ativo";
         employee.StatusNotes = null;
@@ -694,25 +719,9 @@ public class EmployeesController : ControllerBase
 
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("Funcionário {Id} reativado com sucesso", id);
+        _logger.LogInformation("Funcionï¿½rio {Id} reativado com sucesso", id);
 
-        return Ok(new { message = "Funcionário reativado com sucesso" });
-    }
-
-    // ==================== GERAR HASH DE SENHA ====================
-    [HttpPost("generate-hash")]
-    public IActionResult GenerateHash([FromBody] GenerateHashDto dto)
-    {
-        if (string.IsNullOrEmpty(dto.Password))
-            return BadRequest(new { error = "Senha é obrigatória" });
-
-        var hash = Argon2.Hash(dto.Password);
-
-        return Ok(new
-        {
-            hash,
-            algorithm = "argon2id-v1"
-        });
+        return Ok(new { message = "Funcionï¿½rio reativado com sucesso" });
     }
 
     // ==================== HELPERS ====================
@@ -735,4 +744,4 @@ public class EmployeesController : ControllerBase
     }
 }
 
-// DTOs estão em DTOs/Employees/EmployeeRequests.cs
+// DTOs estï¿½o em DTOs/Employees/EmployeeRequests.cs

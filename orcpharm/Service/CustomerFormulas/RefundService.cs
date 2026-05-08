@@ -154,27 +154,20 @@ public class RefundService
     }
 
     /// <summary>
-    /// Processar reembolso via gateway de pagamento (MOCK)
+    /// Processar reembolso via gateway de pagamento
     /// </summary>
-    private async Task<bool> ProcessPaymentGatewayRefundAsync(
+    private Task<bool> ProcessPaymentGatewayRefundAsync(
         Guid onlineOrderId,
         decimal amount)
     {
-        // TODO: Implementar integração real com gateway de pagamento
-        // Exemplos: Stripe, PagSeguro, MercadoPago, etc.
-
-        _logger.LogInformation(
-            "MOCK: Processando reembolso de R$ {Amount} para pedido {OrderId}",
+        // Reembolso automatico desabilitado ate integracao com gateway real (Stripe Refunds API)
+        // Reembolsos devem ser processados manualmente pelo admin ate a integracao estar pronta
+        _logger.LogWarning(
+            "Reembolso de R$ {Amount} para pedido {OrderId} requer processamento manual. Integracao com gateway pendente.",
             amount, onlineOrderId);
 
-        // Simular processamento
-        await Task.Delay(100);
-
-        // Simular sucesso (90% de taxa de sucesso)
-        var random = new Random();
-        var success = random.Next(100) < 90;
-
-        return success;
+        throw new NotSupportedException(
+            "Reembolso automatico nao disponivel. Processe manualmente via painel do Stripe ou entre em contato com o suporte.");
     }
 
     /// <summary>
