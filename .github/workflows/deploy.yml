@@ -35,6 +35,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify secrets presence
+        env:
+          USER_PRESENT: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+          TOKEN_PRESENT: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+          WEBHOOK_PRESENT: ${{ secrets.PORTAINER_WEBHOOK_URL != '' }}
+        run: |
+          echo "DOCKERHUB_USERNAME present: $USER_PRESENT"
+          echo "DOCKERHUB_TOKEN present:    $TOKEN_PRESENT"
+          echo "PORTAINER_WEBHOOK_URL present: $WEBHOOK_PRESENT"
+          if [ "$USER_PRESENT" != "true" ] || [ "$TOKEN_PRESENT" != "true" ]; then
+            echo "::error::Docker Hub secrets ausentes — verifique Settings → Secrets → Actions"
+            exit 1
+          fi
+
       - name: Compute short SHA
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
