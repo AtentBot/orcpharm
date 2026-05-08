@@ -26,10 +26,13 @@ public class OpenAIPrescriptionParserService
     {
         _httpClient = new HttpClient();
         _logger = logger;
-        _apiKey = configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey não configurada");
+        _apiKey = configuration["OpenAI:ApiKey"] ?? string.Empty;
         _model = configuration["OpenAI:Model"] ?? "gpt-4o";
-        
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+
+        if (!string.IsNullOrEmpty(_apiKey))
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+        }
     }
 
     /// <summary>
@@ -37,6 +40,11 @@ public class OpenAIPrescriptionParserService
     /// </summary>
     public async Task<OcrPrescriptionResultDto> ParsePrescriptionAsync(string base64Image, string imageType)
     {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            throw new InvalidOperationException("OpenAI:ApiKey não configurada — OCR de prescrição indisponível");
+        }
+
         try
         {
             _logger.LogInformation("Iniciando OCR de prescrição...");

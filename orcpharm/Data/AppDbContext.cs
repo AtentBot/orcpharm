@@ -55,6 +55,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PaymentGatewayConfig> PaymentGatewayConfigs { get; set; } = null!;
 
     /// <summary>
+    /// Configurações de integrações do estabelecimento (Balança, Impressora, SNGPC, etc.)
+    /// </summary>
+    public DbSet<Controllers.Api.IntegrationConfig> IntegrationConfigs { get; set; } = null!;
+
+    /// <summary>
     /// Logs de webhooks recebidos dos gateways
     /// </summary>
     public DbSet<PaymentWebhookLog> PaymentWebhookLogs { get; set; } = null!;
