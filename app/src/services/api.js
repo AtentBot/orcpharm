@@ -32,12 +32,14 @@ const request = async (endpoint, options = {}) => {
 };
 
 // Auth
-export const login = async (cpf, password) => {
-  const result = await request('/cliente/auth/token', {
+export const login = async (phone, password) => {
+  const result = await request('/cliente/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ cpf: cpf.replace(/\D/g, ''), password }),
+    body: JSON.stringify({ phone: phone.replace(/\D/g, ''), password }),
   });
-  if (result.success && result.token) setToken(result.token);
+  if (result.success && (result.sessionToken || result.token)) {
+    setToken(result.sessionToken || result.token);
+  }
   return result;
 };
 

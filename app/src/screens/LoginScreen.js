@@ -7,14 +7,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useBiometrics } from '../hooks/useBiometrics';
-import { formatCPF, isValidCPF } from '../utils/formatters';
+import { formatPhone } from '../utils/formatters';
 import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '../constants/theme';
 
 const LoginScreen = ({ navigation }) => {
   const { login, loginWithBiometrics } = useAuth();
   const { canUseBiometrics, authenticate, getBiometricLabel, getBiometricIcon } = useBiometrics();
 
-  const [cpf, setCpf] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,22 +41,23 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    if (!cpf || !password) {
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (!phoneDigits || !password) {
       Alert.alert('Atenção', 'Preencha todos os campos.');
       return;
     }
-    if (!isValidCPF(cpf)) {
-      Alert.alert('CPF inválido', 'Verifique o CPF digitado.');
+    if (phoneDigits.length < 10) {
+      Alert.alert('WhatsApp inválido', 'Digite o número com DDD.');
       return;
     }
 
     setLoading(true);
     try {
-      const result = await login(cpf, password);
+      const result = await login(phoneDigits, password);
       if (result.success) {
         if (result.requiresVerification) navigation.navigate('VerifyCode');
       } else {
-        Alert.alert('Erro', result.message || 'CPF ou senha incorretos.');
+        Alert.alert('Erro', result.message || 'WhatsApp ou senha incorretos.');
       }
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível conectar.');
@@ -90,20 +91,20 @@ const LoginScreen = ({ navigation }) => {
         >
           <View style={styles.formCard}>
             <Text style={styles.welcomeText}>Bem-vindo de volta!</Text>
-            <Text style={styles.instructionText}>Entre com seu CPF e senha</Text>
+            <Text style={styles.instructionText}>Entre com seu WhatsApp e senha</Text>
 
-            {/* CPF */}
+            {/* WhatsApp */}
             <View style={styles.inputContainer}>
               <View style={styles.inputAccent} />
-              <Feather name="user" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
+              <Feather name="phone" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="CPF"
+                placeholder="WhatsApp (com DDD)"
                 placeholderTextColor={COLORS.textMuted}
-                value={cpf}
-                onChangeText={(t) => setCpf(formatCPF(t))}
-                keyboardType="numeric"
-                maxLength={14}
+                value={phone}
+                onChangeText={(t) => setPhone(formatPhone(t))}
+                keyboardType="phone-pad"
+                maxLength={15}
                 editable={!loading}
               />
             </View>

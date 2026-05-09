@@ -45,23 +45,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (cpf, password) => {
+  const login = async (phone, password) => {
     try {
-      const result = await api.login(cpf, password);
-      
+      const result = await api.login(phone, password);
+
       if (result.success) {
         if (result.requiresVerification) {
           setPendingVerification({ phone: result.phone });
           return { success: true, requiresVerification: true };
         }
-        
-        await storage.saveToken(result.token);
+
+        const token = result.sessionToken || result.token;
+        if (token) await storage.saveToken(token);
         setUser(result.customer);
         setIsAuthenticated(true);
-        await storage.saveUserData(result.customer);
+        if (result.customer) await storage.saveUserData(result.customer);
         return { success: true };
       }
-      
+
       return result;
     } catch (error) {
       return { success: false, message: error.message };

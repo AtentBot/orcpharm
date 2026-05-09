@@ -14,7 +14,7 @@ export const APP_CONFIG = {
 
 // Endpoints
 export const ENDPOINTS = {
-  LOGIN: '/cliente/auth/token',
+  LOGIN: '/cliente/auth/login',
   REGISTER: '/cliente/auth/register',
   VERIFY: '/cliente/auth/verify',
   RESEND: '/cliente/auth/resend-code',
