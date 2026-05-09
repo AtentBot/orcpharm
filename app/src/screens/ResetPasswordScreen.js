@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
+  StatusBar,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as api from '../services/api';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '../constants/theme';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '../constants/theme';
+import FarmifyLogo from '../components/FarmifyLogo';
 
 const ResetPasswordScreen = ({ route, navigation }) => {
   const phone = route?.params?.phone || '';
@@ -55,36 +56,42 @@ const ResetPasswordScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={GRADIENTS.splash} style={styles.headerGradient}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Feather name="shield" size={32} color={COLORS.white} />
-          </View>
-          <Text style={styles.logoText}>Nova senha</Text>
-          <Text style={styles.subtitle}>Digite o código recebido</Text>
-        </View>
-      </LinearGradient>
-
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.formWrapper}
+        style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.formCard}>
-            <Text style={styles.instructionText}>
-              Enviamos um código de 6 dígitos para o WhatsApp. Digite-o abaixo junto com sua nova senha.
-            </Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Feather name="arrow-left" size={20} color={COLORS.ink} />
+            </TouchableOpacity>
+            <FarmifyLogo size={28} />
+            <View style={{ width: 40 }} />
+          </View>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputAccent} />
-              <Feather name="hash" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
+          <View style={styles.hero}>
+            <View style={styles.iconBadge}>
+              <Feather name="shield" size={20} color={COLORS.primary} />
+            </View>
+            <Text style={styles.heroTitle}>Nova senha</Text>
+            <Text style={styles.heroSub}>
+              Enviamos um código de 6 dígitos para o seu WhatsApp. Digite-o abaixo junto com sua nova senha.
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.label}>Código</Text>
+            <View style={styles.inputWrap}>
+              <Feather name="hash" size={18} color={COLORS.ink3} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
-                placeholder="Código de 6 dígitos"
-                placeholderTextColor={COLORS.textMuted}
+                style={[styles.input, styles.inputMono]}
+                placeholder="000000"
+                placeholderTextColor={COLORS.ink4}
                 value={code}
                 onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, 6))}
                 keyboardType="number-pad"
@@ -93,30 +100,30 @@ const ResetPasswordScreen = ({ route, navigation }) => {
               />
             </View>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputAccent} />
-              <Feather name="lock" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
+            <Text style={[styles.label, { marginTop: SPACING.lg }]}>Nova senha</Text>
+            <View style={styles.inputWrap}>
+              <Feather name="lock" size={18} color={COLORS.ink3} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Nova senha (mín. 8 caracteres)"
-                placeholderTextColor={COLORS.textMuted}
+                placeholder="Mínimo 8 caracteres"
+                placeholderTextColor={COLORS.ink4}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry={!showPassword}
                 editable={!loading}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color={COLORS.textMuted} />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+                <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={COLORS.ink3} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputAccent} />
-              <Feather name="lock" size={20} color={COLORS.textMuted} style={styles.inputIcon} />
+            <Text style={[styles.label, { marginTop: SPACING.lg }]}>Confirmar senha</Text>
+            <View style={styles.inputWrap}>
+              <Feather name="lock" size={18} color={COLORS.ink3} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Confirmar nova senha"
-                placeholderTextColor={COLORS.textMuted}
+                placeholder="Repita a senha"
+                placeholderTextColor={COLORS.ink4}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
@@ -124,28 +131,27 @@ const ResetPasswordScreen = ({ route, navigation }) => {
               />
             </View>
 
-            <TouchableOpacity onPress={handleReset} disabled={loading} activeOpacity={0.8}>
-              <View style={styles.buttonShadow}>
-                <LinearGradient
-                  colors={GRADIENTS.primary}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.button}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <>
-                      <Text style={styles.buttonText}>Redefinir senha</Text>
-                      <Feather name="check" size={20} color={COLORS.white} />
-                    </>
-                  )}
-                </LinearGradient>
-              </View>
+            <TouchableOpacity
+              onPress={handleReset}
+              disabled={loading}
+              activeOpacity={0.85}
+              style={styles.primaryBtn}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <>
+                  <Text style={styles.primaryBtnText}>Redefinir senha</Text>
+                  <Feather name="check" size={18} color={COLORS.white} />
+                </>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.linkButton}>
-              <Text style={styles.linkText}>Não recebi o código - reenviar</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ForgotPassword')}
+              style={styles.linkBtn}
+            >
+              <Text style={styles.linkText}>Não recebi o código — reenviar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -155,49 +161,122 @@ const ResetPasswordScreen = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  headerGradient: { paddingTop: 60, paddingBottom: 80, paddingHorizontal: SPACING.lg, position: 'relative' },
-  backButton: { position: 'absolute', top: 50, left: SPACING.lg, padding: SPACING.sm, zIndex: 10 },
-  logoContainer: { alignItems: 'center', marginTop: SPACING.lg },
-  logoCircle: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  logoText: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.white, marginBottom: 6 },
-  subtitle: { fontSize: FONT_SIZES.sm, color: 'rgba(255,255,255,0.85)' },
-  formWrapper: { flex: 1, marginTop: -40 },
-  scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl },
-  formCard: {
-    backgroundColor: COLORS.white,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: 56,
+    paddingBottom: SPACING.xl,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xxxl,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  hero: {
+    marginBottom: SPACING.xl,
+  },
+  iconBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  heroTitle: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: '700',
+    color: COLORS.ink,
+    letterSpacing: -0.5,
+    marginBottom: SPACING.sm,
+  },
+  heroSub: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.ink2,
+    lineHeight: 22,
+  },
+  card: {
+    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     ...SHADOWS.card,
   },
-  instructionText: {
-    fontSize: FONT_SIZES.sm, color: COLORS.textSecondary,
-    marginBottom: SPACING.lg, textAlign: 'center',
+  label: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    color: COLORS.ink2,
+    marginBottom: SPACING.sm,
+    letterSpacing: 0.2,
   },
-  inputContainer: {
-    flexDirection: 'row', alignItems: 'center',
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.backgroundAlt,
-    borderRadius: BORDER_RADIUS.md, paddingHorizontal: SPACING.md,
-    height: 56, marginBottom: SPACING.md, position: 'relative', overflow: 'hidden',
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    height: 52,
   },
-  inputAccent: {
-    position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: COLORS.primary,
+  inputIcon: {
+    marginRight: SPACING.sm,
   },
-  inputIcon: { marginLeft: SPACING.sm, marginRight: SPACING.sm },
-  input: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.text },
-  eyeButton: { padding: SPACING.sm },
-  buttonShadow: { ...SHADOWS.button, marginTop: SPACING.md },
-  button: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: SPACING.sm, height: 56, borderRadius: BORDER_RADIUS.md,
+  input: {
+    flex: 1,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.ink,
   },
-  buttonText: { fontSize: FONT_SIZES.md, fontWeight: '600', color: COLORS.white },
-  linkButton: { marginTop: SPACING.lg, alignItems: 'center' },
-  linkText: { color: COLORS.primary, fontSize: FONT_SIZES.sm, fontWeight: '500' },
+  inputMono: {
+    letterSpacing: 4,
+    fontWeight: '600',
+  },
+  eyeBtn: {
+    padding: SPACING.xs,
+    marginLeft: SPACING.xs,
+  },
+  primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    height: 52,
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    marginTop: SPACING.xl,
+    ...SHADOWS.button,
+  },
+  primaryBtnText: {
+    color: COLORS.white,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  linkBtn: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  linkText: {
+    color: COLORS.ink2,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '500',
+  },
 });
 
 export default ResetPasswordScreen;

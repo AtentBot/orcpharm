@@ -1,51 +1,69 @@
-// Formula Clear Design System
-// Pharmaceutical precision — emerald teal + warm amber accents
+// Farmify Design System (mobile)
+// Identidade Farmify — paleta editorial-clínica: petrol + bone + âmbar
+// Fonte da verdade web: wwwroot/css/design-system/tokens.css
 
 export const COLORS = {
-  primary: '#0D9488',
-  primaryDark: '#0F766E',
-  primaryLight: '#99F6E4',
-  primaryMuted: 'rgba(13, 148, 136, 0.12)',
+  // Primária Farmify — Petróleo
+  primary: '#0F6E78',
+  primaryDark: '#0A5C66',
+  primaryDarker: '#095861',
+  primaryLight: '#9FC8C5',
+  primarySoft: '#E6F2F1',
+  primaryMuted: 'rgba(15, 110, 120, 0.12)',
 
-  accent: '#F59E0B',
-  accentDark: '#D97706',
-  accentLight: '#FEF3C7',
+  // Acento Farmify — Âmbar (CTA, alertas, ponto da brand "farmify.")
+  accent: '#D88B2C',
+  accentDark: '#9A5E15',
+  accentLight: '#F5DDB0',
+  accentSoft: '#FBF1E0',
 
-  purple: '#7C3AED',
+  // Inks (texto sobre bone)
+  ink: '#0A1814',
+  ink2: '#364946',
+  ink3: '#6B7B78',
+  ink4: '#94A19E',
+  ink5: '#C8D0CD',
 
-  success: '#059669',
-  successLight: '#D1FAE5',
-  warning: '#EA580C',
-  warningLight: '#FFF7ED',
-  error: '#DC2626',
+  // Aliases para compat com screens existentes
+  text: '#0A1814',
+  textSecondary: '#364946',
+  textMuted: '#6B7B78',
+
+  // Status (Farmify)
+  success: '#15803D',
+  successLight: '#DCFCE7',
+  warning: '#B45309',
+  warningLight: '#FEF3C7',
+  error: '#B91C1C',
   errorLight: '#FEE2E2',
 
-  text: '#1C1917',
-  textSecondary: '#57534E',
-  textMuted: '#A8A29E',
-
+  // Surfaces — bone caloroso
   white: '#FFFFFF',
-  background: '#FAFAF9',
-  backgroundLight: '#F5F5F4',
+  background: '#FAF9F5',     // bone
+  backgroundAlt: '#F2F1EC',  // bg-subtle
+  surface: '#FFFFFF',
+  surface2: '#FBFAF6',
   cardGlass: 'rgba(255, 255, 255, 0.92)',
 
-  border: '#E7E5E4',
-  borderLight: '#F5F5F4',
-  borderFocus: '#0D9488',
+  // Bordas (rules)
+  border: '#E5E8E5',
+  borderLight: '#F2F1EC',
+  borderStrong: '#D6DAD6',
+  borderFocus: '#0F6E78',
 };
 
 export const GRADIENTS = {
-  background: ['#FAFAF9', '#F5F5F4', '#FAFAF9'],
-  primary: ['#0D9488', '#0F766E'],
-  primarySoft: ['#CCFBF1', '#99F6E4'],
-  purple: ['#7C3AED', '#6D28D9'],
-  accent: ['#F59E0B', '#D97706'],
-  success: ['#059669', '#047857'],
-  promo: ['#134E4A', '#0F766E'],
-  dark: ['#292524', '#1C1917'],
-  darkTeal: ['#134E4A', '#0F766E'],
-  orderAvatar: ['#0D9488', '#059669'],
-  splash: ['#0D9488', '#134E4A', '#0F766E'],
+  background: ['#FAF9F5', '#F2F1EC', '#FAF9F5'],
+  primary: ['#0F6E78', '#0A5C66'],
+  primarySoft: ['#E6F2F1', '#C7E0DE'],
+  accent: ['#D88B2C', '#9A5E15'],
+  success: ['#15803D', '#0F6E2D'],
+  promo: ['#0F6E78', '#095861'],
+  dark: ['#0A1814', '#042A2D'],
+  darkTeal: ['#0F6E78', '#042A2D'],
+  orderAvatar: ['#0F6E78', '#0A5C66'],
+  splash: ['#0F6E78', '#095861', '#042A2D'],
+  hero: ['#0F6E78', '#0A5C66'],
 };
 
 export const SPACING = {
@@ -61,12 +79,12 @@ export const SPACING = {
 
 export const BORDER_RADIUS = {
   xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 6,
+  md: 10,
+  lg: 14,
   xl: 20,
   xxl: 24,
-  full: 100,
+  full: 999,
 };
 
 export const FONT_SIZES = {
@@ -82,27 +100,42 @@ export const FONT_SIZES = {
   hero: 36,
 };
 
+// Sombras calibradas pra fundo bone (Farmify)
 export const SHADOWS = {
   small: {
-    shadowColor: '#78716C',
+    shadowColor: '#0A1814',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   medium: {
-    shadowColor: '#78716C',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowColor: '#0A1814',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
     elevation: 4,
   },
   large: {
-    shadowColor: '#78716C',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowColor: '#0A1814',
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.18,
+    shadowRadius: 48,
+    elevation: 12,
+  },
+  card: {
+    shadowColor: '#0A1814',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  button: {
+    shadowColor: '#0F6E78',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
   },
   colored: (color) => ({
     shadowColor: color,
