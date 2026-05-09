@@ -72,6 +72,25 @@ export const resendCode = async (phone) => {
   });
 };
 
+export const requestPasswordReset = async (phone) => {
+  return request('/cliente/auth/request-reset', {
+    method: 'POST',
+    body: JSON.stringify({ phone: phone.replace(/\D/g, '') }),
+  });
+};
+
+export const resetPassword = async (phone, code, newPassword, confirmPassword) => {
+  return request('/cliente/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      phone: phone.replace(/\D/g, ''),
+      code,
+      newPassword,
+      confirmPassword,
+    }),
+  });
+};
+
 export const getMe = async () => request('/cliente/auth/me');
 
 export const logout = async () => {

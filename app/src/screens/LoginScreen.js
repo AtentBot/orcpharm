@@ -127,6 +127,15 @@ const LoginScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
+            {/* Forgot password link */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ForgotPassword')}
+              style={styles.forgotButton}
+              disabled={loading}
+            >
+              <Text style={styles.forgotText}>Esqueci minha senha</Text>
+            </TouchableOpacity>
+
             {/* Login Button */}
             <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
               <View style={styles.loginButtonShadow}>
@@ -334,6 +343,18 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
     borderRadius: BORDER_RADIUS.md,
     gap: SPACING.xs,
+  },
+  forgotButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    marginBottom: SPACING.md,
+    marginTop: -SPACING.sm,
+  },
+  forgotText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '500',
   },
   registerText: {
     fontSize: FONT_SIZES.md,
