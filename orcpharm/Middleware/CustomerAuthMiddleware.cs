@@ -49,8 +49,22 @@ public class CustomerAuthMiddleware
             return;
         }
 
-        // Buscar token da sessão
+        // Buscar token: cookie (web), Bearer header (mobile), ou X-Session-Token
         var sessionToken = context.Request.Cookies["CustomerSessionId"];
+
+        if (string.IsNullOrEmpty(sessionToken))
+        {
+            var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                sessionToken = authHeader.Substring("Bearer ".Length).Trim();
+            }
+        }
+
+        if (string.IsNullOrEmpty(sessionToken))
+        {
+            sessionToken = context.Request.Headers["X-Session-Token"].FirstOrDefault();
+        }
 
         if (string.IsNullOrEmpty(sessionToken))
         {
