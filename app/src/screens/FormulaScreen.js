@@ -1,22 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  TextInput,
-  FlatList,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
+  ActivityIndicator, TextInput, StatusBar,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import * as api from '../services/api';
 import { formatCurrency } from '../utils/formatters';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '../constants/theme';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '../constants/theme';
+import FarmifyLogo from '../components/FarmifyLogo';
 
-const FormulaScreen = ({ navigation }) => {
+// Sugestões pré-populadas (ingredientes comuns) — mostradas antes de qualquer busca
+const POPULAR_INGREDIENTS = [
+  'Vitamina C',
+  'Vitamina D3',
+  'Vitamina B12',
+  'Magnésio Glicinato',
+  'Colágeno',
+  'Ômega 3',
+  'Zinco',
+  'Melatonina',
+  'Coenzima Q10',
+  'Cafeína',
+];
+
+const ICON_BY_TYPE = (name) => {
+  const n = (name || '').toLowerCase();
+  if (n.includes('capsul')) return 'circle';
+  if (n.includes('creme') || n.includes('pomada')) return 'droplet';
+  if (n.includes('solu') || n.includes('xarop')) return 'thermometer';
+  if (n.includes('sache')) return 'package';
+  if (n.includes('gel')) return 'cloud-drizzle';
+  return 'box';
+};
+
+const FormulaScreen = ({ navigation, route }) => {
+  const initialTypeId = route?.params?.productTypeId;
+
   const [productTypes, setProductTypes] = useState([]);
   const [selectedType, setSelectedType] = useState(null);
   const [ingredients, setIngredients] = useState([]);
@@ -26,64 +45,97 @@ const FormulaScreen = ({ navigation }) => {
   const [calculating, setCalculating] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => { loadProductTypes(); }, []);
+  useEffect(() => { loadSuggestions(); }, []);
 
   useEffect(() => {
-    if (selectedType && ingredients.length > 0) {
-      calculatePrice();
-    } else {
-      setTotalPrice(0);
-    }
+    if (selectedType && ingredients.length > 0) calculatePrice();
+    else setTotalPrice(0);
   }, [selectedType, ingredients]);
 
   const loadProductTypes = async () => {
     try {
       const result = await api.getProductTypes();
-      if (result.success && result.productTypes) {
-        setProductTypes(result.productTypes);
-        if (result.productTypes.length > 0) setSelectedType(result.productTypes[0]);
+      const list = result?.productTypes || result?.data || result || [];
+      if (Array.isArray(list) && list.length > 0) {
+        setProductTypes(list);
+        const initial = initialTypeId
+          ? list.find((t) => t.id === initialTypeId)
+          : list[0];
+        setSelectedType(initial || list[0]);
       }
     } catch (error) {
-      console.error('Erro ao carregar tipos:', error);
+      // silencioso: tela ainda funciona pra buscar ingredientes
     } finally {
       setLoading(false);
     }
   };
 
-  const searchIngredients = async (query) => {
+  const loadSuggestions = async () => {
+    setSuggestionsLoading(true);
+    try {
+      const promises = POPULAR_INGREDIENTS.slice(0, 6).map((q) =>
+        api.autocompleteIngredients(q).then((r) => {
+          const arr = Array.isArray(r) ? r : (r?.ingredients || r?.data || []);
+          return arr[0];
+        }).catch(() => null)
+      );
+      const results = (await Promise.all(promises)).filter(Boolean);
+      // dedupe por id
+      const seen = new Set();
+      const deduped = results.filter((r) => {
+        if (!r?.id || seen.has(r.id)) return false;
+        seen.add(r.id);
+        return true;
+      });
+      setSuggestions(deduped);
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const searchIngredients = useCallback(async (query) => {
     if (!query || query.length < 2) { setSearchResults([]); return; }
     setSearching(true);
     try {
       const result = await api.autocompleteIngredients(query);
-      if (result.success && result.ingredients) setSearchResults(result.ingredients);
-    } catch (error) {
-      console.error('Erro na busca:', error);
+      const arr = Array.isArray(result) ? result : (result?.ingredients || result?.data || []);
+      setSearchResults(arr);
+    } catch {
+      setSearchResults([]);
     } finally {
       setSearching(false);
     }
-  };
+  }, []);
 
   const addIngredient = (ingredient) => {
-    if (ingredients.some(i => i.id === ingredient.id)) {
-      Alert.alert('Atenção', 'Este ingrediente já foi adicionado.');
+    if (ingredients.some((i) => i.id === ingredient.id)) {
+      Alert.alert('Já adicionado', 'Esse ingrediente já está na sua fórmula.');
       return;
     }
-    setIngredients([...ingredients, { ...ingredient, quantity: 1, unit: ingredient.defaultUnit || 'mg' }]);
+    setIngredients([
+      ...ingredients,
+      { ...ingredient, quantity: ingredient.defaultQuantity || 100, unit: ingredient.defaultUnit || 'mg' },
+    ]);
     setSearchQuery('');
     setSearchResults([]);
   };
 
-  const updateIngredientQuantity = (id, quantity) => {
-    setIngredients(ingredients.map(i => i.id === id ? { ...i, quantity: parseFloat(quantity) || 0 } : i));
+  const updateQty = (id, qty) => {
+    setIngredients(ingredients.map((i) => i.id === id ? { ...i, quantity: parseFloat(qty) || 0 } : i));
   };
 
-  const updateIngredientUnit = (id, unit) => {
-    setIngredients(ingredients.map(i => i.id === id ? { ...i, unit } : i));
+  const updateUnit = (id, unit) => {
+    setIngredients(ingredients.map((i) => i.id === id ? { ...i, unit } : i));
   };
 
   const removeIngredient = (id) => {
-    setIngredients(ingredients.filter(i => i.id !== id));
+    setIngredients(ingredients.filter((i) => i.id !== id));
   };
 
   const calculatePrice = async () => {
@@ -92,172 +144,227 @@ const FormulaScreen = ({ navigation }) => {
     try {
       const result = await api.calculateFormula(
         selectedType.id,
-        ingredients.map(i => ({ ingredientId: i.id, quantity: i.quantity, unit: i.unit }))
+        ingredients.map((i) => ({ ingredientId: i.id, quantity: i.quantity, unit: i.unit }))
       );
-      if (result.success) setTotalPrice(result.totalPrice || 0);
-    } catch (error) {
-      console.error('Erro ao calcular:', error);
-    } finally {
-      setCalculating(false);
-    }
+      if (result?.success) setTotalPrice(result.totalPrice || result.total || 0);
+    } catch {}
+    setCalculating(false);
   };
 
   const addToCart = async () => {
     if (!selectedType || ingredients.length === 0) {
-      Alert.alert('Atenção', 'Adicione ao menos um ingrediente.');
+      Alert.alert('Atenção', 'Escolha um tipo e adicione ao menos um ingrediente.');
       return;
     }
     try {
       const result = await api.addFormulaToCart({
         productTypeId: selectedType.id,
-        ingredients: ingredients.map(i => ({
+        ingredients: ingredients.map((i) => ({
           ingredientId: i.id, ingredientName: i.name, quantity: i.quantity, unit: i.unit,
         })),
       });
-      if (result.success) {
-        Alert.alert('Adicionado ao carrinho!', 'Sua fórmula foi adicionada com sucesso.',
+      if (result?.success) {
+        Alert.alert('Adicionado ao carrinho!', 'Sua fórmula personalizada foi adicionada.',
           [{ text: 'Ver carrinho', onPress: () => navigation.navigate('Cart') }, { text: 'Continuar', style: 'cancel' }]
         );
       } else {
-        Alert.alert('Erro', result.message || 'Não foi possível adicionar ao carrinho.');
+        Alert.alert('Erro', result?.message || 'Não foi possível adicionar ao carrinho.');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Erro', 'Ocorreu um erro. Tente novamente.');
     }
   };
 
-  if (loading) {
-    return (
-      <LinearGradient colors={GRADIENTS.background} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </LinearGradient>
-    );
-  }
-
   return (
-    <LinearGradient colors={GRADIENTS.background} style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <View style={styles.backButtonCircle}>
-            <Feather name="arrow-left" size={20} color={COLORS.primary} />
-          </View>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Feather name="arrow-left" size={20} color={COLORS.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Fórmula Personalizada</Text>
-        <View style={{ width: 44 }} />
+        <FarmifyLogo size={24} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
-        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Product type */}
+        <Text style={styles.title}>Monte sua fórmula</Text>
+        <Text style={styles.subtitle}>
+          Escolha a forma farmacêutica e adicione os ativos. O preço é calculado em tempo real.
+        </Text>
+
+        {/* Tipo de produto */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tipo de produto</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typesContainer}>
-            {productTypes.map((type) => {
-              const isSelected = selectedType?.id === type.id;
-              return (
-                <TouchableOpacity
-                  key={type.id}
-                  style={[styles.typeCard, isSelected && styles.typeCardSelected]}
-                  onPress={() => setSelectedType(type)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.typeEmoji}>{type.emoji || '💊'}</Text>
-                  <Text style={[styles.typeName, isSelected && styles.typeNameSelected]}>{type.name}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          <Text style={styles.sectionLabel}>1. Forma farmacêutica</Text>
+          {loading ? (
+            <View style={styles.skelRow}>
+              {[1, 2, 3, 4].map((i) => <View key={i} style={styles.skelCard} />)}
+            </View>
+          ) : productTypes.length === 0 ? (
+            <View style={styles.emptyTypes}>
+              <Feather name="info" size={16} color={COLORS.ink3} />
+              <Text style={styles.emptyTypesText}>
+                Nenhuma forma disponível agora. Tenta enviar uma receita.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typesRow}>
+              {productTypes.map((pt) => {
+                const isSelected = selectedType?.id === pt.id;
+                return (
+                  <TouchableOpacity
+                    key={pt.id}
+                    style={[styles.typeCard, isSelected && styles.typeCardActive]}
+                    onPress={() => setSelectedType(pt)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[styles.typeIconWrap, isSelected && styles.typeIconWrapActive]}>
+                      <Feather
+                        name={ICON_BY_TYPE(pt.name)}
+                        size={20}
+                        color={isSelected ? COLORS.white : COLORS.primary}
+                      />
+                    </View>
+                    <Text style={[styles.typeName, isSelected && styles.typeNameActive]}>{pt.name}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
-        {/* Ingredient search */}
+        {/* Busca de ingredientes */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingredientes</Text>
-          <View style={styles.searchContainer}>
-            <View style={styles.searchIconWrapper}>
-              <Feather name="search" size={18} color={COLORS.textMuted} />
-            </View>
+          <Text style={styles.sectionLabel}>2. Ingredientes</Text>
+          <View style={styles.searchWrap}>
+            <Feather name="search" size={18} color={COLORS.ink3} style={{ marginRight: SPACING.sm }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Buscar ingrediente..."
-              placeholderTextColor={COLORS.textMuted}
+              placeholder="Buscar (ex: vitamina C, melatonina...)"
+              placeholderTextColor={COLORS.ink4}
               value={searchQuery}
-              onChangeText={(text) => { setSearchQuery(text); searchIngredients(text); }}
+              onChangeText={(t) => { setSearchQuery(t); searchIngredients(t); }}
             />
-            {searching && <ActivityIndicator size="small" color={COLORS.primary} />}
+            {searching ? <ActivityIndicator size="small" color={COLORS.primary} /> : null}
+            {searchQuery && !searching ? (
+              <TouchableOpacity onPress={() => { setSearchQuery(''); setSearchResults([]); }}>
+                <Feather name="x" size={18} color={COLORS.ink3} />
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           {searchResults.length > 0 && (
-            <View style={styles.searchResults}>
+            <View style={styles.resultsCard}>
               {searchResults.map((item) => (
-                <TouchableOpacity key={item.id} style={styles.searchResultItem} onPress={() => addIngredient(item)}>
-                  <Text style={styles.searchResultText}>{item.name}</Text>
-                  <View style={styles.addIconCircle}>
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.resultItem}
+                  onPress={() => addIngredient(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.resultName}>{item.name}</Text>
+                    {item.category ? (
+                      <Text style={styles.resultMeta}>{item.category}</Text>
+                    ) : null}
+                  </View>
+                  <View style={styles.addCircle}>
                     <Feather name="plus" size={16} color={COLORS.white} />
                   </View>
                 </TouchableOpacity>
               ))}
             </View>
           )}
+
+          {/* Sugestões — só aparecem quando não tem busca ativa */}
+          {!searchQuery && (
+            <View style={{ marginTop: SPACING.md }}>
+              <Text style={styles.suggestionsLabel}>Sugestões populares</Text>
+              {suggestionsLoading ? (
+                <View style={styles.skelRow}>
+                  {[1, 2, 3].map((i) => <View key={i} style={styles.skelCard} />)}
+                </View>
+              ) : (
+                <View style={styles.chipsWrap}>
+                  {(suggestions.length > 0 ? suggestions : POPULAR_INGREDIENTS.map((n) => ({ id: 'name:' + n, name: n })))
+                    .map((s) => (
+                      <TouchableOpacity
+                        key={s.id || s.name}
+                        style={styles.chip}
+                        onPress={() => {
+                          if (s.id && !String(s.id).startsWith('name:')) {
+                            addIngredient(s);
+                          } else {
+                            setSearchQuery(s.name);
+                            searchIngredients(s.name);
+                          }
+                        }}
+                      >
+                        <Feather name="plus" size={12} color={COLORS.primary} />
+                        <Text style={styles.chipText}>{s.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
-        {/* Added ingredients */}
+        {/* Lista de ingredientes adicionados */}
         {ingredients.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sua fórmula ({ingredients.length} itens)</Text>
-            {ingredients.map((ingredient) => (
-              <View key={ingredient.id} style={styles.ingredientCard}>
-                <View style={styles.ingredientAccent} />
-                <View style={styles.ingredientBody}>
-                  <View style={styles.ingredientInfo}>
-                    <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                    <View style={styles.ingredientControls}>
-                      <TextInput
-                        style={styles.quantityInput}
-                        keyboardType="numeric"
-                        value={String(ingredient.quantity)}
-                        onChangeText={(text) => updateIngredientQuantity(ingredient.id, text)}
-                      />
-                      <View style={styles.unitSelector}>
-                        {['mg', 'g', 'ml'].map((unit) => (
-                          <TouchableOpacity
-                            key={unit}
-                            style={[styles.unitButton, ingredient.unit === unit && styles.unitButtonActive]}
-                            onPress={() => updateIngredientUnit(ingredient.id, unit)}
-                          >
-                            <Text style={[styles.unitButtonText, ingredient.unit === unit && styles.unitButtonTextActive]}>{unit}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-                  </View>
-                  <TouchableOpacity style={styles.removeButton} onPress={() => removeIngredient(ingredient.id)}>
-                    <Feather name="trash-2" size={18} color={COLORS.error} />
+            <Text style={styles.sectionLabel}>3. Sua fórmula ({ingredients.length})</Text>
+            {ingredients.map((ing) => (
+              <View key={ing.id} style={styles.ingCard}>
+                <View style={styles.ingHead}>
+                  <Text style={styles.ingName} numberOfLines={1}>{ing.name}</Text>
+                  <TouchableOpacity onPress={() => removeIngredient(ing.id)}>
+                    <Feather name="trash-2" size={16} color={COLORS.error} />
                   </TouchableOpacity>
+                </View>
+                <View style={styles.ingControls}>
+                  <TextInput
+                    style={styles.qtyInput}
+                    keyboardType="numeric"
+                    value={String(ing.quantity)}
+                    onChangeText={(t) => updateQty(ing.id, t)}
+                  />
+                  <View style={styles.unitSelector}>
+                    {['mg', 'g', 'ml'].map((u) => (
+                      <TouchableOpacity
+                        key={u}
+                        style={[styles.unitBtn, ing.unit === u && styles.unitBtnActive]}
+                        onPress={() => updateUnit(ing.id, u)}
+                      >
+                        <Text style={[styles.unitText, ing.unit === u && styles.unitTextActive]}>{u}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               </View>
             ))}
           </View>
         )}
 
-        {/* Summary */}
+        {/* Resumo */}
         {ingredients.length > 0 && (
-          <View style={styles.summaryCard}>
+          <View style={styles.summary}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tipo:</Text>
-              <Text style={styles.summaryValue}>{selectedType?.name}</Text>
+              <Text style={styles.summaryLabel}>Tipo</Text>
+              <Text style={styles.summaryValue}>{selectedType?.name || '—'}</Text>
             </View>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Ingredientes:</Text>
+              <Text style={styles.summaryLabel}>Ingredientes</Text>
               <Text style={styles.summaryValue}>{ingredients.length}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryRow}>
-              <Text style={styles.totalLabel}>Total estimado:</Text>
+              <Text style={styles.totalLabel}>Total estimado</Text>
               {calculating ? (
                 <ActivityIndicator size="small" color={COLORS.primary} />
               ) : (
@@ -267,116 +374,179 @@ const FormulaScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* Add to cart */}
         {ingredients.length > 0 && (
-          <TouchableOpacity onPress={addToCart} activeOpacity={0.8}>
-            <LinearGradient colors={GRADIENTS.primary} style={styles.addButton}>
-              <Feather name="shopping-cart" size={20} color={COLORS.white} />
-              <Text style={styles.addButtonText}>Adicionar ao carrinho</Text>
-            </LinearGradient>
+          <TouchableOpacity onPress={addToCart} style={styles.cta} activeOpacity={0.85}>
+            <Feather name="shopping-cart" size={18} color={COLORS.white} />
+            <Text style={styles.ctaText}>Adicionar ao carrinho</Text>
           </TouchableOpacity>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 60 }} />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
+  container: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: SPACING.xxxl + 10, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
   },
-  backButton: { padding: 2 },
-  backButtonCircle: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: COLORS.primaryMuted, alignItems: 'center', justifyContent: 'center',
+  backBtn: {
+    width: 40, height: 40, borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  headerTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.text },
-  scrollView: { flex: 1 },
-  scrollContent: { padding: SPACING.lg },
-
+  scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xl },
+  title: { fontSize: FONT_SIZES.xxl, fontWeight: '700', color: COLORS.ink, letterSpacing: -0.5 },
+  subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.ink2, marginTop: 4, marginBottom: SPACING.lg, lineHeight: 20 },
   section: { marginBottom: SPACING.xl },
-  sectionTitle: { fontSize: FONT_SIZES.md, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.md },
+  sectionLabel: {
+    fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.ink2,
+    marginBottom: SPACING.sm, letterSpacing: 0.2,
+  },
 
-  typesContainer: { gap: SPACING.sm },
+  // Tipo de produto
+  typesRow: { gap: SPACING.sm, paddingRight: SPACING.lg },
   typeCard: {
-    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.xxl, padding: SPACING.md,
-    alignItems: 'center', minWidth: 88, marginRight: SPACING.sm,
-    borderWidth: 2, borderColor: 'transparent', ...SHADOWS.small,
+    width: 96, padding: SPACING.md, borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.surface, alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.border, marginRight: SPACING.sm,
+    ...SHADOWS.card,
   },
-  typeCardSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryMuted },
-  typeEmoji: { fontSize: 26, marginBottom: SPACING.xs },
-  typeName: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '500' },
-  typeNameSelected: { color: COLORS.primary, fontWeight: '700' },
+  typeCardActive: {
+    backgroundColor: COLORS.primarySoft,
+    borderColor: COLORS.primary,
+  },
+  typeIconWrap: {
+    width: 40, height: 40, borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  typeIconWrapActive: { backgroundColor: COLORS.primary },
+  typeName: { fontSize: FONT_SIZES.xs, color: COLORS.ink2, fontWeight: '500', textAlign: 'center' },
+  typeNameActive: { color: COLORS.primary, fontWeight: '700' },
 
-  searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.xxl, paddingVertical: 14, paddingHorizontal: SPACING.md,
-    gap: SPACING.sm, borderWidth: 2, borderColor: COLORS.border,
+  emptyTypes: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    padding: SPACING.md, backgroundColor: COLORS.backgroundAlt,
+    borderRadius: BORDER_RADIUS.md,
   },
-  searchIconWrapper: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: COLORS.borderLight, alignItems: 'center', justifyContent: 'center',
-  },
-  searchInput: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.text },
+  emptyTypesText: { flex: 1, fontSize: FONT_SIZES.sm, color: COLORS.ink2 },
 
-  searchResults: {
-    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, marginTop: SPACING.sm,
-    borderWidth: 1, borderColor: COLORS.borderLight, maxHeight: 220, ...SHADOWS.medium, overflow: 'hidden',
-  },
-  searchResultItem: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 14, paddingHorizontal: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.borderLight,
-  },
-  searchResultText: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.text },
-  addIconCircle: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center',
-  },
-
-  ingredientCard: {
-    flexDirection: 'row', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.sm, overflow: 'hidden', ...SHADOWS.small,
-  },
-  ingredientAccent: { width: 4, backgroundColor: COLORS.primary },
-  ingredientBody: { flex: 1, flexDirection: 'row', alignItems: 'center', padding: SPACING.md },
-  ingredientInfo: { flex: 1 },
-  ingredientName: { fontSize: FONT_SIZES.md, fontWeight: '600', color: COLORS.text, marginBottom: SPACING.sm },
-  ingredientControls: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  quantityInput: {
-    width: 64, backgroundColor: COLORS.backgroundLight, borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.sm, fontSize: FONT_SIZES.md, textAlign: 'center', color: COLORS.text, fontWeight: '600',
+  // Skeleton
+  skelRow: { flexDirection: 'row', gap: SPACING.sm },
+  skelCard: {
+    width: 80, height: 80, borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.backgroundAlt,
   },
 
+  // Search
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md, paddingHorizontal: SPACING.md,
+    height: 52, borderWidth: 1, borderColor: COLORS.border,
+    ...SHADOWS.card,
+  },
+  searchInput: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.ink },
+
+  resultsCard: {
+    marginTop: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.border,
+    overflow: 'hidden',
+    ...SHADOWS.card,
+  },
+  resultItem: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: SPACING.md,
+    borderBottomWidth: 1, borderBottomColor: COLORS.borderLight,
+  },
+  resultName: { fontSize: FONT_SIZES.md, color: COLORS.ink, fontWeight: '500' },
+  resultMeta: { fontSize: FONT_SIZES.xs, color: COLORS.ink3, marginTop: 2 },
+  addCircle: {
+    width: 32, height: 32, borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  // Sugestões
+  suggestionsLabel: {
+    fontSize: FONT_SIZES.xs, fontWeight: '600', color: COLORS.ink3,
+    marginBottom: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5,
+  },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingVertical: SPACING.xs + 2, paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  chipText: { fontSize: FONT_SIZES.sm, color: COLORS.ink, fontWeight: '500' },
+
+  // Ingrediente adicionado
+  ingCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderWidth: 1, borderColor: COLORS.border,
+    ...SHADOWS.card,
+  },
+  ingHead: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: SPACING.sm,
+  },
+  ingName: { fontSize: FONT_SIZES.md, fontWeight: '600', color: COLORS.ink, flex: 1, marginRight: SPACING.sm },
+  ingControls: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  qtyInput: {
+    width: 80, height: 40, backgroundColor: COLORS.backgroundAlt,
+    borderRadius: BORDER_RADIUS.md, paddingHorizontal: SPACING.sm,
+    fontSize: FONT_SIZES.md, color: COLORS.ink, textAlign: 'center', fontWeight: '600',
+  },
   unitSelector: { flexDirection: 'row', gap: 4 },
-  unitButton: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: COLORS.backgroundLight },
-  unitButtonActive: { backgroundColor: COLORS.primary },
-  unitButtonText: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, fontWeight: '600' },
-  unitButtonTextActive: { color: COLORS.white },
-  removeButton: { padding: SPACING.sm },
-
-  summaryCard: {
-    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.xxl, padding: SPACING.lg + 4,
-    marginBottom: SPACING.lg, borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.medium,
+  unitBtn: {
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.md, backgroundColor: COLORS.backgroundAlt,
   },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
-  summaryLabel: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary },
-  summaryValue: { fontSize: FONT_SIZES.md, color: COLORS.text, fontWeight: '600' },
-  divider: { height: 1, backgroundColor: COLORS.borderLight, marginVertical: SPACING.md },
-  totalLabel: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.text },
-  totalValue: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.primary },
+  unitBtnActive: { backgroundColor: COLORS.primary },
+  unitText: { fontSize: FONT_SIZES.xs, color: COLORS.ink3, fontWeight: '600' },
+  unitTextActive: { color: COLORS.white },
 
-  addButton: {
+  // Summary
+  summary: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1, borderColor: COLORS.border,
+    marginBottom: SPACING.md,
+    ...SHADOWS.card,
+  },
+  summaryRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  summaryLabel: { fontSize: FONT_SIZES.sm, color: COLORS.ink2 },
+  summaryValue: { fontSize: FONT_SIZES.md, color: COLORS.ink, fontWeight: '600' },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
+  totalLabel: { fontSize: FONT_SIZES.md, fontWeight: '700', color: COLORS.ink },
+  totalValue: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.primary, letterSpacing: -0.5 },
+
+  // CTA
+  cta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 18, paddingHorizontal: SPACING.xl, borderRadius: BORDER_RADIUS.xxl, gap: SPACING.sm,
-    ...SHADOWS.colored(COLORS.primary),
+    gap: SPACING.sm, height: 52,
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    ...SHADOWS.button,
   },
-  addButtonText: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.white },
+  ctaText: { color: COLORS.white, fontSize: FONT_SIZES.md, fontWeight: '600' },
 });
 
 export default FormulaScreen;
