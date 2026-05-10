@@ -116,6 +116,81 @@ public class CustomerPortalController : ControllerBase
     }
 
     /// <summary>
+    /// Prateleira de ingredientes ativos do estabelecimento — agrupado por categoria.
+    /// GET /api/customer-portal/ingredients?category=Vitaminas&search=vit&limit=200
+    /// Sempre retorna apenas ingredientes ativos com estoque liberado pra Customer (allowed_usage IN BOTH/COMMERCIAL).
+    /// </summary>
+    [HttpGet("ingredients")]
+    public async Task<IActionResult> GetIngredients(
+        [FromQuery] string? category = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int limit = 500)
+    {
+        var (_, establishmentId) = await GetCustomerContext();
+
+        if (!establishmentId.HasValue)
+            return Unauthorized(new { success = false, error = "Usuário não autenticado" });
+
+        try
+        {
+            var query = _db.RawMaterials
+                .Where(r => r.EstablishmentId == establishmentId.Value && r.IsActive);
+
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(r => r.Category == category);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                query = query.Where(r => EF.Functions.ILike(r.Name, $"%{s}%"));
+            }
+
+            var items = await query
+                .OrderBy(r => r.Category)
+                .ThenBy(r => r.Name)
+                .Take(Math.Clamp(limit, 1, 1000))
+                .Select(r => new
+                {
+                    id = r.Id,
+                    name = r.Name,
+                    category = r.Category,
+                    controlType = r.ControlType,
+                    allowedUsage = r.AllowedUsage,
+                    defaultUnit = r.Unit ?? "mg",
+                    minimumStock = r.MinimumStock,
+                    currentStock = r.CurrentStock,
+                    inStock = r.CurrentStock > 0,
+                })
+                .ToListAsync();
+
+            // Agrupa por categoria pra UI
+            var groups = items
+                .GroupBy(i => i.category ?? "Outros")
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    category = g.Key,
+                    count = g.Count(),
+                    items = g.ToList(),
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                success = true,
+                totalItems = items.Count,
+                totalCategories = groups.Count,
+                categories = groups,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao listar prateleira de ingredientes");
+            return StatusCode(500, new { success = false, error = "Erro ao carregar prateleira" });
+        }
+    }
+
+    /// <summary>
     /// Lista subtipos de um tipo de produto (60 cápsulas, 100g creme, etc.)
     /// </summary>
     [HttpGet("product-types/{typeId}/subtypes")]

@@ -93,6 +93,16 @@ export const resetPassword = async (phone, code, newPassword, confirmPassword) =
 
 export const getMe = async () => request('/cliente/auth/me');
 
+// Catálogo — prateleira de ingredientes ativos
+export const getCatalogIngredients = async ({ category, search, limit } = {}) => {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (search) params.set('search', search);
+  if (limit) params.set('limit', String(limit));
+  const qs = params.toString();
+  return request(`/customer-portal/ingredients${qs ? '?' + qs : ''}`);
+};
+
 export const logout = async () => {
   try { await request('/cliente/auth/logout', { method: 'POST' }); } catch (e) {}
   clearToken();

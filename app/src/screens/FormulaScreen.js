@@ -35,10 +35,19 @@ const ICON_BY_TYPE = (name) => {
 
 const FormulaScreen = ({ navigation, route }) => {
   const initialTypeId = route?.params?.productTypeId;
+  const initialIngredient = route?.params?.initialIngredient;
 
   const [productTypes, setProductTypes] = useState([]);
   const [selectedType, setSelectedType] = useState(null);
-  const [ingredients, setIngredients] = useState([]);
+  const [ingredients, setIngredients] = useState(() =>
+    initialIngredient
+      ? [{
+          ...initialIngredient,
+          quantity: initialIngredient.defaultQuantity || 100,
+          unit: initialIngredient.defaultUnit || initialIngredient.unit || 'mg',
+        }]
+      : []
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
