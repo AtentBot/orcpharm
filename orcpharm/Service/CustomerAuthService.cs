@@ -577,6 +577,21 @@ public class CustomerAuthService
 
     private async Task<CustomerSession> CreateSessionAsync(CustomerAuth auth, string ipAddress, string userAgent)
     {
+        // Define establishment padrão da sessão: usa o do cliente cadastrado se houver,
+        // ou cai no primeiro estabelecimento ativo do sistema (single-pharmacy setup).
+        var customer = auth.Customer ?? await _context.Customers
+            .FirstOrDefaultAsync(c => c.Id == auth.CustomerId);
+
+        Guid? defaultEstablishmentId = customer?.EstablishmentId;
+        if (defaultEstablishmentId == null || defaultEstablishmentId == Guid.Empty)
+        {
+            defaultEstablishmentId = await _context.Establishments
+                .Where(e => e.IsActive)
+                .OrderBy(e => e.CreatedAt)
+                .Select(e => (Guid?)e.Id)
+                .FirstOrDefaultAsync();
+        }
+
         var session = new CustomerSession
         {
             Id = Guid.NewGuid(),
@@ -588,7 +603,8 @@ public class CustomerAuthService
             DeviceType = DetectDeviceType(userAgent),
             CreatedAt = DateTime.UtcNow,
             ExpiresAt = DateTime.UtcNow.AddDays(SESSION_DURATION_DAYS),
-            IsActive = true
+            IsActive = true,
+            CurrentEstablishmentId = defaultEstablishmentId,
         };
 
         _context.CustomerSessions.Add(session);
