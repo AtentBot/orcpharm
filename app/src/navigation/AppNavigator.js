@@ -19,6 +19,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import PrescriptionScreen from '../screens/PrescriptionScreen';
 import FormulaScreen from '../screens/FormulaScreen';
 import CartScreen from '../screens/CartScreen';
+import CatalogScreen from '../screens/CatalogScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -108,6 +109,7 @@ const MainStack = () => (
     <Stack.Screen name="Prescription" component={PrescriptionScreen} />
     <Stack.Screen name="Formula" component={FormulaScreen} />
     <Stack.Screen name="Cart" component={CartScreen} />
+    <Stack.Screen name="Catalog" component={CatalogScreen} />
   </Stack.Navigator>
 );
 

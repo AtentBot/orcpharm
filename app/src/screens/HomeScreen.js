@@ -120,7 +120,11 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Catálogo */}
-          <TouchableOpacity style={styles.actionCardCatalogo}>
+          <TouchableOpacity
+            style={styles.actionCardCatalogo}
+            onPress={() => navigation.navigate('Catalog')}
+            activeOpacity={0.85}
+          >
             <View style={styles.catalogoPattern}>
               <View style={styles.patternDot1} />
               <View style={styles.patternDot2} />
