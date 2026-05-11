@@ -43,7 +43,9 @@ public class CustomerAuthMiddleware
         }
 
         // Verifica se é rota do portal do cliente
-        if (!path.StartsWith("/cliente") && !path.StartsWith("/api/cliente"))
+        if (!path.StartsWith("/cliente")
+            && !path.StartsWith("/api/cliente")
+            && !path.StartsWith("/api/customer-portal"))
         {
             await _next(context);
             return;
