@@ -241,15 +241,17 @@ public class CustomerAuthService
                     _context.CustomerAuths.Add(auth);
                     await _context.SaveChangesAsync();
 
-                    await SendVerificationCodeAsync(auth);
+                    var (codeSent, codeSendMessage) = await SendVerificationCodeAsync(auth);
 
-                    _logger.LogInformation("Cliente cadastrado com sucesso: {CustomerId}, Code: {Code}", 
+                    _logger.LogInformation("Cliente cadastrado com sucesso: {CustomerId}, Code: {Code}",
                         customerId, customer.Code);
 
                     return new CustomerRegisterResponseDto
                     {
                         Success = true,
-                        Message = "Cadastro iniciado! Verifique o código enviado por WhatsApp.",
+                        Message = codeSent
+                            ? "Cadastro iniciado! Verifique o código enviado por WhatsApp."
+                            : "Cadastro criado, mas não conseguimos enviar o código por WhatsApp. Toque em 'Reenviar código' na próxima tela.",
                         CustomerId = customerId,
                         RequiresVerification = true
                     };
@@ -421,7 +423,8 @@ public class CustomerAuthService
                 return (false, "Aguarde 1 minuto para solicitar novo código.");
             }
 
-            await SendVerificationCodeAsync(auth);
+            var (sent, sendMessage) = await SendVerificationCodeAsync(auth);
+            if (!sent) return (false, sendMessage);
             return (true, "Novo código enviado para seu WhatsApp.");
         }
         catch (Exception ex)
@@ -524,7 +527,8 @@ public class CustomerAuthService
         if (auth == null)
             return (false, "Telefone não encontrado.");
 
-        await SendVerificationCodeAsync(auth);
+        var (sent, sendMessage) = await SendVerificationCodeAsync(auth);
+        if (!sent) return (false, sendMessage);
         return (true, "Código de recuperação enviado para seu WhatsApp.");
     }
 
@@ -559,7 +563,7 @@ public class CustomerAuthService
 
     // ==================== HELPERS ====================
 
-    private async Task SendVerificationCodeAsync(CustomerAuth auth)
+    private async Task<(bool Success, string Message)> SendVerificationCodeAsync(CustomerAuth auth)
     {
         var code = GenerateVerificationCode();
 
@@ -569,10 +573,18 @@ public class CustomerAuthService
         auth.LastVerificationSentAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
+        var maskedPhone = auth.Phone?.Length > 6 ? auth.Phone[..4] + "****" + auth.Phone[^2..] : "***";
         var message = $"🔐 *Formula Clear*\n\nSeu código de verificação é: *{code}*\n\nVálido por {VERIFICATION_CODE_EXPIRY_MINUTES} minutos.";
-        await _whatsAppService.SendMessageAsync(auth.Phone, message);
+        var (sent, sendMessage) = await _whatsAppService.SendMessageAsync(auth.Phone, message);
 
-        _logger.LogInformation("Código de verificação enviado para {Phone}", auth.Phone?.Length > 6 ? auth.Phone[..4] + "****" + auth.Phone[^2..] : "***");
+        if (!sent)
+        {
+            _logger.LogError("Falha ao enviar código WhatsApp para {Phone}: {Error}", maskedPhone, sendMessage);
+            return (false, "Não foi possível enviar o código pelo WhatsApp. Tente novamente em instantes.");
+        }
+
+        _logger.LogInformation("Código de verificação enviado para {Phone}", maskedPhone);
+        return (true, "Código enviado.");
     }
 
     private async Task<CustomerSession> CreateSessionAsync(CustomerAuth auth, string ipAddress, string userAgent)
