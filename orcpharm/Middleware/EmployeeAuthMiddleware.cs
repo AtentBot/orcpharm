@@ -129,7 +129,8 @@ public class EmployeeAuthMiddleware
             "/api/prescriptionquotes/public",
             "/api/ingredients",                     // ✅ Autocomplete de ingredientes
             "/api/pricing/ingredient/search",       // ✅ Busca preço por nome (Portal Cliente)
-            "/api/pricing/formula"                  // ✅ Cálculo de fórmula (Portal Cliente)
+            "/api/pricing/formula",                 // ✅ Cálculo de fórmula (Portal Cliente)
+            "/api/wa/diag"                          // ✅ Diagnóstico WhatsApp/AtentBot
         };
 
         if (publicApis.Any(api => path.StartsWith(api)))
