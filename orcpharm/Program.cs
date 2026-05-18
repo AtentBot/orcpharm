@@ -150,8 +150,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
 
-// HttpClient
-builder.Services.AddHttpClient<WhatsAppService>();
+// HttpClient — timeout obrigatório pra evitar thread pool starvation se AtentBot pendurar
+builder.Services.AddHttpClient<WhatsAppService>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(15);
+});
 
 // Services
 builder.Services.AddScoped<PurchaseOrderService>();
