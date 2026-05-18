@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Net.Http.Json;
+using Service.Notifications;
 
 namespace Controllers
 {
@@ -10,11 +11,41 @@ namespace Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _config;
+        private readonly WhatsAppService _whatsAppService;
 
-        public MessageController(IHttpClientFactory httpClientFactory, IConfiguration config)
+        public MessageController(
+            IHttpClientFactory httpClientFactory,
+            IConfiguration config,
+            WhatsAppService whatsAppService)
         {
             _httpClientFactory = httpClientFactory;
             _config = config;
+            _whatsAppService = whatsAppService;
+        }
+
+        // DiagnÃ³stico do caminho real usado em prod (WhatsAppService â†’ instÃ¢ncia "pharm").
+        // GET /api/wa/diag?phone=11975903732
+        [HttpGet("diag")]
+        public async Task<IActionResult> Diag([FromQuery] string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                return BadRequest(new { error = "missing_phone" });
+
+            var apiKeyRaw = _config["AtentBot:ApiKey"];
+            var apiUrl = _config["AtentBot:ApiUrl"] ?? "https://api.atentbot.com/message/sendText/pharm";
+            var apiKeyMask = string.IsNullOrEmpty(apiKeyRaw)
+                ? "<missing>"
+                : apiKeyRaw.Length > 4 ? "****" + apiKeyRaw[^4..] : "****";
+
+            var (success, message) = await _whatsAppService.SendMessageAsync(phone, "[diag] teste de envio");
+            return Ok(new
+            {
+                phoneInput = phone,
+                apiKeyMask,
+                apiUrl,
+                success,
+                providerResponse = message
+            });
         }
 
         public record MessageRequest(string Number, string Text);
@@ -30,7 +61,7 @@ namespace Controllers
             if (string.IsNullOrWhiteSpace(apiKey))
                 return StatusCode(500, new { error = "atentbot_apikey_not_configured" });
 
-            // monta requisição
+            // monta requisiï¿½ï¿½o
             var client = _httpClientFactory.CreateClient();
             var url = $"{baseUrl.TrimEnd('/')}/message/sendText/crescer";
             var payload = new { number = req.Number, text = req.Text };
