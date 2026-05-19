@@ -28,6 +28,7 @@ out/
 *.userosscache
 *.sln.docstates
 *.csproj.user
+*.lscache
 
 # .NET Core publish artifacts -------------------------------------------------
 project.lock.json
