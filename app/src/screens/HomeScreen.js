@@ -122,7 +122,7 @@ const HomeScreen = ({ navigation }) => {
           {/* Catálogo */}
           <TouchableOpacity
             style={styles.actionCardCatalogo}
-            onPress={() => navigation.navigate('Catalog')}
+            onPress={() => navigation.jumpTo('SearchTab')}
             activeOpacity={0.85}
           >
             <View style={styles.catalogoPattern}>

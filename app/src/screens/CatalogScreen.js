@@ -82,9 +82,13 @@ const CatalogScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={20} color={COLORS.ink} />
-        </TouchableOpacity>
+        {navigation.canGoBack() ? (
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={20} color={COLORS.ink} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
         <FarmifyLogo size={24} />
         <View style={{ width: 40 }} />
       </View>

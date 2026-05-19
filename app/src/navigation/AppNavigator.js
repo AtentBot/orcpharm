@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
-import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '../constants/theme';
+import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -33,19 +33,6 @@ const AuthStack = () => (
     <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
   </Stack.Navigator>
-);
-
-// Search placeholder
-const SearchScreen = () => (
-  <LinearGradient colors={GRADIENTS.background} style={styles.placeholder}>
-    <View style={styles.placeholderIconOuter}>
-      <View style={styles.placeholderIconInner}>
-        <Feather name="search" size={36} color={COLORS.primary} />
-      </View>
-    </View>
-    <Text style={styles.placeholderTitle}>Buscar</Text>
-    <Text style={styles.placeholderSubtitle}>Em breve</Text>
-  </LinearGradient>
 );
 
 // Tab icon with active dot indicator
@@ -77,7 +64,7 @@ const TabNavigator = () => (
     />
     <Tab.Screen
       name="SearchTab"
-      component={SearchScreen}
+      component={CatalogScreen}
       options={{
         tabBarLabel: 'Buscar',
         tabBarIcon: ({ color, focused }) => <TabIcon name="search" color={color} focused={focused} />,
@@ -109,7 +96,6 @@ const MainStack = () => (
     <Stack.Screen name="Prescription" component={PrescriptionScreen} />
     <Stack.Screen name="Formula" component={FormulaScreen} />
     <Stack.Screen name="Cart" component={CartScreen} />
-    <Stack.Screen name="Catalog" component={CatalogScreen} />
   </Stack.Navigator>
 );
 
@@ -181,38 +167,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.white,
     letterSpacing: -0.5,
-  },
-  placeholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholderIconOuter: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.borderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-  placeholderIconInner: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: COLORS.primaryMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placeholderTitle: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  placeholderSubtitle: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.textMuted,
-    marginTop: SPACING.xs,
   },
 });
 
