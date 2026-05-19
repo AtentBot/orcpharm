@@ -152,6 +152,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // ════════════════════════════════════════════════════════════════════════
 
     public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
+    public DbSet<RawMaterialCatalog> RawMaterialsCatalog => Set<RawMaterialCatalog>();
     public DbSet<Batch> Batches => Set<Batch>();
     public DbSet<Category> Categories { get; set; } = null!;
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();

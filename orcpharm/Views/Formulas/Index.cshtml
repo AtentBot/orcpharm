@@ -769,12 +769,14 @@
 
             timeout = setTimeout(async () => {
                 try {
-                    const response = await fetch(`/api/RawMaterials?search=${encodeURIComponent(term)}&pageSize=15`);
-                    const data = await response.json();
-                    
-                    const items = data.items || data;
-                    
-                    if (items && items.length > 0) {
+                    const response = await fetch(`/api/RawMaterials/search?q=${encodeURIComponent(term)}&limit=15`);
+                    const payload = await response.json();
+                    const items = Array.isArray(payload?.data) ? payload.data
+                                : Array.isArray(payload?.items) ? payload.items
+                                : Array.isArray(payload) ? payload
+                                : [];
+
+                    if (items.length > 0) {
                         dropdown.innerHTML = items.map(rm => `
                             <div class="dropdown-item-raw" onclick="selectRawMaterial('${rm.id}', '${rm.name.replace(/'/g, "\\'")}', '${rm.unit || 'g'}')">
                                 <strong>${rm.name}</strong>

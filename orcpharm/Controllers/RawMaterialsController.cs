@@ -525,6 +525,120 @@ public class RawMaterialsController : ControllerBase
     }
 
     // ════════════════════════════════════════════════════════════════════════════
+    // IMPORTAR DO CATÁLOGO GLOBAL
+    // ════════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Importa um ou mais itens do catálogo global para o estoque do estabelecimento.
+    /// Itens já cadastrados (mesmo nome) são ignorados silenciosamente.
+    /// POST /api/RawMaterials/import-from-catalog
+    /// </summary>
+    [HttpPost("import-from-catalog")]
+    public async Task<IActionResult> ImportFromCatalog([FromBody] ImportFromCatalogDto dto)
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null)
+            return Unauthorized(new { error = "Funcionário não autenticado" });
+
+        if (!IsEmployeeActive(employee))
+            return Unauthorized(new { error = "Funcionário inativo" });
+
+        if (!await HasStockManagementPermission(employee))
+            return StatusCode(403, new { error = "Sem permissão para gerenciar estoque" });
+
+        if (dto.CatalogIds == null || dto.CatalogIds.Count == 0)
+            return BadRequest(new { error = "Nenhum item selecionado" });
+
+        var catalogItems = await _db.RawMaterialsCatalog
+            .Where(c => dto.CatalogIds.Contains(c.Id) && c.IsActive)
+            .ToListAsync();
+
+        if (catalogItems.Count == 0)
+            return NotFound(new { error = "Nenhum item válido encontrado no catálogo" });
+
+        // Quais hormonios/controlados precisam de permissão extra
+        var needsControlled = catalogItems.Any(c =>
+            !string.IsNullOrEmpty(c.ControlType) && c.ControlType != "COMUM");
+        if (needsControlled && !await HasControlledSubstancePermission(employee))
+            return StatusCode(403, new { error = "Seleção inclui substâncias controladas; sem permissão" });
+
+        // Já cadastrados (por nome, case-insensitive)
+        var existingNames = await _db.RawMaterials
+            .Where(rm => rm.EstablishmentId == employee.EstablishmentId && rm.IsActive)
+            .Select(rm => rm.Name.ToLower())
+            .ToListAsync();
+        var existingSet = new HashSet<string>(existingNames, StringComparer.OrdinalIgnoreCase);
+
+        var now = DateTime.UtcNow;
+        var imported = new List<object>();
+        var skipped = new List<object>();
+
+        foreach (var c in catalogItems)
+        {
+            if (existingSet.Contains(c.Name))
+            {
+                skipped.Add(new { c.Id, c.Name, reason = "Já cadastrado neste estabelecimento" });
+                continue;
+            }
+
+            var material = new RawMaterial
+            {
+                Id = Guid.NewGuid(),
+                EstablishmentId = employee.EstablishmentId,
+                Name = c.Name,
+                DcbCode = c.DcbCode,
+                CasNumber = c.CasNumber ?? "",
+                Category = c.Category,
+                ControlType = c.ControlType,
+                AllowedUsage = c.AllowedUsage,
+                PhysicalState = c.PhysicalState,
+                Unit = c.Unit,
+                PurityFactor = c.DefaultPurityFactor,
+                CorrectionFactor = c.DefaultCorrectionFactor,
+                Synonyms = c.Synonyms,
+                Indications = c.Indications,
+                Popularity = c.Popularity,
+                CurrentStock = 0,
+                MinimumStock = 0,
+                MaximumStock = 0,
+                IsVirtual = dto.AsVirtual ?? true,
+                IsActive = true,
+                PriceSource = "BASE",
+                RequiresSpecialAuthorization = c.ControlType != "COMUM",
+                CreatedAt = now,
+                UpdatedAt = now,
+                CreatedByEmployeeId = employee.Id,
+                UpdatedByEmployeeId = employee.Id
+            };
+
+            _db.RawMaterials.Add(material);
+            existingSet.Add(c.Name);
+            imported.Add(new { catalogId = c.Id, id = material.Id, c.Name });
+        }
+
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Import do catálogo: {Imported} importados, {Skipped} pulados (estabelecimento {EstId} por {EmpName})",
+            imported.Count, skipped.Count, employee.EstablishmentId, employee.FullName);
+
+        return Ok(new
+        {
+            success = true,
+            importedCount = imported.Count,
+            skippedCount = skipped.Count,
+            imported,
+            skipped
+        });
+    }
+
+    public class ImportFromCatalogDto
+    {
+        public List<Guid> CatalogIds { get; set; } = new();
+        public bool? AsVirtual { get; set; } = true;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
     // PREÇOS
     // ════════════════════════════════════════════════════════════════════════════
 

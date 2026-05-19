@@ -22,6 +22,7 @@ using Filters;
 using Service.CustomerFormulas;
 using Service.PharmaceuticalForms;
 using Service.Marketplace;
+using Service.Catalog;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -169,6 +170,7 @@ builder.Services.AddScoped<StripeService>();
 builder.Services.AddScoped<SubscriptionService>();
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<Service.IngredientMatcherService>();
+builder.Services.AddScoped<CatalogSeederService>();
 
 // Marketplace Services
 builder.Services.AddScoped<JwtTokenService>();
@@ -385,6 +387,19 @@ try
                 await db.SaveChangesAsync();
 
                 Console.WriteLine("SAAS ADMIN criado com sucesso. Troque a senha apos o primeiro login em /admin/login");
+            }
+
+            // ═══════════════════════════════════════════════════════════════════════
+            // SEED CATÁLOGO GLOBAL DE MATÉRIAS-PRIMAS
+            // ═══════════════════════════════════════════════════════════════════════
+            try
+            {
+                var catalogSeeder = scope.ServiceProvider.GetRequiredService<CatalogSeederService>();
+                await catalogSeeder.SeedAsync();
+            }
+            catch (Exception seedEx)
+            {
+                Console.WriteLine($"⚠️ Erro ao seedar catálogo de matérias-primas: {seedEx.Message}");
             }
         }
         else

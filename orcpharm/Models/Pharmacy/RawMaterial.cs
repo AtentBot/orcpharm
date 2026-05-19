@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Models.Pharmacy;
 
-[Index(nameof(DcbCode), IsUnique = true)]
+[Index(nameof(EstablishmentId), nameof(DcbCode), IsUnique = true)]
 [Index(nameof(Name))]
 [Index(nameof(ControlType))]
 [Index(nameof(EstablishmentId), nameof(IsActive))]
