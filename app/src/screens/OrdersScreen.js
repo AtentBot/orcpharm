@@ -17,6 +17,8 @@ import { COLORS, GRADIENTS, SPACING, BORDER_RADIUS, FONT_SIZES, SHADOWS } from '
 
 const STATUS_LABELS = {
   PENDING: { label: 'Pendente', color: '#F59E0B', icon: 'clock' },
+  CONFIRMED: { label: 'Confirmado', color: '#3B82F6', icon: 'check' },
+  PREPARING: { label: 'Em preparação', color: '#0D9488', icon: 'zap' },
   IN_PROGRESS: { label: 'Em produção', color: '#0D9488', icon: 'zap' },
   READY: { label: 'Pronto', color: '#059669', icon: 'check-circle' },
   DELIVERED: { label: 'Entregue', color: '#57534E', icon: 'package' },

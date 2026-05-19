@@ -56,6 +56,55 @@ public class ClienteApiController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
+    /// Listar pedidos do cliente (paginado, com filtro opcional de status)
+    /// GET /api/cliente/orders?page=1&status=IN_PROGRESS
+    /// O app trata IN_PROGRESS como agregado de PENDING/CONFIRMED/PREPARING.
+    /// </summary>
+    [HttpGet("orders")]
+    public async Task<IActionResult> GetOrders([FromQuery] int page = 1, [FromQuery] string? status = null)
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return Unauthorized(new { success = false });
+
+        if (page < 1) page = 1;
+        const int pageSize = 10;
+
+        var query = _context.OnlineOrders.Where(o => o.CustomerId == customer.Id);
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            if (status == "IN_PROGRESS")
+            {
+                query = query.Where(o => o.Status == "PENDING" || o.Status == "CONFIRMED" || o.Status == "PREPARING");
+            }
+            else
+            {
+                query = query.Where(o => o.Status == status);
+            }
+        }
+
+        var orders = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(o => new
+            {
+                id = o.Id,
+                orderNumber = o.OrderNumber,
+                code = o.OrderNumber,
+                status = o.Status,
+                description = o.Items.Select(i => i.ProductName).FirstOrDefault(),
+                itemCount = o.Items.Count,
+                total = o.Total,
+                createdAt = o.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(new { success = true, orders });
+    }
+
+    /// <summary>
     /// Listar pedidos ativos
     /// GET /api/cliente/orders/active
     /// </summary>
