@@ -162,11 +162,14 @@ public class AdminMarketplaceController : ControllerBase
     }
 
     /// <summary>
-    /// Ativar/desativar farmácia no marketplace
+    /// Ativar/desativar farmácia no marketplace — requer SUPER_ADMIN
     /// </summary>
     [HttpPut("pharmacies/{id:guid}/toggle")]
     public async Task<ActionResult<ApiResponse>> TogglePharmacy(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, ApiResponse.ErrorResponse("Acesso negado. Requer perfil SUPER_ADMIN."));
+
         var pharmacy = await _db.Establishments.FindAsync(id);
         if (pharmacy == null)
             return NotFound(ApiResponse.ErrorResponse("Farmácia não encontrada"));
@@ -222,13 +225,22 @@ public class AdminMarketplaceController : ControllerBase
     }
 
     /// <summary>
-    /// Forçar recálculo de comissões de uma semana
+    /// Forçar recálculo de comissões de uma semana — requer SUPER_ADMIN
     /// </summary>
     [HttpPost("commissions/recalculate")]
     public async Task<ActionResult<ApiResponse>> RecalculateCommissions([FromQuery] DateTime weekDate)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, ApiResponse.ErrorResponse("Acesso negado. Requer perfil SUPER_ADMIN."));
+
         var commissions = await _commission.CalculateWeeklyCommissionsAsync(weekDate);
         return Ok(ApiResponse.SuccessResponse($"Comissões recalculadas: {commissions.Count} farmácias"));
+    }
+
+    private bool IsSuperAdmin()
+    {
+        var role = HttpContext.Items["SaasAdminRole"] as string;
+        return string.Equals(role, "SUPER_ADMIN", StringComparison.Ordinal);
     }
 }
 

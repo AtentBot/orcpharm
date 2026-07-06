@@ -2361,7 +2361,7 @@ namespace Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("email");
 
-                    b.Property<Guid>("EstablishmentId")
+                    b.Property<Guid?>("EstablishmentId")
                         .HasColumnType("uuid")
                         .HasColumnName("establishment_id");
 
@@ -2558,8 +2558,8 @@ namespace Migrations
                         .HasColumnName("VerificationAttempts");
 
                     b.Property<string>("VerificationCode")
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("VerificationCode");
 
                     b.Property<DateTime?>("VerificationCodeExpiresAt")

@@ -40,9 +40,6 @@ public class PharmacyDetailDto
     public decimal DeliveryRadiusKm { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
-    public string? Phone { get; set; }
-    public string? WhatsApp { get; set; }
-    public string? Email { get; set; }
     public string? Street { get; set; }
     public string? Number { get; set; }
     public string? Neighborhood { get; set; }

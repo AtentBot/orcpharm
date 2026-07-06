@@ -23,10 +23,9 @@ public class CustomerAuth
     [StringLength(200)]
     public string? Email { get; set; }
 
-    [Required]
     [Column("Cpf")]
     [StringLength(11)]
-    public string Cpf { get; set; } = string.Empty;
+    public string? Cpf { get; set; }
 
     [Column("PasswordHash")]
     [StringLength(500)]
@@ -43,7 +42,7 @@ public class CustomerAuth
     public bool IsVerified { get; set; } = false;
 
     [Column("VerificationCode")]
-    [StringLength(6)]
+    [StringLength(64)]
     public string? VerificationCode { get; set; }
 
     [Column("VerificationCodeExpiresAt")]

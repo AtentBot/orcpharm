@@ -838,7 +838,7 @@ public class FiscalService
         key.Append(invoice.Series.ToString().PadLeft(3, '0')); // 3
         key.Append(invoice.InvoiceNumber.ToString().PadLeft(9, '0')); // 9
         key.Append("1"); // tpEmis: 1=Normal
-        key.Append(new Random().Next(10000000, 99999999).ToString()); // 8 código numérico
+        key.Append(System.Security.Cryptography.RandomNumberGenerator.GetInt32(10000000, 99999999).ToString()); // 8 cNF
 
         // Calcular dígito verificador (módulo 11)
         var dv = CalculateMod11(key.ToString());
@@ -936,8 +936,8 @@ public class InternalNFeProvider : INFeProvider
     public Task<NFeResultDto> EmitirAsync(string xml, FiscalConfig config)
     {
         // Simulação para ambiente de homologação/desenvolvimento
-        var random = new Random();
-        var success = config.Environment == "HOMOLOGACAO" || random.Next(100) > 5;
+        var success = config.Environment == "HOMOLOGACAO" ||
+                      System.Security.Cryptography.RandomNumberGenerator.GetInt32(100) > 5;
 
         if (success)
         {
@@ -945,7 +945,7 @@ public class InternalNFeProvider : INFeProvider
             {
                 Success = true,
                 InvoiceKey = Guid.NewGuid().ToString("N").Substring(0, 44).ToUpper(),
-                Protocol = $"135{DateTime.Now:yyyyMMddHHmmss}{random.Next(1000, 9999)}",
+                Protocol = $"135{DateTime.Now:yyyyMMddHHmmss}{System.Security.Cryptography.RandomNumberGenerator.GetInt32(1000, 9999)}",
                 AuthorizationDate = DateTime.UtcNow,
                 XmlPath = $"/storage/xml/{DateTime.Now:yyyyMM}/{Guid.NewGuid()}.xml"
             });

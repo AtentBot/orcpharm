@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using Data;
+using Microsoft.EntityFrameworkCore;
 using Service.Marketplace;
 
 namespace Middleware;
@@ -14,7 +17,7 @@ public class JwtAuthMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, JwtTokenService jwtService)
+    public async Task InvokeAsync(HttpContext context, JwtTokenService jwtService, AppDbContext db)
     {
         var path = context.Request.Path.Value?.ToLowerInvariant() ?? "";
 
@@ -44,6 +47,20 @@ public class JwtAuthMiddleware
             return;
         }
 
+        // Verificar revogação pelo jti claim
+        var jti = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        if (!string.IsNullOrEmpty(jti))
+        {
+            var isRevoked = await db.RevokedJwts
+                .AnyAsync(r => r.JwtId == jti && r.ExpiresAt > DateTime.UtcNow);
+            if (isRevoked)
+            {
+                context.Response.StatusCode = 401;
+                await context.Response.WriteAsJsonAsync(new { error = "Token revogado. Faça login novamente." });
+                return;
+            }
+        }
+
         var customerId = jwtService.GetCustomerIdFromToken(principal);
         if (customerId == null)
         {
@@ -54,15 +71,22 @@ public class JwtAuthMiddleware
 
         context.Items["MobileCustomerId"] = customerId.Value;
         context.Items["MobileCustomerPrincipal"] = principal;
+        context.Items["MobileJti"] = jti;
 
         await _next(context);
     }
 
     private static bool IsPublicMobileRoute(string path)
     {
-        return path.StartsWith("/api/mobile/v1/auth/")
+        return path == "/api/mobile/v1/auth/register"
+            || path == "/api/mobile/v1/auth/login"
+            || path == "/api/mobile/v1/auth/verify-email"
+            || path == "/api/mobile/v1/auth/resend-verification"
+            || path == "/api/mobile/v1/auth/refresh-token"
+            || path.StartsWith("/api/mobile/v1/auth/forgot-password")
+            || path.StartsWith("/api/mobile/v1/auth/reset-password")
             || path.StartsWith("/api/mobile/v1/pharmacies/nearby")
-            || path.StartsWith("/api/mobile/v1/pharmacies/") && !path.Contains("/orders")
+            || (path.StartsWith("/api/mobile/v1/pharmacies/") && !path.Contains("/orders"))
             || path.StartsWith("/api/mobile/v1/search")
             || path.StartsWith("/api/mobile/v1/categories");
     }

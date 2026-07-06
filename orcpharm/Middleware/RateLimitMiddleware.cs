@@ -16,6 +16,8 @@ public class RateLimitMiddleware
 
     private const int MaxRequestsPerMinute = 120;
     private const int AuthMaxRequestsPerMinute = 10; // Login/register mais restrito
+    // Limita o tamanho do dicionário para prevenir consumo ilimitado de memória
+    private const int MaxTrackedKeys = 50_000;
 
     public RateLimitMiddleware(RequestDelegate next, ILogger<RateLimitMiddleware> logger)
     {
@@ -38,8 +40,21 @@ public class RateLimitMiddleware
         var key = $"{ip}:{(IsAuthEndpoint(path) ? "auth" : "general")}";
         var limit = IsAuthEndpoint(path) ? AuthMaxRequestsPerMinute : MaxRequestsPerMinute;
 
+        // Previne crescimento ilimitado do dicionário (ex: IPs únicos de ataque DDoS)
+        if (_counters.Count >= MaxTrackedKeys)
+        {
+            context.Response.StatusCode = 429;
+            context.Response.Headers["Retry-After"] = "60";
+            await context.Response.WriteAsJsonAsync(new { error = "Muitas requisições. Tente novamente em 1 minuto." });
+            return;
+        }
+
         var counter = _counters.GetOrAdd(key, _ => new SlidingWindowCounter());
         counter.CleanupOldEntries();
+
+        // Remove chaves vazias periodicamente para liberar memória
+        if (counter.Count == 0 && _counters.Count > 1000)
+            _counters.TryRemove(key, out _);
 
         if (counter.Count >= limit)
         {

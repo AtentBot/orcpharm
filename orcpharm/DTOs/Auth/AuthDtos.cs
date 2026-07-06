@@ -28,18 +28,18 @@ public class ResetPasswordDto
 }
 
 /// <summary>
-/// DTO para alteração de senha de funcionário
+/// DTO para alteraï¿½ï¿½o de senha de funcionï¿½rio
 /// Usado pelo EmployeesController
 /// </summary>
 public class ChangePasswordDto
 {
     /// <summary>
-    /// ID do funcionário que terá a senha alterada
+    /// ID do funcionï¿½rio que terï¿½ a senha alterada
     /// </summary>
     public Guid EmployeeId { get; set; }
 
     /// <summary>
-    /// Senha atual (obrigatória se o funcionário estiver alterando sua própria senha)
+    /// Senha atual (obrigatï¿½ria se o funcionï¿½rio estiver alterando sua prï¿½pria senha)
     /// </summary>
     public string? CurrentPassword { get; set; }
 
@@ -49,7 +49,7 @@ public class ChangePasswordDto
     public string NewPassword { get; set; } = string.Empty;
 
     /// <summary>
-    /// Confirmação da nova senha (para validação no frontend)
+    /// Confirmaï¿½ï¿½o da nova senha (para validaï¿½ï¿½o no frontend)
     /// </summary>
     public string ConfirmPassword { get; set; } = string.Empty;
 }
@@ -61,6 +61,8 @@ public class Request2FADto
 
 public class Verify2FADto
 {
+    /// <summary>Token opaco retornado pelo /api/auth/login quando Requires2FA = true.</summary>
+    public string TempToken { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public string Purpose { get; set; } = "LOGIN";
 }

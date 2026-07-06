@@ -180,14 +180,15 @@ export const searchIngredients = async (query) => {
   return request(`/pricing/ingredient/search?name=${encodeURIComponent(query)}`);
 };
 
-export const autocompleteIngredients = async (query) => {
-  return request(`/pricing/autocomplete?query=${encodeURIComponent(query)}`);
+export const autocompleteIngredients = async (query, limit = 10) => {
+  const r = await request(`/cliente/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+  return r?.results || [];
 };
 
-export const calculateFormula = async (productTypeId, ingredients) => {
-  return request('/pricing/formula/calculate', {
+export const calculateFormula = async (productType, ingredients, productQuantity = 1) => {
+  return request('/cliente/formula/calculate', {
     method: 'POST',
-    body: JSON.stringify({ productTypeId, ingredients }),
+    body: JSON.stringify({ productType, productQuantity, ingredients }),
   });
 };
 

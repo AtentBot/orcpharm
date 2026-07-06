@@ -21,10 +21,11 @@ public class OpenAIPrescriptionParserService
     private const string OpenAiEndpoint = "https://api.openai.com/v1/chat/completions";
 
     public OpenAIPrescriptionParserService(
+        HttpClient httpClient,
         IConfiguration configuration,
         ILogger<OpenAIPrescriptionParserService> logger)
     {
-        _httpClient = new HttpClient();
+        _httpClient = httpClient;
         _logger = logger;
         _apiKey = configuration["OpenAI:ApiKey"] ?? string.Empty;
         _model = configuration["OpenAI:Model"] ?? "gpt-4o";

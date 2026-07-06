@@ -68,8 +68,30 @@ public class AuthService
             };
         }
 
+        // Verificar lockout da conta
+        if (employee.LockedUntil.HasValue && employee.LockedUntil > DateTime.UtcNow)
+        {
+            attempt.FailureReason = "Conta bloqueada";
+            _context.LoginAttempts.Add(attempt);
+            await _context.SaveChangesAsync();
+
+            return new LoginResponseDto
+            {
+                Success = false,
+                Message = "Conta bloqueada temporariamente por excesso de tentativas. Tente novamente mais tarde."
+            };
+        }
+
         if (!VerifyPassword(dto.Password, employee.PasswordHash))
         {
+            employee.FailedLoginAttempts++;
+            if (employee.FailedLoginAttempts >= 5)
+            {
+                employee.LockedUntil = DateTime.UtcNow.AddMinutes(30);
+                employee.FailedLoginAttempts = 0;
+                _logger.LogWarning("Conta de funcionário bloqueada por 30 min: {Identifier}", dto.Identifier);
+            }
+
             attempt.FailureReason = "Senha incorreta";
             _context.LoginAttempts.Add(attempt);
             await _context.SaveChangesAsync();
@@ -80,6 +102,10 @@ public class AuthService
                 Message = "CPF/WhatsApp ou senha inválidos"
             };
         }
+
+        // Reset do lockout ao logar com sucesso
+        employee.FailedLoginAttempts = 0;
+        employee.LockedUntil = null;
 
         var requires2FA = await Check2FARequired(employee.Id);
 

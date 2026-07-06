@@ -19,9 +19,8 @@ public class SignupService
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     // IDs padrão para novos cadastros
-    private static readonly Guid OwnerAccessLevelId = Guid.Parse("b0000000-0000-0000-0000-000000000001");  // OWNER - Proprietário
+    private static readonly Guid OwnerAccessLevelId = Guid.Parse("10000000-0000-0000-0000-000000000001");  // OWNER - Proprietário (seeded em AppDbContext)
     private static readonly Guid DefaultCategoryId = Guid.Parse("c0000000-0000-0000-0000-000000000001");   // Farmácia de Manipulação
-    private static readonly Guid OwnerJobPositionId = Guid.Parse("145f5c60-62fa-428d-ab46-56503621a8d6");  // Cargo: Proprietário(a)
 
     public SignupService(
         AppDbContext context,
@@ -296,7 +295,7 @@ public class SignupService
 
             // Verificar se já existe um proprietário para este establishment
             var existingOwner = await _context.Set<Employee>()
-                .AnyAsync(e => e.EstablishmentId == dto.EstablishmentId && e.JobPositionId == OwnerJobPositionId);
+                .AnyAsync(e => e.EstablishmentId == dto.EstablishmentId);
 
             if (existingOwner)
                 return (false, "Já existe um proprietário cadastrado para este estabelecimento", null);
@@ -314,12 +313,35 @@ public class SignupService
             if (cpfExists)
                 return (false, "CPF já cadastrado no sistema", null);
 
+            // Criar (ou reusar) cargo de Proprietário para este estabelecimento
+            var ownerPosition = await _context.Set<JobPosition>()
+                .FirstOrDefaultAsync(p => p.EstablishmentId == establishment.Id && p.Code == "owner");
+            if (ownerPosition == null)
+            {
+                ownerPosition = new JobPosition
+                {
+                    Id = Guid.NewGuid(),
+                    EstablishmentId = establishment.Id,
+                    Code = "owner",
+                    Name = "Proprietário(a)",
+                    Description = "Dono do estabelecimento",
+                    HierarchyLevel = 10,
+                    RequiresCertification = false,
+                    IsSystemDefault = true,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Set<JobPosition>().Add(ownerPosition);
+                await _context.SaveChangesAsync();
+            }
+
             // Criar o Employee proprietário
             var owner = new Employee
             {
                 Id = Guid.NewGuid(),
                 EstablishmentId = establishment.Id,
-                JobPositionId = OwnerJobPositionId,
+                JobPositionId = ownerPosition.Id,
                 FullName = dto.FullName.Trim(),
                 Cpf = cpfLimpo,
                 Email = establishment.Email!,

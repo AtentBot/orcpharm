@@ -15,6 +15,7 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import HomeScreen from '../screens/HomeScreen';
 import OrdersScreen from '../screens/OrdersScreen';
+import OrderDetailScreen from '../screens/OrderDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import PrescriptionScreen from '../screens/PrescriptionScreen';
 import FormulaScreen from '../screens/FormulaScreen';
@@ -96,6 +97,7 @@ const MainStack = () => (
     <Stack.Screen name="Prescription" component={PrescriptionScreen} />
     <Stack.Screen name="Formula" component={FormulaScreen} />
     <Stack.Screen name="Cart" component={CartScreen} />
+    <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
   </Stack.Navigator>
 );
 

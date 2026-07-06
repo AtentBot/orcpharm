@@ -25,7 +25,7 @@ public class EstablishmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Establishment>>> List(
+    public async Task<ActionResult<IEnumerable<object>>> List(
         [FromQuery] string? city = null,
         [FromQuery] string? state = null,
         [FromQuery] int skip = 0,
@@ -38,19 +38,40 @@ public class EstablishmentsController : ControllerBase
         var data = await q.OrderBy(e => e.NomeFantasia)
                           .Skip(Math.Max(0, skip))
                           .Take(Math.Clamp(take, 1, 200))
+                          .Select(e => new
+                          {
+                              e.Id, e.NomeFantasia, e.RazaoSocial, e.Cnpj,
+                              e.City, e.State, e.PostalCode,
+                              e.Phone, e.WhatsApp, e.Email,
+                              e.IsActive, e.OnboardingCompleted,
+                              e.IsMarketplaceActive, e.AverageRating, e.TotalRatings,
+                              e.CreatedAt
+                          })
                           .ToListAsync();
-        return data;
+        return Ok(data);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Establishment>> Get(Guid id)
-        => await _db.Establishments.FindAsync(id) is { } e ? Ok(e) : NotFound();
+    public async Task<ActionResult<object>> Get(Guid id)
+    {
+        var e = await _db.Establishments.FindAsync(id);
+        if (e is null) return NotFound();
+        return Ok(new
+        {
+            e.Id, e.NomeFantasia, e.RazaoSocial, e.Cnpj,
+            e.City, e.State, e.PostalCode, e.Street, e.Number, e.Neighborhood,
+            e.Phone, e.WhatsApp, e.Email, e.Instagram, e.Facebook,
+            e.IsActive, e.OnboardingCompleted,
+            e.IsMarketplaceActive, e.AverageRating, e.TotalRatings,
+            e.CreatedAt, e.UpdatedAt
+        });
+    }
 
-    // 1) CADASTRO: cria establishment, gera 6 dígitos, salva client_onboarding e envia WhatsApp
+    // 1) CADASTRO: cria establishment, gera 6 dï¿½gitos, salva client_onboarding e envia WhatsApp
     [HttpPost]
     public async Task<ActionResult<Establishment>> Create([FromBody] Establishment input, CancellationToken ct)
     {
-        // ? 1. Verifica se já existe CNPJ igual
+        // ? 1. Verifica se jï¿½ existe CNPJ igual
         if (!string.IsNullOrWhiteSpace(input.Cnpj))
         {
             var exists = await _db.Establishments
@@ -60,12 +81,12 @@ public class EstablishmentsController : ControllerBase
                 return Conflict(new
                 {
                     error = "duplicate_cnpj",
-                    message = "Já temos um cliente cadastrado utilizando este CNPJ. Verifique seus dados ou entre em contato com o suporte."
+                    message = "Jï¿½ temos um cliente cadastrado utilizando este CNPJ. Verifique seus dados ou entre em contato com o suporte."
                 });
         }
 
         // ? 2. Metadados
-        input.Id = Guid.NewGuid(); // CORREÇÃO: Gerar um novo ID
+        input.Id = Guid.NewGuid(); // CORREï¿½ï¿½O: Gerar um novo ID
         input.CreatedAt = DateTime.UtcNow;
         input.UpdatedAt = input.CreatedAt;
         input.PasswordCreatedAt = DateTime.UtcNow;
@@ -79,59 +100,74 @@ public class EstablishmentsController : ControllerBase
             input.PasswordAlgorithm = "argon2id-v1";
         }
 
-        // ? 4. Novos cadastros
+        // Campos controlados pela plataforma â€” nunca aceitar valores do cliente
         input.OnboardingCompleted = false;
         input.IsActive = true;
+        input.SubscriptionStatus = null;
+        input.TrialEndsAt = null;
+        input.MaxEmployeesLimit = null;
+        input.MaxOrdersLimit = null;
+        input.FeaturesEnabled = null;
+        input.IsMarketplaceActive = false;
+        input.AverageRating = 0;
+        input.TotalRatings = 0;
+        input.StripeConnectAccountId = null;
 
-        // ? 5. Persistência
+        // ? 5. Persistï¿½ncia
         _db.Establishments.Add(input);
         await _db.SaveChangesAsync(ct);
 
-        // Gera 6 dígitos (100000..999999)
+        // Gera 6 dï¿½gitos (100000..999999)
         var six = RandomNumberGenerator.GetInt32(100000, 1000000);
 
-        // CORREÇÃO: Usar o input que acabamos de salvar, não buscar novamente
+        // CORREï¿½ï¿½O: Usar o input que acabamos de salvar, nï¿½o buscar novamente
         // Salva em client_onboarding
         var co = new ClientOnboarding
         {
             Id = Guid.NewGuid(),
-            EstablishmentId = input.Id, // Usar input.Id diretamente
+            EstablishmentId = input.Id,
             WhatsApp = input.WhatsApp ?? string.Empty,
             Numero = six,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            OnboardingCompleted = false
+            OnboardingCompleted = false,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(30),
+            IsUsed = false
         };
         _db.ClientOnboardings.Add(co);
         await _db.SaveChangesAsync(ct);
 
         // Envia WhatsApp via AtentBot
-        var msg = $"Olá equipe do {input.NomeFantasia}, estamos felizes com sua chegada, " +
-                  $"seu numero de confirmação é {six}.";
+        var msg = $"Olï¿½ equipe do {input.NomeFantasia}, estamos felizes com sua chegada, " +
+                  $"seu numero de confirmaï¿½ï¿½o ï¿½ {six}.";
 
         await SendWhatsAppAsync(co.WhatsApp, msg, ct);
 
         return CreatedAtAction(nameof(Get), new { id = input.Id }, input);
     }
 
-    // 2) CONFIRMAÇÃO: recebe código de 6 dígitos e finaliza onboarding
+    // 2) CONFIRMAï¿½ï¿½O: recebe cï¿½digo de 6 dï¿½gitos e finaliza onboarding
     public record ConfirmRequest(int Numero);
 
-    [HttpPost("confirm")]
+    [HttpPost("confirm"), Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("auth")]
     public async Task<IActionResult> Confirm([FromBody] ConfirmRequest req, CancellationToken ct)
     {
         if (req.Numero < 100000 || req.Numero > 999999)
             return BadRequest(new { error = "invalid_code_format" });
 
-        // Busca o registro mais recente com esse número
+        // Busca o registro mais recente com esse nï¿½mero que ainda esteja vï¿½lido e nï¿½o usado
         var co = await _db.ClientOnboardings
             .OrderByDescending(x => x.CreatedAt)
             .FirstOrDefaultAsync(x => x.Numero == req.Numero, ct);
 
-        if (co is null)
+        if (co is null || co.IsUsed)
             return NotFound(new { error = "code_not_found" });
 
-        // Atualiza client_onboarding
+        if (co.ExpiresAt < DateTime.UtcNow)
+            return BadRequest(new { error = "code_expired", message = "CÃ³digo expirado. Solicite um novo." });
+
+        // Marca como usado antes de qualquer outra operaÃ§Ã£o para evitar race condition
+        co.IsUsed = true;
         co.OnboardingCompleted = true;
         co.UpdatedAt = DateTime.UtcNow;
 

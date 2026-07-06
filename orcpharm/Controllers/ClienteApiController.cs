@@ -16,11 +16,16 @@ public class ClienteApiController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<ClienteApiController> _logger;
+    private readonly Service.CustomerFormulas.PricingService _pricingService;
 
-    public ClienteApiController(AppDbContext context, ILogger<ClienteApiController> logger)
+    public ClienteApiController(
+        AppDbContext context,
+        ILogger<ClienteApiController> logger,
+        Service.CustomerFormulas.PricingService pricingService)
     {
         _context = context;
         _logger = logger;
+        _pricingService = pricingService;
     }
 
     private Customer? GetCurrentCustomer() => HttpContext.Items["Customer"] as Customer;
@@ -257,8 +262,10 @@ public class ClienteApiController : ControllerBase
 
         var session = GetCurrentSession();
 
+        var currentEstablishmentId = session?.CurrentEstablishmentId;
         var coupon = await _context.Coupons
-            .FirstOrDefaultAsync(c => c.Code == dto.Code.ToUpper() && c.IsActive);
+            .FirstOrDefaultAsync(c => c.Code == dto.Code.ToUpper() && c.IsActive &&
+                (c.EstablishmentId == null || c.EstablishmentId == currentEstablishmentId));
 
         if (coupon == null)
             return Ok(new { success = false, message = "Cupom não encontrado" });
@@ -414,31 +421,102 @@ public class ClienteApiController : ControllerBase
     /// GET /api/cliente/search
     /// </summary>
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string q)
+    public async Task<IActionResult> Search([FromQuery] string q, [FromQuery] int limit = 20)
     {
         var session = GetCurrentSession();
         if (session?.CurrentEstablishmentId == null)
             return BadRequest(new { success = false, message = "Selecione uma farmácia" });
 
-        if (string.IsNullOrWhiteSpace(q) || q.Length < 2)
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
             return Ok(new { success = true, results = new List<object>() });
+
+        if (limit <= 0 || limit > 50) limit = 20;
+        var term = q.Trim().ToLower();
 
         var results = await _context.RawMaterials
             .Where(r => r.EstablishmentId == session.CurrentEstablishmentId &&
                        r.IsActive &&
-                       (r.Name.ToLower().Contains(q.ToLower()) ||
-                        (r.Synonyms != null && r.Synonyms.ToLower().Contains(q.ToLower()))))
-            .Take(20)
+                       (r.Name.ToLower().Contains(term) ||
+                        (r.Synonyms != null && r.Synonyms.ToLower().Contains(term)) ||
+                        (r.DcbCode != null && r.DcbCode.ToLower().Contains(term))))
+            .OrderByDescending(r => r.Name.ToLower().StartsWith(term))
+            .ThenByDescending(r => r.Popularity)
+            .ThenBy(r => r.Name)
+            .Take(limit)
             .Select(r => new {
                 id = r.Id,
                 name = r.Name,
                 category = r.Category,
+                unit = r.Unit,
+                dcbCode = r.DcbCode,
                 inStock = r.CurrentStock > 0,
                 price = r.BasePrice ?? r.LastPurchasePrice ?? 0
             })
             .ToListAsync();
 
         return Ok(new { success = true, results });
+    }
+
+    /// <summary>
+    /// Calcular preço de uma fórmula personalizada (estabelecimento da sessão).
+    /// POST /api/cliente/formula/calculate
+    /// </summary>
+    [HttpPost("formula/calculate")]
+    public async Task<IActionResult> CalculateFormula([FromBody] CustomerFormulaCalcRequest request)
+    {
+        var customer = GetCurrentCustomer();
+        if (customer == null)
+            return Unauthorized(new { success = false });
+
+        var session = GetCurrentSession();
+        if (session?.CurrentEstablishmentId == null)
+            return BadRequest(new { success = false, message = "Selecione uma farmácia" });
+
+        if (request?.Ingredients == null || request.Ingredients.Count == 0)
+            return BadRequest(new { success = false, message = "Lista de ingredientes é obrigatória" });
+
+        var quantity = request.ProductQuantity > 0 ? request.ProductQuantity : 1;
+
+        var inputs = request.Ingredients.Select(i => new Service.CustomerFormulas.FormulaIngredientInput
+        {
+            RawMaterialId = i.RawMaterialId,
+            Name = i.Name,
+            Quantity = i.Quantity,
+            Unit = string.IsNullOrWhiteSpace(i.Unit) ? "mg" : i.Unit
+        }).ToList();
+
+        var result = await _pricingService.CalculateFormulaWithIngredientsAsync(
+            inputs,
+            quantity,
+            session.CurrentEstablishmentId.Value,
+            string.IsNullOrWhiteSpace(request.ProductType) ? "Cápsula" : request.ProductType);
+
+        return Ok(new
+        {
+            success = true,
+            totalPrice = result.SuggestedPrice,
+            breakdown = new
+            {
+                ingredientsCost = result.TotalIngredientsCost,
+                manipulationCost = result.ManipulationCost,
+                packagingCost = result.PackagingCost,
+                totalCost = result.TotalCost,
+                profitMargin = result.ProfitMargin
+            },
+            confidence = result.AverageConfidence,
+            ingredients = result.Ingredients.Select(it => new
+            {
+                rawMaterialId = it.RawMaterialId,
+                name = it.Name,
+                quantity = it.Quantity,
+                unit = it.Unit,
+                unitPrice = it.UnitPrice,
+                totalPrice = it.TotalPrice,
+                source = it.Source.ToString(),
+                warning = it.Warning
+            }),
+            warnings = result.Warnings
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -506,4 +584,19 @@ public class ValidateCouponDto
 {
     public string Code { get; set; } = string.Empty;
     public decimal Subtotal { get; set; }
+}
+
+public class CustomerFormulaCalcRequest
+{
+    public string? ProductType { get; set; }
+    public int ProductQuantity { get; set; } = 1;
+    public List<CustomerFormulaCalcIngredient> Ingredients { get; set; } = new();
+}
+
+public class CustomerFormulaCalcIngredient
+{
+    public Guid? RawMaterialId { get; set; }
+    public string? Name { get; set; }
+    public decimal Quantity { get; set; }
+    public string? Unit { get; set; }
 }

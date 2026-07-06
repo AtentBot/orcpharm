@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Data;
 using Models;
@@ -16,7 +17,6 @@ namespace Controllers.Api;
 /// </summary>
 [ApiController]
 [Route("api/cliente/prescriptions")]
-[AllowAnonymous]
 public class ClientePrescriptionApiController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -40,6 +40,8 @@ public class ClientePrescriptionApiController : ControllerBase
     /// Upload e processamento OCR de receita
     /// </summary>
     [HttpPost("upload")]
+    [EnableRateLimiting("ocr-upload")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<IActionResult> UploadPrescription([FromBody] CustomerPrescriptionUploadDto dto)
     {
         var customer = HttpContext.Items["Customer"] as Customer;
@@ -51,6 +53,10 @@ public class ClientePrescriptionApiController : ControllerBase
         if (session?.CurrentEstablishmentId == null)
             return BadRequest(new { success = false, message = "Selecione uma farmácia primeiro" });
 
+        // Validar magic bytes do arquivo (evita upload de executáveis disfarçados)
+        if (!IsAllowedPrescriptionFile(dto.FileBase64))
+            return BadRequest(new { success = false, message = "Tipo de arquivo inválido. Envie JPEG, PNG ou PDF." });
+
         try
         {
             _logger.LogInformation("Cliente {CustomerId} enviando receita para OCR", customer.Id);
@@ -61,7 +67,7 @@ public class ClientePrescriptionApiController : ControllerBase
                 Id = Guid.NewGuid(),
                 EstablishmentId = session.CurrentEstablishmentId.Value,
                 CustomerId = customer.Id,
-                Code = $"RX-{DateTime.UtcNow:yyyyMMddHHmmss}-{new Random().Next(1000, 9999)}",
+                Code = $"RX-{DateTime.UtcNow:yyyyMMddHHmmss}-{System.Security.Cryptography.RandomNumberGenerator.GetInt32(1000, 9999)}",
                 Status = "PENDENTE",
                 PrescriptionDate = DateTime.UtcNow,
                 ExpirationDate = DateTime.UtcNow.AddDays(30),
@@ -270,7 +276,7 @@ public class ClientePrescriptionApiController : ControllerBase
                 EstablishmentId = session!.CurrentEstablishmentId!.Value,
                 CustomerId = customer.Id,
                 PrescriptionId = prescription.Id,
-                Code = $"ORC-{DateTime.UtcNow:yyyyMMdd}-{new Random().Next(1000, 9999)}",
+                Code = $"ORC-{DateTime.UtcNow:yyyyMMdd}-{System.Security.Cryptography.RandomNumberGenerator.GetInt32(1000, 9999)}",
                 PublicToken = publicToken,
                 
                 CustomerName = customer.FullName ?? "",
@@ -395,7 +401,7 @@ public class ClientePrescriptionApiController : ControllerBase
             var formula = new CustomerFormula
             {
                 Id = Guid.NewGuid(),
-                Code = $"FORM-{DateTime.UtcNow:yyyyMMddHHmmss}-{new Random().Next(100, 999)}",
+                Code = $"FORM-{DateTime.UtcNow:yyyyMMddHHmmss}-{System.Security.Cryptography.RandomNumberGenerator.GetInt32(100, 999)}",
                 EstablishmentId = session.CurrentEstablishmentId.Value,
                 CustomerId = customer.Id,
                 
@@ -647,8 +653,33 @@ public class ClientePrescriptionApiController : ControllerBase
         if (lower.Contains("ml")) return "ml";
         if (lower.Contains("l") && !lower.Contains("ml")) return "L";
         if (lower.Contains("caps") || lower.Contains("cáps")) return "un";
-        
+
         return "un";
+    }
+
+    private static bool IsAllowedPrescriptionFile(string? base64)
+    {
+        if (string.IsNullOrWhiteSpace(base64)) return false;
+        try
+        {
+            // Remove data URL prefix if present (data:image/jpeg;base64,...)
+            var raw = base64.Contains(',') ? base64[(base64.IndexOf(',') + 1)..] : base64;
+            var bytes = Convert.FromBase64String(raw);
+            if (bytes.Length < 8) return false;
+
+            // JPEG: FF D8 FF
+            if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return true;
+            // PNG: 89 50 4E 47 0D 0A 1A 0A
+            if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) return true;
+            // PDF: 25 50 44 46 (%PDF)
+            if (bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46) return true;
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 

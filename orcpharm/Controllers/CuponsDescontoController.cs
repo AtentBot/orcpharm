@@ -128,7 +128,8 @@ public class CuponsDescontoController : Controller
     [HttpGet]
     public async Task<IActionResult> Editar(Guid id)
     {
-        var coupon = await _context.Coupons.FindAsync(id);
+        var establishmentId = GetEstablishmentId();
+        var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId);
         if (coupon == null)
             return NotFound();
 
@@ -146,7 +147,8 @@ public class CuponsDescontoController : Controller
     {
         try
         {
-            var coupon = await _context.Coupons.FindAsync(id);
+            var establishmentId = GetEstablishmentId();
+            var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId);
             if (coupon == null)
                 return NotFound();
 
@@ -186,7 +188,8 @@ public class CuponsDescontoController : Controller
     {
         try
         {
-            var coupon = await _context.Coupons.FindAsync(id);
+            var establishmentId = GetEstablishmentId();
+            var coupon = await _context.Coupons.FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId);
             if (coupon == null)
                 return NotFound(new { success = false });
 
@@ -214,9 +217,10 @@ public class CuponsDescontoController : Controller
     {
         try
         {
+            var establishmentId = GetEstablishmentId();
             var coupon = await _context.Coupons
                 .Include(c => c.Usages)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId);
 
             if (coupon == null)
                 return NotFound();

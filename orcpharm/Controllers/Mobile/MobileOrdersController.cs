@@ -5,6 +5,7 @@ using DTOs;
 using DTOs.Mobile;
 using Models;
 using Models.Marketplace;
+using Models.Pharmacy;
 using Service.Marketplace;
 
 namespace Controllers.Mobile;
@@ -33,6 +34,12 @@ public class MobileOrdersController : ControllerBase
         var customerId = GetCustomerId();
         if (customerId == null) return Unauthorized(ApiResponse.ErrorResponse("Não autenticado"));
 
+        // Bloquear pedidos de clientes com email não verificado
+        var customerAuth = await _db.CustomerAuths
+            .FirstOrDefaultAsync(a => a.CustomerId == customerId.Value);
+        if (customerAuth != null && !customerAuth.IsVerified)
+            return BadRequest(ApiResponse.ErrorResponse("Verifique seu email antes de fazer pedidos. Um código foi enviado no cadastro."));
+
         // Buscar carrinho ativo
         var cart = await _db.CustomerCarts
             .Include(c => c.Items)
@@ -44,16 +51,14 @@ public class MobileOrdersController : ControllerBase
         if (cart == null || !cart.Items.Any())
             return BadRequest(ApiResponse.ErrorResponse("Carrinho vazio"));
 
-        // Verificar estoque (reload para dados frescos)
+        // Verificar estoque — early check para UX (não garante atomicidade; a garantia real é o UPDATE abaixo)
         foreach (var item in cart.Items)
         {
             if (item.Product != null)
                 await _db.Entry(item.Product).ReloadAsync();
 
             if (item.Product == null || !item.Product.IsActive || item.Product.StockQuantity < item.Quantity)
-            {
                 return BadRequest(ApiResponse.ErrorResponse($"Produto '{item.DisplayName}' indisponível ou sem estoque"));
-            }
         }
 
         // Verificar valor mínimo
@@ -82,9 +87,59 @@ public class MobileOrdersController : ControllerBase
             deliveryLng = address.Longitude;
         }
 
+        // Validar e calcular cupom de desconto server-side (nunca confiar no cliente)
+        Coupon? appliedCoupon = null;
+        decimal discountAmount = 0m;
+
+        if (!string.IsNullOrWhiteSpace(request.CouponCode))
+        {
+            var normalizedCode = request.CouponCode.Trim().ToUpperInvariant();
+            var coupon = await _db.Coupons
+                .Include(c => c.Usages)
+                .FirstOrDefaultAsync(c => c.Code == normalizedCode
+                    && c.IsActive
+                    && (c.EstablishmentId == null || c.EstablishmentId == request.EstablishmentId));
+
+            if (coupon == null || !coupon.IsValid)
+                return BadRequest(ApiResponse.ErrorResponse("Cupom inválido ou expirado."));
+
+            if (coupon.MinOrderValue.HasValue && subtotal < coupon.MinOrderValue.Value)
+                return BadRequest(ApiResponse.ErrorResponse($"Pedido mínimo para este cupom: R$ {coupon.MinOrderValue.Value:F2}"));
+
+            if (coupon.MaxUses.HasValue && coupon.UsedCount >= coupon.MaxUses.Value)
+                return BadRequest(ApiResponse.ErrorResponse("Cupom esgotado."));
+
+            if (coupon.MaxUsesPerCustomer.HasValue)
+            {
+                var usedByCustomer = coupon.Usages?.Count(u => u.CustomerId == customerId.Value) ?? 0;
+                if (usedByCustomer >= coupon.MaxUsesPerCustomer.Value)
+                    return BadRequest(ApiResponse.ErrorResponse("Você já atingiu o limite de uso deste cupom."));
+            }
+
+            if (coupon.FirstPurchaseOnly)
+            {
+                var hasPriorOrder = await _db.OnlineOrders
+                    .AnyAsync(o => o.CustomerId == customerId.Value && o.Status != "CANCELLED");
+                if (hasPriorOrder)
+                    return BadRequest(ApiResponse.ErrorResponse("Este cupom é válido apenas na primeira compra."));
+            }
+
+            discountAmount = coupon.DiscountType == "PERCENTAGE"
+                ? subtotal * (coupon.DiscountPercentage ?? 0m) / 100m
+                : (coupon.DiscountValue ?? 0m);
+
+            if (coupon.MaxDiscountValue.HasValue)
+                discountAmount = Math.Min(discountAmount, coupon.MaxDiscountValue.Value);
+
+            discountAmount = Math.Min(discountAmount, subtotal);
+            appliedCoupon = coupon;
+        }
+
+        var orderTotal = subtotal - discountAmount;
+
         // Calcular comissão
         var (commissionRate, commissionAmount, netAmount) =
-            await _commission.CalculateCommissionAsync(request.EstablishmentId, subtotal);
+            await _commission.CalculateCommissionAsync(request.EstablishmentId, orderTotal);
 
         // Criar pedido
         var order = new OnlineOrder
@@ -95,9 +150,9 @@ public class MobileOrdersController : ControllerBase
             EstablishmentId = request.EstablishmentId,
             Status = "PENDING",
             Subtotal = subtotal,
-            Discount = 0,
+            Discount = discountAmount,
             DeliveryFee = 0,
-            Total = subtotal,
+            Total = orderTotal,
             PaymentMethod = request.PaymentMethod,
             PaymentStatus = "PENDING",
             DeliveryType = request.DeliveryType,
@@ -127,35 +182,67 @@ public class MobileOrdersController : ControllerBase
                 Notes = cartItem.Notes
             });
 
-            // Atualizar estoque e total vendido
-            if (cartItem.Product != null)
-            {
-                cartItem.Product.StockQuantity -= cartItem.Quantity;
-                cartItem.Product.TotalSold += cartItem.Quantity;
-            }
         }
 
-        _db.OnlineOrders.Add(order);
-
-        // Registrar transação da plataforma
-        await _commission.RegisterTransactionAsync(
-            order.Id, request.EstablishmentId, customerId.Value, subtotal, commissionRate);
-
-        // Criar estimativa de entrega
-        var estimate = new DeliveryEstimate
+        // Persistência em transação — o UPDATE atômico de estoque evita race condition (TOCTOU)
+        using var tx = await _db.Database.BeginTransactionAsync();
+        try
         {
-            OrderId = order.Id,
-            EstimatedMinutes = pharmacy.AverageDeliveryMinutes,
-            EstimatedDeliveryAt = DateTime.UtcNow.AddMinutes(pharmacy.AverageDeliveryMinutes),
-            Status = "ESTIMADO"
-        };
-        _db.DeliveryEstimates.Add(estimate);
+            foreach (var cartItem in cart.Items)
+            {
+                var affected = await _db.Database.ExecuteSqlInterpolatedAsync(
+                    $@"UPDATE ""CatalogProducts"" SET ""StockQuantity"" = ""StockQuantity"" - {cartItem.Quantity}, ""TotalSold"" = ""TotalSold"" + {cartItem.Quantity} WHERE ""Id"" = {cartItem.ProductId} AND ""StockQuantity"" >= {cartItem.Quantity} AND ""IsActive"" = TRUE");
 
-        // Limpar carrinho
-        cart.Status = "CONVERTED";
-        cart.UpdatedAt = DateTime.UtcNow;
+                if (affected == 0)
+                {
+                    await tx.RollbackAsync();
+                    return BadRequest(ApiResponse.ErrorResponse($"Produto '{cartItem.DisplayName}' sem estoque suficiente"));
+                }
+            }
 
-        await _db.SaveChangesAsync();
+            _db.OnlineOrders.Add(order);
+
+            // Registrar uso do cupom (dentro da transação para consistência)
+            if (appliedCoupon != null)
+            {
+                appliedCoupon.UsedCount += 1;
+                _db.CouponUsages.Add(new CouponUsage
+                {
+                    Id = Guid.NewGuid(),
+                    CouponId = appliedCoupon.Id,
+                    CustomerId = customerId.Value,
+                    OrderId = order.Id,
+                    DiscountApplied = discountAmount,
+                    UsedAt = DateTime.UtcNow
+                });
+            }
+
+            // Registrar transação da plataforma
+            await _commission.RegisterTransactionAsync(
+                order.Id, request.EstablishmentId, customerId.Value, orderTotal, commissionRate);
+
+            // Criar estimativa de entrega
+            var estimate = new DeliveryEstimate
+            {
+                OrderId = order.Id,
+                EstimatedMinutes = pharmacy.AverageDeliveryMinutes,
+                EstimatedDeliveryAt = DateTime.UtcNow.AddMinutes(pharmacy.AverageDeliveryMinutes),
+                Status = "ESTIMADO"
+            };
+            _db.DeliveryEstimates.Add(estimate);
+
+            // Limpar carrinho
+            cart.Status = "CONVERTED";
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
+        catch
+        {
+            await tx.RollbackAsync();
+            throw;
+        }
 
         _logger.LogInformation("Pedido {OrderNumber} criado para farmácia {PharmacyId}, comissão {Rate:P}",
             order.OrderNumber, request.EstablishmentId, commissionRate);

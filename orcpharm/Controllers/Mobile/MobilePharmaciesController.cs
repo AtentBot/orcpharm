@@ -31,20 +31,27 @@ public class MobilePharmaciesController : ControllerBase
     {
         pageSize = Math.Min(pageSize, 50);
 
-        var pharmacies = await _db.Establishments
-            .Where(e => e.IsActive
-                        && e.IsMarketplaceActive
-                        && e.Latitude != null
-                        && e.Longitude != null)
+        // Buscar do banco sem cálculo de distância (CalculateDistance não é traduzível para SQL)
+        var establishments = await _db.Establishments
+            .Where(e => e.IsActive && e.IsMarketplaceActive && e.Latitude != null && e.Longitude != null)
             .Select(e => new
             {
                 Establishment = e,
-                Distance = CalculateDistance(lat, lng, e.Latitude!.Value, e.Longitude!.Value),
                 ProductCount = _db.CatalogProducts.Count(p =>
                     p.EstablishmentId == e.Id && p.IsActive && p.IsMarketplaceVisible)
             })
-            .Where(x => x.Distance <= radius)
             .ToListAsync();
+
+        // Filtrar e calcular distância em memória
+        var pharmacies = establishments
+            .Select(e => new
+            {
+                e.Establishment,
+                Distance = CalculateDistance(lat, lng, e.Establishment.Latitude!.Value, e.Establishment.Longitude!.Value),
+                e.ProductCount
+            })
+            .Where(x => x.Distance <= radius)
+            .ToList();
 
         var sorted = sortBy switch
         {
@@ -138,9 +145,6 @@ public class MobilePharmaciesController : ControllerBase
             DeliveryRadiusKm = pharmacy.DeliveryRadiusKm,
             Latitude = pharmacy.Latitude,
             Longitude = pharmacy.Longitude,
-            Phone = pharmacy.Phone,
-            WhatsApp = pharmacy.WhatsApp,
-            Email = pharmacy.Email,
             Street = pharmacy.Street,
             Number = pharmacy.Number,
             Neighborhood = pharmacy.Neighborhood,

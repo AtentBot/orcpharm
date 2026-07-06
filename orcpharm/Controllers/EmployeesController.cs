@@ -131,8 +131,8 @@ public class EmployeesController : ControllerBase
             Response.Cookies.Append("SessionId", session.Token, new CookieOptions
             {
                 HttpOnly = true,              // Prote��o contra XSS
-                Secure = Request.IsHttps,     // true apenas em HTTPS
-                SameSite = SameSiteMode.Lax,  // Permite navega��o normal
+                Secure = true,                // Sempre Secure — proxy TLS termina antes do app
+                SameSite = SameSiteMode.Strict,
                 Expires = session.ExpiresAt,  // Mesmo tempo da sess�o (8h)
                 Path = "/",                   // V�lido para todo o site
                 IsEssential = true            // Cookie essencial para funcionamento

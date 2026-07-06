@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
   ActivityIndicator, TextInput, StatusBar,
@@ -56,9 +56,33 @@ const FormulaScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const searchSeq = useRef(0);
 
   useEffect(() => { loadProductTypes(); }, []);
   useEffect(() => { loadSuggestions(); }, []);
+
+  // Autocomplete com debounce + guarda contra respostas fora de ordem
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const seq = ++searchSeq.current;
+    const timer = setTimeout(async () => {
+      try {
+        const arr = await api.autocompleteIngredients(q);
+        if (seq === searchSeq.current) setSearchResults(Array.isArray(arr) ? arr : []);
+      } catch {
+        if (seq === searchSeq.current) setSearchResults([]);
+      } finally {
+        if (seq === searchSeq.current) setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (selectedType && ingredients.length > 0) calculatePrice();
@@ -87,10 +111,9 @@ const FormulaScreen = ({ navigation, route }) => {
     setSuggestionsLoading(true);
     try {
       const promises = POPULAR_INGREDIENTS.slice(0, 6).map((q) =>
-        api.autocompleteIngredients(q).then((r) => {
-          const arr = Array.isArray(r) ? r : (r?.ingredients || r?.data || []);
-          return arr[0];
-        }).catch(() => null)
+        api.autocompleteIngredients(q)
+          .then((arr) => (Array.isArray(arr) ? arr[0] : null))
+          .catch(() => null)
       );
       const results = (await Promise.all(promises)).filter(Boolean);
       // dedupe por id
@@ -107,20 +130,6 @@ const FormulaScreen = ({ navigation, route }) => {
       setSuggestionsLoading(false);
     }
   };
-
-  const searchIngredients = useCallback(async (query) => {
-    if (!query || query.length < 2) { setSearchResults([]); return; }
-    setSearching(true);
-    try {
-      const result = await api.autocompleteIngredients(query);
-      const arr = Array.isArray(result) ? result : (result?.ingredients || result?.data || []);
-      setSearchResults(arr);
-    } catch {
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
-    }
-  }, []);
 
   const addIngredient = (ingredient) => {
     if (ingredients.some((i) => i.id === ingredient.id)) {
@@ -152,10 +161,10 @@ const FormulaScreen = ({ navigation, route }) => {
     setCalculating(true);
     try {
       const result = await api.calculateFormula(
-        selectedType.id,
-        ingredients.map((i) => ({ ingredientId: i.id, quantity: i.quantity, unit: i.unit }))
+        selectedType.name,
+        ingredients.map((i) => ({ rawMaterialId: i.id, name: i.name, quantity: i.quantity, unit: i.unit }))
       );
-      if (result?.success) setTotalPrice(result.totalPrice || result.total || 0);
+      if (result?.success) setTotalPrice(result.totalPrice || 0);
     } catch {}
     setCalculating(false);
   };
@@ -257,7 +266,7 @@ const FormulaScreen = ({ navigation, route }) => {
               placeholder="Buscar (ex: vitamina C, melatonina...)"
               placeholderTextColor={COLORS.ink4}
               value={searchQuery}
-              onChangeText={(t) => { setSearchQuery(t); searchIngredients(t); }}
+              onChangeText={setSearchQuery}
             />
             {searching ? <ActivityIndicator size="small" color={COLORS.primary} /> : null}
             {searchQuery && !searching ? (
@@ -310,7 +319,6 @@ const FormulaScreen = ({ navigation, route }) => {
                             addIngredient(s);
                           } else {
                             setSearchQuery(s.name);
-                            searchIngredients(s.name);
                           }
                         }}
                       >

@@ -24,7 +24,6 @@ namespace Controllers.Api;
 
 [ApiController]
 [Route("api/cliente/cart")]
-[AllowAnonymous]
 public class ClienteCartApiController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -570,7 +569,6 @@ public class ClienteCartApiController : ControllerBase
 
 [ApiController]
 [Route("api/cliente/orders")]
-[AllowAnonymous]
 public class ClienteOrdersApiController : ControllerBase
 {
     private readonly AppDbContext _context;

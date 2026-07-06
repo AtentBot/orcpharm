@@ -3,6 +3,11 @@
 # Cobre o projeto ASP.NET Core e workspaces auxiliares (app/, orcpharm.Tests/).
 # =============================================================================
 
+# Arquivos locais com credenciais (nunca commitar)
+doc.txt
+*.credentials
+*.secrets
+
 # .NET build outputs ----------------------------------------------------------
 bin/
 obj/

@@ -172,6 +172,8 @@ public class StripeService
             {
                 Customer = customerId,
                 PaymentMethodTypes = new List<string> { "card" },
+                // Cartão só é coletado ao final do trial (não no início) — promessa "sem cartão"
+                PaymentMethodCollection = "if_required",
                 LineItems = new List<CheckoutSessionLineItemOptions>
                 {
                     new CheckoutSessionLineItemOptions

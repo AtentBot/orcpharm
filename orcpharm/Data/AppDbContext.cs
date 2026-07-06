@@ -386,6 +386,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Models.Marketplace.CustomerAddress> CustomerAddresses { get; set; } = null!;
     public DbSet<Models.Marketplace.PharmacyPayoutAccount> PharmacyPayoutAccounts { get; set; } = null!;
     public DbSet<Models.Marketplace.SearchHistory> SearchHistories { get; set; } = null!;
+    public DbSet<PendingTwoFactorSession> PendingTwoFactorSessions { get; set; } = null!;
+    public DbSet<RevokedJwt> RevokedJwts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -2427,6 +2429,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(e => e.CustomerId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<PendingTwoFactorSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TempToken).IsUnique();
+            entity.HasIndex(e => e.ExpiresAt);
+        });
+
+        modelBuilder.Entity<RevokedJwt>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.JwtId).IsUnique();
+            entity.HasIndex(e => e.ExpiresAt);
         });
     }
 }

@@ -57,6 +57,22 @@ public class MobileAuthResponse
     public string? RefreshToken { get; set; }
     public DateTime? ExpiresAt { get; set; }
     public MobileCustomerProfile? Customer { get; set; }
+    public bool RequiresEmailVerification { get; set; }
+}
+
+public class MobileVerifyEmailRequest
+{
+    [Required, EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    [Required, StringLength(6, MinimumLength = 6)]
+    public string Code { get; set; } = string.Empty;
+}
+
+public class MobileResendVerificationRequest
+{
+    [Required, EmailAddress]
+    public string Email { get; set; } = string.Empty;
 }
 
 public class MobileCustomerProfile

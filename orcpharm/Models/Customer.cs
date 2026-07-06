@@ -12,7 +12,7 @@ public class Customer
     public Guid Id { get; set; }
 
     [Column("establishment_id")]
-    public Guid EstablishmentId { get; set; }
+    public Guid? EstablishmentId { get; set; }
 
     [Column("code")]
     [MaxLength(20)]
@@ -108,7 +108,7 @@ public class Customer
     public DateTime CreatedAt { get; set; }
 
     [Column("created_by_employee_id")]
-    public Guid CreatedByEmployeeId { get; set; }
+    public Guid? CreatedByEmployeeId { get; set; }
 
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }

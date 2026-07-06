@@ -81,6 +81,9 @@ public class MobileCartController : ControllerBase
         var customerId = GetCustomerId();
         if (customerId == null) return Unauthorized(ApiResponse.ErrorResponse("Não autenticado"));
 
+        if (request.Quantity < 1 || request.Quantity > 99)
+            return BadRequest(ApiResponse.ErrorResponse("Quantidade inválida. Informe entre 1 e 99."));
+
         var product = await _db.CatalogProducts
             .FirstOrDefaultAsync(p => p.Id == request.ProductId && p.IsActive && p.IsMarketplaceVisible);
 
@@ -89,6 +92,12 @@ public class MobileCartController : ControllerBase
 
         if (product.StockQuantity <= 0)
             return BadRequest(ApiResponse.ErrorResponse("Produto fora de estoque"));
+
+        // Validar farmácia destino antes de trocar o carrinho
+        var pharmacy = await _db.Establishments
+            .FirstOrDefaultAsync(e => e.Id == request.EstablishmentId && e.IsMarketplaceActive && e.AcceptingOrders);
+        if (pharmacy == null)
+            return BadRequest(ApiResponse.ErrorResponse("Farmácia não está aceitando pedidos no momento"));
 
         // Buscar ou criar carrinho
         var cart = await _db.CustomerCarts
@@ -120,7 +129,10 @@ public class MobileCartController : ControllerBase
         var existingItem = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
         if (existingItem != null)
         {
-            existingItem.Quantity += request.Quantity;
+            var newQty = existingItem.Quantity + request.Quantity;
+            if (newQty > 99)
+                return BadRequest(ApiResponse.ErrorResponse("Quantidade máxima por item é 99."));
+            existingItem.Quantity = newQty;
             existingItem.UpdatedAt = DateTime.UtcNow;
         }
         else
@@ -160,6 +172,9 @@ public class MobileCartController : ControllerBase
 
         if (item == null)
             return NotFound(ApiResponse.ErrorResponse("Item não encontrado"));
+
+        if (request.Quantity < 1 || request.Quantity > 99)
+            return BadRequest(ApiResponse.ErrorResponse("Quantidade inválida. Informe entre 1 e 99."));
 
         item.Quantity = request.Quantity;
         item.UpdatedAt = DateTime.UtcNow;

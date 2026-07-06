@@ -23,11 +23,12 @@ public class QuoteWhatsAppService
 
     public QuoteWhatsAppService(
         AppDbContext context,
+        HttpClient httpClient,
         IConfiguration configuration,
         ILogger<QuoteWhatsAppService> logger)
     {
         _context = context;
-        _httpClient = new HttpClient();
+        _httpClient = httpClient;
         _logger = logger;
 
         _apiKey = configuration["AtentBot:ApiKey"]

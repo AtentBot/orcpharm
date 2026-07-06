@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Service;
 using DTOs.Cliente;
 
@@ -21,7 +22,7 @@ public class ClienteAuthApiController : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("login")]
+    [HttpPost("login"), EnableRateLimiting("auth")]
     public async Task<IActionResult> Login([FromBody] CustomerLoginDto dto)
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -37,7 +38,7 @@ public class ClienteAuthApiController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("register")]
+    [HttpPost("register"), EnableRateLimiting("signup")]
     public async Task<IActionResult> Register([FromBody] CustomerRegisterDto dto)
     {
         if (!dto.ConsentDataProcessing)
@@ -65,14 +66,14 @@ public class ClienteAuthApiController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("resend-code")]
+    [HttpPost("resend-code"), EnableRateLimiting("resend-code")]
     public async Task<IActionResult> ResendCode([FromBody] CustomerResendCodeDto dto)
     {
         var (success, message) = await _authService.ResendCodeAsync(dto.Phone);
         return Ok(new { success, message });
     }
 
-    [HttpPost("request-reset")]
+    [HttpPost("request-reset"), EnableRateLimiting("password-reset")]
     public async Task<IActionResult> RequestPasswordReset([FromBody] CustomerResetPasswordDto dto)
     {
         var (success, message) = await _authService.RequestPasswordResetAsync(dto.Phone);
@@ -150,7 +151,7 @@ public class ClienteAuthApiController : ControllerBase
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Lax,
+            SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddDays(30),
             Path = "/"
         });

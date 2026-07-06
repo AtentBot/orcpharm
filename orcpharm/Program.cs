@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Data;
@@ -33,6 +34,21 @@ using System.Threading.RateLimiting;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
+
+// Forwarded headers — necessário para rate limiting e HTTPS funcionar atrás de proxy reverso
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Aceitar apenas proxies confiáveis (Docker internal network 172.16.0.0/12)
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(
+        System.Net.IPAddress.Parse("172.16.0.0"), 12));
+    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(
+        System.Net.IPAddress.Parse("10.0.0.0"), 8));
+    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(
+        System.Net.IPAddress.Parse("192.168.0.0"), 16));
+});
 
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
@@ -79,10 +95,32 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(30),
                 QueueLimit = 0
             }));
+
+    // OCR: 3 uploads por minuto por IP — chamadas externas à OpenAI são caras
+    options.AddPolicy("ocr-upload", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
+// Kestrel — limites globais para mitigar flood e body bombing
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+    options.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(120);
+});
+
+// IMemoryCache — usado pelo BruteForceMiddleware para rastrear falhas por IP
+builder.Services.AddMemoryCache();
+
 // Add services to the container.
-builder.Services.AddScoped<CurrentEmployeeFilter>(); 
+builder.Services.AddScoped<CurrentEmployeeFilter>();
 
 builder.Services.AddControllersWithViews(options =>
 {
@@ -163,8 +201,15 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<BatchQualityService>();
 // AddManipulationServices() ja registrado na linha 94
 builder.Services.AddScoped<Service.Prescriptions.PrescriptionQuoteService>();
-builder.Services.AddScoped<Service.Prescriptions.QuoteWhatsAppService>();
-builder.Services.AddScoped<Service.Prescriptions.OpenAIPrescriptionParserService>();
+// HttpClient com timeout — evita thread pool starvation se OpenAI ou AtentBot pendurar
+builder.Services.AddHttpClient<Service.Prescriptions.OpenAIPrescriptionParserService>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(60);
+});
+builder.Services.AddHttpClient<Service.Prescriptions.QuoteWhatsAppService>(c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddScoped<Service.Prescriptions.PrescriptionWorkflowService>();
 builder.Services.AddScoped<StripeService>();
 builder.Services.AddScoped<SubscriptionService>();
@@ -202,11 +247,15 @@ builder.Services.AddAuthentication(options =>
     .AddJwtBearer("MobileJwt", options =>
     {
         var jwtSettings = builder.Configuration.GetSection("Jwt");
+        var jwtKey = jwtSettings["Key"];
+        if (string.IsNullOrWhiteSpace(jwtKey))
+            throw new InvalidOperationException(
+                "JWT:Key não configurado. Defina a variável de ambiente JWT__KEY ou configure appsettings.");
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "default-dev-key-change-in-production-minimum-32-chars")),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = true,
             ValidIssuer = jwtSettings["Issuer"],
             ValidateAudience = true,
@@ -369,7 +418,16 @@ try
             // ═══════════════════════════════════════════════════════════════════════
             if (!await db.SaasAdmins.AnyAsync())
             {
-                var senhaAdmin = builder.Configuration["SeedAdmin:Password"] ?? "OrcPharm@2024";
+                var senhaAdmin = builder.Configuration["SeedAdmin:Password"];
+                if (string.IsNullOrWhiteSpace(senhaAdmin))
+                {
+                    Console.WriteLine("⚠️  ATENÇÃO: SeedAdmin:Password não configurado. Use uma senha forte em produção!");
+                    senhaAdmin = app.Environment.IsDevelopment()
+                        ? "OrcPharm@Dev2024"
+                        : throw new InvalidOperationException(
+                            "SeedAdmin:Password não configurado. Defina via env var SEEDADMIN__PASSWORD antes de iniciar em produção.");
+                }
+
                 var hashSenha = Argon2.Hash(senhaAdmin);
 
                 db.SaasAdmins.Add(new SaasAdmin
@@ -414,6 +472,9 @@ catch (Exception ex)
 }
 
 // Configure pipeline
+app.UseForwardedHeaders(); // Deve ser o primeiro — atualiza RemoteIpAddress antes do rate limiting
+app.UseMiddleware<BruteForceMiddleware>(); // Bloqueia IPs com excesso de falhas de autenticação
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -454,9 +515,9 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors();
-app.UseRateLimiter();
-app.UseMiddleware<RateLimitMiddleware>(); // Rate limit para APIs mobile
-app.UseRouting();
+app.UseMiddleware<RateLimitMiddleware>(); // Rate limit para APIs mobile (sliding window)
+app.UseRouting(); // Routing deve ser antes do UseRateLimiter para resolver endpoint metadata
+app.UseRateLimiter(); // Usa [EnableRateLimiting] attributes — precisa do endpoint resolvido
 app.UseSession();
 
 app.UseAuthentication();
@@ -469,6 +530,8 @@ app.UseSubscriptionRequired();  // ← NOVO: Verifica se tem subscription válid
 app.UseAuthorization();
 
 app.MapStaticAssets();
+// MapControllers() habilita endpoint routing para ApiControllers — necessário para [EnableRateLimiting]
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

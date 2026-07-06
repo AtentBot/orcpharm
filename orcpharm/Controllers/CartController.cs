@@ -115,6 +115,18 @@ public class CartController : ControllerBase
     {
         try
         {
+            if (dto.Quantity < 1 || dto.Quantity > 99)
+                return BadRequest(ApiResponse<CartDto>.ErrorResponse("Quantidade inválida"));
+
+            // Buscar produto do banco — nunca confiar no preço enviado pelo cliente
+            var product = await _context.CatalogProducts
+                .FirstOrDefaultAsync(p => p.Id == dto.ProductId
+                                       && p.EstablishmentId == dto.EstablishmentId
+                                       && p.IsActive);
+
+            if (product == null)
+                return NotFound(ApiResponse<CartDto>.ErrorResponse("Produto não encontrado"));
+
             var sessionToken = GetOrCreateSessionToken();
 
             // Verificar se produto já está no carrinho
@@ -125,14 +137,11 @@ public class CartController : ControllerBase
 
             if (existingItem != null)
             {
-                // Incrementar quantidade
                 existingItem.Quantity += dto.Quantity;
                 existingItem.TotalPrice = existingItem.UnitPrice * existingItem.Quantity;
             }
             else
             {
-                // TODO: Buscar informações do produto do banco
-                // Por enquanto, usar dados do DTO
                 var cartItem = new CartItem
                 {
                     Id = Guid.NewGuid(),
@@ -141,11 +150,11 @@ public class CartController : ControllerBase
                     EstablishmentId = dto.EstablishmentId,
                     ItemType = "PRODUTO",
                     ReferenceId = dto.ProductId,
-                    Name = dto.ProductName,
-                    Description = dto.ProductDescription,
+                    Name = product.Name,
+                    Description = product.ShortDescription ?? product.Description,
                     Quantity = dto.Quantity,
-                    UnitPrice = dto.UnitPrice,
-                    TotalPrice = dto.UnitPrice * dto.Quantity,
+                    UnitPrice = product.CurrentPrice,
+                    TotalPrice = product.CurrentPrice * dto.Quantity,
                     RequiresPrescription = dto.RequiresPrescription,
                     IsControlled = dto.IsControlled,
                     IsCustomFormula = false,

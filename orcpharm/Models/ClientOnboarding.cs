@@ -24,7 +24,7 @@ namespace Models
         public string WhatsApp { get; set; } = string.Empty;
 
         [Column("numero")]
-        [Range(100000, 999999, ErrorMessage = "O número deve conter 6 dígitos.")]
+        [Range(100000, 999999, ErrorMessage = "O nï¿½mero deve conter 6 dï¿½gitos.")]
         [Required]
         public int Numero { get; set; }
 
@@ -36,5 +36,11 @@ namespace Models
 
         [Column("onboarding_completed")]
         public bool OnboardingCompleted { get; set; } = false;
+
+        [Column("expires_at")]
+        public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(30);
+
+        [Column("is_used")]
+        public bool IsUsed { get; set; } = false;
     }
 }

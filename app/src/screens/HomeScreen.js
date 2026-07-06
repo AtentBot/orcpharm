@@ -80,16 +80,6 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.greetingName}>{getFirstName()}</Text>
         </View>
 
-        {/* Search */}
-        <TouchableOpacity style={styles.searchBar} activeOpacity={0.8}>
-          <View style={styles.searchIconWrap}>
-            <Feather name="search" size={18} color={COLORS.primary} />
-          </View>
-          <Text style={styles.searchPlaceholder}>O que você precisa hoje?</Text>
-          <View style={styles.searchDivider} />
-          <Feather name="sliders" size={16} color={COLORS.textMuted} />
-        </TouchableOpacity>
-
         {/* Quick Actions */}
         <View style={styles.actionsContainer}>
           {/* Receita */}
@@ -250,21 +240,9 @@ const styles = StyleSheet.create({
   },
   cartBadgeText: { fontSize: 10, fontWeight: '700', color: COLORS.white },
 
-  greetingContainer: { marginBottom: SPACING.lg },
+  greetingContainer: { marginBottom: SPACING.xl },
   greetingLabel: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginBottom: 2, letterSpacing: 0.2 },
   greetingName: { fontSize: FONT_SIZES.xxxl, fontWeight: '800', color: COLORS.text, letterSpacing: -0.8 },
-
-  searchBar: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardGlass,
-    borderRadius: 9999, paddingVertical: SPACING.md + 2, paddingHorizontal: SPACING.md,
-    gap: SPACING.sm, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.small,
-  },
-  searchIconWrap: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: COLORS.primaryMuted, alignItems: 'center', justifyContent: 'center',
-  },
-  searchPlaceholder: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.textMuted },
-  searchDivider: { width: 1, height: 20, backgroundColor: COLORS.border, marginHorizontal: SPACING.xs },
 
   actionsContainer: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.xl },
   actionCardReceita: {

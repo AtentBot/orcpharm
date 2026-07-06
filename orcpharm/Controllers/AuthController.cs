@@ -50,18 +50,34 @@ public class AuthController : ControllerBase
                 return Unauthorized(result);
             }
 
-            // Se requer 2FA, adicionar identifier no response para uso posterior
+            // Se requer 2FA, criar sessão pendente com token opaco (não expor identifier ao cliente)
             if (result.Requires2FA)
             {
                 _logger.LogInformation("Login requer 2FA para: {Identifier}", dto.Identifier);
 
-                // Retornar identifier para que cliente possa passar no verify-2fa
+                var employee2fa = await _context.Employees
+                    .FirstOrDefaultAsync(e => e.Cpf == dto.Identifier || e.WhatsApp == dto.Identifier);
+
+                if (employee2fa == null)
+                    return Unauthorized(new { message = "Funcionário não encontrado" });
+
+                var tempToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48));
+                var pending = new Models.PendingTwoFactorSession
+                {
+                    TempToken = tempToken,
+                    EmployeeId = employee2fa.Id,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
+                };
+                _context.PendingTwoFactorSessions.Add(pending);
+                await _context.SaveChangesAsync();
+
                 return Ok(new
                 {
                     result.Success,
                     result.Message,
                     result.Requires2FA,
-                    identifier = dto.Identifier // ✅ Cliente precisa disso para verify-2fa
+                    tempToken // token opaco — NÃO inclui identifier
                 });
             }
 
@@ -91,6 +107,7 @@ public class AuthController : ControllerBase
 
     // ==================== VERIFICAR 2FA ====================
     [HttpPost("verify-2fa")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("auth")]
     public async Task<IActionResult> Verify2FA([FromBody] Verify2FADto dto)
     {
         try
@@ -101,16 +118,26 @@ public class AuthController : ControllerBase
             if (!validationResult.IsValid)
                 return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
 
-            // ✅ CORRIGIDO: Buscar employee por identifier (CPF/WhatsApp)
-            var identifier = Request.Headers["X-Temp-Identifier"].FirstOrDefault();
-            if (string.IsNullOrEmpty(identifier))
-                return BadRequest(new { message = "Identifier não fornecido. Envie no header X-Temp-Identifier" });
+            if (string.IsNullOrWhiteSpace(dto.TempToken))
+                return BadRequest(new { message = "TempToken não fornecido. Realize o login novamente." });
 
-            var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.Cpf == identifier || e.WhatsApp == identifier);
+            var pending = await _context.PendingTwoFactorSessions
+                .Include(p => p.Employee)
+                .FirstOrDefaultAsync(p => p.TempToken == dto.TempToken);
 
+            if (pending == null || pending.IsUsed)
+                return Unauthorized(new { message = "Token de 2FA inválido." });
+
+            if (pending.ExpiresAt < DateTime.UtcNow)
+                return Unauthorized(new { message = "Token de 2FA expirado. Realize o login novamente." });
+
+            var employee = pending.Employee;
             if (employee == null)
-                return Unauthorized(new { message = "Funcionário não encontrado" });
+                return Unauthorized(new { message = "Funcionário não encontrado." });
+
+            // Marca o temp token como usado para evitar replay attack
+            pending.IsUsed = true;
+            await _context.SaveChangesAsync();
 
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             var userAgent = Request.Headers["User-Agent"].ToString();
@@ -120,7 +147,7 @@ public class AuthController : ControllerBase
 
             if (!success)
             {
-                _logger.LogWarning("Verificação 2FA falhou para: {Identifier}", identifier);
+                _logger.LogWarning("Verificação 2FA falhou: TempToken={TempToken}", dto.TempToken);
                 return BadRequest(new { message });
             }
 

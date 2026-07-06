@@ -142,7 +142,10 @@ const CatalogScreen = ({ navigation }) => {
                 size={14}
                 color={activeCategory === g.category ? COLORS.white : COLORS.primary}
               />
-              <Text style={[styles.tabText, activeCategory === g.category && styles.tabTextActive]}>
+              <Text
+                style={[styles.tabText, activeCategory === g.category && styles.tabTextActive]}
+                numberOfLines={1}
+              >
                 {g.category} <Text style={styles.tabCount}>·{g.count}</Text>
               </Text>
             </TouchableOpacity>
@@ -249,8 +252,8 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.ink },
 
-  tabsScroll: { flexGrow: 0, marginBottom: SPACING.md },
-  tabsRow: { paddingHorizontal: SPACING.lg, gap: SPACING.sm },
+  tabsScroll: { flexGrow: 0, height: 44, marginBottom: SPACING.md },
+  tabsRow: { paddingHorizontal: SPACING.lg, gap: SPACING.sm, alignItems: 'center' },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2,
