@@ -190,14 +190,17 @@ public class MobileOrdersController : ControllerBase
         {
             foreach (var cartItem in cart.Items)
             {
-                var affected = await _db.Database.ExecuteSqlInterpolatedAsync(
-                    $@"UPDATE ""CatalogProducts"" SET ""StockQuantity"" = ""StockQuantity"" - {cartItem.Quantity}, ""TotalSold"" = ""TotalSold"" + {cartItem.Quantity} WHERE ""Id"" = {cartItem.ProductId} AND ""StockQuantity"" >= {cartItem.Quantity} AND ""IsActive"" = TRUE");
-
-                if (affected == 0)
+                var product = await _db.CatalogProducts
+                    .FirstOrDefaultAsync(p => p.Id == cartItem.ProductId
+                                           && p.StockQuantity >= cartItem.Quantity
+                                           && p.IsActive);
+                if (product == null)
                 {
                     await tx.RollbackAsync();
                     return BadRequest(ApiResponse.ErrorResponse($"Produto '{cartItem.DisplayName}' sem estoque suficiente"));
                 }
+                product.StockQuantity -= cartItem.Quantity;
+                product.TotalSold += cartItem.Quantity;
             }
 
             _db.OnlineOrders.Add(order);
