@@ -49,6 +49,12 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
 
             if (!validateSignupForm()) {
+                const firstError = signupForm.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+                showAlert('warning', 'Corrija os campos destacados antes de continuar.');
                 return;
             }
 
