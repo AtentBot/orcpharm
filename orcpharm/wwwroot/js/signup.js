@@ -655,22 +655,25 @@ function formatPhone(value) {
 function setFieldError(field, message) {
     field.classList.add('is-invalid');
     field.classList.remove('is-valid');
+    field.style.borderColor = '#dc3545';
+    field.style.boxShadow = '0 0 0 3px rgba(220,53,69,.15)';
 
-    let feedback = field.nextElementSibling;
-    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+    let feedback = field.parentNode.querySelector('.field-error-msg');
+    if (!feedback) {
         feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback';
-        field.parentNode.insertBefore(feedback, field.nextSibling);
+        feedback.className = 'field-error-msg';
+        field.parentNode.appendChild(feedback);
     }
+    feedback.style.cssText = 'color:#dc3545;font-size:12px;margin-top:4px;font-weight:500;';
     feedback.textContent = message;
 }
 
 function clearFieldError(field) {
     field.classList.remove('is-invalid');
-    const feedback = field.nextElementSibling;
-    if (feedback && feedback.classList.contains('invalid-feedback')) {
-        feedback.textContent = '';
-    }
+    field.style.borderColor = '';
+    field.style.boxShadow = '';
+    const feedback = field.parentNode.querySelector('.field-error-msg');
+    if (feedback) feedback.remove();
 }
 
 function showAlert(type, message) {
