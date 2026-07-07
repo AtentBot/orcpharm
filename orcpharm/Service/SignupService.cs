@@ -18,8 +18,7 @@ public class SignupService
     private readonly ILogger<SignupService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    // IDs padrão para novos cadastros
-    private static readonly Guid OwnerAccessLevelId = Guid.Parse("10000000-0000-0000-0000-000000000001");  // OWNER - Proprietário (seeded em AppDbContext)
+    // ID padrão para categoria
     private static readonly Guid DefaultCategoryId = Guid.Parse("c0000000-0000-0000-0000-000000000001");   // Farmácia de Manipulação
 
     public SignupService(
@@ -119,6 +118,13 @@ public class SignupService
                     return (false, "WhatsApp já cadastrado", null); 
             }
 
+            // Buscar AccessLevel OWNER pelo Code (não depende de ID fixo)
+            var ownerAccessLevel = await _context.Set<AccessLevel>()
+                .FirstOrDefaultAsync(a => a.Code == "OWNER");
+
+            if (ownerAccessLevel == null)
+                return (false, "Configuração de perfil de acesso não encontrada. Contate o suporte.", null);
+
             // Validar plano (opcional - usa plano gratuito/trial se não informado)
             SubscriptionPlan? plan = null;
             if (dto.PlanId.HasValue && dto.PlanId.Value != Guid.Empty)
@@ -155,7 +161,7 @@ public class SignupService
                 Neighborhood = dto.Neighborhood?.Trim(),
                 City = dto.City?.Trim(),
                 State = dto.State?.Trim(),
-                AccessLevelId = OwnerAccessLevelId,
+                AccessLevelId = ownerAccessLevel.Id,
                 CategoryId = DefaultCategoryId,
                 PasswordHash = Argon2.Hash(dto.Password),
                 PasswordAlgorithm = "argon2id-v1",
