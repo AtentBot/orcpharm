@@ -447,10 +447,12 @@ public class SignupService
             if (onboarding == null)
                 return (false, "Cadastro não encontrado");
 
-            // Gerar novo código
+            // Gerar novo código e resetar timestamps de expiração
             var code = RandomNumberGenerator.GetInt32(100000, 1000000);
             onboarding.Numero = code;
+            onboarding.CreatedAt = DateTime.UtcNow;
             onboarding.UpdatedAt = DateTime.UtcNow;
+            onboarding.ExpiresAt = DateTime.UtcNow.AddMinutes(10);
             
             await _context.SaveChangesAsync();
 
