@@ -226,6 +226,10 @@ builder.Services.AddScoped<Service.Marketplace.OrderNotificationService>();
 builder.Services.AddHostedService<Services.Jobs.WeeklyCommissionJob>();
 builder.Services.AddHostedService<Services.Jobs.AbandonedCartCleanupJob>();
 
+// Support Module
+builder.Services.AddScoped<Service.Support.SupportTicketService>();
+builder.Services.AddHostedService<Services.Jobs.WhatsAppMonitorJob>();
+
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();

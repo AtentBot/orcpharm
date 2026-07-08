@@ -111,4 +111,10 @@ public class AdminController : Controller
     {
         return View();
     }
+
+    [HttpGet("/admin/support")]
+    public IActionResult Support()
+    {
+        return View();
+    }
 }

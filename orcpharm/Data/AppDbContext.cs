@@ -11,6 +11,7 @@ using Models.Fiscal;
 using Models.Billing;
 using Models.Controlled;
 using Models.Cart;
+using Models.Support;
 
 namespace Data;
 
@@ -388,6 +389,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Models.Marketplace.SearchHistory> SearchHistories { get; set; } = null!;
     public DbSet<PendingTwoFactorSession> PendingTwoFactorSessions { get; set; } = null!;
     public DbSet<RevokedJwt> RevokedJwts { get; set; } = null!;
+
+    // ════════════════════════════════════════════════════════════════════════
+    // SUPORTE & MONITORAMENTO
+    // ════════════════════════════════════════════════════════════════════════
+    public DbSet<SupportTicket> SupportTickets { get; set; } = null!;
+    public DbSet<SupportTicketMessage> SupportTicketMessages { get; set; } = null!;
+    public DbSet<WhatsAppInstanceStatus> WhatsAppInstanceStatuses { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -2443,6 +2451,40 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.JwtId).IsUnique();
             entity.HasIndex(e => e.ExpiresAt);
+        });
+
+        // ──────────────────────────────────────────────────────────────────
+        // SUPORTE & MONITORAMENTO
+        // ──────────────────────────────────────────────────────────────────
+
+        modelBuilder.Entity<SupportTicket>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.EstablishmentId);
+            entity.HasIndex(e => e.DeduplicationKey);
+            entity.HasIndex(e => e.CreatedAt);
+
+            entity.HasOne(e => e.Establishment)
+                  .WithMany()
+                  .HasForeignKey(e => e.EstablishmentId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.Messages)
+                  .WithOne(m => m.Ticket)
+                  .HasForeignKey(m => m.TicketId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SupportTicketMessage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TicketId);
+        });
+
+        modelBuilder.Entity<WhatsAppInstanceStatus>(entity =>
+        {
+            entity.HasKey(e => e.InstanceName);
         });
     }
 }
