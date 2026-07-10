@@ -327,7 +327,296 @@
     </div>
 </div>
 
+<!-- ════ GESTÃO DE ADMINISTRADORES ════ -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-shield-lock me-2"></i>Administradores</span>
+                <button class="btn btn-sm btn-primary" onclick="openInviteModal()" id="inviteBtn">
+                    <i class="bi bi-person-plus me-1"></i>Convidar
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Papel</th>
+                                <th>Status</th>
+                                <th>Último acesso</th>
+                                <th>Sessões</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminsTable">
+                            <tr><td colspan="7" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Convidar Admin -->
+<div class="modal fade" id="inviteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Convidar Administrador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Nome Completo <span class="text-danger">*</span></label>
+                    <input type="text" id="inviteName" class="form-control" placeholder="Ex: Maria Silva">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Email <span class="text-danger">*</span></label>
+                    <input type="email" id="inviteEmail" class="form-control" placeholder="email@empresa.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Papel</label>
+                    <select id="inviteRole" class="form-select">
+                        <option value="SUPPORT">Suporte — visualiza chamados e responde</option>
+                        <option value="ADMIN" selected>Administrador — acesso completo exceto gestão de admins</option>
+                        <option value="SUPER_ADMIN">Super Admin — acesso total</option>
+                    </select>
+                </div>
+                <div class="alert alert-info py-2 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Um email com link de acesso será enviado. O link expira em 3 dias.
+                </div>
+                <div id="inviteError" class="alert alert-danger d-none py-2 small"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" id="inviteSubmitBtn" onclick="submitInvite()">
+                    <i class="bi bi-send me-1"></i>Enviar convite
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Alterar Papel -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alterar Papel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" id="roleModalName"></p>
+                <select id="roleSelect" class="form-select">
+                    <option value="SUPPORT">Suporte</option>
+                    <option value="ADMIN">Administrador</option>
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary btn-sm" onclick="submitRoleChange()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+<script>
+// ════ GESTÃO DE ADMINS ════════════════════════════════════════════════════
+
+let currentAdminId = null;
+let currentUserRole = null;
+
+const ROLE_BADGE = {
+    SUPER_ADMIN: '<span class="badge bg-danger">Super Admin</span>',
+    ADMIN:       '<span class="badge bg-primary">Admin</span>',
+    SUPPORT:     '<span class="badge bg-secondary">Suporte</span>'
+};
+
+async function loadAdmins() {
+    const r = await fetch('/api/admin/users');
+    if (!r.ok) {
+        if (r.status === 401 || r.status === 403) {
+            document.getElementById('inviteBtn').classList.add('d-none');
+            document.getElementById('adminsTable').innerHTML =
+                '<tr><td colspan="7" class="text-center py-3 text-muted">Sem permissão para visualizar</td></tr>';
+            return;
+        }
+        return;
+    }
+    const admins = await r.json();
+
+    // detecta papel do usuário atual pelo botão de toggle (se ele mesmo aparece na lista)
+    const meEl = document.getElementById('adminEmail');
+    const myEmail = meEl ? meEl.value : '';
+    const me = admins.find(a => a.email === myEmail);
+    currentUserRole = me?.role ?? 'ADMIN';
+
+    if (currentUserRole !== 'SUPER_ADMIN') {
+        document.getElementById('inviteBtn').classList.add('d-none');
+    }
+
+    const tbody = document.getElementById('adminsTable');
+    tbody.innerHTML = admins.map(a => {
+        const isSelf = a.email === myEmail;
+        const canAct = currentUserRole === 'SUPER_ADMIN' && !isSelf;
+        return `
+        <tr>
+            <td><span class="fw-medium">${escHtml(a.fullName)}</span>${isSelf ? ' <span class="badge bg-light text-dark border">Você</span>' : ''}</td>
+            <td><small class="text-muted">${escHtml(a.email)}</small></td>
+            <td>${ROLE_BADGE[a.role] || a.role}</td>
+            <td>
+                ${a.isActive
+                    ? '<span class="badge bg-success">Ativo</span>'
+                    : '<span class="badge bg-warning text-dark">Pendente / Inativo</span>'}
+            </td>
+            <td><small class="text-muted">${a.lastLoginAt ? fmtDate(a.lastLoginAt) : '—'}</small></td>
+            <td><small>${a.activeSessions > 0 ? `<span class="text-success">${a.activeSessions} ativa(s)</span>` : '—'}</small></td>
+            <td>
+                ${canAct ? `
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="openRoleModal('${a.id}','${escHtml(a.fullName)}','${a.role}')">
+                            <i class="bi bi-person-gear me-2"></i>Alterar papel
+                        </a></li>
+                        ${!a.isActive ? `
+                        <li><a class="dropdown-item" href="#" onclick="resendInvite('${a.id}','${escHtml(a.email)}')">
+                            <i class="bi bi-envelope-arrow-up me-2"></i>Reenviar convite
+                        </a></li>` : ''}
+                        ${a.activeSessions > 0 ? `
+                        <li><a class="dropdown-item text-warning" href="#" onclick="revokeSessions('${a.id}')">
+                            <i class="bi bi-box-arrow-right me-2"></i>Revogar sessões
+                        </a></li>` : ''}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item ${a.isActive ? 'text-danger' : 'text-success'}" href="#" onclick="toggleAdmin('${a.id}')">
+                            <i class="bi bi-${a.isActive ? 'person-x' : 'person-check'} me-2"></i>
+                            ${a.isActive ? 'Desativar' : 'Ativar'}
+                        </a></li>
+                    </ul>
+                </div>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openInviteModal() {
+    document.getElementById('inviteName').value = '';
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteRole').value = 'ADMIN';
+    document.getElementById('inviteError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('inviteModal')).show();
+}
+
+async function submitInvite() {
+    const btn = document.getElementById('inviteSubmitBtn');
+    const errEl = document.getElementById('inviteError');
+    errEl.classList.add('d-none');
+
+    const fullName = document.getElementById('inviteName').value.trim();
+    const email = document.getElementById('inviteEmail').value.trim();
+    const role = document.getElementById('inviteRole').value;
+
+    if (!fullName || !email) { errEl.textContent = 'Preencha nome e email.'; errEl.classList.remove('d-none'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
+
+    const r = await fetch('/api/admin/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email, role })
+    });
+    const d = await r.json();
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send me-1"></i>Enviar convite';
+
+    if (r.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('inviteModal')).hide();
+        showToast('success', d.message);
+        await loadAdmins();
+    } else {
+        errEl.textContent = d.message || 'Erro ao enviar convite.';
+        errEl.classList.remove('d-none');
+    }
+}
+
+function openRoleModal(id, name, currentRole) {
+    currentAdminId = id;
+    document.getElementById('roleModalName').textContent = name;
+    document.getElementById('roleSelect').value = currentRole;
+    new bootstrap.Modal(document.getElementById('roleModal')).show();
+}
+
+async function submitRoleChange() {
+    const role = document.getElementById('roleSelect').value;
+    const r = await fetch(`/api/admin/users/${currentAdminId}/role`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role })
+    });
+    const d = await r.json();
+    bootstrap.Modal.getInstance(document.getElementById('roleModal')).hide();
+    showToast(r.ok ? 'success' : 'danger', d.message);
+    if (r.ok) await loadAdmins();
+}
+
+async function toggleAdmin(id) {
+    if (!confirm('Confirmar esta ação?')) return;
+    const r = await fetch(`/api/admin/users/${id}/toggle`, { method: 'POST' });
+    const d = await r.json();
+    showToast(r.ok ? 'success' : 'danger', d.message);
+    if (r.ok) await loadAdmins();
+}
+
+async function revokeSessions(id) {
+    if (!confirm('Revogar todas as sessões ativas deste admin?')) return;
+    const r = await fetch(`/api/admin/users/${id}/revoke-sessions`, { method: 'POST' });
+    const d = await r.json();
+    showToast(r.ok ? 'success' : 'danger', d.message);
+    if (r.ok) await loadAdmins();
+}
+
+async function resendInvite(id, email) {
+    if (!confirm(`Reenviar convite para ${email}?`)) return;
+    const r = await fetch(`/api/admin/users/${id}/resend-invite`, { method: 'POST' });
+    const d = await r.json();
+    showToast(r.ok ? 'success' : 'danger', d.message);
+}
+
+function showToast(type, message) {
+    const t = document.createElement('div');
+    t.className = `alert alert-${type} position-fixed bottom-0 end-0 m-3`;
+    t.style.cssText = 'z-index:9999;min-width:260px;border-radius:10px;';
+    t.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${escHtml(message)}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+function fmtDate(d) {
+    return d ? new Date(d).toLocaleString('pt-BR', { dateStyle:'short', timeStyle:'short' }) : '—';
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadAdmins();
+</script>
+
+
 <script>
     // ════════════════════════════════════════════════════════════════════
     // VARIÁVEIS GLOBAIS

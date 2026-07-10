@@ -336,9 +336,10 @@ public class AdminAuthController : ControllerBase
             if (resetToken?.SaasAdmin == null)
                 return BadRequest(new { message = "Token inválido ou expirado" });
 
-            // Atualizar senha
+            // Atualizar senha e ativar conta (caso seja primeiro acesso via convite)
             var admin = resetToken.SaasAdmin;
             admin.PasswordHash = Argon2.Hash(dto.NewPassword);
+            admin.IsActive = true;
             admin.UpdatedAt = DateTime.UtcNow;
 
             // Marcar token como usado
