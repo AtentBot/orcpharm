@@ -172,6 +172,11 @@ public class EmployeesController : ControllerBase
                 details = "Problema ao salvar dados no banco"
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro inesperado durante login");
+            return StatusCode(500, new { error = "Erro interno. Tente novamente." });
+        }
     }
 
     // ==================== CRIAR FUNCION�RIO ====================
@@ -722,6 +727,96 @@ public class EmployeesController : ControllerBase
         _logger.LogInformation("Funcion�rio {Id} reativado com sucesso", id);
 
         return Ok(new { message = "Funcion�rio reativado com sucesso" });
+    }
+
+    // ==================== MEU PERFIL (auto-serviço) ====================
+
+    [HttpGet("me")]
+    public IActionResult GetMe()
+    {
+        var employee = HttpContext.Items["Employee"] as Models.Employees.Employee;
+        if (employee == null) return Unauthorized();
+
+        return Ok(new
+        {
+            employee.Id,
+            employee.FullName,
+            employee.SocialName,
+            employee.Email,
+            employee.Phone,
+            employee.WhatsApp,
+            employee.Cpf,
+            jobPosition = employee.JobPosition?.Name,
+            jobPositionCode = employee.JobPosition?.Code,
+            employee.RequirePasswordChange
+        });
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateMeDto dto)
+    {
+        var current = HttpContext.Items["Employee"] as Models.Employees.Employee;
+        if (current == null) return Unauthorized();
+
+        var employee = await _db.Employees.FindAsync(current.Id);
+        if (employee == null) return NotFound();
+
+        if (!string.IsNullOrWhiteSpace(dto.FullName))
+            employee.FullName = dto.FullName.Trim();
+
+        employee.SocialName = string.IsNullOrWhiteSpace(dto.SocialName) ? null : dto.SocialName.Trim();
+
+        if (!string.IsNullOrWhiteSpace(dto.Email))
+        {
+            var newEmail = dto.Email.Trim().ToLowerInvariant();
+            if (newEmail != employee.Email)
+            {
+                var emailInUse = await _db.Employees.AnyAsync(e => e.Id != employee.Id && e.Email == newEmail);
+                if (emailInUse)
+                    return BadRequest(new { error = "Este e-mail já está em uso por outro funcionário" });
+
+                employee.Email = newEmail;
+            }
+        }
+
+        if (dto.Phone != null)
+            employee.Phone = dto.Phone.Trim();
+
+        if (dto.WhatsApp != null)
+            employee.WhatsApp = dto.WhatsApp.Trim();
+
+        employee.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Perfil atualizado com sucesso" });
+    }
+
+    [HttpPost("me/change-password")]
+    public async Task<IActionResult> ChangeMyPassword([FromBody] ChangeMyPasswordDto dto)
+    {
+        var current = HttpContext.Items["Employee"] as Models.Employees.Employee;
+        if (current == null) return Unauthorized();
+
+        var employee = await _db.Employees.FindAsync(current.Id);
+        if (employee == null) return NotFound();
+
+        if (!Argon2.Verify(employee.PasswordHash, dto.CurrentPassword))
+            return BadRequest(new { error = "Senha atual incorreta" });
+
+        var (isValid, errors) = PasswordValidator.ValidatePassword(dto.NewPassword);
+        if (!isValid)
+            return BadRequest(new { error = "Senha inválida: " + string.Join(", ", errors) });
+
+        if (dto.NewPassword != dto.ConfirmPassword)
+            return BadRequest(new { error = "As senhas não coincidem" });
+
+        employee.PasswordHash = Argon2.Hash(dto.NewPassword);
+        employee.PasswordLastChanged = DateTime.UtcNow;
+        employee.RequirePasswordChange = false;
+        employee.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Senha alterada com sucesso" });
     }
 
     // ==================== HELPERS ====================

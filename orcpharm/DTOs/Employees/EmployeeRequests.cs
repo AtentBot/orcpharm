@@ -566,3 +566,18 @@ public class DeactivateEmployeeDto
 // NOTA IMPORTANTE: 
 // Se DTOs.Auth.ChangePasswordDto não tiver IsAdminReset, use ChangeEmployeePasswordDto
 // =======================================================================
+public class UpdateMeDto
+{
+    public string? FullName { get; set; }
+    public string? SocialName { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string? WhatsApp { get; set; }
+}
+
+public class ChangeMyPasswordDto
+{
+    public string CurrentPassword { get; set; } = "";
+    public string NewPassword { get; set; } = "";
+    public string ConfirmPassword { get; set; } = "";
+}

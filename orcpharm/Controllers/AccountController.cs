@@ -106,4 +106,13 @@ public class AccountController : Controller
         ViewBag.Identifier = identifier;
         return View();
     }
+
+    // ==================== MEU PERFIL ====================
+    [HttpGet]
+    public IActionResult Profile()
+    {
+        var employee = HttpContext.Items["Employee"] as Employee;
+        if (employee == null) return RedirectToAction("Login");
+        return View();
+    }
 }
