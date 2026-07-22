@@ -231,7 +231,7 @@ public class CartController : ControllerBase
                 return BadRequest(ApiResponse<CartDto>.ErrorResponse(
                     "Não é possível alterar quantidade de fórmulas personalizadas"));
 
-            if (dto.Quantity <= 0)
+            if (dto.Quantity <= 0 || dto.Quantity > 99)
                 return BadRequest(ApiResponse<CartDto>.ErrorResponse("Quantidade inválida"));
 
             item.Quantity = dto.Quantity;

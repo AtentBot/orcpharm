@@ -236,6 +236,20 @@ public class AuthService
         if (employee == null)
             return (false, "Código inválido ou expirado");
 
+        // Verificar tentativas falhas recentes (mesma proteção de ResetPasswordAsync —
+        // sem isso, este endpoint permite brute-force do código sem limite)
+        var recentFailedAttempts = await _context.PasswordResetTokens
+            .Where(t => t.EmployeeId == employee.Id &&
+                       !t.IsUsed &&
+                       t.ExpiresAt > DateTime.UtcNow)
+            .SumAsync(t => t.Attempts);
+
+        if (recentFailedAttempts >= 5)
+        {
+            _logger.LogWarning("Muitas tentativas de verificação de código para employee {EmployeeId}", employee.Id);
+            return (false, "Muitas tentativas incorretas. Solicite um novo código.");
+        }
+
         var token = await _context.PasswordResetTokens
             .Where(t => t.EmployeeId == employee.Id &&
                        t.Code == dto.Code &&
@@ -244,7 +258,18 @@ public class AuthService
             .FirstOrDefaultAsync();
 
         if (token == null)
+        {
+            var latestToken = await _context.PasswordResetTokens
+                .Where(t => t.EmployeeId == employee.Id && !t.IsUsed && t.ExpiresAt > DateTime.UtcNow)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefaultAsync();
+            if (latestToken != null)
+            {
+                latestToken.Attempts++;
+                await _context.SaveChangesAsync();
+            }
             return (false, "Código inválido ou expirado");
+        }
 
         return (true, "Código verificado com sucesso");
     }

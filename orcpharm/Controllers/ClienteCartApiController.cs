@@ -5,6 +5,7 @@ using Data;
 using Models;
 using DTOs.Cart;
 using Models.Pharmacy;
+using Service.Marketplace;
 using System.Text.Json;
 
 namespace Controllers.Api;
@@ -572,11 +573,13 @@ public class ClienteCartApiController : ControllerBase
 public class ClienteOrdersApiController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly CommissionService _commission;
     private readonly ILogger<ClienteOrdersApiController> _logger;
 
-    public ClienteOrdersApiController(AppDbContext context, ILogger<ClienteOrdersApiController> logger)
+    public ClienteOrdersApiController(AppDbContext context, CommissionService commission, ILogger<ClienteOrdersApiController> logger)
     {
         _context = context;
+        _commission = commission;
         _logger = logger;
     }
 
@@ -603,6 +606,12 @@ public class ClienteOrdersApiController : ControllerBase
             return Unauthorized(new { success = false, message = "Não autenticado" });
         }
 
+        // Bloquear pedidos de clientes com email não verificado (mesma regra do app mobile)
+        var customerAuth = await _context.CustomerAuths
+            .FirstOrDefaultAsync(a => a.CustomerId == customer.Id);
+        if (customerAuth != null && !customerAuth.IsVerified)
+            return BadRequest(new { success = false, message = "Verifique seu email antes de fazer pedidos." });
+
         var establishmentId = session.CurrentEstablishmentId.Value;
 
         // 2. Buscar carrinho com itens
@@ -621,11 +630,25 @@ public class ClienteOrdersApiController : ControllerBase
             return BadRequest(new { success = false, message = "Carrinho vazio" });
         }
 
+        // Verificar estoque — early check para UX (a garantia real é o UPDATE atômico abaixo)
+        foreach (var item in cart.Items!.Where(i => i.ProductId.HasValue))
+        {
+            if (item.Product != null)
+                await _context.Entry(item.Product).ReloadAsync();
+
+            if (item.Product == null || !item.Product.IsActive || item.Product.StockQuantity < item.Quantity)
+                return BadRequest(new { success = false, message = $"Produto '{item.Product?.Name ?? "item"}' indisponível ou sem estoque" });
+        }
+
         // 3. Gerar número único do pedido
         var orderNumber = GenerateOrderNumber();
 
         // 4. Calcular totais
         var subtotal = cart.Items!.Sum(i => i.UnitPrice * i.Quantity);
+
+        // Calcular comissão da plataforma
+        var (commissionRate, commissionAmount, netAmount) =
+            await _commission.CalculateCommissionAsync(establishmentId, subtotal);
 
         // 5. Criar pedido
         var order = new OnlineOrder
@@ -639,64 +662,97 @@ public class ClienteOrdersApiController : ControllerBase
             DeliveryFee = 0,
             Total = subtotal,
             CustomerNotes = dto.Notes,
-            DeliveryType = "PICKUP", // Padrão: retirada no local
+            DeliveryType = dto.DeliveryType,
             PaymentMethod = null,
-            PaymentStatus = "PENDING"
+            PaymentStatus = "PENDING",
+            PlatformCommissionRate = commissionRate,
+            PlatformCommissionAmount = commissionAmount,
+            NetAmountToPharmacy = netAmount
         };
 
-        _context.Set<OnlineOrder>().Add(order);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Pedido criado: {OrderNumber} (ID: {OrderId})",
-            orderNumber, order.Id);
-
-        // 6. Criar itens do pedido e atualizar fórmulas
-        var formulasUpdated = 0;
-        foreach (var item in cart.Items!)
+        // Persistência em transação — UPDATE atômico de estoque evita race condition (TOCTOU)
+        using var tx = await _context.Database.BeginTransactionAsync();
+        try
         {
-            // Determinar nome do produto
-            string productName;
-            if (item.Product != null)
+            foreach (var item in cart.Items!.Where(i => i.ProductId.HasValue))
             {
-                productName = item.Product.Name;
-            }
-            else if (item.CustomerFormula != null)
-            {
-                productName = $"Fórmula Personalizada ({item.CustomerFormula.Code})";
-
-                // Atualizar status da fórmula: DRAFT → PENDING
-                item.CustomerFormula.Status = "PENDING";
-                item.CustomerFormula.OnlineOrderId = order.Id;
-                formulasUpdated++;
-            }
-            else
-            {
-                productName = "Produto não identificado";
+                var product = await _context.CatalogProducts
+                    .FirstOrDefaultAsync(p => p.Id == item.ProductId!.Value
+                                           && p.StockQuantity >= item.Quantity
+                                           && p.IsActive);
+                if (product == null)
+                {
+                    await tx.RollbackAsync();
+                    return BadRequest(new { success = false, message = $"Produto '{item.Product?.Name ?? "item"}' sem estoque suficiente" });
+                }
+                product.StockQuantity -= item.Quantity;
+                product.TotalSold += item.Quantity;
             }
 
-            // Criar item do pedido
-            var orderItem = new OnlineOrderItem
+            _context.Set<OnlineOrder>().Add(order);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Pedido criado: {OrderNumber} (ID: {OrderId})",
+                orderNumber, order.Id);
+
+            // 6. Criar itens do pedido e atualizar fórmulas
+            var formulasUpdated = 0;
+            foreach (var item in cart.Items!)
             {
-                OrderId = order.Id,
-                ProductId = item.ProductId,
-                ProductName = productName,
-                Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice,
-                TotalPrice = item.UnitPrice * item.Quantity,
-                Notes = item.Notes
-            };
-            _context.Set<OnlineOrderItem>().Add(orderItem);
+                // Determinar nome do produto
+                string productName;
+                if (item.Product != null)
+                {
+                    productName = item.Product.Name;
+                }
+                else if (item.CustomerFormula != null)
+                {
+                    productName = $"Fórmula Personalizada ({item.CustomerFormula.Code})";
+
+                    // Atualizar status da fórmula: DRAFT → PENDING
+                    item.CustomerFormula.Status = "PENDING";
+                    item.CustomerFormula.OnlineOrderId = order.Id;
+                    formulasUpdated++;
+                }
+                else
+                {
+                    productName = "Produto não identificado";
+                }
+
+                // Criar item do pedido
+                var orderItem = new OnlineOrderItem
+                {
+                    OrderId = order.Id,
+                    ProductId = item.ProductId,
+                    ProductName = productName,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    TotalPrice = item.UnitPrice * item.Quantity,
+                    Notes = item.Notes
+                };
+                _context.Set<OnlineOrderItem>().Add(orderItem);
+            }
+
+            if (formulasUpdated > 0)
+            {
+                _logger.LogInformation("{Count} fórmula(s) vinculada(s) ao pedido {OrderNumber}",
+                    formulasUpdated, orderNumber);
+            }
+
+            // Registrar transação da plataforma (comissão)
+            await _commission.RegisterTransactionAsync(order.Id, establishmentId, customer.Id, subtotal, commissionRate);
+
+            // 7. Limpar carrinho (itens já foram convertidos em pedido)
+            _context.Set<CustomerCartItem>().RemoveRange(cart.Items!);
+            await _context.SaveChangesAsync();
+
+            await tx.CommitAsync();
         }
-
-        if (formulasUpdated > 0)
+        catch
         {
-            _logger.LogInformation("{Count} fórmula(s) vinculada(s) ao pedido {OrderNumber}",
-                formulasUpdated, orderNumber);
+            await tx.RollbackAsync();
+            throw;
         }
-
-        // 7. Limpar carrinho (itens já foram convertidos em pedido)
-        _context.Set<CustomerCartItem>().RemoveRange(cart.Items!);
-        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Pedido {OrderNumber} finalizado. Cliente: {CustomerId}, " +
             "Itens: {ItemCount}, Total: R$ {Total:F2}",

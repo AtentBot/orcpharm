@@ -256,8 +256,9 @@ public class CuponsDescontoController : Controller
     [HttpGet]
     public async Task<IActionResult> Relatorio(Guid id)
     {
+        var establishmentId = GetEstablishmentId();
         var coupon = await _context.Coupons
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(c => c.Id == id && c.EstablishmentId == establishmentId);
 
         if (coupon == null)
             return NotFound();

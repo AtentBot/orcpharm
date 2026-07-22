@@ -257,6 +257,7 @@ public class AuthController : ControllerBase
     }
 
     // ==================== RECUPERAÇÃO DE SENHA - PASSO 2: VERIFICAR CÓDIGO (OPCIONAL) ====================
+    [EnableRateLimiting("password-reset")]
     [HttpPost("password/verify-code")]
     public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeDto dto)
     {
