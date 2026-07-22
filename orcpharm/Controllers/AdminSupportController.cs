@@ -1,6 +1,7 @@
 using Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Models;
 using Models.Support;
 using Service.Support;
 
@@ -145,7 +146,7 @@ public class AdminSupportController : ControllerBase
         if (string.IsNullOrWhiteSpace(req.Body))
             return BadRequest(new { message = "Mensagem não pode ser vazia" });
 
-        var admin = HttpContext.Items["SaasAdmin"] as string ?? "Admin";
+        var admin = (HttpContext.Items["SaasAdmin"] as SaasAdmin)?.FullName ?? "Admin";
 
         try
         {

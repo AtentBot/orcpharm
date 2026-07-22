@@ -487,11 +487,11 @@ async function loadAdmins() {
                         <i class="bi bi-three-dots"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" onclick="openRoleModal('${a.id}','${escHtml(a.fullName)}','${a.role}')">
+                        <li><a class="dropdown-item" href="#" onclick="openRoleModal('${a.id}','${jsAttr(a.fullName)}','${a.role}')">
                             <i class="bi bi-person-gear me-2"></i>Alterar papel
                         </a></li>
                         ${!a.isActive ? `
-                        <li><a class="dropdown-item" href="#" onclick="resendInvite('${a.id}','${escHtml(a.email)}')">
+                        <li><a class="dropdown-item" href="#" onclick="resendInvite('${a.id}','${jsAttr(a.email)}')">
                             <i class="bi bi-envelope-arrow-up me-2"></i>Reenviar convite
                         </a></li>` : ''}
                         ${a.activeSessions > 0 ? `
@@ -613,6 +613,14 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Escapa valores embutidos como argumento de string dentro de onclick="fn('...')":
+// precisa neutralizar tanto aspas simples (quebra o literal JS) quanto os
+// caracteres de atributo HTML — escHtml sozinho não protege esse contexto.
+function jsAttr(s) {
+    if (!s) return '';
+    return escHtml(String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+}
+
 loadAdmins();
 </script>
 
@@ -692,7 +700,7 @@ loadAdmins();
                             <div>
                                 <h6 class="mb-1">
                                     ${getGatewayIcon(gw.gatewayType)}
-                                    ${gw.displayName}
+                                    ${escHtml(gw.displayName)}
                                 </h6>
                                 <small class="text-muted">${gw.gatewayTypeName}</small>
                             </div>
@@ -745,7 +753,7 @@ loadAdmins();
                         <div class="small text-muted border-top pt-2 mt-2">
                             <i class="bi bi-clock me-1"></i>
                             Testado em ${new Date(gw.lastTestedAt).toLocaleString('pt-BR')}
-                            ${gw.lastTestMessage ? `<br><small>${gw.lastTestMessage}</small>` : ''}
+                            ${gw.lastTestMessage ? `<br><small>${escHtml(gw.lastTestMessage)}</small>` : ''}
                         </div>` : ''}
                     </div>
                     <div class="card-footer bg-transparent">

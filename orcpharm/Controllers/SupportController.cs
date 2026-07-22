@@ -15,7 +15,7 @@ public class SupportController : Controller
     {
         var employee = HttpContext.Items["Employee"] as Employee;
         if (employee == null)
-            return Redirect("/Login");
+            return Redirect("/Account/Login");
 
         ViewBag.Establishment = employee.Establishment;
         return View();

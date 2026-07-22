@@ -125,7 +125,7 @@ public class EmployeeAuthMiddleware
             "/api/establishment/login",
             "/api/signup",
             "/api/subscriptionplans",
-            "/api/stripe/webhook",
+            "/api/webhooks/stripe",
             "/api/prescriptionquotes/public",
             "/api/ingredients",                     // ✅ Autocomplete de ingredientes
             "/api/pricing/ingredient/search",       // ✅ Busca preço por nome (Portal Cliente)

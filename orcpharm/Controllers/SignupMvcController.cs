@@ -88,7 +88,7 @@ public class SignupMvcController : Controller
             if (hasSubscription)
             {
                 TempData["SuccessMessage"] = "Cadastro já finalizado. Faça login.";
-                return Redirect("/login");
+                return Redirect("/Account/Login");
             }
             else
             {
@@ -131,7 +131,7 @@ public class SignupMvcController : Controller
         if (existingSubscription != null)
         {
             TempData["SuccessMessage"] = "Você já possui uma assinatura ativa.";
-            return Redirect("/login");
+            return Redirect("/Account/Login");
         }
 
         var plans = await _context.Set<SubscriptionPlan>()

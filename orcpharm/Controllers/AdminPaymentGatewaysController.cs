@@ -158,6 +158,9 @@ public class AdminPaymentGatewaysController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePaymentGatewayDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             // Validações básicas
@@ -241,6 +244,9 @@ public class AdminPaymentGatewaysController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePaymentGatewayDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var config = await _context.Set<PaymentGatewayConfig>().FindAsync(id);
@@ -314,6 +320,9 @@ public class AdminPaymentGatewaysController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var config = await _context.Set<PaymentGatewayConfig>().FindAsync(id);
@@ -347,6 +356,9 @@ public class AdminPaymentGatewaysController : ControllerBase
     [HttpPost("{id}/test")]
     public async Task<IActionResult> TestConnection(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var config = await _context.Set<PaymentGatewayConfig>().FindAsync(id);
@@ -404,6 +416,9 @@ public class AdminPaymentGatewaysController : ControllerBase
     [HttpPost("{id}/set-default")]
     public async Task<IActionResult> SetAsDefault(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var config = await _context.Set<PaymentGatewayConfig>().FindAsync(id);
@@ -444,6 +459,9 @@ public class AdminPaymentGatewaysController : ControllerBase
     [HttpPost("{id}/toggle")]
     public async Task<IActionResult> Toggle(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var config = await _context.Set<PaymentGatewayConfig>().FindAsync(id);
@@ -609,10 +627,10 @@ public class AdminPaymentGatewaysController : ControllerBase
         var baseUrl = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host;
         var path = gatewayType switch
         {
-            PaymentGatewayType.Stripe => "/webhooks/stripe",
-            PaymentGatewayType.MercadoPago => "/webhooks/mercadopago",
-            PaymentGatewayType.Abacatepay => "/webhooks/abacatepay",
-            _ => "/webhooks/unknown"
+            PaymentGatewayType.Stripe => "/api/webhooks/stripe",
+            PaymentGatewayType.MercadoPago => "/api/webhooks/mercadopago",
+            PaymentGatewayType.Abacatepay => "/api/webhooks/abacatepay",
+            _ => "/api/webhooks/unknown"
         };
         return baseUrl + path;
     }
@@ -622,6 +640,12 @@ public class AdminPaymentGatewaysController : ControllerBase
         if (HttpContext.Items["SaasAdmin"] is SaasAdmin admin)
             return admin.Id;
         return null;
+    }
+
+    private bool IsSuperAdmin()
+    {
+        var role = HttpContext.Items["SaasAdminRole"] as string;
+        return string.Equals(role, "SUPER_ADMIN", StringComparison.Ordinal);
     }
 
     private static object GetRequiredFields(PaymentGatewayType gatewayType)

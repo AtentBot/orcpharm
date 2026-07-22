@@ -95,6 +95,9 @@ public class AdminPlansController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePlanDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
@@ -146,6 +149,9 @@ public class AdminPlansController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreatePlanDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var plan = await _context.Set<SubscriptionPlan>().FindAsync(id);
@@ -221,6 +227,9 @@ public class AdminPlansController : ControllerBase
     [HttpPatch("{id}/gateway-ids")]
     public async Task<IActionResult> UpdateGatewayIds(Guid id, [FromBody] UpdateGatewayIdsDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var plan = await _context.Set<SubscriptionPlan>().FindAsync(id);
@@ -275,6 +284,9 @@ public class AdminPlansController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var plan = await _context.Set<SubscriptionPlan>().FindAsync(id);
@@ -322,6 +334,9 @@ public class AdminPlansController : ControllerBase
     [HttpPost("{id}/toggle")]
     public async Task<IActionResult> Toggle(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var plan = await _context.Set<SubscriptionPlan>().FindAsync(id);
@@ -377,5 +392,11 @@ public class AdminPlansController : ControllerBase
             _logger.LogError(ex, "Erro ao buscar estatísticas dos planos");
             return StatusCode(500, new { message = "Erro ao buscar estatísticas" });
         }
+    }
+
+    private bool IsSuperAdmin()
+    {
+        var role = HttpContext.Items["SaasAdminRole"] as string;
+        return string.Equals(role, "SUPER_ADMIN", StringComparison.Ordinal);
     }
 }

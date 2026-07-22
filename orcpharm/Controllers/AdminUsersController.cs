@@ -117,6 +117,7 @@ public class AdminUsersController : ControllerBase
 
         await _email.SendEmailAsync(
             email,
+            req.FullName,
             "Convite — OrcPharm Admin Panel",
             $@"<div style='font-family:sans-serif;max-width:520px;margin:0 auto'>
                 <h2 style='color:#1a3a3a'>Você foi convidado!</h2>
@@ -254,6 +255,7 @@ public class AdminUsersController : ControllerBase
 
         await _email.SendEmailAsync(
             admin.Email,
+            admin.FullName,
             "Convite reenviado — OrcPharm Admin Panel",
             $@"<div style='font-family:sans-serif;max-width:520px;margin:0 auto'>
                 <h2 style='color:#1a3a3a'>Novo link de acesso</h2>

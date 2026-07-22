@@ -283,7 +283,7 @@ async function openTicket(id) {
     document.getElementById('modalTitle').textContent = t.title;
     document.getElementById('modalMeta').innerHTML =
         `${PRIORITY_BADGE[t.priority]} ${STATUS_BADGE[t.status]} &nbsp;` +
-        `<span class="text-muted">${ORIGIN_BADGE[t.origin]} · ${t.categoryDisplay}</span>` +
+        `<span class="text-muted">${ORIGIN_BADGE[t.origin]} · ${escHtml(t.categoryDisplay)}</span>` +
         (t.pharmacyName ? ` · <strong>${escHtml(t.pharmacyName)}</strong>` : '');
 
     document.getElementById('modalDescription').innerHTML =

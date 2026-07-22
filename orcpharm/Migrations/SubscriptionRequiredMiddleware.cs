@@ -228,7 +228,7 @@ public class SubscriptionRequiredMiddleware
             "/orcamento",
             
             // Stripe
-            "/api/stripe/webhook",
+            "/api/webhooks/stripe",
             "/api/stripe/success",
             "/api/stripe/cancel",
             

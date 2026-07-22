@@ -118,7 +118,7 @@ public class AdminAuthMiddleware
             "/signup",
             "/api/signup",
             "/api/subscriptionplans",
-            "/api/stripe/webhook",
+            "/api/webhooks/stripe",
             "/api/stripe/success",
             "/api/stripe/cancel"
         };

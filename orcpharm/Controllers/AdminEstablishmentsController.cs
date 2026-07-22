@@ -159,6 +159,9 @@ public class AdminEstablishmentsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEstablishmentDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var establishment = await _context.Establishments.FindAsync(id);
@@ -238,6 +241,9 @@ public class AdminEstablishmentsController : ControllerBase
     [HttpPost("{id}/block")]
     public async Task<IActionResult> Block(Guid id, [FromBody] BlockReasonDto dto)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var establishment = await _context.Establishments.FindAsync(id);
@@ -264,6 +270,9 @@ public class AdminEstablishmentsController : ControllerBase
     [HttpPost("{id}/unblock")]
     public async Task<IActionResult> Unblock(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var establishment = await _context.Establishments.FindAsync(id);
@@ -325,6 +334,12 @@ public class AdminEstablishmentsController : ControllerBase
             _logger.LogError(ex, "Erro ao exportar estabelecimentos");
             return StatusCode(500, new { message = "Erro ao exportar" });
         }
+    }
+
+    private bool IsSuperAdmin()
+    {
+        var role = HttpContext.Items["SaasAdminRole"] as string;
+        return string.Equals(role, "SUPER_ADMIN", StringComparison.Ordinal);
     }
 }
 

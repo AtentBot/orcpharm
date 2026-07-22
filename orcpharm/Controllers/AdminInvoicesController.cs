@@ -191,6 +191,9 @@ public class AdminInvoicesController : ControllerBase
     [HttpPost("{id}/mark-paid")]
     public async Task<IActionResult> MarkAsPaid(Guid id)
     {
+        if (!IsSuperAdmin())
+            return StatusCode(403, new { message = "Acesso negado. Requer perfil SUPER_ADMIN." });
+
         try
         {
             var invoice = await _context.SubscriptionInvoices.FindAsync(id);
@@ -294,5 +297,11 @@ public class AdminInvoicesController : ControllerBase
             _logger.LogError(ex, "Erro ao exportar faturas");
             return StatusCode(500, new { message = "Erro ao exportar" });
         }
+    }
+
+    private bool IsSuperAdmin()
+    {
+        var role = HttpContext.Items["SaasAdminRole"] as string;
+        return string.Equals(role, "SUPER_ADMIN", StringComparison.Ordinal);
     }
 }
